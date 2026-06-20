@@ -119,6 +119,7 @@ export function defaultReportFor(type, opts = {}) {
       claim_changes: [],
       scope_decisions: [],
       multiple_dependent_claim_policy: "unsupported-unless-deliberately-implemented",
+      unsupported_features: [],
     };
   }
 

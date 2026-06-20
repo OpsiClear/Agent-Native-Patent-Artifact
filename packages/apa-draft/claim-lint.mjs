@@ -51,7 +51,7 @@ export function lintClaims(matterDir) {
     if (c.prose && !/\.\s*$/.test(c.prose)) W("LINT_NO_PERIOD", `${c.id}: claim does not end with a period.`);
     if (c.binding.type === "claim-independent" && !TRANSITIONS.test(hay)) W("LINT_TRANSITION", `${c.id}: independent claim has no transitional phrase (comprising/consisting of/including/having).`);
     if (c.binding.type === "claim-dependent" && !/\bclaim\s+\d+\b/i.test(c.prose)) W("LINT_DEP_REF", `${c.id}: dependent claim does not reference a base "claim N" in its text.`);
-    if (MULTI_DEP.test(hay)) W("LINT_MULTI_DEP", `${c.id}: appears to be a multiple-dependent claim (37 CFR 1.75(c): must be in the alternative; extra fee).`);
+    if (MULTI_DEP.test(hay)) W("LINT_MULTI_DEP", `${c.id}: appears to be a multiple-dependent claim. Multiple-dependent claims are unsupported in APA MVP unless deliberately implemented across claim lint, validation, fees, examples, and filing review; 37 CFR 1.75(c) also requires alternative form and extra fee handling.`);
     if (NONCE_112F.test(hay)) W("LINT_112F", `${c.id}: a "means/…-for" nonce phrase may invoke 35 USC 112(f) - ensure corresponding structure is disclosed and linked, or it is indefinite under 112(b).`);
   }
   return { findings, claims: claims.length };
@@ -73,12 +73,21 @@ export function buildClaimsReport(matterDir, lintResult = lintClaims(matterDir))
   report.claims_reviewed = Array.from({ length: lintResult.claims || 0 }, (_, i) => `CLM${String(i + 1).padStart(2, "0")}`);
   report.findings = (lintResult.findings || []).map((f) => ({
     finding_type: "flag",
-    severity: f.severity === "warning" ? "warning" : "info",
+    severity: f.code === "LINT_MULTI_DEP" ? "fix-before-filing" : f.severity === "warning" ? "warning" : "info",
     rule_anchor: ruleAnchorFor(f.code),
     code: f.code,
     evidence_span: f.msg,
     recommendation: `Resolve or deliberately document ${f.code}: ${f.msg}`,
   }));
+  report.unsupported_features = (lintResult.findings || [])
+    .filter((f) => f.code === "LINT_MULTI_DEP")
+    .map((f) => ({
+      feature: "multiple-dependent-claims",
+      status: "unsupported-in-apa-mvp",
+      rule_anchor: "37-cfr-1.75",
+      evidence_span: f.msg,
+      recommendation: "Rewrite as singly dependent claims or deliberately implement full multiple-dependent-claim support across linting, validation, fees, examples, and practitioner review before filing.",
+    }));
   report.next_allowed_steps = report.findings.length
     ? ["revise-claims", "rerun-claim-lint", "run-apa-validate"]
     : ["run-apa-validate", "draft-specification", "run-apa-rigor"];

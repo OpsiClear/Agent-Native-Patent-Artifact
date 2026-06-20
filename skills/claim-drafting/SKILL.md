@@ -54,7 +54,10 @@ do not select scope or apply narrowing edits.
 5. **Report + check.** Emit `logic/claims_report.json` using the shared report envelope
    (`schema: apa-claims-report-v1`, `legal_posture: flags-not-conclusions`). If you changed claim text,
    scope choices, provenance, or dependencies, update the report's `claim_changes`, `scope_decisions`,
-   `findings`, and `human_checkpoints`. Then run
+   `findings`, `unsupported_features`, and `human_checkpoints`. Multiple-dependent claims are
+   unsupported in APA MVP unless deliberately implemented across claim lint, validation, fees,
+   examples, and filing review; an apparent multiple-dependent form must be listed in
+   `unsupported_features` and rewritten or explicitly routed to practitioner review. Then run
    `node packages/apa-draft/claim-lint.mjs <matter> --report-out <matter>/logic/claims_report.json`
    (legal form + report scaffold/update) and
    `node packages/apa-validate/validate.mjs <matter>` (antecedent basis, dependency, edge resolution).

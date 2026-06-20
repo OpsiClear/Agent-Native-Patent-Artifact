@@ -37,7 +37,12 @@ test("nonce 'means for' -> LINT_112F", () => {
 
 test("multiple-dependent form -> LINT_MULTI_DEP", () => {
   const d = clone();
-  try { edit(d, (t) => t.replace("insert of claim 1, further", "insert of claims 1 or 2, further")); assert.ok(codes(lintClaims(d)).includes("LINT_MULTI_DEP")); }
+  try {
+    edit(d, (t) => t.replace("insert of claim 1, further", "insert of claims 1 or 2, further"));
+    const result = lintClaims(d);
+    assert.ok(codes(result).includes("LINT_MULTI_DEP"));
+    assert.match(result.findings.find((f) => f.code === "LINT_MULTI_DEP").msg, /unsupported in APA MVP/);
+  }
   finally { rmSync(d, { recursive: true, force: true }); }
 });
 
@@ -64,6 +69,25 @@ test("claim-lint --report-out writes a valid claims_report.json", () => {
     assert.equal(check.ok, true, JSON.stringify(check.errors));
     assert.equal(report.report_type, "claims");
     assert.equal(report.legal_posture, "flags-not-conclusions");
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("claim-lint report records multiple-dependent claims as unsupported features", () => {
+  const d = clone();
+  try {
+    edit(d, (t) => t.replace("insert of claim 1, further", "insert of claims 1 or 2, further"));
+    const out = join(d, "logic", "claims_report.json");
+    const res = spawnSync(process.execPath, [CLI, d, "--report-out", out, "--json"], { encoding: "utf8" });
+    assert.equal(res.status, 1, res.stderr);
+    const report = JSON.parse(readFileSync(out, "utf8"));
+    const check = validateReport(report, { kind: "claims" });
+    assert.equal(check.ok, true, JSON.stringify(check.errors));
+    assert.equal(report.findings.find((f) => f.code === "LINT_MULTI_DEP").severity, "fix-before-filing");
+    assert.equal(report.unsupported_features[0].feature, "multiple-dependent-claims");
+    assert.equal(report.unsupported_features[0].status, "unsupported-in-apa-mvp");
+    assert.match(report.unsupported_features[0].recommendation, /Rewrite as singly dependent claims/);
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

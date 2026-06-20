@@ -710,7 +710,7 @@ Detailed tasks:
 - [ ] If implemented, update fee logic, claim lint, validator, examples, and docs together.
 - [x] Preserve pro-se neutral options only.
 - [x] Require `claims_report.json` schema validation when claim-lint writes a report.
-- [ ] Add an explicit unsupported-feature warning when a user requests multiple-dependent claims in
+- [x] Add an explicit unsupported-feature warning when a user requests multiple-dependent claims in
   MVP mode.
 
 Suggested targets:
@@ -720,13 +720,13 @@ Suggested targets:
 - `packages/apa-reports/*`
 
 Acceptance criteria:
-- [ ] Multiple-dependent claim syntax is either rejected clearly or fully supported across fees,
+- [x] Multiple-dependent claim syntax is either rejected clearly or fully supported across fees,
   dependencies, examples, and validation.
 - [ ] Pro-se mode returns neutral organization options/questions, not strategic claim-scope advice.
 - [x] AI-suggested limitations still block assembly until human adoption.
 
 Verification:
-- [ ] `node --test packages/apa-validate/test/*.test.mjs packages/apa-draft/test/*.test.mjs packages/apa-reports/test/*.test.mjs`
+- [x] `node --test packages/apa-validate/test/*.test.mjs packages/apa-draft/test/*.test.mjs packages/apa-reports/test/*.test.mjs`
 
 ### 3.7 `/apa-spec`
 

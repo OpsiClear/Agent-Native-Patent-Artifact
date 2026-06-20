@@ -110,6 +110,23 @@ test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-Fil
   } finally { rmSync(d2, { recursive: true, force: true }); }
 });
 
+test("preflight: unsupported multiple-dependent claim form blocks assembly", () => {
+  const d = clone();
+  try {
+    const p = join(d, "logic", "claims.md");
+    writeFileSync(p, readFileSync(p, "utf8")
+      .replace("insert of claim 1, further", "insert of claims 1 or 2, further"));
+    const pf = preflight(d, {});
+    const gate = pf.gates.find((g) => g.name === "claim-form");
+    assert.equal(gate.status, "block", JSON.stringify(pf.gates));
+    assert.match(gate.msg, /LINT_MULTI_DEP/);
+    assert.equal(pf.blocked, true);
+    assert.equal(pf.goNoGo, "NO-GO");
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
 test("preflight: blocking drawing-quality findings block assembly", () => {
   const d = clone();
   try {

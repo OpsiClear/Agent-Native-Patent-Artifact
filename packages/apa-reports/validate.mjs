@@ -123,9 +123,10 @@ function validateCommon(errors, report, cfg) {
 
 function validateTypeSpecific(errors, report, type) {
   if (type === "claims") {
-    for (const key of ["claims_reviewed", "claim_changes", "scope_decisions"]) {
+    for (const key of ["claims_reviewed", "claim_changes", "scope_decisions", "unsupported_features"]) {
       if (!Array.isArray(report[key])) push(errors, key, "must be an array");
     }
+    asArray(report.unsupported_features).forEach((feature, i) => validateUnsupportedFeature(errors, `unsupported_features[${i}]`, feature));
     return;
   }
 
@@ -178,6 +179,16 @@ function validateClaimChart(errors, path, chart) {
     return;
   }
   chart.cells.forEach((cell, i) => validateChartCell(errors, `${path}.cells[${i}]`, cell));
+}
+
+function validateUnsupportedFeature(errors, path, feature) {
+  if (!isObject(feature)) return push(errors, path, "must be an object");
+  for (const key of ["feature", "status", "rule_anchor", "evidence_span", "recommendation"]) {
+    if (!feature[key] || typeof feature[key] !== "string") {
+      push(errors, pathOf(path, key), "must be a non-empty string");
+    }
+  }
+  if ("conclusion" in feature) push(errors, pathOf(path, "conclusion"), "must not appear in unsupported feature entries");
 }
 
 function validateChartCell(errors, path, cell) {

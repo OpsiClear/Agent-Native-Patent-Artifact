@@ -44,6 +44,24 @@ test("findings require severity, rule anchor, evidence span, and recommendation"
   assert.ok(result.errors.some((e) => e.path === "findings[0].recommendation"));
 });
 
+test("claims reports validate unsupported-feature entries", () => {
+  const report = defaultReportFor("claims", { matter: EXAMPLE });
+  report.unsupported_features.push({
+    feature: "multiple-dependent-claims",
+    status: "unsupported-in-apa-mvp",
+    rule_anchor: "37-cfr-1.75",
+    evidence_span: "CLM02 appears to depend from claims 1 or 2.",
+    recommendation: "Rewrite as singly dependent claims.",
+  });
+  let result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  delete report.unsupported_features[0].recommendation;
+  result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "unsupported_features[0].recommendation"));
+});
+
 test("reports reject legal-conclusion fields and overbroad search assertions", () => {
   const report = defaultReportFor("patentability", { matter: EXAMPLE });
   report.search_completeness = "complete";

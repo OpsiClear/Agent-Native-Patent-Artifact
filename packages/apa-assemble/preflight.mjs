@@ -77,7 +77,8 @@ export function preflight(matterDir, { assembledDir } = {}) {
 
   // Claim form lint.
   const l = lintClaims(matterDir);
-  if (l.findings.length) add("claim-form", "warn", `${l.findings.length} claim-form finding(s): ${l.findings.map((f) => f.code).join(", ")}.`);
+  const claimLintStatus = l.findings.some((f) => f.code === "LINT_MULTI_DEP") ? "block" : "warn";
+  if (l.findings.length) add("claim-form", claimLintStatus, `${l.findings.length} claim-form finding(s): ${l.findings.map((f) => f.code).join(", ")}.`);
   else add("claim-form", "pass", "claim form clean.");
 
   // Figures / numerals.
