@@ -29,6 +29,27 @@ export const REPORT_TYPES = {
     defaultPath: "logic/patentability_report.json",
     title: "Patentability flags report",
   },
+  disclosure_capture: {
+    type: "disclosure_capture",
+    schema: "apa-disclosure-session-report-v1",
+    skill: "apa-disclose",
+    defaultPath: "staging/disclosure_session_report.json",
+    title: "Disclosure capture session report",
+  },
+  compile: {
+    type: "compile",
+    schema: "apa-compile-report-v1",
+    skill: "apa-compile",
+    defaultPath: "staging/compile_report.json",
+    title: "Compile/import report",
+  },
+  specification: {
+    type: "specification",
+    schema: "apa-specification-report-v1",
+    skill: "apa-spec",
+    defaultPath: "src/specification_report.json",
+    title: "Specification drafting report",
+  },
   examiner_adversary: {
     type: "examiner_adversary",
     schema: "apa-examiner-adversary-report-v1",
@@ -52,6 +73,18 @@ const ALIASES = {
   analyze: "patentability",
   patentability_report: "patentability",
   "patentability-report": "patentability",
+  disclose: "disclosure_capture",
+  disclosure: "disclosure_capture",
+  disclosure_capture_report: "disclosure_capture",
+  disclosure_session_report: "disclosure_capture",
+  "disclosure-capture": "disclosure_capture",
+  "disclosure-session-report": "disclosure_capture",
+  compile_report: "compile",
+  "compile-report": "compile",
+  compiler: "compile",
+  spec: "specification",
+  specification_report: "specification",
+  "specification-report": "specification",
   examiner: "examiner_adversary",
   examiner_adversary_report: "examiner_adversary",
   "examiner-adversary": "examiner_adversary",
@@ -137,6 +170,44 @@ export function defaultReportFor(type, opts = {}) {
         "112": [],
       },
       search_completeness: "not_asserted",
+    };
+  }
+
+  if (normalized === "disclosure_capture") {
+    return {
+      ...report,
+      session: {
+        source: "conversation",
+        started_at: "",
+        ended_at: "",
+      },
+      promoted_observations: [],
+      bar_date_facts: [],
+      limitation_inventorship: [],
+      raw_fact_boundaries: [],
+      relaxed_import_notes: [],
+    };
+  }
+
+  if (normalized === "compile") {
+    return {
+      ...report,
+      documents: [],
+      claim_extractions: [],
+      provenance_labels: [],
+      ocr_text_quality_flags: [],
+      unrecoverable_provenance: [],
+      conception_reconstruction_policy: "not-recoverable-unless-source-evidenced",
+    };
+  }
+
+  if (normalized === "specification") {
+    return {
+      ...report,
+      conditional_sections: [],
+      spec_paragraphs: [],
+      unsupported_domains: [],
+      source_span_policy: "warning",
     };
   }
 

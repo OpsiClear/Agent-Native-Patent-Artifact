@@ -27,6 +27,21 @@ const TEACHING_STATUS = ["yes", "partial", "no", "unknown"];
 const CONFIDENCE = ["high", "medium", "low", "unknown"];
 const RATIONALE_SOURCES = ["record-evidence", "common-sense", "design-need", "market-pressure", "other"];
 const USER_ROLES = ["registered_practitioner", "pro_se", "unknown"];
+const SOURCE_LABELS = [
+  "transcript",
+  "upload",
+  "inventor-confirmation",
+  "attorney-note",
+  "figure-reconstruction",
+  "source-extracted",
+  "inferred-from-document",
+  "not-recoverable",
+];
+const ADOPTION_STATES = ["raw", "staged", "human-adopted", "not-recoverable"];
+const TEXT_QUALITY = ["native-text", "ocr-high", "ocr-medium", "ocr-low", "unknown"];
+const EXTRACTION_CONFIDENCE = ["high", "medium", "low", "unknown"];
+const PROVENANCE_LABELS = ["source-extracted", "inferred-from-document", "not-recoverable"];
+const CONDITIONAL_SECTION_STATUS = ["supported", "not_applicable", "unsupported", "human_reviewed"];
 
 function isObject(v) {
   return v && typeof v === "object" && !Array.isArray(v);
@@ -57,6 +72,20 @@ function validateCheckpoint(errors, path, cp) {
   if (!cp.id || typeof cp.id !== "string") push(errors, pathOf(path, "id"), "must be a string");
   if (typeof cp.required !== "boolean") push(errors, pathOf(path, "required"), "must be boolean");
   if (typeof cp.satisfied !== "boolean") push(errors, pathOf(path, "satisfied"), "must be boolean");
+}
+
+function validateSourceSpanRecord(errors, path, entry, { allowNotRecoverable = false } = {}) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  if (!SOURCE_LABELS.includes(entry.source)) {
+    push(errors, pathOf(path, "source"), `must be ${SOURCE_LABELS.join("|")}`);
+  }
+  if (entry.source === "not-recoverable" && allowNotRecoverable) return;
+  if (!entry.source_span || typeof entry.source_span !== "string") {
+    push(errors, pathOf(path, "source_span"), "must be a non-empty string");
+  }
+  if (!/^[0-9a-f]{64}$/i.test(String(entry.source_sha256 || ""))) {
+    push(errors, pathOf(path, "source_sha256"), "must be a 64-character SHA-256 hex digest");
+  }
 }
 
 function validateRulePack(errors, path, rulePack) {
@@ -159,6 +188,48 @@ function validateTypeSpecific(errors, report, type) {
     return;
   }
 
+  if (type === "disclosure_capture") {
+    if (!isObject(report.session)) push(errors, "session", "must be an object");
+    if (!Array.isArray(report.promoted_observations)) push(errors, "promoted_observations", "must be an array");
+    else report.promoted_observations.forEach((entry, i) => validatePromotedObservation(errors, `promoted_observations[${i}]`, entry));
+    if (!Array.isArray(report.bar_date_facts)) push(errors, "bar_date_facts", "must be an array");
+    else report.bar_date_facts.forEach((entry, i) => validateBarDateFact(errors, `bar_date_facts[${i}]`, entry));
+    if (!Array.isArray(report.limitation_inventorship)) push(errors, "limitation_inventorship", "must be an array");
+    else report.limitation_inventorship.forEach((entry, i) => validateLimitationInventorship(errors, `limitation_inventorship[${i}]`, entry));
+    for (const key of ["raw_fact_boundaries", "relaxed_import_notes"]) {
+      if (!Array.isArray(report[key])) push(errors, key, "must be an array");
+    }
+    return;
+  }
+
+  if (type === "compile") {
+    if (!Array.isArray(report.documents)) push(errors, "documents", "must be an array");
+    else report.documents.forEach((entry, i) => validateCompileDocument(errors, `documents[${i}]`, entry));
+    if (!Array.isArray(report.claim_extractions)) push(errors, "claim_extractions", "must be an array");
+    else report.claim_extractions.forEach((entry, i) => validateClaimExtraction(errors, `claim_extractions[${i}]`, entry));
+    if (!Array.isArray(report.provenance_labels)) push(errors, "provenance_labels", "must be an array");
+    else report.provenance_labels.forEach((entry, i) => validateProvenanceLabel(errors, `provenance_labels[${i}]`, entry));
+    for (const key of ["ocr_text_quality_flags", "unrecoverable_provenance"]) {
+      if (!Array.isArray(report[key])) push(errors, key, "must be an array");
+    }
+    if (report.conception_reconstruction_policy !== "not-recoverable-unless-source-evidenced") {
+      push(errors, "conception_reconstruction_policy", "must be not-recoverable-unless-source-evidenced");
+    }
+    return;
+  }
+
+  if (type === "specification") {
+    if (!Array.isArray(report.conditional_sections)) push(errors, "conditional_sections", "must be an array");
+    else report.conditional_sections.forEach((entry, i) => validateConditionalSection(errors, `conditional_sections[${i}]`, entry));
+    if (!Array.isArray(report.spec_paragraphs)) push(errors, "spec_paragraphs", "must be an array");
+    else report.spec_paragraphs.forEach((entry, i) => validateSpecParagraph(errors, `spec_paragraphs[${i}]`, entry));
+    if (!Array.isArray(report.unsupported_domains)) push(errors, "unsupported_domains", "must be an array");
+    if (!["warning", "strict", "relaxed"].includes(report.source_span_policy)) {
+      push(errors, "source_span_policy", "must be warning|strict|relaxed");
+    }
+    return;
+  }
+
   if (type === "examiner_adversary") {
     if (!Array.isArray(report.critiques)) push(errors, "critiques", "must be an array");
     if (typeof report.loop_count !== "number" || report.loop_count < 0) {
@@ -201,6 +272,83 @@ function validateTypeSpecific(errors, report, type) {
       push(errors, "authoritative_deadline", "must be false");
     }
     validateDeadlineSupport(errors, "deadline_support", report.deadline_support);
+  }
+}
+
+function validatePromotedObservation(errors, path, entry) {
+  validateSourceSpanRecord(errors, path, entry);
+  if (!["claim", "embodiment", "spec", "term", "prior-art", "bar-date"].includes(entry.target_artifact)) {
+    push(errors, pathOf(path, "target_artifact"), "must be claim|embodiment|spec|term|prior-art|bar-date");
+  }
+  if (!ADOPTION_STATES.includes(entry.adoption_state)) {
+    push(errors, pathOf(path, "adoption_state"), `must be ${ADOPTION_STATES.join("|")}`);
+  }
+}
+
+function validateBarDateFact(errors, path, entry) {
+  validateSourceSpanRecord(errors, path, entry);
+  for (const key of ["fact_type", "date", "speaker", "trace_id"]) {
+    if (!entry[key] || typeof entry[key] !== "string") push(errors, pathOf(path, key), "must be a non-empty string");
+  }
+}
+
+function validateLimitationInventorship(errors, path, entry) {
+  validateSourceSpanRecord(errors, path, entry);
+  if (!entry.limitation || typeof entry.limitation !== "string") push(errors, pathOf(path, "limitation"), "must be a non-empty string");
+  if (!Array.isArray(entry.inventors) || entry.inventors.length === 0) {
+    push(errors, pathOf(path, "inventors"), "must be a non-empty array");
+  }
+}
+
+function validateCompileDocument(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  for (const key of ["path", "source_type"]) {
+    if (!entry[key] || typeof entry[key] !== "string") push(errors, pathOf(path, key), "must be a non-empty string");
+  }
+  if (!TEXT_QUALITY.includes(entry.text_quality)) {
+    push(errors, pathOf(path, "text_quality"), `must be ${TEXT_QUALITY.join("|")}`);
+  }
+  if (entry.source_sha256 != null && !/^[0-9a-f]{64}$/i.test(String(entry.source_sha256))) {
+    push(errors, pathOf(path, "source_sha256"), "must be a 64-character SHA-256 hex digest when present");
+  }
+}
+
+function validateClaimExtraction(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  for (const key of ["claim", "original_number", "source_span"]) {
+    if (!entry[key] || typeof entry[key] !== "string") push(errors, pathOf(path, key), "must be a non-empty string");
+  }
+  if (!EXTRACTION_CONFIDENCE.includes(entry.extraction_confidence)) {
+    push(errors, pathOf(path, "extraction_confidence"), `must be ${EXTRACTION_CONFIDENCE.join("|")}`);
+  }
+  if (!TEXT_QUALITY.includes(entry.text_quality)) {
+    push(errors, pathOf(path, "text_quality"), `must be ${TEXT_QUALITY.join("|")}`);
+  }
+}
+
+function validateProvenanceLabel(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  if (!entry.artifact || typeof entry.artifact !== "string") push(errors, pathOf(path, "artifact"), "must be a non-empty string");
+  if (!PROVENANCE_LABELS.includes(entry.label)) push(errors, pathOf(path, "label"), `must be ${PROVENANCE_LABELS.join("|")}`);
+  if (entry.label === "inferred-from-document" && entry.conception_decision === true) {
+    push(errors, pathOf(path, "conception_decision"), "inferred public-document facts must not be upgraded to conception decisions");
+  }
+}
+
+function validateConditionalSection(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  if (!entry.section || typeof entry.section !== "string") push(errors, pathOf(path, "section"), "must be a non-empty string");
+  if (!CONDITIONAL_SECTION_STATUS.includes(entry.status)) {
+    push(errors, pathOf(path, "status"), `must be ${CONDITIONAL_SECTION_STATUS.join("|")}`);
+  }
+  if (!entry.basis || typeof entry.basis !== "string") push(errors, pathOf(path, "basis"), "must be a non-empty string");
+}
+
+function validateSpecParagraph(errors, path, entry) {
+  validateSourceSpanRecord(errors, path, entry, { allowNotRecoverable: true });
+  if (!entry.spec_id || typeof entry.spec_id !== "string") push(errors, pathOf(path, "spec_id"), "must be a non-empty string");
+  if (!["transcribed", "reconstructed", "attorney-authored", "human-adopted", "not-recoverable"].includes(entry.grounding)) {
+    push(errors, pathOf(path, "grounding"), "must be transcribed|reconstructed|attorney-authored|human-adopted|not-recoverable");
   }
 }
 

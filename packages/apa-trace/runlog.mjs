@@ -34,7 +34,7 @@ export function fileRecord(matterDir, path) {
 }
 
 export function existingFileRecords(matterDir, paths) {
-  return paths.filter((p) => p && existsSync(p)).map((p) => fileRecord(matterDir, p));
+  return paths.filter((p) => p && existsSync(p) && statSync(p).isFile()).map((p) => fileRecord(matterDir, p));
 }
 
 export function commandRecord({ argv, cwd = process.cwd(), exitCode = 0, startedAt, endedAt } = {}) {

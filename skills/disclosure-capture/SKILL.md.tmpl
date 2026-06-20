@@ -53,7 +53,15 @@ disclosure interview; it reviews the turn and writes new events into the artifac
    when possible; keep the `inventorship_matrix` in `PATENT.md` current (which inventor conceived
    which claim, 35 USC 116).
 
-7. **Validate.** After writing, run `node packages/apa-validate/validate.mjs <matter>` and surface the
+7. **Session report.** Emit `staging/disclosure_session_report.json` using the shared report schema
+   (`schema: apa-disclosure-session-report-v1`, `legal_posture: flags-not-conclusions`). Record
+   `promoted_observations`, `bar_date_facts`, `limitation_inventorship`, `raw_fact_boundaries`, and
+   any `relaxed_import_notes`. Each promoted observation, bar-date fact, and limitation-inventorship
+   entry must carry source metadata (`source`, `source_span`, `source_sha256`) and the relevant
+   speaker/timestamp/trace id when available. Then run
+   `node packages/apa-reports/cli.mjs check <matter>/staging/disclosure_session_report.json --kind disclosure_capture`.
+
+8. **Validate.** After writing, run `node packages/apa-validate/validate.mjs <matter>` and surface the
    errors/warnings to the human. Do not claim the matter is ready to file - that is a later, gated stage.
 
 ## Do NOT

@@ -39,7 +39,15 @@ must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the 
    not grounded in the disclosure. Write any gap literally as **"Not specified in disclosure"** for the
    human - do not fill it.
 3. Keep numerals and defined terms consistent with `evidence/drawings/*` and `logic/concepts.md`.
-4. Validate: `node packages/apa-validate/validate.mjs <matter>` (numeral definedness, support edges,
+4. **Specification report.** Emit `src/specification_report.json` using the shared report schema
+   (`schema: apa-specification-report-v1`, `legal_posture: flags-not-conclusions`). Record each
+   conditionally-present 37 CFR 1.77 section in `conditional_sections` as `supported`,
+   `not_applicable`, `unsupported`, or `human_reviewed`; record each drafted/adopted `SPEC####`
+   paragraph in `spec_paragraphs` with grounding and source-span metadata; and record unsupported
+   domains such as ST.26 sequence listings in `unsupported_domains` instead of drafting around them.
+   Then run
+   `node packages/apa-reports/cli.mjs check <matter>/src/specification_report.json --kind specification`.
+5. Validate: `node packages/apa-validate/validate.mjs <matter>` (numeral definedness, support edges,
    term bounds). Resolve or flag warnings; do not assert §112 sufficiency - that is the human's call.
 
 {{WRITING_RUBRIC}}

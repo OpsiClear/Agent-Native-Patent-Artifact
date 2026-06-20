@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { defaultReportFor, expectedReportPath } from "../schemas.mjs";
+import { defaultReportFor, expectedReportPath, REPORT_TYPES } from "../schemas.mjs";
 import { validateReport } from "../validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -17,14 +17,103 @@ function run(args) {
   return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
 }
 
-test("default reports for all four semantic skills validate", () => {
-  for (const kind of ["claims", "patentability", "examiner_adversary", "office_action"]) {
+test("default reports for every semantic skill validate", () => {
+  for (const kind of Object.keys(REPORT_TYPES)) {
     const report = defaultReportFor(kind, { matter: EXAMPLE });
     assert.equal(report.rule_pack.id, "uspto-v1");
     assert.equal(report.rule_pack.effective_date, "2026-06-15");
     const result = validateReport(report, { kind });
     assert.equal(result.ok, true, `${kind}: ${JSON.stringify(result.errors)}`);
   }
+});
+
+test("disclosure reports require promoted observations, bar dates, and limitation inventorship to be source-backed", () => {
+  const report = defaultReportFor("disclosure_capture", { matter: EXAMPLE });
+  report.promoted_observations.push({
+    target_artifact: "claim",
+    source: "transcript",
+    source_span: "interview-001:10:00-10:30",
+    source_sha256: "a".repeat(64),
+    adoption_state: "human-adopted",
+  });
+  report.bar_date_facts.push({
+    fact_type: "public_use",
+    date: "2026-01-15",
+    speaker: "AINVENTOR",
+    trace_id: "PH01",
+    source: "inventor-confirmation",
+    source_span: "interview-001:22:00-22:20",
+    source_sha256: "b".repeat(64),
+  });
+  report.limitation_inventorship.push({
+    limitation: "LIM01",
+    inventors: ["AINVENTOR"],
+    source: "transcript",
+    source_span: "interview-001:10:00-10:30",
+    source_sha256: "c".repeat(64),
+  });
+  let result = validateReport(report, { kind: "disclosure_capture" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  delete report.promoted_observations[0].source_sha256;
+  result = validateReport(report, { kind: "disclosure_capture" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "promoted_observations[0].source_sha256"));
+});
+
+test("compile reports preserve text quality and prevent inferred conception upgrades", () => {
+  const report = defaultReportFor("compile", { matter: EXAMPLE });
+  report.documents.push({
+    path: "source.pdf",
+    source_type: "public-patent",
+    text_quality: "ocr-medium",
+    source_sha256: "d".repeat(64),
+  });
+  report.claim_extractions.push({
+    claim: "CLM01",
+    original_number: "1",
+    source_span: "source.pdf p. 8 lines 1-12",
+    extraction_confidence: "medium",
+    text_quality: "ocr-medium",
+  });
+  report.provenance_labels.push({
+    artifact: "PH01",
+    label: "not-recoverable",
+  });
+  let result = validateReport(report, { kind: "compile" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  report.provenance_labels[0] = {
+    artifact: "PH01",
+    label: "inferred-from-document",
+    conception_decision: true,
+  };
+  result = validateReport(report, { kind: "compile" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "provenance_labels[0].conception_decision"));
+});
+
+test("specification reports require conditional-section status and source-backed SPEC paragraphs", () => {
+  const report = defaultReportFor("specification", { matter: EXAMPLE });
+  report.conditional_sections.push({
+    section: "federally sponsored research",
+    status: "not_applicable",
+    basis: "PATENT.md does not identify federal sponsorship.",
+  });
+  report.spec_paragraphs.push({
+    spec_id: "SPEC0002",
+    grounding: "transcribed",
+    source: "upload",
+    source_span: "disclosure.md para. 4",
+    source_sha256: "e".repeat(64),
+  });
+  let result = validateReport(report, { kind: "specification" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  report.conditional_sections[0].status = "maybe";
+  result = validateReport(report, { kind: "specification" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "conditional_sections[0].status"));
 });
 
 test("reports require rule-pack metadata", () => {
@@ -238,7 +327,7 @@ test("CLI scaffolds and checks minimal reports for an example matter", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-reports-"));
   try {
     cpSync(EXAMPLE, d, { recursive: true });
-    for (const kind of ["claims", "patentability", "examiner_adversary", "office_action"]) {
+    for (const kind of Object.keys(REPORT_TYPES)) {
       const scaffold = run(["scaffold", kind, "--matter", d]);
       assert.equal(scaffold.status, 0, scaffold.stderr);
       const file = join(d, expectedReportPath(kind));

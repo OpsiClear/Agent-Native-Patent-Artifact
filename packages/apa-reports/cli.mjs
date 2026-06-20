@@ -22,7 +22,7 @@ function usage(msg = "") {
     "",
     "Usage:",
     "  node cli.mjs list",
-    "  node cli.mjs scaffold <claims|patentability|examiner_adversary|office_action> --matter <dir> [--out file] [--oa file]",
+    "  node cli.mjs scaffold <report-type> --matter <dir> [--out file] [--oa file]",
     "  node cli.mjs check <report.json> [--kind type] [--json]",
     "",
   ].join("\n"));
@@ -36,6 +36,15 @@ function defaultInputCandidates(type, matter, args) {
   }
   if (type === "patentability") {
     return [p("PATENT.md"), p("logic", "claims.md"), p("logic", "prior_art.md"), p("logic", "reference_matrix.md")];
+  }
+  if (type === "disclosure_capture") {
+    return [p("PATENT.md"), p("staging", "observations.yaml"), p("trace", "prosecution.yaml"), p("logic", "claims.md"), p("src", "embodiments.md")];
+  }
+  if (type === "compile") {
+    return [p("PATENT.md"), p("staging", "source-fetch.md"), p("logic", "claims.md"), p("src", "embodiments.md"), p("evidence", "drawings")];
+  }
+  if (type === "specification") {
+    return [p("PATENT.md"), p("logic", "claims.md"), p("src", "embodiments.md"), p("evidence", "drawings")];
   }
   if (type === "examiner_adversary") {
     return [p("PATENT.md"), p("logic", "claims.md"), p("src", "embodiments.md"), p("logic", "prior_art.md"), p("patent_rigor_report.json")];
@@ -104,4 +113,3 @@ function main() {
 }
 
 process.exit(main());
-

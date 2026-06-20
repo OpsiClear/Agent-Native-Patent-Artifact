@@ -62,7 +62,17 @@ record the command in the compile notes.
    `evidence/` (one raw record per reference, the drawings transcription with numeral->element->SPEC).
 4. **Exploration graph.** Reconstruct the conception / claim-derivation decisions into
    `trace/prosecution.yaml` (PH## nodes; abandoned positions as `dead_end` leaves where the source
-   shows them).
+   shows them). Do not reconstruct conception decisions from a public patent/application unless the
+   source itself provides direct conception evidence; otherwise label that provenance
+   `not-recoverable`.
+
+5. **Compile report.** Emit `staging/compile_report.json` using the shared report schema
+   (`schema: apa-compile-report-v1`, `legal_posture: flags-not-conclusions`). Record each imported
+   document's `text_quality` / OCR status, each verbatim claim extraction's original number and
+   page/line/paragraph `source_span`, the `provenance_labels` used (`source-extracted`,
+   `inferred-from-document`, `not-recoverable`), any `ocr_text_quality_flags`, and all
+   `unrecoverable_provenance`. Then run
+   `node packages/apa-reports/cli.mjs check <matter>/staging/compile_report.json --kind compile`.
 
 ## Bounded fix loop (<= 3 rounds)
 

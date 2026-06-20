@@ -52,6 +52,18 @@ test("externalSinkRecord hashes exact bytes and captures scan approval state", (
   assert.equal(rec.scan_verdict.medium_count, 1);
 });
 
+test("existingFileRecords ignores directory candidates", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-runlog-dir-"));
+  try {
+    writeFileSync(join(d, "input.md"), "alpha");
+    mkdirSync(join(d, "drawings"));
+    const records = existingFileRecords(d, [join(d, "input.md"), join(d, "drawings")]);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].path, "input.md");
+    assert.equal(records[0].sha256, sha256("alpha"));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("validateRunlog reports malformed JSONL with line numbers only when asked", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-runlog-bad-"));
   try {
