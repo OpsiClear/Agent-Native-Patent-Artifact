@@ -148,6 +148,84 @@ main#doc {
 .section-header .count { color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
 .section-header .blurb { color: var(--text-dim); font-size: 12px; margin-left: 10px; font-weight: 400; }
 
+/* -------- Review checklist -------- */
+.review-section { margin: 30px 0 0; scroll-margin-top: 100px; }
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.review-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.review-panel.ok { border-color: rgba(132, 212, 157, 0.35); }
+.review-panel.needs-review { border-color: rgba(255, 184, 107, 0.55); }
+.review-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 4px;
+}
+.review-panel h3 { margin: 0; font-size: 13px; }
+.review-status {
+  min-width: 26px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.review-panel.needs-review .review-status {
+  color: var(--warn);
+  border-color: rgba(255, 184, 107, 0.55);
+  background: var(--warn-soft);
+}
+.review-status-line {
+  padding: 0 12px 9px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.review-items {
+  margin: 0;
+  padding: 8px 12px 11px;
+  border-top: 1px solid var(--line-soft);
+  list-style: none;
+}
+.review-items li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 8px;
+  margin: 4px 0;
+  color: var(--text);
+  font-size: 12px;
+}
+.review-items li.muted {
+  display: block;
+  color: var(--text-faint);
+}
+.review-items a,
+.review-id {
+  color: var(--accent);
+  font-family: ui-monospace, monospace;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.review-items small {
+  grid-column: 2;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
 /* -------- Card -------- */
 .card {
   background: var(--bg-2);
@@ -307,4 +385,5 @@ main#doc {
   nav#toc { display: none; }
   main#doc { padding: 20px 16px 60px; }
   .controls input { width: 120px; }
+  .review-grid { grid-template-columns: 1fr; }
 }

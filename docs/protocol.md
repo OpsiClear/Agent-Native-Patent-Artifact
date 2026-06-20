@@ -315,11 +315,21 @@ node packages/apa-reports/cli.mjs check <matter>/logic/claims_report.json --kind
   "meta": { "title": "...", "application_type": "utility", "status": "drafting",
             "rules_effective_date": "...", "provenance_summary": {...} },
   "nodes": [ { "id": "CLM01", "kind": "claim", "title": "...", "fields": {...}, "provenance": "..." } ],
-  "edges": [ { "from": "CLM01.LIM02", "to": "SPEC0003", "kind": "supported_by", "resolved": true } ]
+  "edges": [ { "from": "CLM01.LIM02", "to": "SPEC0003", "kind": "supported_by", "resolved": true } ],
+  "review": {
+    "schema": "apa-viewer-review-v1",
+    "provenance": { "unadopted_limitations": [], "blocking_count": 0 },
+    "ids": { "unverified_prior_art": [], "warning_count": 0 },
+    "support": { "unresolved_edges": [], "unsupported_support_edges": [], "warning_count": 0 },
+    "drawings": { "status": "reviewed", "findings": [], "blocking_count": 0 }
+  }
 }
 ```
 Node kinds: `claim`, `claim-limitation`, `spec-paragraph`, `drawing-figure`, `reference-numeral`,
 `prior-art-reference`, `defined-term`, `prosecution-node`, `inventor`.
+The `review` block is read-only UI state. It surfaces human-review work queues for adoption,
+IDS/reference verification, unresolved support edges, and drawing-quality issues; it does not perform
+writeback or legal review.
 **Deliberate divergence from ARA:** an edge whose target does not exist is **emitted with
 `"resolved": false`** (and rendered as a visible warning) — it is **not** silently dropped. This must
 hold in **both** `build_manifest.mjs` and `viewer.js`.

@@ -297,6 +297,8 @@ export function build(matterRoot) {
     });
   }
 
+  const review = buildReview(matterRoot, nodes, edges);
+
   return {
     meta: {
       title,
@@ -311,7 +313,107 @@ export function build(matterRoot) {
     },
     nodes,
     edges,
+    review,
   };
+}
+
+function buildReview(matterRoot, nodes, edges) {
+  const limitations = nodes.filter((n) => n.kind === "claim-limitation");
+  const unadoptedLimitations = limitations
+    .filter((n) => (n.provenance || "ai-suggested") === "ai-suggested")
+    .map((n) => ({
+      id: n.id,
+      claim: n.fields?.claim || "",
+      title: n.title || "",
+      provenance: n.provenance || "ai-suggested",
+      status: "human adoption required before assembly",
+    }));
+
+  const priorArt = nodes.filter((n) => n.kind === "prior-art-reference");
+  const unverifiedPriorArt = priorArt
+    .filter((n) => !(n.fields?.verification && n.fields.verification.verified === true))
+    .map((n) => ({
+      id: n.id,
+      title: n.title || "",
+      citation: n.fields?.citation || "",
+      verification: n.fields?.verification || null,
+      status: "human IDS/reference verification required",
+    }));
+
+  const unresolvedEdges = edges
+    .filter((e) => e.resolved === false)
+    .map((e) => ({
+      from: e.from,
+      to: e.to,
+      kind: e.kind,
+      severity: e.kind === "supported_by" ? "fix-before-filing" : "warning",
+    }));
+
+  const drawingFigures = nodes.filter((n) => n.kind === "drawing-figure");
+  const drawingReview = loadDrawingReview(matterRoot, drawingFigures.length);
+
+  return {
+    schema: "apa-viewer-review-v1",
+    provenance: {
+      unadopted_limitations: unadoptedLimitations,
+      blocking_count: unadoptedLimitations.length,
+    },
+    ids: {
+      unverified_prior_art: unverifiedPriorArt,
+      warning_count: unverifiedPriorArt.length,
+    },
+    support: {
+      unresolved_edges: unresolvedEdges,
+      unsupported_support_edges: unresolvedEdges.filter((e) => e.kind === "supported_by"),
+      warning_count: unresolvedEdges.length,
+    },
+    drawings: drawingReview,
+  };
+}
+
+function loadDrawingReview(matterRoot, drawingFigureCount) {
+  const path = join(matterRoot, "evidence", "drawings", "quality-review.json");
+  if (drawingFigureCount === 0) {
+    return {
+      status: "not-applicable",
+      findings: [],
+      blocking_count: 0,
+      warning_count: 0,
+    };
+  }
+  if (!existsSync(path)) {
+    return {
+      status: "missing",
+      path: "evidence/drawings/quality-review.json",
+      findings: [],
+      blocking_count: 0,
+      warning_count: 1,
+      message: "drawing-quality review not found",
+    };
+  }
+  try {
+    const review = JSON.parse(readFileSync(path, "utf8"));
+    const findings = Array.isArray(review.findings) ? review.findings : [];
+    return {
+      status: (review.blocking_count || 0) > 0 ? "blocking-findings" : "reviewed",
+      path: "evidence/drawings/quality-review.json",
+      min_score: review.min_score ?? null,
+      mean_score: review.mean_score ?? null,
+      verdict: review.verdict || "",
+      findings,
+      blocking_count: review.blocking_count || 0,
+      warning_count: findings.filter((f) => f && f.severity !== "info").length,
+    };
+  } catch (e) {
+    return {
+      status: "parse-error",
+      path: "evidence/drawings/quality-review.json",
+      findings: [],
+      blocking_count: 0,
+      warning_count: 1,
+      message: e.message,
+    };
+  }
 }
 
 /**

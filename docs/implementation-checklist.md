@@ -533,13 +533,18 @@ Verification:
 
 ### 2.5 Human Review UI
 
+Current state: `packages/apa-viewer/build_manifest.mjs` emits `review.schema:
+apa-viewer-review-v1` with provenance adoption, IDS/prior-art verification, unresolved-edge, and
+drawing-quality summaries. `viewer.js` renders those summaries as a read-only Review section before
+the artifact cards; `style.css` keeps the panels responsive. No writeback is implemented.
+
 Tasks:
-- [ ] Add viewer panels for provenance adoption state.
-- [ ] Add viewer panels for IDS verification state.
-- [ ] Add viewer panels for claim support / unresolved edges.
-- [ ] Add viewer panels for drawing-quality findings.
-- [ ] Add a read-only review checklist view first; writeback can be a later phase.
-- [ ] Keep all warning states visible and non-silent.
+- [x] Add viewer panels for provenance adoption state.
+- [x] Add viewer panels for IDS verification state.
+- [x] Add viewer panels for claim support / unresolved edges.
+- [x] Add viewer panels for drawing-quality findings.
+- [x] Add a read-only review checklist view first; writeback can be a later phase.
+- [x] Keep all warning states visible and non-silent.
 
 Suggested targets:
 - `packages/apa-viewer/build_manifest.mjs`
@@ -548,14 +553,14 @@ Suggested targets:
 - `packages/apa-viewer/test/*.test.mjs`
 
 Acceptance criteria:
-- [ ] Viewer surfaces unadopted `ai-suggested` limitations.
-- [ ] Viewer surfaces unverified IDS/prior-art references.
-- [ ] Viewer surfaces unresolved support and drawing-quality issues.
-- [ ] Viewer remains static and works from a generated `manifest.json`.
+- [x] Viewer surfaces unadopted `ai-suggested` limitations.
+- [x] Viewer surfaces unverified IDS/prior-art references.
+- [x] Viewer surfaces unresolved support and drawing-quality issues.
+- [x] Viewer remains static and works from a generated `manifest.json`.
 
 Verification:
-- [ ] `node --test packages/apa-viewer/test/*.test.mjs`
-- [ ] `node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --out examples/minimal-patent-artifact/manifest.json`
+- [x] `node --test packages/apa-viewer/test/*.test.mjs`
+- [x] `node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --out examples/minimal-patent-artifact/manifest.json`
 
 ## Phase 3 - Skill-By-Skill Cleanup Items
 
@@ -931,7 +936,7 @@ Verification:
 7. [x] Decide and implement legal-preamble progressive disclosure.
 8. [x] Add trigger tests.
 9. [ ] Add benchmarks.
-10. [ ] Add human review UI.
+10. [x] Add human review UI.
 
 ## Release Gate
 

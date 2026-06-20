@@ -18,7 +18,7 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **276 tests, all passing** (`bash
+generation, CI, and an end-to-end integration test. The suite is **278 tests, all passing** (`bash
 build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.
@@ -45,7 +45,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `docs/source-registry.md` | Prior-art source IDs, access modes, and human-verification requirements | ✅ |
 | `examples/minimal-patent-artifact/` | A worked (fictional) artifact that exercises the protocol | ✅ |
 | `packages/apa-validate/` | Level-1 **mechanical** validator (antecedent basis, claim deps, edge resolution, type-aware core) | ✅ tested |
-| `packages/apa-viewer/` | Static, claims-first viewer + manifest builder (unresolved §112-support edges shown, never dropped) | ✅ tested |
+| `packages/apa-viewer/` | Static, claims-first viewer + manifest builder with read-only review panels (unresolved §112-support edges shown, never dropped) | ✅ tested |
 | `packages/apa-redact/` | Scan-at-sink confidentiality/PII guard (3-tier, patent-extended) | ✅ tested |
 | `packages/apa-safe/` | Guarded external-sink wrappers (`send`, `fetch`, `npx`): exact-byte scan, MEDIUM approval, runlog sink hashes, untrusted fetch envelope | ✅ tested |
 | `packages/apa-reports/` | Shared semantic report schemas for claims, patentability, examiner-adversary, and office-action reports | ✅ tested |

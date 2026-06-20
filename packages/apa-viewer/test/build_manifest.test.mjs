@@ -7,7 +7,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -70,6 +70,40 @@ test("the clean example produces zero unresolved edges", () => {
   const m = build(EXAMPLE);
   const unresolved = m.edges.filter((e) => e.resolved === false);
   assert.equal(unresolved.length, 0, "example matter is fully resolved");
+});
+
+test("review summary surfaces drawing QA state without writeback", () => {
+  const m = build(EXAMPLE);
+  assert.equal(m.review.schema, "apa-viewer-review-v1");
+  assert.equal(m.review.provenance.blocking_count, 0);
+  assert.equal(m.review.ids.warning_count, 0);
+  assert.equal(m.review.support.warning_count, 0);
+  assert.equal(m.review.drawings.status, "missing");
+  assert.equal(m.review.drawings.path, "evidence/drawings/quality-review.json");
+});
+
+test("review summary surfaces unadopted limitations and unverified prior-art references", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-view-review-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const claims = join(dir, "logic", "claims.md");
+    writeFileSync(claims, readFileSync(claims, "utf8").replace(
+      "  - id: LIM01\n    text: \"a reservoir configured to hold water\"\n    introduces: \"reservoir\"\n    supported_by: [SPEC0002]\n    illustrated_by: [FIG01#10]\n    provenance: inventor:AINVENTOR",
+      "  - id: LIM01\n    text: \"a reservoir configured to hold water\"\n    introduces: \"reservoir\"\n    supported_by: [SPEC0002]\n    illustrated_by: [FIG01#10]\n    provenance: ai-suggested",
+    ));
+    const priorArt = join(dir, "logic", "prior_art.md");
+    writeFileSync(priorArt, readFileSync(priorArt, "utf8").replace(
+      "verification: { verified: true, confidence: high }",
+      "verification: { verified: false, confidence: low }",
+    ));
+    const m = build(dir);
+    assert.equal(m.review.provenance.blocking_count, 1);
+    assert.equal(m.review.provenance.unadopted_limitations[0].id, "LIM01");
+    assert.equal(m.review.ids.warning_count, 1);
+    assert.equal(m.review.ids.unverified_prior_art[0].id, "PA01");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 // ------------------------------------------------------------------------------------------------

@@ -23,6 +23,8 @@ one JSON file are fully self-contained and embeddable** — drop the four static
   practitioner.”*
 - **Claims first, always visible** — each claim card headlines its id, short title, and a provenance
   chip. Click **limitations (n)** to lazily expand the claim's `LIM##` limitations inline.
+- **Read-only review checklist** - panels summarize unadopted limitations, unverified prior-art/IDS
+  references, unresolved support edges, and drawing-quality state from `manifest.review`.
 - **Typed-edge chip groups** — each limitation/claim shows its edges grouped by kind (`supported by
   (§112)`, `illustrated by`, `antecedent basis`, `depends on`, `distinguished over`, `scope set at`,
   `conceived by`, …). Clicking a chip expands the linked node inline and flashes its canonical card.

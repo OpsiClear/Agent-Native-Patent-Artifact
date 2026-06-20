@@ -113,6 +113,7 @@ async function main() {
 
   renderTopBar();
   renderHero();
+  renderReviewPanels();
   renderSections();
   renderTOC();
   wireControls();
@@ -187,6 +188,120 @@ function renderHero() {
       if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   }
+}
+
+// ---------------------------------------------------------------------------
+// review checklist (read-only human review surface)
+// ---------------------------------------------------------------------------
+function renderReviewPanels() {
+  const review = state.data.review;
+  const sections = document.getElementById("sections");
+  if (!review || !sections) return;
+
+  const wrap = document.createElement("section");
+  wrap.id = "section-review";
+  wrap.className = "review-section";
+  wrap.innerHTML = `
+    <div class="section-header">
+      <h2>Review <span class="blurb">read-only checklist</span></h2>
+    </div>
+    <div class="review-grid"></div>
+  `;
+  const grid = wrap.querySelector(".review-grid");
+  grid.appendChild(reviewPanel({
+    title: "Provenance adoption",
+    issueCount: review.provenance?.blocking_count || 0,
+    okText: "all limitations adopted",
+    issueText: "human adoption required",
+    items: (review.provenance?.unadopted_limitations || []).map((x) => ({
+      id: x.id,
+      text: `${x.claim || ""} ${x.title || ""}`.trim(),
+      detail: x.status || "",
+    })),
+  }));
+  grid.appendChild(reviewPanel({
+    title: "IDS verification",
+    issueCount: review.ids?.warning_count || 0,
+    okText: "prior-art references verified",
+    issueText: "reference verification required",
+    items: (review.ids?.unverified_prior_art || []).map((x) => ({
+      id: x.id,
+      text: x.title || x.citation || x.id,
+      detail: x.status || "",
+    })),
+  }));
+  grid.appendChild(reviewPanel({
+    title: "Support edges",
+    issueCount: review.support?.warning_count || 0,
+    okText: "all edges resolve",
+    issueText: "unresolved edge review required",
+    items: (review.support?.unresolved_edges || []).map((x) => ({
+      id: bareId(x.from),
+      text: `${x.from} ${x.kind} -> ${x.to}`,
+      detail: x.severity || "",
+    })),
+  }));
+  const drawing = review.drawings || {};
+  const drawingIssues = (drawing.blocking_count || 0) + (drawing.status === "missing" || drawing.status === "parse-error" ? 1 : 0);
+  grid.appendChild(reviewPanel({
+    title: "Drawing QA",
+    issueCount: drawingIssues,
+    okText: drawing.status === "not-applicable" ? "no drawing figures" : "drawing review present",
+    issueText: drawing.status === "missing" ? "drawing review missing" : "drawing findings require review",
+    items: drawingItems(drawing),
+  }));
+
+  sections.parentNode.insertBefore(wrap, sections);
+}
+
+function reviewPanel({ title, issueCount, okText, issueText, items }) {
+  const panel = document.createElement("article");
+  panel.className = `review-panel ${issueCount > 0 ? "needs-review" : "ok"}`;
+  const status = issueCount > 0 ? issueText : okText;
+  panel.innerHTML = `
+    <div class="review-panel-head">
+      <h3>${esc(title)}</h3>
+      <span class="review-status">${issueCount > 0 ? esc(issueCount) : "0"}</span>
+    </div>
+    <div class="review-status-line">${esc(status)}</div>
+    <ul class="review-items"></ul>
+  `;
+  const list = panel.querySelector(".review-items");
+  if (!items.length) {
+    const li = document.createElement("li");
+    li.className = "muted";
+    li.textContent = okText;
+    list.appendChild(li);
+    return panel;
+  }
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    const href = item.id && state.byId.has(bareId(item.id)) ? `#card-${esc(bareId(item.id))}` : "";
+    li.innerHTML =
+      (href ? `<a href="${href}">${esc(item.id)}</a>` : `<span class="review-id">${esc(item.id || "")}</span>`) +
+      `<span>${esc(item.text || "")}</span>` +
+      (item.detail ? `<small>${esc(item.detail)}</small>` : "");
+    list.appendChild(li);
+  });
+  return panel;
+}
+
+function drawingItems(drawing) {
+  if (drawing.status === "not-applicable") return [];
+  if (drawing.status === "missing" || drawing.status === "parse-error") {
+    return [{
+      id: "",
+      text: drawing.message || "drawing-quality review not found",
+      detail: drawing.path || "",
+    }];
+  }
+  const findings = Array.isArray(drawing.findings) ? drawing.findings : [];
+  if (!findings.length) return [];
+  return findings.slice(0, 8).map((f) => ({
+    id: f.figure || f.sheet || "",
+    text: f.issue_type || f.message || f.rule_reference || "drawing finding",
+    detail: f.severity || f.rule_reference || "",
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -483,6 +598,11 @@ function toggleNested(card, chip, nodeId) {
 function renderTOC() {
   const toc = document.getElementById("toc");
   toc.innerHTML = "";
+  if (state.data.review) {
+    const h = document.createElement("h4");
+    h.innerHTML = `<a href="#section-review">Review</a>`;
+    toc.appendChild(h);
+  }
   SECTIONS.forEach((s) => {
     const items = state.data.nodes.filter((n) => s.kinds.includes(n.kind));
     if (items.length === 0) return;
