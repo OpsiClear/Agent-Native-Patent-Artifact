@@ -149,8 +149,26 @@ function validateTypeSpecific(errors, report, type) {
     if (typeof report.loop_count !== "number" || report.loop_count < 0) {
       push(errors, "loop_count", "must be a non-negative number");
     }
+    if (typeof report.max_examiner_loops !== "number" || report.max_examiner_loops < 0) {
+      push(errors, "max_examiner_loops", "must be a non-negative number");
+    }
+    if (
+      typeof report.loop_count === "number" &&
+      typeof report.max_examiner_loops === "number" &&
+      report.loop_count > report.max_examiner_loops
+    ) {
+      const ok = asArray(report.human_checkpoints).some((cp) => cp.id === "examiner-loop-override" && cp.satisfied === true);
+      if (!ok) push(errors, "loop_count", "must not exceed max_examiner_loops without a satisfied examiner-loop-override checkpoint");
+    }
     if (!["none", "pro_se_summary", "practitioner-approved"].includes(report.edit_mode)) {
       push(errors, "edit_mode", "must be none|pro_se_summary|practitioner-approved");
+    }
+    if (!Array.isArray(report.dead_end_arguments)) push(errors, "dead_end_arguments", "must be an array");
+    else report.dead_end_arguments.forEach((entry, i) => validateDeadEndArgument(errors, `dead_end_arguments[${i}]`, entry));
+    if (!Array.isArray(report.proposed_amendments)) push(errors, "proposed_amendments", "must be an array");
+    else report.proposed_amendments.forEach((entry, i) => validateProposedAmendment(errors, `proposed_amendments[${i}]`, entry));
+    if (report.edit_mode === "pro_se_summary" && asArray(report.proposed_amendments).length > 0) {
+      push(errors, "proposed_amendments", "must be empty in pro_se_summary mode; provide neutral issues/questions only");
     }
     if (report.edit_mode === "practitioner-approved") {
       const ok = asArray(report.human_checkpoints).some((cp) => cp.id === "practitioner-approval" && cp.satisfied === true);
@@ -181,6 +199,43 @@ function validateDeadlineSupport(errors, path, support) {
   }
   if (!support.basis || typeof support.basis !== "string") {
     push(errors, pathOf(path, "basis"), "must be a non-empty string");
+  }
+}
+
+function validateDeadEndArgument(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  for (const key of ["argument", "reason", "evidence_span"]) {
+    if (!entry[key] || typeof entry[key] !== "string") {
+      push(errors, pathOf(path, key), "must be a non-empty string");
+    }
+  }
+  if (!Array.isArray(entry.affected_claims) || entry.affected_claims.length === 0) {
+    push(errors, pathOf(path, "affected_claims"), "must be a non-empty array");
+  } else {
+    entry.affected_claims.forEach((claim, i) => {
+      if (!claim || typeof claim !== "string") push(errors, `${path}.affected_claims[${i}]`, "must be a non-empty string");
+    });
+  }
+  if (entry.do_not_reuse !== true) {
+    push(errors, pathOf(path, "do_not_reuse"), "must be true so later prosecution work does not reuse the argument");
+  }
+}
+
+function validateProposedAmendment(errors, path, entry) {
+  if (!isObject(entry)) return push(errors, path, "must be an object");
+  for (const key of ["claim", "proposal", "rationale", "evidence_span"]) {
+    if (!entry[key] || typeof entry[key] !== "string") {
+      push(errors, pathOf(path, key), "must be a non-empty string");
+    }
+  }
+  if (entry.status !== "proposal-only") {
+    push(errors, pathOf(path, "status"), "must be proposal-only");
+  }
+  if (entry.requires_practitioner_approval !== true) {
+    push(errors, pathOf(path, "requires_practitioner_approval"), "must be true");
+  }
+  if (entry.human_adopted !== false) {
+    push(errors, pathOf(path, "human_adopted"), "must be false until separately adopted through the human review process");
   }
 }
 

@@ -145,6 +145,8 @@ export function defaultReportFor(type, opts = {}) {
       loop_count: 0,
       max_examiner_loops: 2,
       edit_mode: "none",
+      dead_end_arguments: [],
+      proposed_amendments: [],
     };
   }
 

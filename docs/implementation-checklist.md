@@ -927,13 +927,18 @@ Verification:
 
 ### 3.13 `/apa-examiner`
 
+Current state: `examiner_adversary_report.json` carries loop metadata, dead-end arguments, and
+proposal-only amendment metadata. `packages/apa-reports` validates the loop cap, a satisfied
+`examiner-loop-override` checkpoint for cap overruns, do-not-reuse dead-end arguments, pro-se
+summary-only behavior, and proposal-only amendment fields.
+
 Detailed tasks:
 - [x] Skill text and autoprep routing cap examiner loops.
-- [ ] Make loop cap machine-enforced through autoprep state or examiner report metadata.
+- [x] Make loop cap machine-enforced through autoprep state or examiner report metadata.
 - [x] Ensure no claim/spec edits happen without registered-practitioner approval.
 - [x] Keep privilege/work-product caution visible.
 - [x] Require `examiner_adversary_report.json` schema validation for material examiner reports.
-- [ ] Add report field for `dead_end` arguments so later prosecution work does not reuse them.
+- [x] Add report field for `dead_end` arguments so later prosecution work does not reuse them.
 
 Suggested targets:
 - `skills/examiner-adversary/SKILL.md.tmpl`
@@ -941,13 +946,13 @@ Suggested targets:
 - Future autoprep/examiner deterministic runner if added.
 
 Acceptance criteria:
-- [ ] Examiner loop count is visible in machine-readable state.
-- [ ] Pro-se mode produces neutral issues/questions only.
-- [ ] Any proposed amendment is a proposal requiring practitioner/human approval before adoption.
+- [x] Examiner loop count is visible in machine-readable state.
+- [x] Pro-se mode produces neutral issues/questions only.
+- [x] Any proposed amendment is a proposal requiring practitioner/human approval before adoption.
 
 Verification:
 - [x] `node --test packages/apa-reports/test/*.test.mjs`
-- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.14 `/apa-office-action`
 

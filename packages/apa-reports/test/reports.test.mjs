@@ -159,6 +159,63 @@ test("examiner practitioner-approved edit mode requires a satisfied checkpoint",
   assert.equal(result.ok, true, JSON.stringify(result.errors));
 });
 
+test("examiner reports enforce loop caps unless explicitly overridden", () => {
+  const report = defaultReportFor("examiner_adversary", { matter: EXAMPLE });
+  report.loop_count = 3;
+  report.max_examiner_loops = 2;
+  let result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "loop_count"));
+
+  report.human_checkpoints.push({ id: "examiner-loop-override", required: true, satisfied: true });
+  result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+});
+
+test("examiner reports validate dead-end arguments for do-not-reuse tracking", () => {
+  const report = defaultReportFor("examiner_adversary", { matter: EXAMPLE });
+  report.dead_end_arguments.push({
+    argument: "Argue that reference PA01 lacks any transport step.",
+    reason: "PA01 expressly discloses passive transport at para. 12.",
+    affected_claims: ["CLM01"],
+    do_not_reuse: true,
+    evidence_span: "trace/prosecution.yaml PH03; PA01 para. 12",
+  });
+  let result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  delete report.dead_end_arguments[0].do_not_reuse;
+  result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "dead_end_arguments[0].do_not_reuse"));
+});
+
+test("examiner reports keep amendments proposal-only and disallow them in pro-se mode", () => {
+  const report = defaultReportFor("examiner_adversary", { matter: EXAMPLE });
+  report.proposed_amendments.push({
+    claim: "CLM01",
+    proposal: "Add an explicit hardware decoder limitation.",
+    rationale: "Addresses the strongest 103 combination while preserving dependent fallback scope.",
+    evidence_span: "trace/prosecution_rationale.md Critique 2",
+    status: "proposal-only",
+    requires_practitioner_approval: true,
+    human_adopted: false,
+  });
+  let result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  report.edit_mode = "pro_se_summary";
+  result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "proposed_amendments"));
+
+  report.edit_mode = "none";
+  report.proposed_amendments[0].human_adopted = true;
+  result = validateReport(report, { kind: "examiner_adversary" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "proposed_amendments[0].human_adopted"));
+});
+
 test("CLI scaffolds and checks minimal reports for an example matter", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-reports-"));
   try {

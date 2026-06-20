@@ -61,7 +61,13 @@ and human approval.
 5. **Machine report.** Emit `trace/examiner_adversary_report.json` using the shared report envelope
    (`schema: apa-examiner-adversary-report-v1`, `legal_posture: flags-not-conclusions`). Include each
    critique as a report finding or `critiques` entry, `loop_count`, `max_examiner_loops`, `edit_mode`,
-   and any required practitioner-approval checkpoint. Validate it with
+   `dead_end_arguments`, `proposed_amendments`, and any required practitioner-approval checkpoint.
+   `loop_count` must not exceed `max_examiner_loops` unless the report includes a satisfied
+   `examiner-loop-override` checkpoint. Each `dead_end_arguments[]` entry must include the argument,
+   reason, affected claims, evidence span, and `do_not_reuse: true`. Each `proposed_amendments[]`
+   entry must be `status: "proposal-only"`, `requires_practitioner_approval: true`, and
+   `human_adopted: false`. In `pro_se_summary` mode, leave `proposed_amendments` empty and provide
+   neutral issues/questions only. Validate it with
    `node packages/apa-reports/cli.mjs check <matter>/trace/examiner_adversary_report.json --kind examiner_adversary`.
    In `shareable_redacted` mode, do not copy this report into any external share package.
 6. **Re-check** only after human-approved edits: `node packages/apa-draft/claim-lint.mjs <matter>` and
