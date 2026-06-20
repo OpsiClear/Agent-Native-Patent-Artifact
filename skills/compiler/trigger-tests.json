@@ -1,0 +1,14 @@
+{
+  "command": "/apa-compile",
+  "keywords": ["compile existing patent", "lift published application", "extract claims verbatim"],
+  "should_trigger": [
+    "/apa-compile public_application.pdf into an APA matter.",
+    "Use /apa-compile to lift published application text and extract claims verbatim.",
+    "Invoke /apa-compile on this existing patent document and preserve page spans."
+  ],
+  "should_not_trigger": [
+    "Use /apa-disclose for a new inventor interview.",
+    "Create a release changelog from git commits.",
+    "Calculate a mortgage payment schedule."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "command": "/apa-office-action",
+  "keywords": ["office action response", "37 CFR 1.136", "response deadline estimate"],
+  "should_trigger": [
+    "/apa-office-action parse this non-final Office Action and estimate response deadlines.",
+    "Use /apa-office-action to scaffold flags and questions for an examiner rejection.",
+    "Invoke /apa-office-action for a 37 CFR 1.136 response deadline estimate."
+  ],
+  "should_not_trigger": [
+    "Use /apa-examiner before filing to stress-test the draft.",
+    "Summarize a customer support transcript.",
+    "Show me disk usage for this directory."
+  ]
+}

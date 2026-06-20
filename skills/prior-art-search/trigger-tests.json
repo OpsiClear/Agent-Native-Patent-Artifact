@@ -1,0 +1,14 @@
+{
+  "command": "/apa-priorart",
+  "keywords": ["patentsview search", "PA## evidence records", "reference matrix seed"],
+  "should_trigger": [
+    "/apa-priorart search patentsview for references bearing on the claims.",
+    "Use /apa-priorart to write PA## evidence records and seed the reference matrix.",
+    "Invoke /apa-priorart with scan-at-sink before querying prior-art databases."
+  ],
+  "should_not_trigger": [
+    "Use /apa-analyze after the references have already been gathered.",
+    "Find restaurants near the office.",
+    "Run the linter and fix formatting."
+  ]
+}

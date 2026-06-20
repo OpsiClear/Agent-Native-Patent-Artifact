@@ -1,0 +1,14 @@
+{
+  "command": "/apa-analyze",
+  "keywords": ["element-by-element claim chart", "102 103 mapping", "112f screen"],
+  "should_trigger": [
+    "/apa-analyze build element-by-element claim charts against PA01.",
+    "Use /apa-analyze for 102 103 mapping and 112f screen flags.",
+    "Invoke /apa-analyze to compare prior-art references to claim limitations."
+  ],
+  "should_not_trigger": [
+    "Use /apa-priorart to collect candidate references first.",
+    "Tell me whether my contract is enforceable.",
+    "Optimize an SQL query plan."
+  ]
+}

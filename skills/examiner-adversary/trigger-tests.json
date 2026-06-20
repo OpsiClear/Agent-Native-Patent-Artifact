@@ -1,0 +1,14 @@
+{
+  "command": "/apa-examiner",
+  "keywords": ["examiner adversary", "strongest likely rejection", "critique fix rationale"],
+  "should_trigger": [
+    "/apa-examiner run a skeptical 101/102/103/112 pass against the claims.",
+    "Use /apa-examiner to identify the strongest likely rejection and proposed fixes.",
+    "Invoke /apa-examiner and record critique fix rationale without editing claims."
+  ],
+  "should_not_trigger": [
+    "Use /apa-rigor to compute the six-dimension report verdict.",
+    "Review this React component for accessibility issues.",
+    "Tell me how to rename a git branch."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "command": "/apa-claims",
+  "keywords": ["claim ladder", "antecedent basis", "dependent claim fallback"],
+  "should_trigger": [
+    "/apa-claims draft independent and dependent claims from the adopted embodiments.",
+    "Use /apa-claims to build a claim ladder with antecedent basis checks.",
+    "Invoke /apa-claims and add dependent claim fallback positions tied to support."
+  ],
+  "should_not_trigger": [
+    "Use /apa-spec to draft the detailed description sections.",
+    "Tell me the weather forecast for tomorrow.",
+    "Format this JSON file alphabetically."
+  ]
+}

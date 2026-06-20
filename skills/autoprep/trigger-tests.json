@@ -1,0 +1,14 @@
+{
+  "command": "/apa-autoprep",
+  "keywords": ["full patent-prep lifecycle", "end-to-end patent prep", "run every APA phase"],
+  "should_trigger": [
+    "/apa-autoprep run the full patent-prep lifecycle on this matter and stop at checkpoints.",
+    "Use /apa-autoprep for end-to-end patent prep from disclosure through assembly.",
+    "Invoke /apa-autoprep to run every APA phase with gates between them."
+  ],
+  "should_not_trigger": [
+    "Use /apa-priorart to search patentsview only.",
+    "Run the unit tests for the JavaScript package.",
+    "Summarize this non-patent project README."
+  ]
+}

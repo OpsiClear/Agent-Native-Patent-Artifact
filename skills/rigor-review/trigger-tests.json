@@ -1,0 +1,14 @@
+{
+  "command": "/apa-rigor",
+  "keywords": ["six-dimension rigor report", "patent_rigor_report.json", "deterministic verdict"],
+  "should_trigger": [
+    "/apa-rigor scaffold the six-dimension rigor report.",
+    "Use /apa-rigor to validate patent_rigor_report.json and compute the deterministic verdict.",
+    "Invoke /apa-rigor after examiner review to audit the artifact."
+  ],
+  "should_not_trigger": [
+    "Use /apa-assemble to collate the package draft.",
+    "Explain how to configure npm workspaces.",
+    "Draft a short marketing email."
+  ]
+}

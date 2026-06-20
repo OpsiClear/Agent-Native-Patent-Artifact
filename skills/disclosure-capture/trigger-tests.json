@@ -1,0 +1,14 @@
+{
+  "command": "/apa-disclose",
+  "keywords": ["invention disclosure interview", "capture disclosure", "bar-date facts"],
+  "should_trigger": [
+    "/apa-disclose capture this invention disclosure after the inventor interview.",
+    "Use /apa-disclose to record embodiments, alternatives, and bar-date facts.",
+    "Invoke /apa-disclose at the end of the disclosure session."
+  ],
+  "should_not_trigger": [
+    "Use /apa-compile to import an already published patent.",
+    "Generate a CSS color palette for a dashboard.",
+    "Explain how promises work in JavaScript."
+  ]
+}

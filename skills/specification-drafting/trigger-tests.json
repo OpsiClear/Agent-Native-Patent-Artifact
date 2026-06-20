@@ -1,0 +1,14 @@
+{
+  "command": "/apa-spec",
+  "keywords": ["37 CFR 1.77 specification", "detailed description sections", "reference numerals consistent"],
+  "should_trigger": [
+    "/apa-spec draft the 37 CFR 1.77 specification sections from embodiments.",
+    "Use /apa-spec to keep reference numerals consistent in the detailed description.",
+    "Invoke /apa-spec after claims are adopted and source spans are available."
+  ],
+  "should_not_trigger": [
+    "Use /apa-claims to draft the independent claim first.",
+    "Write a Python script to rename files.",
+    "Compare two JSON API responses."
+  ]
+}

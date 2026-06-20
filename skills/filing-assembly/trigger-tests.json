@@ -1,0 +1,14 @@
+{
+  "command": "/apa-assemble",
+  "keywords": ["assembly package draft", "pre-filing go/no-go", "upload manifest"],
+  "should_trigger": [
+    "/apa-assemble collate the assembly package draft and upload manifest.",
+    "Use /apa-assemble to make the pre-filing go/no-go checklist.",
+    "Invoke /apa-assemble after rigor review to generate ADS, IDS, and fee worksheet drafts."
+  ],
+  "should_not_trigger": [
+    "Use /apa-office-action for a post-filing examiner response scaffold.",
+    "Deploy the website to production.",
+    "Convert this CSV file to JSON."
+  ]
+}

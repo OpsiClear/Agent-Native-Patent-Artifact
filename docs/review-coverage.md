@@ -35,7 +35,7 @@ For the detailed implementation checklist derived from these items, see
 | Review item | Current coverage |
 |---|---|
 | Benchmark suite with public patents/OAs/synthetic disclosures | Deferred. Existing tests cover deterministic mechanics and example matters; broader legal-drafting benchmark data is a separate dataset effort. |
-| Trigger tests for each skill | Deferred. Skill docs are generated and checked for freshness; host-trigger behavioral tests are not implemented. |
+| Trigger tests for each skill | Covered. Every committed skill has `trigger-tests.json` with at least three should-trigger and three should-not-trigger prompts; `scripts/check-skills.mjs` validates frontmatter length, explicit `/apa-*` invocation triggers, offline routing fixtures, pure legal-advice non-triggers, and host-rendered Claude/Codex/Cursor frontmatter behavior. |
 | Jurisdiction/rule packs | Deferred. The current protocol is USPTO-scoped; rule-pack abstraction is future work. |
 | Counsel/work-product mode | Partially covered by guardrail text and warnings. A formal mode bit and privilege-preserving workflow are future work. |
 | Human review UI for provenance, IDS, support, and drawings | Deferred. Existing viewer renders unresolved graph warnings; review/adoption UI is future work. |

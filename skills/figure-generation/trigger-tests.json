@@ -1,0 +1,14 @@
+{
+  "command": "/apa-figures",
+  "keywords": ["render numbered patent figures", "reference numeral reconciliation", "B&W SVG line-art"],
+  "should_trigger": [
+    "/apa-figures render numbered patent figures from the method claims.",
+    "Use /apa-figures for B&W SVG line-art with reference numeral reconciliation.",
+    "Invoke /apa-figures to create FIG. views and numbered parts."
+  ],
+  "should_not_trigger": [
+    "Use /apa-drawing-quality to review existing drawings for formal risk.",
+    "Resize this PNG photograph for the website.",
+    "Draw a colorful marketing hero illustration."
+  ]
+}

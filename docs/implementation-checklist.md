@@ -457,10 +457,10 @@ Verification:
 ### 2.2 Skill Trigger Tests
 
 Tasks:
-- [ ] Define positive and negative trigger prompts for every committed skill.
-- [ ] Validate frontmatter descriptions are under 1024 chars, imperative, and boundary-aware.
-- [ ] Add host-specific trigger behavior tests where possible.
-- [ ] Add a "no accidental legal-advice trigger" test set.
+- [x] Define positive and negative trigger prompts for every committed skill.
+- [x] Validate frontmatter descriptions are under 1024 chars, imperative, and boundary-aware.
+- [x] Add host-specific trigger behavior tests where possible.
+- [x] Add a "no accidental legal-advice trigger" test set.
 
 Suggested targets:
 - `scripts/check-skills.mjs`
@@ -468,12 +468,12 @@ Suggested targets:
 - `scripts/**/*.test.mjs`
 
 Acceptance criteria:
-- [ ] Every skill has at least three should-trigger and three should-not-trigger cases.
-- [ ] Trigger tests run without network.
-- [ ] Generated descriptions do not summarize workflows in a way that encourages agents to skip bodies.
+- [x] Every skill has at least three should-trigger and three should-not-trigger cases.
+- [x] Trigger tests run without network.
+- [x] Generated descriptions do not summarize workflows in a way that encourages agents to skip bodies.
 
 Verification:
-- [ ] `node --test scripts/**/*.test.mjs`
+- [x] `node --test scripts/**/*.test.mjs`
 
 ### 2.3 Jurisdiction And Rule Packs
 
@@ -922,7 +922,7 @@ Verification:
 5. [x] Expand upload manifest fields. Prior-art dossier expansion complete.
 6. [x] Add rigor staleness caps.
 7. [x] Decide and implement legal-preamble progressive disclosure.
-8. [ ] Add trigger tests.
+8. [x] Add trigger tests.
 9. [ ] Add benchmarks.
 10. [ ] Add human review UI.
 

@@ -1,0 +1,14 @@
+{
+  "command": "/apa-drawing-quality",
+  "keywords": ["drawing quality review", "USPTO formal-risk precheck", "lead line crowding"],
+  "should_trigger": [
+    "/apa-drawing-quality review whether these patent drawings look professional.",
+    "Use /apa-drawing-quality for USPTO formal-risk precheck and lead line crowding.",
+    "Invoke /apa-drawing-quality on the rendered sheets before assembly."
+  ],
+  "should_not_trigger": [
+    "Use /apa-svg-upgrader to polish rough SVG source files first.",
+    "Generate a cartoon avatar image.",
+    "Check TypeScript compile errors."
+  ]
+}

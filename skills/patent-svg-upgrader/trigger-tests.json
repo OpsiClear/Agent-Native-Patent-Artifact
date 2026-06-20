@@ -1,0 +1,14 @@
+{
+  "command": "/apa-svg-upgrader",
+  "keywords": ["upgrade rough SVG", "professional utility-patent drawing candidates", "numeral parity report"],
+  "should_trigger": [
+    "/apa-svg-upgrader polish these rough generated SVG patent figures.",
+    "Use /apa-svg-upgrader to upgrade rough SVG files before drawing QA.",
+    "Invoke /apa-svg-upgrader and preserve numeral parity."
+  ],
+  "should_not_trigger": [
+    "Use /apa-figures to render the first deterministic figure from a JSON spec.",
+    "Create a new raster product mockup.",
+    "Explain CSS flexbox alignment."
+  ]
+}
