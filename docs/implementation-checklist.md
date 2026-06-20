@@ -329,16 +329,19 @@ Verification:
 
 ### 1.6 Prior-Art Dossier Expansion
 
-Current state: `apa-search --write` writes a dossier with query hash, sources, ranked candidates,
-assigned references, and human closest-art state.
+Current state: `apa-search --write` writes a dossier with query hash, source parameters, source
+summaries, top-N before/after dedupe/ranking, dedupe clusters, excluded results/reasons, assigned
+references, and human closest-art state. `apa-search verify-closest-art` updates the human closest-art
+selection and keeps IDS readiness false until title, venue, canonical link, and relied-on passage are
+verified.
 
 Tasks:
-- [ ] Record API parameters per source, not only source counts.
-- [ ] Record excluded results and exclusion reasons.
-- [ ] Record dedupe clusters and winner rationale.
-- [ ] Record top-N before and after dedupe/ranking.
-- [ ] Add human-verified closest-art selection update helper.
-- [ ] Add IDS-ready verification status only after title, venue, canonical link, and relied-on passage
+- [x] Record API parameters per source, not only source counts.
+- [x] Record excluded results and exclusion reasons.
+- [x] Record dedupe clusters and winner rationale.
+- [x] Record top-N before and after dedupe/ranking.
+- [x] Add human-verified closest-art selection update helper.
+- [x] Add IDS-ready verification status only after title, venue, canonical link, and relied-on passage
   are verified.
 
 Suggested targets:
@@ -348,13 +351,13 @@ Suggested targets:
 - `packages/apa-search/test/*.test.mjs`
 
 Acceptance criteria:
-- [ ] Dossier can answer: what was searched, where, when, with what parameters, what was excluded, and
+- [x] Dossier can answer: what was searched, where, when, with what parameters, what was excluded, and
   why the closest-art candidate was selected.
-- [ ] Dossier still states the search is incomplete and not a clearance.
-- [ ] Dedupe decisions are auditable.
+- [x] Dossier still states the search is incomplete and not a clearance.
+- [x] Dedupe decisions are auditable.
 
 Verification:
-- [ ] `node --test packages/apa-search/test/*.test.mjs`
+- [x] `node --test packages/apa-search/test/*.test.mjs`
 
 ### 1.7 Upload Manifest Expansion
 
@@ -625,7 +628,7 @@ Verification:
 2. [x] Expand source-span validation in warning mode.
 3. [x] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
 4. [x] Add report schema package and wire claims/patentability/examiner/OA reports.
-5. [ ] Expand prior-art dossier and upload manifest fields.
+5. [ ] Expand upload manifest fields. Prior-art dossier expansion complete.
 6. [ ] Add rigor staleness caps.
 7. [ ] Decide and implement legal-preamble progressive disclosure.
 8. [ ] Add trigger tests.

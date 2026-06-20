@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { iterEntitySections } from "../../lib/apa-parse.mjs";
-import { refToPaBlock, refToEvidence } from "./lib/refs.mjs";
+import { refSummary, refToPaBlock, refToEvidence } from "./lib/refs.mjs";
 import { queryToString } from "./search.mjs";
 
 function nextPaNumber(priorArtPath) {
@@ -55,6 +55,12 @@ export function writeLandscape(matterDir, rankedRefs) {
 
 export function buildSearchDossier({ query, result, assigned = [], limit = 25, generatedAt = new Date().toISOString() }) {
   const queryBytes = result?.verdict?.text || `${queryToString(query)}\n${JSON.stringify(query || {})}`;
+  const ranked = result?.ranked || [];
+  const raw = result?.rawRecords || ranked;
+  const deduped = result?.deduped || ranked;
+  const dedupeClusters = result?.dedupe?.clusters || [];
+  const dedupeExclusions = result?.dedupe?.excludedResults || [];
+  const sourceExclusions = sourceLevelExclusions(result?.perSource || []);
   return {
     schema: "apa-search-dossier-v1",
     generated_at: generatedAt,
@@ -72,30 +78,34 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
     },
     sources: (result?.perSource || []).map((s) => ({
       source_id: s.id,
+      access_mode: s.accessMode || "unknown",
+      status: s.status || "",
       count: s.count || 0,
       raw_count: s.rawCount ?? null,
       error: s.error || null,
+      skipped: Boolean(s.skipped),
+      query_parameters: s.parameters || null,
       notes: s.notes || [],
     })),
-    ranked_candidates: (result?.ranked || []).slice(0, limit).map((r, index) => ({
-      rank: index + 1,
-      source_id: r.source || "unknown",
-      doc_number: r.docNumber || "",
-      title: r.title || "",
-      score: r.score ?? null,
-      url: r.url || "",
-      verification: { verified: false, confidence: "unverified" },
-    })),
+    top_n: {
+      before_dedupe: raw.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1, stage: "before-dedupe" })),
+      after_dedupe_before_ranking: deduped.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1, stage: "after-dedupe-before-ranking" })),
+      after_ranking: ranked.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1, stage: "after-ranking" })),
+    },
+    dedupe_clusters: dedupeClusters,
+    excluded_results: [...dedupeExclusions, ...sourceExclusions],
+    ranked_candidates: ranked.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1 })),
     assigned_references: assigned.map((a) => ({
       pa_id: a.paId,
       doc_number: a.docNumber,
       title: a.title || "",
-      verification: { verified: false, confidence: "unverified" },
+      verification: idsVerificationStatus(),
     })),
     closest_art_selection: {
       human_verified: false,
       selected_pa_ids: [],
       rationale: "",
+      verification: idsVerificationStatus(),
     },
     caveats: [
       "This run is not a complete search and never asserts no anticipating art was found.",
@@ -103,6 +113,102 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
       "Do not rely on or list a reference on an IDS until a human verifies the citation and relied-on passages.",
     ],
   };
+}
+
+export function idsVerificationStatus(checks = {}) {
+  const required = {
+    title: Boolean(checks.title || checks.title_verified || checks.titleVerified),
+    venue: Boolean(checks.venue || checks.venue_verified || checks.venueVerified),
+    canonical_link: Boolean(checks.canonical_link || checks.canonical_link_verified || checks.canonicalLinkVerified),
+    relied_on_passage: Boolean(checks.relied_on_passage || checks.relied_on_passage_verified || checks.reliedOnPassageVerified),
+  };
+  const idsReady = Object.values(required).every(Boolean);
+  const humanVerified = Boolean(checks.human_verified || checks.humanVerified);
+  return {
+    human_verified: humanVerified,
+    confidence: humanVerified ? (checks.confidence || "human-verified") : "unverified",
+    ids_ready: idsReady,
+    required_checks: required,
+    ...(checks.reviewer ? { reviewer: String(checks.reviewer) } : {}),
+    ...(checks.verified_at || checks.verifiedAt ? { verified_at: String(checks.verified_at || checks.verifiedAt) } : {}),
+    ids_ready_reason: idsReady
+      ? "title, venue, canonical link, and relied-on passage verified"
+      : "IDS-ready requires human verification of title, venue, canonical link, and relied-on passage",
+  };
+}
+
+export function updateClosestArtSelection(dossierPath, {
+  selectedPaIds = [],
+  rationale = "",
+  reviewer = "",
+  verifiedAt = new Date().toISOString(),
+  checks = {},
+} = {}) {
+  const dossier = JSON.parse(readFileSync(dossierPath, "utf8"));
+  const selected = asList(selectedPaIds);
+  const assignedIds = new Set((dossier.assigned_references || []).map((r) => r.pa_id).filter(Boolean));
+  const missing = selected.filter((id) => !assignedIds.has(id));
+  if (!selected.length) throw new Error("selectedPaIds must include at least one PA## id");
+  if (missing.length) throw new Error(`selected PA id(s) not in dossier assigned_references: ${missing.join(", ")}`);
+  if (!String(rationale || "").trim()) throw new Error("rationale is required for closest-art verification");
+
+  const humanVerified = true;
+  const verification = idsVerificationStatus({
+    ...checks,
+    human_verified: humanVerified,
+    reviewer,
+    verified_at: verifiedAt,
+  });
+  dossier.closest_art_selection = {
+    human_verified: humanVerified,
+    selected_pa_ids: selected,
+    rationale: String(rationale).trim(),
+    reviewer: String(reviewer || ""),
+    verified_at: verifiedAt,
+    verification,
+  };
+  dossier.assigned_references = (dossier.assigned_references || []).map((r) => (
+    selected.includes(r.pa_id)
+      ? { ...r, verification }
+      : r
+  ));
+  writeFileSync(dossierPath, JSON.stringify(dossier, null, 2) + "\n");
+  return dossier;
+}
+
+function candidateRecord(ref, extra = {}) {
+  return {
+    ...extra,
+    ...refSummary(ref),
+    score: ref?.score ?? null,
+    verification: idsVerificationStatus(),
+  };
+}
+
+function sourceLevelExclusions(perSource) {
+  const excluded = [];
+  for (const s of perSource || []) {
+    if (s.skipped) {
+      excluded.push({
+        reason: "source-skipped",
+        source_id: s.id,
+        detail: (s.notes || []).join("; ") || "source not queried",
+      });
+    }
+    if (s.error) {
+      excluded.push({
+        reason: "source-error",
+        source_id: s.id,
+        detail: s.error,
+      });
+    }
+  }
+  return excluded;
+}
+
+function asList(v) {
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  return String(v || "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 export function writeSearchDossier(matterDir, opts) {

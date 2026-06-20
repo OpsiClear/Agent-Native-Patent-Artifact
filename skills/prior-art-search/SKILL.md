@@ -103,9 +103,14 @@ airtight enforcement.
    exact claim language it blocks vs. does not block; then name the strongest examiner combination and
    the practical claim boundary. This drives claim narrowing - as flags for the human.
 7. **Update audit state.** The search dossier must record the serialized-query SHA-256, source IDs,
-   source counts/errors, ranked candidates, assigned `PA##` IDs, and
+   exact source parameters, source counts/errors, top-N candidates before dedupe, after dedupe, and
+   after ranking, dedupe clusters, excluded results/reasons, assigned `PA##` IDs, and
    `closest_art_selection.human_verified: false` until a human fills it. Add a `trace/runlog.jsonl`
    entry for the command and external-sink bytes hash when the run is part of an APA matter.
+8. **Human closest-art verification.** After the human chooses closest art, update the dossier:
+   `node packages/apa-search/cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/<dossier>.json --pa PA## --rationale "<why selected>" --reviewer "<name>"`.
+   Add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`
+   only after each check is actually complete; `ids_ready` must remain false until all four are true.
 
 ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a

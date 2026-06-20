@@ -35,6 +35,10 @@ test("runSearch (mock): dedupes and ranks; blocked query returns no results", as
   const q = { keywords: ["reservoir", "float", "valve", "wick"], cpc: ["A01G27/00"], limit: 10 };
   const res = await runSearch({ query: q, sources: ["mock"] });
   assert.equal(res.blocked, false);
+  assert.ok(Array.isArray(res.rawRecords));
+  assert.ok(Array.isArray(res.dedupe.clusters));
+  assert.ok(res.dedupe.excludedResults.some((r) => r.reason === "duplicate-doc-number"));
+  assert.equal(res.perSource[0].parameters.mode, "deterministic-fixture");
   // mock returns "US-10000001-B2" AND a comma/space-formatted duplicate "US 10,000,001 B2";
   // they must collapse to ONE canonical key. 4 records -> 3 unique.
   const keys = res.ranked.map((r) => normalizeDocNumber(r.docNumber));

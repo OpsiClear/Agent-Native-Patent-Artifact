@@ -180,13 +180,6 @@ function mapPatent(p) {
  */
 export async function search(query, opts = {}) {
   const apiKey = opts.apiKey ?? process.env.PATENTSVIEW_API_KEY;
-  if (!apiKey) {
-    // The missing-key case is the ONLY condition under which we throw (per contract).
-    throw new Error(
-      "PatentsView PatentSearch API key required - get a free key at patentsview.org and set PATENTSVIEW_API_KEY"
-    );
-  }
-
   const notes = [];
   const size = Math.max(1, Number(query.limit ?? 25) | 0);
   const body = {
@@ -195,10 +188,24 @@ export async function search(query, opts = {}) {
     o: { size },
     s: [{ patent_date: "desc" }],
   };
+  const parameters = {
+    source_id: meta.id,
+    endpoint: ENDPOINT,
+    method: "POST",
+    body,
+    auth: apiKey ? "X-Api-Key present (value omitted)" : "X-Api-Key missing",
+  };
+
+  if (!apiKey) {
+    // The missing-key case is the ONLY condition under which we throw (per contract).
+    throw new Error(
+      "PatentsView PatentSearch API key required - get a free key at patentsview.org and set PATENTSVIEW_API_KEY"
+    );
+  }
 
   const doFetch = opts.fetch || globalThis.fetch;
   if (typeof doFetch !== "function") {
-    return { records: [], rawCount: 0, notes: ["patentsview: global fetch unavailable (need Node >=21)"] };
+    return { records: [], rawCount: 0, parameters, notes: ["patentsview: global fetch unavailable (need Node >=21)"] };
   }
 
   let res;
@@ -214,7 +221,7 @@ export async function search(query, opts = {}) {
       signal: opts.signal,
     });
   } catch (err) {
-    return { records: [], rawCount: 0, notes: [`patentsview: network error - ${err && err.message ? err.message : err}`] };
+    return { records: [], rawCount: 0, parameters, notes: [`patentsview: network error - ${err && err.message ? err.message : err}`] };
   }
 
   if (!res.ok) {
@@ -226,18 +233,18 @@ export async function search(query, opts = {}) {
     } else {
       notes.push(`patentsview: HTTP ${res.status} ${res.statusText || ""}`.trim());
     }
-    return { records: [], rawCount: 0, notes };
+    return { records: [], rawCount: 0, parameters, notes };
   }
 
   let json;
   try {
     json = await res.json();
   } catch (err) {
-    return { records: [], rawCount: 0, notes: [`patentsview: failed to parse JSON - ${err && err.message ? err.message : err}`] };
+    return { records: [], rawCount: 0, parameters, notes: [`patentsview: failed to parse JSON - ${err && err.message ? err.message : err}`] };
   }
 
   if (json && json.error) {
-    return { records: [], rawCount: 0, notes: [`patentsview: API reported error - ${JSON.stringify(json.error)}`] };
+    return { records: [], rawCount: 0, parameters, notes: [`patentsview: API reported error - ${JSON.stringify(json.error)}`] };
   }
 
   const patents = Array.isArray(json && json.patents) ? json.patents : [];
@@ -254,5 +261,5 @@ export async function search(query, opts = {}) {
     notes.push(`patentsview: returned ${records.length} of ${rawCount} total hits (raise query.limit for more)`);
   }
 
-  return { records, rawCount, notes };
+  return { records, rawCount, parameters, notes };
 }

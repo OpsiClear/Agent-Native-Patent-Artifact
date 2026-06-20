@@ -33,6 +33,11 @@ node cli.mjs --query "self-watering planter float valve" --source mock
 export PATENTSVIEW_API_KEY=...        # see ../../docs/source-registry.md
 node cli.mjs --matter <matter> --source patentsview            # preview ranked candidates
 node cli.mjs --matter <matter> --source patentsview --write    # also file PA## + evidence + reference_matrix
+
+# mark the human closest-art selection after review
+node cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/search-dossier-....json \
+  --pa PA02 --rationale "closest art after human review" --reviewer "<name>" \
+  --title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified
 ```
 
 Exit codes: `0` ok · `2` the query hit MEDIUM-tier sensitive content (re-run with `--yes`) · `3` the
@@ -41,10 +46,17 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 ## What `--write` produces in the matter
 - Appends `PA##` blocks to `logic/prior_art.md` (role-typed, `verification: false`).
 - Writes a raw record per reference under `evidence/prior_art/<paN>.md`.
+- Writes `evidence/prior_art/search-dossier-*.json` with query hash, exact source parameters,
+  top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
+  assigned `PA##` IDs, and the closest-art human-verification state.
 - Writes `logic/reference_matrix.md` — the "Blocks / Does-NOT-block" scaffold for analysis + a human.
 
 The written matter still passes `apa-validate` (Level-1 mechanical). The hardened-verification and
 patentability-analysis steps (and a human) fill in `discloses`/`lacks` and the matrix.
+
+`verify-closest-art` updates only the dossier audit state. It marks the human-selected closest-art
+`PA##` IDs and rationale. `verification.ids_ready` remains false until title, venue, canonical link,
+and relied-on passage have all been independently verified.
 
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`

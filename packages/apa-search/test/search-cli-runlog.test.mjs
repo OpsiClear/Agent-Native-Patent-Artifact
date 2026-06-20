@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdtempSync, rmSync, existsSync } from "node:fs";
+import { cpSync, mkdtempSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,5 +31,45 @@ test("apa-search --write appends a runlog entry with query sink hash and closest
     execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" });
     assert.equal(validateRunlog(d).entries.length, 2, "second write appends a second entry");
     assert.ok(existsSync(join(d, "trace", "runlog.jsonl")));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("apa-search verify-closest-art updates dossier and gates IDS readiness on all checks", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-search-verify-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" });
+    const priorArtDir = join(d, "evidence", "prior_art");
+    const dossier = join(priorArtDir, readdirSync(priorArtDir).find((n) => /^search-dossier-.*\.json$/.test(n)));
+
+    execFileSync(process.execPath, [
+      CLI,
+      "verify-closest-art",
+      "--dossier", dossier,
+      "--pa", "PA02",
+      "--rationale", "Human selected PA02 as the closest art.",
+      "--reviewer", "reviewer@example.test",
+      "--title-verified",
+      "--venue-verified",
+    ], { stdio: "pipe" });
+    let parsed = JSON.parse(readFileSync(dossier, "utf8"));
+    assert.equal(parsed.closest_art_selection.human_verified, true);
+    assert.equal(parsed.closest_art_selection.verification.ids_ready, false);
+
+    execFileSync(process.execPath, [
+      CLI,
+      "verify-closest-art",
+      "--dossier", dossier,
+      "--pa", "PA02",
+      "--rationale", "Human selected PA02 as the closest art.",
+      "--reviewer", "reviewer@example.test",
+      "--title-verified",
+      "--venue-verified",
+      "--canonical-link-verified",
+      "--relied-on-passage-verified",
+    ], { stdio: "pipe" });
+    parsed = JSON.parse(readFileSync(dossier, "utf8"));
+    assert.equal(parsed.closest_art_selection.verification.ids_ready, true);
+    assert.equal(parsed.assigned_references[0].verification.ids_ready, true);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

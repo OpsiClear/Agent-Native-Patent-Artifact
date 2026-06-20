@@ -85,5 +85,18 @@ export async function search(query, _opts = {}) {
     },
   ];
   const relevant = records.filter((r) => has(r.title) || has(r.abstract) || kw.length === 0);
-  return { records: relevant, rawCount: relevant.length, notes: ["mock source: deterministic, no network"] };
+  return {
+    records: relevant,
+    rawCount: relevant.length,
+    parameters: {
+      source_id: meta.id,
+      mode: "deterministic-fixture",
+      query: {
+        keywords: query.keywords || [],
+        cpc: query.cpc || [],
+        limit: query.limit ?? null,
+      },
+    },
+    notes: ["mock source: deterministic, no network"],
+  };
 }

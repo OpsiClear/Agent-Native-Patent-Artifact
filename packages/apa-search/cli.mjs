@@ -11,7 +11,7 @@
  */
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
-import { writeLandscape, writeSearchDossier } from "./writers.mjs";
+import { updateClosestArtSelection, writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { listSources } from "./sources/index.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -41,11 +41,28 @@ function parseArgs(argv) {
   return a;
 }
 
+function value(argv, name) {
+  const i = argv.indexOf(name);
+  return i >= 0 && i + 1 < argv.length ? argv[i + 1] : undefined;
+}
+
+function values(argv, name) {
+  const out = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === name && i + 1 < argv.length) out.push(argv[i + 1]);
+  }
+  return out;
+}
+
 function mask(f) { return `${f.tier} ${f.patternName} @${f.start}`; }
 
 async function main() {
   const startedAt = new Date().toISOString();
-  const a = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2);
+  if (rawArgs[0] === "verify-closest-art") {
+    process.exit(cmdVerifyClosestArt(rawArgs.slice(1)));
+  }
+  const a = parseArgs(rawArgs);
   if (a.listSources) {
     for (const s of listSources()) console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${s.note}`);
     return;
@@ -126,6 +143,41 @@ async function main() {
   console.log("\nNOTE: candidates are UNVERIFIED and possibly incomplete (examiner-grade PPS is UI-only; NPL is");
   console.log("paywalled). A human must verify each reference and select the closest art. This is NOT a clearance");
   console.log("and never asserts \"no anticipating art found.\"");
+}
+
+function cmdVerifyClosestArt(argv) {
+  const dossier = value(argv, "--dossier");
+  const selected = values(argv, "--pa").flatMap((v) => v.split(",")).map((s) => s.trim()).filter(Boolean);
+  const rationale = value(argv, "--rationale") || "";
+  const reviewer = value(argv, "--reviewer") || "";
+  if (!dossier || !selected.length || !rationale) {
+    console.error("usage: verify-closest-art --dossier <search-dossier.json> --pa PA02[,PA03] --rationale <text> [--reviewer name] [--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified] [--json]");
+    return 2;
+  }
+  try {
+    const updated = updateClosestArtSelection(dossier, {
+      selectedPaIds: selected,
+      rationale,
+      reviewer,
+      checks: {
+        title_verified: argv.includes("--title-verified"),
+        venue_verified: argv.includes("--venue-verified"),
+        canonical_link_verified: argv.includes("--canonical-link-verified"),
+        relied_on_passage_verified: argv.includes("--relied-on-passage-verified"),
+      },
+    });
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify(updated.closest_art_selection, null, 2));
+    } else {
+      const v = updated.closest_art_selection.verification;
+      console.log(`updated ${dossier}: closest art ${selected.join(", ")} human_verified=true ids_ready=${v.ids_ready}`);
+      if (!v.ids_ready) console.log(`  ${v.ids_ready_reason}`);
+    }
+    return 0;
+  } catch (e) {
+    console.error(`error: ${e.message}`);
+    return 2;
+  }
 }
 
 function ruleVersionOf(matterDir) {

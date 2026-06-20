@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
 import { scan } from "../apa-redact/redact-engine.mjs";
 import { loadSource, descriptor, listSources } from "./sources/index.mjs";
-import { dedupeRefs, rankRefs } from "./lib/refs.mjs";
+import { dedupeRefsDetailed, rankRefs } from "./lib/refs.mjs";
 
 const STOP = new Set("a,an,the,of,for,and,or,to,with,in,on,by,is,configured,comprising,said,wherein,further,least,one,each,such".split(","));
 
@@ -70,18 +70,67 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
   let all = [];
   for (const id of ids) {
     const d = descriptor(id);
-    if (d && d.accessMode === "ui-restricted") { perSource.push({ id, count: 0, notes: [`${id}: UI-only/ToS-restricted - human handoff, not queried`] }); continue; }
+    if (d && d.accessMode === "ui-restricted") {
+      perSource.push({
+        id,
+        count: 0,
+        rawCount: 0,
+        skipped: true,
+        accessMode: d.accessMode,
+        status: d.status,
+        parameters: { source_id: id, not_queried: true, reason: "ui-restricted-human-handoff" },
+        notes: [`${id}: UI-only/ToS-restricted - human handoff, not queried`],
+      });
+      continue;
+    }
     try {
       const mod = await loadSource(id);
-      const { records, rawCount, notes } = await mod.search(query, opts);
+      const { records, rawCount, notes, parameters } = await mod.search(query, opts);
       all = all.concat(records || []);
-      perSource.push({ id, count: (records || []).length, rawCount, notes: notes || [] });
+      perSource.push({
+        id,
+        count: (records || []).length,
+        rawCount,
+        accessMode: d?.accessMode || mod.meta?.accessMode || "unknown",
+        status: d?.status || "implemented",
+        parameters: parameters || { source_id: id, query: compactQueryForAudit(query) },
+        notes: notes || [],
+      });
     } catch (e) {
-      perSource.push({ id, count: 0, error: e.message });
+      perSource.push({
+        id,
+        count: 0,
+        rawCount: 0,
+        accessMode: d?.accessMode || "unknown",
+        status: d?.status || "error",
+        parameters: { source_id: id, query: compactQueryForAudit(query) },
+        error: e.message,
+      });
     }
   }
-  const ranked = rankRefs(dedupeRefs(all), query);
-  return { blocked: false, verdict, ranked, perSource, query };
+  const dedupe = dedupeRefsDetailed(all);
+  const ranked = rankRefs(dedupe.deduped, query);
+  return {
+    blocked: false,
+    verdict,
+    rawRecords: all,
+    deduped: dedupe.deduped,
+    dedupe: { clusters: dedupe.clusters, excludedResults: dedupe.excludedResults },
+    ranked,
+    perSource,
+    query,
+  };
 }
 
 function safeRead(p) { try { return readFileSync(p, "utf8"); } catch { return ""; } }
+
+function compactQueryForAudit(query) {
+  return {
+    keywords: query?.keywords || [],
+    cpc: query?.cpc || [],
+    assignee: query?.assignee || "",
+    dateFrom: query?.dateFrom || "",
+    dateTo: query?.dateTo || "",
+    limit: query?.limit || null,
+  };
+}

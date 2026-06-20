@@ -51,16 +51,71 @@ export function formatUsDocNumber(id) {
 
 /** Dedupe refs by normalized doc number, keeping the first (or the one with the most fields). */
 export function dedupeRefs(refs) {
+  return dedupeRefsDetailed(refs).deduped;
+}
+
+/**
+ * Dedupe refs by normalized doc number and retain an audit trail.
+ *
+ * `clusters` records every duplicate group and why its winner was kept. `excludedResults` records
+ * every non-winning duplicate as an explicit exclusion, so a dossier can answer what was omitted and
+ * why.
+ */
+export function dedupeRefsDetailed(refs) {
   const by = new Map();
-  for (const r of refs) {
+  const order = [];
+  for (const [index, r] of (refs || []).entries()) {
     const key = normalizeDocNumber(r.docNumber);
-    const prev = by.get(key);
-    if (!prev || fieldCount(r) > fieldCount(prev)) by.set(key, r);
+    const safeKey = key || `NO-DOC-${index}`;
+    if (!by.has(safeKey)) {
+      by.set(safeKey, []);
+      order.push(safeKey);
+    }
+    by.get(safeKey).push({ ref: r, inputIndex: index, fieldCount: fieldCount(r) });
   }
-  return [...by.values()];
+
+  const deduped = [];
+  const clusters = [];
+  const excludedResults = [];
+
+  for (const key of order) {
+    const members = by.get(key);
+    const winner = [...members].sort((a, b) => b.fieldCount - a.fieldCount || a.inputIndex - b.inputIndex)[0];
+    deduped.push(winner.ref);
+    clusters.push({
+      key,
+      winner: refSummary(winner.ref, { input_index: winner.inputIndex, field_count: winner.fieldCount }),
+      members: members.map((m) => refSummary(m.ref, { input_index: m.inputIndex, field_count: m.fieldCount })),
+      rationale: members.length > 1
+        ? "kept the record with the most populated fields; ties keep earliest source order"
+        : "single record for normalized document number",
+    });
+    for (const m of members) {
+      if (m === winner) continue;
+      excludedResults.push({
+        reason: "duplicate-doc-number",
+        duplicate_of: winner.ref.docNumber || "",
+        normalized_key: key,
+        ...refSummary(m.ref, { input_index: m.inputIndex, field_count: m.fieldCount }),
+      });
+    }
+  }
+
+  return { deduped, clusters, excludedResults };
 }
 
 function fieldCount(r) { return Object.values(r).filter((v) => v != null && v !== "").length; }
+
+export function refSummary(ref, extra = {}) {
+  return {
+    source_id: ref?.source || "unknown",
+    doc_number: ref?.docNumber || "",
+    title: ref?.title || "",
+    url: ref?.url || "",
+    date: ref?.date || "",
+    ...extra,
+  };
+}
 
 /** Rank refs by keyword overlap in title+abstract and CPC overlap with the query. Adds `.score`. */
 export function rankRefs(refs, query) {
