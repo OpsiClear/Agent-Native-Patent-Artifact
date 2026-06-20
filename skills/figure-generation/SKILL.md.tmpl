@@ -25,15 +25,21 @@ human-verified, often by a professional draftsperson.
      "arrows":[ {"from":"12","to":"14","kind":"flow"}, {"self":"14","kind":"loop"} ] }
    ```
    Method claims become flowcharts (one box per step, flow arrows); apparatus claims become structural
-   views. Use a numeral for every claimed element; never invent a part not in the disclosure.
-2. **Render:** `node packages/apa-figure/cli.mjs render src/drawing_src/figN.json --out evidence/drawings/figN.svg`.
-3. **Transcribe** the numerals into `evidence/drawings/<figN>.md` (the protocol `numerals` binding:
+   views. Use a numeral for every claimed element; never invent a part not in the disclosure. Each
+   visual part must either carry source/support metadata (`source`, `source_span`, `source_sha256`,
+   `defined_in`, or `supported_by`) or match a transcribed drawing numeral with `defined_in: SPEC####`.
+2. **Transcribe** the numerals into `evidence/drawings/<figN>.md` (the protocol `numerals` binding:
    each `{numeral, element, defined_in: SPEC####}`); exactly one figure is `representative: true`.
-4. **Reconcile:** `node packages/apa-figure/cli.mjs legend --matter <matter>` - it builds the numeral
+3. **Generate the first-pass report before rendering SVGs:**
+   `node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`.
+   Stop on a nonzero exit. Fix any `unsupported_visual_change_risks`, `removed_numerals`, or
+   untraceable generated numerals before rendering.
+4. **Render:** `node packages/apa-figure/cli.mjs render-dir <matter>/src/drawing_src --out-dir <matter>/evidence/drawings`.
+5. **Reconcile:** `node packages/apa-figure/cli.mjs legend --matter <matter>` - it builds the numeral
    legend + the Brief Description of the Drawings and flags any numeral with no `defined_in` SPEC. Then
    `node packages/apa-validate/validate.mjs <matter>` confirms every numeral resolves both ways.
-5. **Preflight rendered SVG quality:** `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
-6. **Polish rough SVGs before filing.** The renderer is deterministic but intentionally simple. If a
+6. **Preflight rendered SVG quality:** `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
+7. **Polish rough SVGs before filing.** The renderer is deterministic but intentionally simple. If a
    figure looks crowded, web-diagram-like, or not draftsperson quality, route it through
    `/apa-svg-upgrader` and then `/apa-drawing-quality` before relying on it in assembly.
 

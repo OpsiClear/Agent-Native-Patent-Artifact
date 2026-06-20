@@ -28,10 +28,14 @@ ReportLab path is reimplemented in plain Node.
    SVG constructs, numerals, lead lines, crowding, caption clearance, long labels, text size, and
    line weight. Findings include sheet, figure, bbox, issue type, rule reference, measured/visual
    status, and a suggested fix.
-4. **`upgrade-report.mjs`** - deterministic pre/post SVG upgrade report for `/apa-svg-upgrader`:
+4. **`generation-report.mjs`** - deterministic first-pass report for `/apa-figures`: generated
+   numerals, removed/transcribed numerals, visual part traceability, arrow traceability, and
+   unsupported visual-change risks before SVG rendering.
+5. **`upgrade-report.mjs`** - deterministic pre/post SVG upgrade report for `/apa-svg-upgrader`:
    SVG diffs, numeral parity, visual-structure additions, preflight before/after, and readiness for
    `/apa-drawing-quality`.
-5. **`cli.mjs`** — `render`, `render-dir`, `review-dir`, `upgrade-report`, and `legend` subcommands.
+6. **`cli.mjs`** — `render`, `render-dir`, `generation-report`, `review-dir`, `upgrade-report`, and
+   `legend` subcommands.
 
 ---
 
@@ -100,6 +104,12 @@ node cli.mjs render fixture.json --out fig01.svg
 # render a directory of JSON figure definitions
 node cli.mjs render-dir src/drawing_src --out-dir evidence/drawings
 
+# write the first-pass source/legend traceability report before SVG rendering
+node cli.mjs generation-report \
+  --matter ../../examples/full-lifecycle-artifact \
+  --source-dir ../../examples/full-lifecycle-artifact/src/drawing_src \
+  --out ../../examples/full-lifecycle-artifact/evidence/drawings/figure_generation_report.json
+
 # run the deterministic drawing-quality preflight on rendered SVGs
 node cli.mjs review-dir src/drawing_src --svg-dir evidence/drawings --out drawing-review.json --min-score 88
 
@@ -111,6 +121,14 @@ node cli.mjs upgrade-report \
   --source-route manual-svg \
   --out evidence/drawings/svg_upgrade_report.json
 ```
+
+The generation report exits nonzero unless generated figures are ready for SVG rendering. It blocks
+readiness when a visual part lacks explicit source/support metadata and lacks a transcribed numeral
+with `defined_in: SPEC####`, when a transcribed numeral would be removed by the source JSON, or when
+an arrow cannot be traced to source metadata or supported endpoint numerals. The report schema is
+`apa-figure-generation-report-v1`; it records `generated_numerals`, `removed_numerals`,
+`unsupported_visual_change_risks`, `human_review_required`, `ready_for_svg_render`, and per-file
+`visual_parts` / `visual_arrows`.
 
 The review report includes a flattened `findings` array for dashboards and per-figure `reviews[*]`
 entries for detailed inspection. Each finding carries `sheet`, `figure`, `bbox`, `issue_type`,

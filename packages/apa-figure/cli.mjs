@@ -17,7 +17,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { basename, extname, join } from "node:path";
+import { basename, dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
 
@@ -25,6 +25,7 @@ import { renderFigure } from "./render.mjs";
 import { buildLegend } from "./numerals.mjs";
 import { aggregateReviews, missingSvgReview, reviewFigure } from "./quality.mjs";
 import { buildSvgUpgradeReport } from "./upgrade-report.mjs";
+import { buildFigureGenerationReport } from "./generation-report.mjs";
 
 function argValue(args, name) {
   const i = args.indexOf(name);
@@ -45,13 +46,14 @@ const USAGE = [
   "usage:",
   "  node cli.mjs render <figdef.json> [--out f.svg]",
   "  node cli.mjs render-dir <drawing_src_dir> --out-dir <svg_dir>",
+  "  node cli.mjs generation-report --matter <matter_dir> [--source-dir drawing_src] --out figure_generation_report.json",
   "  node cli.mjs review-dir <drawing_src_dir> --svg-dir <svg_dir> [--out report.json] [--min-score N]",
   "  node cli.mjs upgrade-report --before-dir <svg_dir> --after-dir <svg_dir> [--source-dir drawing_src] --out svg_upgrade_report.json",
   "  node cli.mjs legend --matter <dir> [--json]",
 ].join("\n");
 
 // Flags that consume the following token as their value (so it is NOT the positional figdef path).
-const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--min-score", "--before-dir", "--after-dir", "--source-dir", "--source-route", "--tool-note"]);
+const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--min-score", "--before-dir", "--after-dir", "--source-dir", "--source-route", "--tool-note", "--matter"]);
 
 function positional(args) {
   return args.find((a, i) => !a.startsWith("--") && !VALUE_FLAGS.has(args[i - 1]));
@@ -165,6 +167,31 @@ function cmdReviewDir(args) {
   return report.blocking_count > 0 || report.min_score < minScore ? 1 : 0;
 }
 
+function cmdGenerationReport(args) {
+  const matter = argValue(args, "--matter");
+  const sourceDir = argValue(args, "--source-dir") || (matter ? join(matter, "src", "drawing_src") : "");
+  const out = argValue(args, "--out");
+  if (!matter || !out) {
+    console.error("error: generation-report requires --matter <matter_dir> --out <report.json>\n" + USAGE);
+    return 1;
+  }
+  let report;
+  try {
+    report = buildFigureGenerationReport({ matterDir: matter, sourceDir });
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  } catch (e) {
+    console.error(`error: generation-report failed: ${e.message}`);
+    return 1;
+  }
+  console.log(
+    `wrote ${out}: files=${report.file_count} verdict=${report.verdict} ` +
+      `generated_numerals=${report.generated_numerals.length} removed_numerals=${report.removed_numerals.length} ` +
+      `unsupported_visual_change_risks=${report.unsupported_visual_change_risks.length}`,
+  );
+  return report.ready_for_svg_render ? 0 : 1;
+}
+
 function cmdUpgradeReport(args) {
   const beforeDir = argValue(args, "--before-dir");
   const afterDir = argValue(args, "--after-dir");
@@ -246,6 +273,7 @@ function main(argv) {
   const rest = args.slice(1);
   if (cmd === "render") return cmdRender(rest);
   if (cmd === "render-dir") return cmdRenderDir(rest);
+  if (cmd === "generation-report") return cmdGenerationReport(rest);
   if (cmd === "review-dir") return cmdReviewDir(rest);
   if (cmd === "upgrade-report") return cmdUpgradeReport(rest);
   if (cmd === "legend") return cmdLegend(rest);

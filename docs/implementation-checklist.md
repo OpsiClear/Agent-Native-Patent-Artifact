@@ -486,9 +486,9 @@ Verification:
 
 Current state: core semantic reports are implemented for claims, patentability, examiner-adversary,
 and office-action work; deterministic package outputs also exist for search dossiers, upload
-manifests, rigor reports, drawing quality, SVG upgrade reports, runlogs, and autoprep state. The
-remaining open coverage is concentrated in disclosure capture, compiler/import, specification
-drafting, and first-pass figure generation.
+manifests, rigor reports, figure generation, drawing quality, SVG upgrade reports, runlogs, and
+autoprep state. The remaining open coverage is concentrated in disclosure capture, compiler/import,
+and specification drafting.
 
 Tasks:
 - [x] `/apa-autoprep` writes or references `trace/autoprep_state.json` and `trace/runlog.jsonl`.
@@ -501,7 +501,7 @@ Tasks:
 - [x] `/apa-claims` writes or references `claims_report.json`.
 - [ ] `/apa-spec` writes or references a specification report, or explicitly records why
   specification drafting remains skill-only while validator/source-span checks cover the output.
-- [ ] `/apa-figures` writes or references `figure_generation_report.json` before SVG render/QA.
+- [x] `/apa-figures` writes or references `figure_generation_report.json` before SVG render/QA.
 - [x] `/apa-svg-upgrader` writes or references `svg_upgrade_report.json`.
 - [x] `/apa-drawing-quality` writes or references `quality-review.json`.
 - [x] `/apa-assemble` writes or references `upload_manifest.json`.
@@ -857,14 +857,20 @@ Verification:
 
 ### 3.8 `/apa-figures`
 
+Current state: `packages/apa-figure` provides
+`node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`.
+The `apa-figure-generation-report-v1` report records generated numerals, removed transcribed
+numerals, visual part traceability, arrow traceability, unsupported visual-change risks, and
+`ready_for_svg_render` before SVG rendering.
+
 Detailed tasks:
 - [x] Keep drawing-quality review as downstream gate.
-- [ ] Ensure figure generator does not add unsupported visual matter by requiring support edges or
+- [x] Ensure figure generator does not add unsupported visual matter by requiring support edges or
   source facts for each newly visualized element.
 - [x] Keep numeral reconciliation deterministic.
-- [ ] Add figure-generation report fields for generated numerals, removed numerals, and unsupported
+- [x] Add figure-generation report fields for generated numerals, removed numerals, and unsupported
   visual-change risks.
-- [ ] Require every `src/drawing_src/*.json` visual part to carry support/source metadata or match a
+- [x] Require every `src/drawing_src/*.json` visual part to carry support/source metadata or match a
   documented reference numeral in the drawing legend/spec.
 
 Suggested targets:
@@ -875,13 +881,14 @@ Suggested targets:
 
 Acceptance criteria:
 - [x] Missing drawing QA warns and blocking drawing findings block assembly.
-- [ ] New numerals/elements are traceable to claim/spec/support facts.
-- [ ] Figure report can be reviewed without manually diffing SVG text.
-- [ ] Figure-generation output distinguishes stylistic layout changes from substantive new visual
+- [x] New numerals/elements are traceable to claim/spec/support facts.
+- [x] Figure report can be reviewed without manually diffing SVG text.
+- [x] Figure-generation output distinguishes stylistic layout changes from substantive new visual
   matter.
 
 Verification:
 - [x] `node --test packages/apa-figure/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`
 
 ### 3.9 `/apa-svg-upgrader`
 
@@ -1069,7 +1076,7 @@ Before declaring this implementation plan complete:
 - [x] `docs/review-coverage.md` has no "Deferred" item without a linked issue, checklist item, or
   explicit out-of-scope rationale.
 - [ ] Every skill that writes files emits or references a machine-readable report; remaining blockers
-  are tracked in `1.9`, `3.2`, `3.3`, `3.7`, and `3.8`.
+  are tracked in `1.9`, `3.2`, `3.3`, and `3.7`.
 - [ ] Every external sink goes through a package-level guard, not only prompt instructions; confirm
   prior-art search, compiler fetches, SVG upgrade tools, cloud-LLM sends, and shareable/export paths.
 - [ ] Every human checkpoint is represented in a machine-readable artifact; confirm adoption,
