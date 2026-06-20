@@ -680,12 +680,12 @@ Verification:
 ### 3.5 `/apa-analyze`
 
 Detailed tasks:
-- [ ] Make every chart cell quote-backed: `appears_teaches`, quote, page/paragraph, confidence, and
+- [x] Make every chart cell quote-backed: `appears_teaches`, quote, page/paragraph, confidence, and
   human verification.
-- [ ] Add exact obviousness motivation/rationale and identify whether it is record evidence, common
+- [x] Add exact obviousness motivation/rationale and identify whether it is record evidence, common
   sense, design need, market pressure, or another KSR-style rationale.
-- [ ] Add reasonable expectation of success field for each proposed combination.
-- [ ] Add secondary-consideration nexus fields and require evidence citation before relying on them.
+- [x] Add reasonable expectation of success field for each proposed combination.
+- [x] Add secondary-consideration nexus fields and require evidence citation before relying on them.
 - [x] Require `patentability_report.json` schema validation for material analysis outputs.
 
 Suggested targets:
@@ -695,13 +695,13 @@ Suggested targets:
 - Future patentability-analysis package if deterministic chart writing is added.
 
 Acceptance criteria:
-- [ ] No limitation chart cell can be marked `yes` or `partial` without a source quote/span.
-- [ ] Obviousness combinations separate rationale, expectation of success, and counter-teaching.
-- [ ] Analysis report remains flags/questions, not a legal conclusion of patentability.
+- [x] No limitation chart cell can be marked `yes` or `partial` without a source quote/span.
+- [x] Obviousness combinations separate rationale, expectation of success, and counter-teaching.
+- [x] Analysis report remains flags/questions, not a legal conclusion of patentability.
 
 Verification:
 - [x] `node --test packages/apa-reports/test/*.test.mjs`
-- [ ] Add report fixture tests for quote-backed chart cells.
+- [x] Add report fixture tests for quote-backed chart cells.
 
 ### 3.6 `/apa-claims`
 

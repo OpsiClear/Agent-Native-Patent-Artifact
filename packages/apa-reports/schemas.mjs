@@ -126,6 +126,7 @@ export function defaultReportFor(type, opts = {}) {
     return {
       ...report,
       claim_charts: [],
+      obviousness_combinations: [],
       statutory_flags: {
         "101": [],
         "102": [],

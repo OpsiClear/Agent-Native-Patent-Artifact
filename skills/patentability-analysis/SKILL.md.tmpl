@@ -22,15 +22,18 @@ the redaction guard and a human reviewer approve it.
 ## Procedure
 1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
    the closest `PA##` references (use `logic/reference_matrix.md` if present). Each cell must carry
-   `appears_teaches: yes|partial|no|unknown`, a short quote or "not located", page/paragraph/location,
-   confidence, and `human_verified`. Mark teaching as an observation to verify, not a finding.
+   `limitation`, `appears_teaches: yes|partial|no|unknown`, a short `quote` or "not located",
+   `page_or_para`, `confidence: high|medium|low|unknown`, and `human_verified`. A `yes` or `partial`
+   cell must have an actual quote and location, not "not located." Mark teaching as an observation to
+   verify, not a finding.
 2. **102 (anticipation):** flag any single reference that appears to teach ALL limitations of a claim.
 3. **102 statutory bars (interview-driven, NOT search):** screen the disclosure's captured bar-date
    events (on-sale, public use, the inventor's own publication/demo) against the effective filing date
    and the one-year grace window. These are not found by a database search - surface as flags for the human.
-4. **103 (obviousness):** for plausible combinations, name the KSR rationale and prompt for the Graham
-   factors; capture inventor-supplied secondary considerations (commercial success, long-felt need,
-   unexpected results) as rebuttal in a `secondary_considerations` note.
+4. **103 (obviousness):** for plausible combinations, name the exact rationale, `rationale_source`
+   (`record-evidence`, `common-sense`, `design-need`, `market-pressure`, or `other`), reasonable
+   expectation of success, and counter-teaching. Capture inventor-supplied secondary considerations
+   (commercial success, long-felt need, unexpected results) only with `nexus` and `evidence_span`.
 5. **112:** (a) confirm each limitation has a resolving `supported_by` SPEC (the validator does the
    mechanical part; sufficiency is a human flag); (b) flag terms of degree lacking an objective bound;
    (f) flag any nonce/`means-for` limitation and check corresponding structure is disclosed.

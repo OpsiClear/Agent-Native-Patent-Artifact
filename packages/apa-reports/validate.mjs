@@ -23,6 +23,10 @@ const FORBIDDEN_TOP_LEVEL = [
   "search_complete",
 ];
 
+const TEACHING_STATUS = ["yes", "partial", "no", "unknown"];
+const CONFIDENCE = ["high", "medium", "low", "unknown"];
+const RATIONALE_SOURCES = ["record-evidence", "common-sense", "design-need", "market-pressure", "other"];
+
 function isObject(v) {
   return v && typeof v === "object" && !Array.isArray(v);
 }
@@ -127,6 +131,11 @@ function validateTypeSpecific(errors, report, type) {
 
   if (type === "patentability") {
     if (!Array.isArray(report.claim_charts)) push(errors, "claim_charts", "must be an array");
+    else report.claim_charts.forEach((chart, i) => validateClaimChart(errors, `claim_charts[${i}]`, chart));
+    if (report.obviousness_combinations !== undefined) {
+      if (!Array.isArray(report.obviousness_combinations)) push(errors, "obviousness_combinations", "must be an array");
+      else report.obviousness_combinations.forEach((combo, i) => validateObviousnessCombination(errors, `obviousness_combinations[${i}]`, combo));
+    }
     if (!isObject(report.statutory_flags)) push(errors, "statutory_flags", "must be an object");
     if (report.search_completeness !== "not_asserted") {
       push(errors, "search_completeness", "must be not_asserted");
@@ -157,6 +166,72 @@ function validateTypeSpecific(errors, report, type) {
     if (report.authoritative_deadline !== false) {
       push(errors, "authoritative_deadline", "must be false");
     }
+  }
+}
+
+function validateClaimChart(errors, path, chart) {
+  if (!isObject(chart)) return push(errors, path, "must be an object");
+  if (!chart.claim || typeof chart.claim !== "string") push(errors, pathOf(path, "claim"), "must be a non-empty string");
+  if (!chart.reference || typeof chart.reference !== "string") push(errors, pathOf(path, "reference"), "must be a non-empty string");
+  if (!Array.isArray(chart.cells)) {
+    push(errors, pathOf(path, "cells"), "must be an array");
+    return;
+  }
+  chart.cells.forEach((cell, i) => validateChartCell(errors, `${path}.cells[${i}]`, cell));
+}
+
+function validateChartCell(errors, path, cell) {
+  if (!isObject(cell)) return push(errors, path, "must be an object");
+  if (!cell.limitation || typeof cell.limitation !== "string") push(errors, pathOf(path, "limitation"), "must be a non-empty string");
+  if (!TEACHING_STATUS.includes(cell.appears_teaches)) {
+    push(errors, pathOf(path, "appears_teaches"), `must be ${TEACHING_STATUS.join("|")}`);
+  }
+  if (!cell.quote || typeof cell.quote !== "string") push(errors, pathOf(path, "quote"), "must be a non-empty string");
+  if (!cell.page_or_para || typeof cell.page_or_para !== "string") push(errors, pathOf(path, "page_or_para"), "must be a non-empty string");
+  if (!CONFIDENCE.includes(cell.confidence)) {
+    push(errors, pathOf(path, "confidence"), `must be ${CONFIDENCE.join("|")}`);
+  }
+  if (typeof cell.human_verified !== "boolean") push(errors, pathOf(path, "human_verified"), "must be boolean");
+  if (["yes", "partial"].includes(cell.appears_teaches)) {
+    if (/^\s*(not located|none|n\/a)\s*$/i.test(String(cell.quote || ""))) {
+      push(errors, pathOf(path, "quote"), "yes/partial teaching cells require a real quote, not 'not located'");
+    }
+    if (/^\s*(not located|none|n\/a)\s*$/i.test(String(cell.page_or_para || ""))) {
+      push(errors, pathOf(path, "page_or_para"), "yes/partial teaching cells require a real page/paragraph/location");
+    }
+  }
+}
+
+function validateObviousnessCombination(errors, path, combo) {
+  if (!isObject(combo)) return push(errors, path, "must be an object");
+  if (!combo.claim || typeof combo.claim !== "string") push(errors, pathOf(path, "claim"), "must be a non-empty string");
+  if (!Array.isArray(combo.references) || combo.references.length < 2) {
+    push(errors, pathOf(path, "references"), "must list at least two references");
+  }
+  if (!combo.rationale || typeof combo.rationale !== "string") push(errors, pathOf(path, "rationale"), "must be a non-empty string");
+  if (!RATIONALE_SOURCES.includes(combo.rationale_source)) {
+    push(errors, pathOf(path, "rationale_source"), `must be ${RATIONALE_SOURCES.join("|")}`);
+  }
+  if (!combo.reasonable_expectation_of_success || typeof combo.reasonable_expectation_of_success !== "string") {
+    push(errors, pathOf(path, "reasonable_expectation_of_success"), "must be a non-empty string");
+  }
+  if (!combo.counter_teaching || typeof combo.counter_teaching !== "string") {
+    push(errors, pathOf(path, "counter_teaching"), "must be a non-empty string or 'none identified'");
+  }
+  if (typeof combo.human_verified !== "boolean") push(errors, pathOf(path, "human_verified"), "must be boolean");
+  if (combo.secondary_considerations !== undefined) {
+    if (!Array.isArray(combo.secondary_considerations)) {
+      push(errors, pathOf(path, "secondary_considerations"), "must be an array");
+    } else {
+      combo.secondary_considerations.forEach((item, i) => validateSecondaryConsideration(errors, `${path}.secondary_considerations[${i}]`, item));
+    }
+  }
+}
+
+function validateSecondaryConsideration(errors, path, item) {
+  if (!isObject(item)) return push(errors, path, "must be an object");
+  for (const key of ["type", "nexus", "evidence_span"]) {
+    if (!item[key] || typeof item[key] !== "string") push(errors, pathOf(path, key), "must be a non-empty string");
   }
 }
 

@@ -54,6 +54,81 @@ test("reports reject legal-conclusion fields and overbroad search assertions", (
   assert.ok(result.errors.some((e) => e.path === "patentability_conclusion"));
 });
 
+test("patentability claim-chart cells must be quote-backed", () => {
+  const report = defaultReportFor("patentability", { matter: EXAMPLE });
+  report.claim_charts.push({
+    claim: "CLM01",
+    reference: "PA01",
+    cells: [
+      {
+        limitation: "LIM01",
+        appears_teaches: "yes",
+        quote: "A reservoir holds water.",
+        page_or_para: "PA01 para. 3",
+        confidence: "high",
+        human_verified: false,
+      },
+      {
+        limitation: "LIM02",
+        appears_teaches: "no",
+        quote: "not located",
+        page_or_para: "not located",
+        confidence: "medium",
+        human_verified: false,
+      },
+    ],
+  });
+  const result = validateReport(report, { kind: "patentability" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+});
+
+test("patentability yes/partial chart cells reject missing quotes or locations", () => {
+  const report = defaultReportFor("patentability", { matter: EXAMPLE });
+  report.claim_charts.push({
+    claim: "CLM01",
+    reference: "PA01",
+    cells: [
+      {
+        limitation: "LIM01",
+        appears_teaches: "partial",
+        quote: "not located",
+        page_or_para: "not located",
+        confidence: "high",
+        human_verified: false,
+      },
+    ],
+  });
+  const result = validateReport(report, { kind: "patentability" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "claim_charts[0].cells[0].quote"));
+  assert.ok(result.errors.some((e) => e.path === "claim_charts[0].cells[0].page_or_para"));
+});
+
+test("patentability obviousness combinations require rationale, expectation, and nexus evidence", () => {
+  const report = defaultReportFor("patentability", { matter: EXAMPLE });
+  report.obviousness_combinations.push({
+    claim: "CLM02",
+    references: ["PA01", "PA02"],
+    rationale: "Known wick transport combined with known float valves.",
+    rationale_source: "record-evidence",
+    reasonable_expectation_of_success: "Both references use passive water-level components.",
+    counter_teaching: "none identified",
+    human_verified: false,
+    secondary_considerations: [
+      { type: "long-felt need", nexus: "asserted nexus to LIM03", evidence_span: "inventor interview p. 2" },
+    ],
+  });
+  let result = validateReport(report, { kind: "patentability" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  delete report.obviousness_combinations[0].reasonable_expectation_of_success;
+  delete report.obviousness_combinations[0].secondary_considerations[0].evidence_span;
+  result = validateReport(report, { kind: "patentability" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "obviousness_combinations[0].reasonable_expectation_of_success"));
+  assert.ok(result.errors.some((e) => e.path === "obviousness_combinations[0].secondary_considerations[0].evidence_span"));
+});
+
 test("examiner practitioner-approved edit mode requires a satisfied checkpoint", () => {
   const report = defaultReportFor("examiner_adversary", { matter: EXAMPLE });
   report.edit_mode = "practitioner-approved";
