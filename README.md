@@ -79,6 +79,7 @@ node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --o
 # then open packages/apa-viewer/index.html (it loads a sibling manifest.json, or ?manifest=<path>)
 node --test "packages/**/*.test.mjs" "lib/**/*.test.mjs" "scripts/**/*.test.mjs" "hosts/**/*.test.mjs" "test/**/*.test.mjs"   # the whole suite (or just: bash build.sh)
 npm run syntax                                                   # parse-check first-party JS/MJS
+npm run coverage                                                 # V8 first-party function coverage summary
 npm run smoke                                                    # cross-package CLI smoke checks
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
 node scripts/setup.mjs --install                                  # optional: copy skills into ~/.claude/skills/apa-*

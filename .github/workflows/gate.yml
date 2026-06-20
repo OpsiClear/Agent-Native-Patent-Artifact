@@ -38,6 +38,9 @@ jobs:
       - name: Full test suite (offline; no API key required)
         run: npm test
 
+      - name: Coverage summary (offline, advisory)
+        run: npm run coverage
+
       - name: Core CLI smoke checks (offline)
         run: npm run smoke
 
