@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="1080" viewBox="0 0 820 1080" role="img" aria-label="FIG. 2">
+  <defs>
+    <marker id="FIG02-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="820" height="1080" fill="white"/>
+  <text id="FIG02-title" x="410" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Rendering path method</text>
+  <line id="FIG02-arrow-0-line" x1="410" y1="144" x2="410" y2="190" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-1-line" x1="410" y1="264" x2="410" y2="310" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-2-line" x1="366.06" y1="384" x2="263.94" y2="470" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <text id="FIG02-arrow-2-label" x="315" y="421" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">yes</text>
+  <line id="FIG02-arrow-3-line" x1="453.94" y1="384" x2="556.06" y2="470" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <text id="FIG02-arrow-3-label" x="505" y="421" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">no</text>
+  <line id="FIG02-arrow-4-line" x1="266.87" y1="544" x2="363.13" y2="620" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-5-line" x1="553.13" y1="544" x2="456.87" y2="620" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-6-line" x1="410" y1="694" x2="410" y2="780" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <rect id="FIG02-part-200-shape" x="250" y="70" width="320" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-200-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="410" y="107">receive content</tspan></text>
+  <line id="FIG02-part-200-lead" x1="410" y1="58" x2="410" y2="70" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-200-num" x="410" y="44" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">200</text>
+  <rect id="FIG02-part-202-shape" x="250" y="190" width="320" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-202-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="410" y="227">validate format</tspan></text>
+  <line id="FIG02-part-202-lead" x1="219" y1="227" x2="250" y2="227" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-202-num" x="205" y="227" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">202</text>
+  <rect id="FIG02-part-204-shape" x="250" y="310" width="320" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-204-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="410" y="347">detect capability</tspan></text>
+  <line id="FIG02-part-204-lead" x1="219" y1="347" x2="250" y2="347" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-204-num" x="205" y="347" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">204</text>
+  <rect id="FIG02-part-206-shape" x="80" y="470" width="280" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-206-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="220" y="507">hardware path</tspan></text>
+  <line id="FIG02-part-206-lead" x1="68.32" y1="542.92" x2="80" y2="540.16" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-206-num" x="54.7" y="546.15" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">206</text>
+  <rect id="FIG02-part-208-shape" x="460" y="470" width="280" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-208-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="600" y="507">software path</tspan></text>
+  <line id="FIG02-part-208-lead" x1="751.68" y1="542.92" x2="740" y2="540.16" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-208-num" x="765.3" y="546.15" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">208</text>
+  <rect id="FIG02-part-210-shape" x="250" y="620" width="320" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-210-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="410" y="657">retry on error</tspan></text>
+  <line id="FIG02-part-210-lead" x1="219" y1="657" x2="250" y2="657" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-210-num" x="205" y="657" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">210</text>
+  <rect id="FIG02-part-212-shape" x="250" y="780" width="320" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-212-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="410" y="817">produce output</tspan></text>
+  <line id="FIG02-part-212-lead" x1="410" y1="866" x2="410" y2="854" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-212-num" x="410" y="880" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">212</text>
+  <text id="FIG02-caption" x="410" y="1062" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 2</text>
+</svg>

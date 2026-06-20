@@ -1,0 +1,6 @@
+# Pin LF for text so the cross-platform SKILL.md freshness gate is stable regardless of
+# a developer's git core.autocrlf setting (defense-in-depth alongside the normalize-before-compare
+# in scripts/gen-skill-docs.mjs).
+* text=auto eol=lf
+*.md text eol=lf
+*.mjs text eol=lf

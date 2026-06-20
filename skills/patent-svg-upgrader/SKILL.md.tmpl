@@ -1,0 +1,112 @@
+---
+name: patent-svg-upgrader
+description: "Upgrade rough generated SVG patent figures into professional utility-patent drawing candidates. Use when APA-generated, AI-generated, Graphviz/Mermaid, draw.io, CAD-exported, or hand-authored SVGs look amateur, crowded, noncompliant, or not filing-polished. Do not use for final legal compliance certification or design-patent ornamental views. Invoke as /apa-svg-upgrader."
+preamble-tier: 3
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
+triggers: "rough SVG, improve patent drawings, upgrade SVG, patent figure polish, real patent quality, /apa-svg-upgrader, pdgkit, PatentDSL, Graphviz patent diagram, drawing normalization"
+---
+
+# patent-svg-upgrader (`/apa-svg-upgrader`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+Turns rough vector figures into professional utility-patent drawing candidates. It is the generation
+and normalization companion to `/apa-drawing-quality`, which is the review gate. Use this skill when
+the current SVGs are black-and-white but still look like ordinary software diagrams rather than
+patent draftsperson drawings.
+
+This skill does not certify 37 CFR 1.84 compliance. It produces improved source figures, rendered
+sheets, and a QA report for human/draftsperson review.
+
+{{DRAWING_STANDARDS}}
+
+## Source selection
+Choose one canonical source and preserve it:
+- **APA figure JSON** (`src/drawing_src/figNN.json`) for figures already in an APA matter.
+- **PatentDSL / `.pdg`** for new block diagrams, flowcharts, sequence diagrams, and state diagrams
+  where automatic patent-style layout is useful. The public `@shibayama/pdgkit` package can validate
+  and render `.pdg` to SVG/PDF; use it as an optional external generator, not as an unreviewed black box.
+- **Manual SVG** only when starting from an existing high-value drawing that must be normalized.
+- **CAD/DXF-derived source** only for mechanical/device embodiments where geometry matters.
+
+Avoid Mermaid, raw Graphviz, or draw.io exports as final canonical source. They are acceptable as
+draft or layout-oracle inputs, but final SVG must be normalized and reviewed.
+
+## Professional SVG target
+Produce SVGs and sheets with these properties:
+- Physical page model: Letter or A4, fixed drawing margins, no responsive layout.
+- Black/white only: no color, gradients, shadows, filters, screenshots, or decorative fills.
+- Stroke hierarchy: about `0.4mm` primary strokes and about `0.2mm` lead/hatching strokes.
+- Reference numerals: plain, upright, at least `0.32cm`, outside dense geometry, not circled or
+  bracketed, with short clear lead lines that end at the feature.
+- Figure labels: `FIG. N` labels have clear space below the view; sheet numbers are top centered.
+- Text discipline: use short catchwords in blocks/flowcharts; move explanation into the specification.
+- Layout: one concept per figure, balanced white space, no clipped content, no overlapping labels, no
+  crowding between callouts and captions.
+- Source parity: every shown numeral is transcribed in `evidence/drawings/*.md` and grounded to SPEC.
+
+## Workflow
+1. **Inventory the current state.** Read `assembled/drawings.html`/`.pdf`, `evidence/drawings/*.svg`,
+   `src/drawing_src/*`, and drawing numeral markdown. Note which figures are merely rough.
+2. **Pick the upgrade route.**
+   - For APA JSON figures, revise the JSON coordinates/labels and re-render with `apa-figure`.
+   - For new diagrammatic figures, consider `.pdg` via `pdgkit`: run `npx @shibayama/pdgkit guide`,
+     write a `.pdg`, validate, render, then import the resulting SVG and numeral table into APA.
+   - For existing SVGs, normalize the SVG directly only when source JSON/PDG is unavailable.
+3. **Normalize style.** Remove color, gradients, shadows, filters, images, foreignObject, frames,
+   title blocks, and non-patent styling. Use fixed fonts, fixed physical sizes, and consistent strokes.
+4. **Re-layout rather than shrink.** If text or numerals are too small, split the figure, enlarge the
+   drawing, shorten labels, or move detail into a separate figure. Do not solve crowding by reducing
+   font size below the physical target.
+5. **Place numerals deliberately.** Prefer periphery placement following the object/profile. Route
+   lead lines after the geometry is stable. Avoid crossed lead lines; if a lead would cross, move the
+   numeral or create an enlarged/detail view.
+6. **Reassemble sheets.** Inline SVG into fixed HTML sheets or export from the chosen renderer to PDF.
+   Use fixed `@page` size/margins and visually inspect the final sheet view.
+7. **Run deterministic SVG preflight.** For APA figure JSON, run
+   `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
+8. **Run quality review.** Use `/apa-drawing-quality` on the final sheets. Iterate until no blocking
+   or fix-before-filing issues remain other than human/legal sign-off.
+
+## When using pdgkit / PatentDSL
+Use this route for block diagrams, flowcharts, sequence diagrams, and state diagrams when APA's current
+box/ellipse renderer is too crude.
+
+Recommended commands:
+```sh
+npx @shibayama/pdgkit guide
+npx @shibayama/pdgkit validate fig01.pdg
+npx @shibayama/pdgkit render fig01.pdg -o fig01.svg
+```
+
+Keep the `.pdg` beside the APA source, for example `src/drawing_src/fig01.pdg`, and preserve any
+rendered SVG under `evidence/drawings/`. Do not rely on the rendered SVG alone; the editable source is
+what makes future amendments auditable.
+
+## Common fixes
+- Replace verbose block labels with short nouns/verbs and put detail in the spec.
+- Move long figure titles out of the drawing; use `FIG. N` and the Brief Description instead.
+- Increase box width/height for flowchart text; wrap to two short lines if needed.
+- Move bottom callouts upward or caption downward to prevent `FIG. N` overlap.
+- Convert default `1px` web strokes to physical strokes.
+- Split crowded architecture figures into overview + detail figures.
+- Add detail/enlarged views for dense atlas, table, or byte-layout features.
+- Preserve every reference numeral consistently across all views.
+
+## Report format
+Return:
+1. `source_route`: APA JSON, PDG, manual SVG, CAD/DXF, or mixed.
+2. `files_changed_or_created`: source, SVG, sheet, and QA-report paths.
+3. `major_layout_changes`: split figures, shortened labels, moved numerals, added detail views.
+4. `remaining_quality_flags`: anything `/apa-drawing-quality` should still review.
+5. `external_tool_notes`: exact external commands used, versions if known, and whether output is
+   deterministic enough to preserve as source.
+
+## Do NOT
+- Treat an AI image or screenshot as a filing-quality utility drawing source.
+- Use Mermaid/Graphviz/draw.io output unchanged as the final drawing.
+- Add unsupported structures, advantages, or embodiments while making the drawing look better.
+- Shrink labels or numerals below the physical readability target.
+- Certify final USPTO/PCT compliance. Rules as of {{RULES_EFFECTIVE_DATE}}; verify currency.

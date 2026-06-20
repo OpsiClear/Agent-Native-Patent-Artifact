@@ -1,0 +1,45 @@
+---
+name: rigor-review
+description: "Audit a matter's epistemic rigor across six patent dimensions (101 eligibility, 112 WD/enablement/definiteness, antecedent basis, claim-spec-drawing support, prior-art distinction, prosecution integrity) and emit patent_rigor_report.json with a deterministic File-Ready..Do-Not-File verdict. Read-only, artifact-only, report-only. Invoke as /apa-rigor."
+preamble-tier: 2
+version: "0.1"
+allowed-tools: "Read, Glob, Grep, Bash, Write"
+triggers: "rigor review, audit rigor, /apa-rigor, patent quality, file-ready check, do-not-file"
+---
+
+# rigor-review (`/apa-rigor`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+ARA Seal **Level 2**: a SEMANTIC audit that assumes Level 1 (mechanical, `apa-validate`) passed. It is
+**read-only and artifact-only** (no fetch, no edits) and **report-only** - it scores, flags, and
+recommends; it does not apply fixes (that is `/apa-examiner`). It scores six dimensions 1-5 against
+anchors and emits `patent_rigor_report.json`; the **verdict is computed deterministically** (not chosen).
+
+## Procedure
+1. **Level-1 gate:** `node packages/apa-validate/validate.mjs <matter>` must have no errors. If it does,
+   stop and report - Level 2 assumes Level 1 is clean.
+2. **Scaffold:** `node packages/apa-rigor/cli.mjs scaffold --matter <matter> --out <matter>/patent_rigor_report.json`.
+   This pre-fills the mechanical dimensions (P3 antecedent basis, P4 support/numeral) from the validator.
+3. **Score the judgment dimensions** by reading the artifact and reasoning against the anchors:
+   - **P1 101 Eligibility** - Alice/Mayo: abstract idea vs. concrete structure / practical application.
+   - **P2 112 WD/Enablement/Definiteness** - is every limitation described and enabled? terms of degree bounded? 112(f) structure present?
+   - **P5 Prior-art Distinction** - is every `distinguished_over` reference substantively distinguished, or does one anticipate?
+   - **P6 Prosecution Integrity** - is the decision record honest? does any claim re-argue a recorded `dead_end` (estoppel)?
+   Confirm or adjust the mechanical P3/P4 with reasoning. Score each 1-5; a single weak dimension caps the verdict.
+4. **Findings:** for each issue add `{ dimension, severity (critical|major|minor|suggestion), evidence_span (VERBATIM quote from the artifact), weakness, amendment (a concrete suggested fix) }`. Severity maps to statutory fatality (critical = 102/101/missing antecedent; major = 103/enablement; minor = definiteness; suggestion = scope).
+5. Fill `questions_for_inventor` / `questions_for_attorney` and `read_order` (the files you reviewed).
+6. **Compute + validate:** `node packages/apa-rigor/cli.mjs check <matter>/patent_rigor_report.json`.
+   It schema-validates and computes the verdict: **File-Ready / File-With-Revisions / Major-Rework /
+   Do-Not-File** (mean band, but any dimension scoring 1 caps at Do-Not-File, a 2 at Major-Rework).
+   The filing gate (`/apa-assemble`) reads this verdict and blocks unless File-Ready/File-With-Revisions.
+
+{{ANALYSIS_101_102_103_112}}
+
+## Do NOT
+- Render any conclusion (patentable / valid / clear). Every finding is a flag/question; a verdict is a
+  drafting-quality recommendation, not a legal opinion or §112 clearance.
+- Edit the artifact (use `/apa-examiner` to drive fixes). Choose the verdict by hand - it is computed.
+- Rules as of {{RULES_EFFECTIVE_DATE}}; verify currency. For a fresh external 102/103 sweep against the
+  current claims, run `/apa-priorart` (fetch-enabled) separately - this internal audit does not fetch.

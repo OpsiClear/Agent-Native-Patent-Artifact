@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+/**
+ * apa-redact — thin entry shim over cli.mjs.
+ *
+ * Resolves cli.mjs relative to this file so the `apa-redact` command works
+ * regardless of the caller's CWD. Zero dependencies; plain ESM; Node >=18.
+ */
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, join } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// cli.mjs lives one directory up (the package root). Dynamic import() needs a
+// file:// URL — a bare Windows path (C:\...) is rejected by the ESM loader.
+await import(pathToFileURL(join(__dirname, "..", "cli.mjs")).href);

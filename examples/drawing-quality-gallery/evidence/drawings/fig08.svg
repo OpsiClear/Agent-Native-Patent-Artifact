@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="820" viewBox="0 0 1120 820" role="img" aria-label="FIG. 8">
+  <defs>
+    <marker id="FIG08-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1120" height="820" fill="white"/>
+  <text id="FIG08-title" x="560" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Sensor cartridge section</text>
+  <line id="FIG08-arrow-0-line" x1="852.35" y1="534.88" x2="463.72" y2="286" stroke="black" stroke-width="2" marker-end="url(#FIG08-arrowhead)"/>
+  <rect id="FIG08-part-800-shape" x="90" y="170" width="760" height="320" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-800-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="470" y="330">housing</tspan></text>
+  <line id="FIG08-part-800-lead" x1="259.12" y1="162.54" x2="268.52" y2="170" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-800-num" x="248.16" y="153.83" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">800</text>
+  <rect id="FIG08-part-802-shape" x="170" y="230" width="500" height="56" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-802-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="420" y="258">gasket</tspan></text>
+  <line id="FIG08-part-802-lead" x1="384.56" y1="221.38" x2="392.9" y2="230" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-802-num" x="374.82" y="211.32" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">802</text>
+  <rect id="FIG08-part-804-shape" x="210" y="315" width="420" height="74" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-804-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="420" y="352">fluid channel</tspan></text>
+  <line id="FIG08-part-804-lead" x1="298.85" y1="311.17" x2="310.22" y2="315" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-804-num" x="285.58" y="306.7" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">804</text>
+  <rect id="FIG08-part-806-shape" x="345" y="405" width="180" height="58" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-806-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="435" y="434">optical window</tspan></text>
+  <line id="FIG08-part-806-lead" x1="303.99" y1="430.39" x2="345" y2="431.52" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-806-num" x="290" y="430" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">806</text>
+  <rect id="FIG08-part-808-shape" x="705" y="220" width="110" height="160" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-808-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="760" y="290.56">alignment</tspan><tspan x="760" y="309.44">rib</tspan></text>
+  <line id="FIG08-part-808-lead" x1="857.25" y1="255.79" x2="815" y2="275" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-808-num" x="870" y="250" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">808</text>
+  <rect id="FIG08-part-810-shape" x="120" y="520" width="210" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-810-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="225" y="565">latch feature</tspan></text>
+  <line id="FIG08-part-810-lead" x1="125.64" y1="615.43" x2="136.34" y2="610" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-810-num" x="113.16" y="621.77" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">810</text>
+  <rect id="FIG08-part-812-shape" x="390" y="530" width="300" height="80" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-812-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="540" y="570">circuit substrate</tspan></text>
+  <line id="FIG08-part-812-lead" x1="535.48" y1="621.95" x2="536.52" y2="610" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-812-num" x="534.27" y="635.9" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">812</text>
+  <ellipse id="FIG08-part-814-shape" cx="915" cy="575" rx="105" ry="50" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG08-part-814-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="915" y="575">seal detail</tspan></text>
+  <line id="FIG08-part-814-lead" x1="998.71" y1="616.27" x2="987.94" y2="610.97" stroke="black" stroke-width="1"/>
+  <text id="FIG08-part-814-num" x="1011.26" y="622.46" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">814</text>
+  <text id="FIG08-caption" x="560" y="802" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 8</text>
+</svg>

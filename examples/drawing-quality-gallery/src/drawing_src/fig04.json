@@ -1,0 +1,23 @@
+{
+  "fig": "FIG04",
+  "title": "Packaged model container",
+  "width": 860,
+  "height": 960,
+  "parts": [
+    { "numeral": "400", "label": "", "shape": "box", "x": 130, "y": 80, "w": 600, "h": 690 },
+    { "numeral": "402", "label": "manifest", "shape": "box", "x": 180, "y": 130, "w": 500, "h": 70 },
+    { "numeral": "404", "label": "metadata", "shape": "box", "x": 205, "y": 230, "w": 450, "h": 70, "numX": 150, "numY": 265 },
+    { "numeral": "406", "label": "tokenizer", "shape": "box", "x": 205, "y": 330, "w": 450, "h": 70, "numX": 150, "numY": 365 },
+    { "numeral": "408", "label": "model shards", "shape": "box", "x": 205, "y": 430, "w": 450, "h": 70, "numX": 150, "numY": 465 },
+    { "numeral": "410", "label": "checksum file", "shape": "box", "x": 180, "y": 530, "w": 500, "h": 70, "numX": 710, "numY": 565 },
+    { "numeral": "412", "label": "policy file", "shape": "box", "x": 205, "y": 630, "w": 210, "h": 70 },
+    { "numeral": "414", "label": "runtime index", "shape": "box", "x": 445, "y": 630, "w": 210, "h": 70 }
+  ],
+  "arrows": [
+    { "from": "402", "to": "404", "kind": "flow" },
+    { "from": "404", "to": "406", "kind": "flow" },
+    { "from": "406", "to": "408", "kind": "flow" },
+    { "from": "408", "to": "410", "kind": "flow" },
+    { "from": "410", "to": "414", "kind": "flow" }
+  ]
+}

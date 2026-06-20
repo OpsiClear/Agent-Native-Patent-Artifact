@@ -1,0 +1,123 @@
+{
+  "figure_count": 8,
+  "mean_score": 100,
+  "min_score": 100,
+  "blocking_count": 0,
+  "fix_before_filing_count": 0,
+  "verdict": "candidate-ready-for-human-review",
+  "reviews": [
+    {
+      "fig": "FIG01",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG02",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG03",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG04",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG05",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG06",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG07",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    },
+    {
+      "fig": "FIG08",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
+      "blocking": 0,
+      "fixes": 0,
+      "findings": [
+        {
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings."
+        }
+      ]
+    }
+  ],
+  "min_score_required": 88
+}

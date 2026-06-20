@@ -1,0 +1,19 @@
+{
+  "fig": "FIG02",
+  "title": "Flowchart of the power-free door-closing method",
+  "representative": false,
+  "width": 760,
+  "height": 720,
+  "parts": [
+    { "numeral": "30", "label": "store energy by opening door", "shape": "box", "x": 230, "y": 60, "w": 300, "h": 90 },
+    { "numeral": "32", "label": "release: spring drives closing", "shape": "box", "x": 230, "y": 230, "w": 300, "h": 90 },
+    { "numeral": "34", "label": "damp via metered fluid", "shape": "box", "x": 230, "y": 400, "w": 300, "h": 90 },
+    { "numeral": "36", "label": "hold open until release torque", "shape": "box", "x": 230, "y": 570, "w": 300, "h": 90 }
+  ],
+  "arrows": [
+    { "from": "30", "to": "32", "kind": "flow" },
+    { "from": "32", "to": "34", "kind": "flow" },
+    { "from": "34", "to": "36", "kind": "flow", "label": "optional" },
+    { "self": "36", "kind": "loop", "label": "resume damped close" }
+  ]
+}

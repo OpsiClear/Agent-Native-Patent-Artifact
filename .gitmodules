@@ -1,0 +1,6 @@
+[submodule "third_party/Agent-Native-Research-Artifact"]
+	path = third_party/Agent-Native-Research-Artifact
+	url = https://github.com/ARA-Labs/Agent-Native-Research-Artifact
+[submodule "third_party/gstack"]
+	path = third_party/gstack
+	url = https://github.com/garrytan/gstack

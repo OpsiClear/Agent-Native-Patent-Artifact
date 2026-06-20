@@ -1,0 +1,42 @@
+# CI gate - the blocking, deterministic, FREE checks (gstack evals.yml + skill-docs.yml analog).
+# Everything here is offline (no API key): SKILL.md freshness, multi-host generation, the full
+# zero-dep test suite, and validation of the worked examples. Runs on Ubuntu AND Windows (APA
+# targets law-firm Windows laptops). The paid LLM-judge evals live in periodic-evals.yml.
+name: gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: free gate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22" # >=21 for the test-runner glob patterns; zero deps, so no install step
+
+      - name: SKILL.md freshness (templates + resolvers must match committed SKILL.md)
+        run: node scripts/gen-skill-docs.mjs --check
+
+      - name: Multi-host generation (exercises HostConfig + non-suppressible safety denylist)
+        run: node scripts/gen-skill-docs.mjs --all-hosts
+
+      - name: Full test suite (offline; no API key required)
+        run: npm test
+
+      - name: Validate worked example - minimal
+        run: node packages/apa-validate/validate.mjs examples/minimal-patent-artifact
+
+      - name: Validate worked example - full lifecycle
+        run: node packages/apa-validate/validate.mjs examples/full-lifecycle-artifact

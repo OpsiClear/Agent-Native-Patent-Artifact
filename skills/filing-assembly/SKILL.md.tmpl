@@ -1,0 +1,48 @@
+---
+name: filing-assembly
+description: "Collate a matter into a filing-ready package - 1.77 specification (HTML print-to-PDF), ADS draft, SB/08 IDS seed, unsigned declaration, fee estimate, and a pre-filing go/no-go checklist. Enforces the inventorship-integrity gate and STOPS at the submit boundary (never signs or files). Invoke as /apa-assemble."
+preamble-tier: 4
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
+triggers: "assemble filing, prepare filing, file-ready, /apa-assemble, ADS, IDS, fee worksheet, pre-filing checklist"
+---
+
+# filing-assembly (`/apa-assemble`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+Collates the matter's drafted artifacts into a filing-ready package and runs the pre-filing gate. It
+**collates**, it does not author (use the drafting skills first). Run:
+`node packages/apa-assemble/cli.mjs --matter <matter> --write`.
+
+It produces, under `<matter>/assembled/`:
+- `specification.md` + `specification.html` - the 37 CFR 1.77 document. **PDF is the filing-faithful
+  format**: open the HTML in a browser and **Print to PDF** (it carries the 1.52 print stylesheet).
+  Schema-valid USPTO DOCX is deferred - the applicant owns the USPTO-rendered DOCX, so PDF is preferred.
+- `ADS.md` - Application Data Sheet draft (controls inventor names + benefit/priority; complete the
+  `[REQUIRED]` fields - a missing benefit/priority claim forfeits priority).
+- `IDS_SB08.md` - IDS seed; every reference is **UNVERIFIED** until a human confirms it (1.97/1.98).
+- `declaration_UNSIGNED.md` - the 1.63 oath template with a **[SIGNATURE REQUIRED]** placeholder.
+- `FEE_WORKSHEET.md` - an **estimate** from a dated fee schedule (verify currency).
+- `PREFLIGHT.md` + `upload_set/MANIFEST.txt` - the go/no-go checklist and the frozen authoritative set.
+
+{{IDS_REQUIREMENTS}}
+
+## Hard gates (the tool enforces; do not override)
+- **Inventorship-integrity gate:** assembly is **NO-GO** while any claim limitation is `ai-suggested` -
+  a human must adopt each (-> `inventor`/`attorney`/`human-revised`) first.
+- **>= 1 natural-person inventor**, none AI-named.
+- **Mechanical validation** must pass (no errors); claim-form + numeral findings are surfaced.
+- **Rigor review** (/apa-rigor, Phase 5) must reach File-Ready / File-With-Revisions before filing.
+
+{{REDACT_INVOCATION_BLOCK:filing}}
+
+## Structural refusals (no override) - APA stops at the submit boundary
+APA never signs or certifies a USPTO paper, never generates an executed/signed declaration, never
+asserts micro-entity status, and never files. Patent Center has no public submission API and requires
+an identity-verified human account; a human files. Rules as of {{RULES_EFFECTIVE_DATE}}; verify currency.
+
+## Do NOT
+- Mark the package "filed" or "ready to file" without human review, signature, and rigor sign-off.
+- Treat the fee estimate as authoritative or assert micro-entity status.

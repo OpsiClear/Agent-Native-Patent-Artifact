@@ -1,0 +1,14 @@
+{
+  "name": "drawing-quality-gallery",
+  "purpose": "Benchmark deterministic utility-patent drawing generation and review gates.",
+  "figures": [
+    { "fig": "FIG01", "kind": "software block diagram", "risk": "crowded architecture slide" },
+    { "fig": "FIG02", "kind": "method flowchart", "risk": "unreadable labels and branch clutter" },
+    { "fig": "FIG03", "kind": "atlas table layout", "risk": "dense grid and caption crowding" },
+    { "fig": "FIG04", "kind": "container layout", "risk": "filesystem screenshot styling" },
+    { "fig": "FIG05", "kind": "client-server hardware decoder", "risk": "mixed hardware/software boundaries" },
+    { "fig": "FIG06", "kind": "sequence diagram", "risk": "UML clutter and message crossings" },
+    { "fig": "FIG07", "kind": "state machine", "risk": "tangled loops and verbose transitions" },
+    { "fig": "FIG08", "kind": "cross-section detail view", "risk": "hatching/labels obscuring structure" }
+  ]
+}

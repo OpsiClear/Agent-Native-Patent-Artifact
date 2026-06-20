@@ -1,0 +1,59 @@
+---
+name: disclosure-capture
+description: "Capture an invention disclosure into a Patent Artifact as you interview the inventor - decisions, embodiments, alternatives, prior-art hits, and bar dates - via progressive crystallization. Invoke at the end of a disclosure session. File-I/O only; no external sinks."
+preamble-tier: 2
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep"
+triggers: "capture disclosure, invention disclosure, record invention, /apa-disclose, end of disclosure session"
+---
+
+# disclosure-capture (`/apa-disclose`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+
+An end-of-session epilogue that routes what happened in an invention-disclosure conversation into a
+Patent Artifact (`<matter>/`, see {{PROTOCOL_REF}}). It is **file-I/O only** - it never fetches or
+sends anything externally, so an unfiled disclosure stays confidential on the machine. Run it after a
+disclosure interview; it reviews the turn and writes new events into the artifact.
+
+## Procedure
+
+1. **Locate or scaffold the matter.** If a `<matter>/` exists, use it; else create the mandatory core
+   for the matter's `application_type` (ask once via matter config if unknown; default `utility`).
+
+2. **Harvest events** from the session. For each, classify on two axes (ARA's model):
+   - **Kind** - *journey* (a decision, an abandoned embodiment, a scope pivot, a prior-art hit) vs
+     *interpretive* (a claimed novel feature, a characterization of what prior art teaches).
+   - **Routing** - *direct* (journey facts -> write immediately and immutably to `trace/prosecution.yaml`
+     as PH## nodes; dead ends are first-class) vs *staged* (interpretive facts -> append to
+     `staging/observations.yaml`, do NOT yet write to `logic/`).
+
+3. **Crystallize staged observations into `logic/` only on a closure signal:** (a) verbal affirmation
+   by the inventor, (b) empirical resolution, (c) artifact commitment (it got written into a draft),
+   or (d) topic abandonment. Default to NON-promotion - never freeze a half-formed invention into a
+   claim. When an interpretive observation about novelty crystallizes, write it as a claim seed in
+   `logic/claims.md` / a defined term in `logic/concepts.md` / a prior-art block in `logic/prior_art.md`.
+
+4. **Provenance on every entry.** Default `ai-suggested`. Upgrade only on an explicit human act: a
+   verbatim inventor statement -> `inventor:<id>` (conception evidence); a paraphrase the human accepts
+   -> `human-revised`; attorney authorship -> `attorney`. Provenance never auto-upgrades. A claim
+   limitation left `ai-suggested` is an assembly blocker until a human adopts it.
+
+5. **Bar-date / candor prompt (always ask).** Has the invention been offered for sale, sold, publicly
+   used, demonstrated, or described in a publication? Capture each with its date as a journey event -
+   these statutory-bar facts are not findable by any later search and bear on 35 USC 102 and the duty
+   of candor. Record, never auto-assert or judge.
+
+6. **Inventorship.** Attribute conception to specific named natural persons; keep the
+   `inventorship_matrix` in `PATENT.md` current (which inventor conceived which claim, 35 USC 116).
+
+7. **Validate.** After writing, run `node packages/apa-validate/validate.mjs <matter>` and surface the
+   errors/warnings to the human. Do not claim the matter is filing-ready - that is a later, gated stage.
+
+## Do NOT
+- Invent a limitation, embodiment, or advantage the inventor did not disclose. Write gaps literally as
+  "Not specified in disclosure."
+- Crystallize an unsettled idea into a formal claim.
+- Name AI as an inventor, or assert any patentability/novelty conclusion (flags and questions only).

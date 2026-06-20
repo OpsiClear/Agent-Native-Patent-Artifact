@@ -1,0 +1,44 @@
+# Decision DAG (append-only / immutable). PH## nodes record the prosecution/claim-scope journey.
+# dead_end nodes preserve a foreclosed position so an agent never re-argues it.
+root: PH01
+nodes:
+  - id: PH01
+    type: question
+    summary: "What is the defensible inventive kernel over a plain spring hinge (PA01) and a separate overhead closer (PA02)?"
+    alternatives:
+      - "Claim the closing spring alone (anticipated by PA01)."
+      - "Claim a hydraulic door closer generally (anticipated by PA02)."
+      - "Claim the integration of spring + damper + hold-open detent within one hinge body."
+    children: [PH02, PH03]
+    provenance: attorney
+
+  - id: PH02
+    type: decision
+    summary: "Claim the integrated hinge as the kernel, mirrored across two statutory categories."
+    choice: "Independent apparatus claim CLM01 (hinge body + leaves + shared spindle + spring + damper) and independent method claim CLM05 (store energy, release, damp); push the metering valve, the bounded speed, and the hold-open detent into dependents CLM02-CLM04 and CLM06."
+    alternatives:
+      - "Single apparatus claim only (rejected - lose method coverage of the closing process)."
+      - "Make the hold-open detent an independent-claim element (rejected - narrows the lead claim; reserved as dependent CLM04/CLM06)."
+    evidence: ["PA01 lacks a hydraulic damper", "PA02 lacks in-hinge integration and a hold-open detent"]
+    children: [PH04]
+    provenance: attorney
+
+  - id: PH03
+    type: dead_end
+    summary: "Tried a broad functional independent claim: 'a hinge comprising means for returning a door and means for damping its closing speed'."
+    hypothesis: "Pure functional 'means for' language would capture any spring + any damper and read on more competitor designs."
+    failure_mode: "103 / 112(f): the 'means for' limitations invoke 35 USC 112(f) and are construed to cover only the disclosed structure plus equivalents - giving no extra breadth - while inviting a 112(b) indefiniteness rejection if structure is not clearly linked, and a 103 combination rejection over PA01 + PA02 for the bare spring+damper aggregation."
+    lesson: "Keep structural, non-nonce language (closing spring, hydraulic damper coupled to the pivot spindle) in the independent claims; do NOT pursue 'means for' breadth in the lead claims. Reserve any broad functional genus for a continuation, not the lead claim."
+    children: []
+    provenance: attorney
+
+  - id: PH04
+    type: decision
+    summary: "Bound the terms of degree so the dependents and the spec stay definite under 112(b)."
+    choice: "Express closing speed as a full-close interval of 3-12 s for a 90-degree swing (CLM03, SPEC0007); fix the hold-open angle within 85-110 degrees (TERM02); define release torque by cam geometry and follower preload (TERM03)."
+    alternatives:
+      - "Leave 'closing speed' and 'hold-open angle' unqualified (rejected - 112(b) term-of-degree risk)."
+    evidence: ["TERM01, TERM02, TERM03 all carry objective bounds"]
+    children: []
+    provenance: attorney
+```

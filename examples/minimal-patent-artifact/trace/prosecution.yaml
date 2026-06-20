@@ -1,0 +1,23 @@
+# Decision DAG (append-only / immutable). PH## nodes record the prosecution/claim-scope journey.
+# dead_end nodes preserve a foreclosed position so an agent never re-argues it.
+root: PH01
+nodes:
+  - id: PH01
+    type: decision
+    summary: "Claim the float-actuated valve in combination with the reservoir as the inventive kernel."
+    choice: "Independent claim recites reservoir + float + valve-closes-at-selected-level (CLM01)."
+    alternatives:
+      - "Claim any automatic shutoff (rejected - see PH02)."
+      - "Claim the wick as essential (rejected - wick is in PA01; kept as dependent CLM02)."
+    evidence: ["PA01 lacks a float-actuated valve"]
+    children: [PH02]
+    provenance: attorney
+
+  - id: PH02
+    type: dead_end
+    summary: "Tried claiming 'any automatic shutoff mechanism' without the float structure."
+    hypothesis: "A broad functional 'automatic shutoff' limitation would capture more designs."
+    failure_mode: "103 / 112(f): purely functional, risks anticipation by generic float valves and means-plus-function indefiniteness without disclosed structure."
+    lesson: "Keep the structural float+valve coupling in the independent claim; reserve broader functional language for continuation strategy, not the lead claim."
+    children: []
+    provenance: attorney

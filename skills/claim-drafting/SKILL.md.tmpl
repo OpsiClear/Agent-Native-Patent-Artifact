@@ -1,0 +1,45 @@
+---
+name: claim-drafting
+description: "Draft independent + dependent claims for a matter: build the dual-lens claim ladder (examiner-survival + portfolio-protection), enforce single-sentence form and antecedent basis, seed defined terms, and bind each limitation to its spec support and the closest prior art. Invoke as /apa-claims."
+preamble-tier: 3
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
+triggers: "draft claims, write claims, claim set, /apa-claims, claim ladder, independent claim"
+---
+
+# claim-drafting (`/apa-claims`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+Drafts the `CLM##`/`LIM##` claim set in `logic/claims.md` from the inventive concept, embodiments, and
+the prior-art landscape, in the protocol's binding format ({{PROTOCOL_REF}}). Claim **scope is a human
+decision**; you recommend a ladder and flag tradeoffs.
+
+## Procedure
+1. **Inputs:** read `logic/problem.md`, `src/embodiments.md`, `logic/prior_art.md` (+ `reference_matrix.md`
+   if present), and `logic/patentability.md`. Identify the defensible kernel = the combination the
+   closest art (`PA##`) lacks.
+2. **Build the ladder** (see the dual-lens guide below). For each claim write a `### CLM## - <title>`
+   section: prose claim text + a ```binding block with `type`, `category`, `depends_on` (dependents),
+   `distinguished_over: [PA##]` (the closest art the independent claim reads past), `scope_set_at: [PH##]`
+   (log the scope decision in `trace/prosecution.yaml`), and `limitations:` each with `id` (`LIM##`,
+   globally unique), `text`, `introduces` (the `a/an` noun phrase), `references` + `antecedent_of` (the
+   earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, and `provenance`.
+3. **Provenance.** Default every drafted limitation to `ai-suggested` - it is an **assembly blocker**
+   until a human (inventor verbatim -> `inventor:<id>`; attorney -> `attorney`; paraphrase accepted ->
+   `human-revised`) adopts it. Never name AI as an inventor.
+4. **Seed `concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
+   objective bound.
+5. **Check.** Run `node packages/apa-draft/claim-lint.mjs <matter>` (legal form) and
+   `node packages/apa-validate/validate.mjs <matter>` (antecedent basis, dependency, edge resolution).
+   Fix findings; an unresolved `supported_by` is a §112-support warning to resolve or flag, not hide.
+
+{{CLAIM_FORMAT_GUIDE}}
+
+{{CLAIM_LADDER_GUIDE}}
+
+## Do NOT
+- Invent a limitation the disclosure does not support (new matter). Write gaps as "Not specified in disclosure."
+- Decide or assert claim scope/breadth as final, or render a patentability conclusion - recommend and flag.
+- Leave a formal claim limitation `ai-suggested` at assembly - it blocks. Rules as of {{RULES_EFFECTIVE_DATE}}.

@@ -1,0 +1,56 @@
+---
+name: compiler
+description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile <path>."
+preamble-tier: 3
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, WebFetch"
+triggers: "compile patent, lift patent, /apa-compile, build artifact from patent, convert patent to artifact"
+---
+
+# compiler (`/apa-compile <path-or-url>`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+
+Reverse-engineers a patent / published application / disclosure document into a Patent Artifact
+(`<matter>/`, {{PROTOCOL_REF}}) through a 4-stage epistemic chain, then a bounded fix loop. It accepts
+a PDF/text patent, a publication, or a pile of notes.
+
+{{REDACT_INVOCATION_BLOCK:cloud-llm}}
+
+## Stages (run in order)
+
+1. **Semantic Deconstruction.** Extract raw atoms from the source: the **claims VERBATIM** (paraphrase
+   changes legal scope - copy exactly), every defined term, every reference numeral + its element,
+   every embodiment, every prior-art citation and the role it plays.
+2. **Cognitive Mapping.** Map atoms into `logic/claims.md` (CLM##/LIM##, antecedent basis),
+   `logic/concepts.md` (TERM##), `logic/prior_art.md` (PA## typed by role), and `logic/problem.md`.
+3. **Physical & Evidence grounding.** Write `src/embodiments.md` (SPEC#### paragraphs, each grounded:
+   `transcribed` if sourced from the document, `reconstructed` if drafted from figures), and
+   `evidence/` (one raw record per reference, the drawings transcription with numeral->element->SPEC).
+4. **Exploration graph.** Reconstruct the conception / claim-derivation decisions into
+   `trace/prosecution.yaml` (PH## nodes; abandoned positions as `dead_end` leaves where the source
+   shows them).
+
+## Bounded fix loop (<= 3 rounds)
+
+After a draft, run `node packages/apa-validate/validate.mjs <matter>` and `node
+packages/apa-viewer/build_manifest.mjs <matter>`. Fix coverage and resolution gaps (dangling
+`supported_by`, missing antecedents, undefined numerals) and re-run. Stop at clean, or after 3 rounds
+surface the residual findings for the human.
+
+{{CLAIM_FORMAT_GUIDE}}
+
+{{ANALYSIS_101_102_103_112}}
+
+## Critical rules (zero-hallucination, hardened for legal use)
+- Claims are copied **verbatim**. Never paraphrase claim language.
+- A gap is written literally as **"Not present in source"** - never invent a limitation (new matter).
+- Every prior-art reference is flagged for human verification before it is relied on or listed on an
+  IDS (see {{IDS_REQUIREMENTS}} via the assembly stage). Do not assert what a reference discloses
+  beyond its actual text.
+- Output is a navigable artifact + flags/questions, never a patentability or validity conclusion.
+
+See `references/apa-schema.md` (the on-disk schema) and `references/validation-checklist.md`.
+Rules encoded as of {{RULES_EFFECTIVE_DATE}}; verify currency.

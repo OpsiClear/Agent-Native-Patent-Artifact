@@ -1,0 +1,12 @@
+# Append-only capture buffer. Unconfirmed interpretive observations from a disclosure session, awaiting
+# a closure signal before they crystallize into logic/. Two illustrative open observations remain here
+# (they are NOT yet promoted into the clean draft) for this fictional demonstration matter.
+observations:
+  - id: OBS01
+    note: "Inventor mentioned a possible gas-spring substitution for the helical closing spring; not yet adopted into any SPEC (see SPEC0005 'Not specified in disclosure'). Hold until inventor confirms structure."
+    raised_by: inventor:RMORALES
+    status: open
+  - id: OBS02
+    note: "Possible second figure variant showing the cam profile detail in isolation; not yet drawn. Reserve numeral 26 detail for a future FIG03 if added."
+    raised_by: attorney
+    status: open

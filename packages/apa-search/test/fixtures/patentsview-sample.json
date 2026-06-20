@@ -1,0 +1,71 @@
+{
+  "_note": "schema-constructed (not real-captured). Shape and field names match the live PatentsView PatentSearch API (https://search.patentsview.org/api/v1/patent/, verified 2026-06-15): top-level { error, count, total_hits, patents[] }; patent fields patent_id/patent_title/patent_abstract/patent_date; nested groups assignees[].assignee_organization, inventors[].inventor_name_first/inventor_name_last, cpc_current[].cpc_subclass_id/cpc_group_id. The live API requires a free X-Api-Key, which was unavailable in this environment, and outbound network from the shell is blocked, so a representative response for the query 'self watering planter float valve' was constructed to the confirmed schema rather than recorded live.",
+  "error": false,
+  "count": 4,
+  "total_hits": 4,
+  "patents": [
+    {
+      "patent_id": "10905426",
+      "patent_title": "Self-watering planter with float-actuated shutoff valve",
+      "patent_abstract": "A self-watering planter includes a water reservoir, a float disposed within the reservoir, and a shutoff valve mechanically coupled to the float. As water is added, the float rises and closes the valve when the water reaches a predetermined level, preventing overflow and maintaining a substantially constant reservoir level for sub-irrigation of soil above the reservoir.",
+      "patent_date": "2021-02-02",
+      "assignees": [
+        { "assignee_organization": "GreenThumb Innovations LLC" }
+      ],
+      "inventors": [
+        { "inventor_name_first": "Maria", "inventor_name_last": "Sanchez" },
+        { "inventor_name_first": "David", "inventor_name_last": "Okafor" }
+      ],
+      "cpc_current": [
+        { "cpc_subclass_id": "A01G", "cpc_group_id": "A01G27/00" },
+        { "cpc_subclass_id": "A01G", "cpc_group_id": "A01G27/006" }
+      ]
+    },
+    {
+      "patent_id": "9591814",
+      "patent_title": "Float valve assembly for sub-irrigated plant container",
+      "patent_abstract": "A float valve assembly for a plant container maintains a target water level in a lower reservoir. A buoyant float actuates a poppet valve seated against an inlet; when the reservoir level falls, the float drops and the valve opens to admit water from a supply line, and when the target level is reached the float closes the valve.",
+      "patent_date": "2017-03-14",
+      "assignees": [
+        { "assignee_organization": "AquaGrow Systems, Inc." }
+      ],
+      "inventors": [
+        { "inventor_name_first": "Hiroshi", "inventor_name_last": "Tanaka" }
+      ],
+      "cpc_current": [
+        { "cpc_subclass_id": "A01G", "cpc_group_id": "A01G27/003" }
+      ]
+    },
+    {
+      "patent_id": "D812345",
+      "patent_title": "Self-watering planter pot",
+      "patent_abstract": null,
+      "patent_date": "2018-03-13",
+      "assignees": [
+        { "assignee_organization": "HomeBloom Design Co." }
+      ],
+      "inventors": [
+        { "inventor_name_first": "Elena", "inventor_name_last": "Petrova" }
+      ],
+      "cpc_current": [
+        { "cpc_subclass_id": "A01G", "cpc_group_id": "A01G27/02" }
+      ]
+    },
+    {
+      "patent_id": "8533993",
+      "patent_title": "Wicking self-watering plant container with reservoir level indicator",
+      "patent_abstract": "A self-watering plant container draws water from a reservoir to a growing medium via a capillary wick. A transparent sight tube communicating with the reservoir indicates the water level so that the reservoir can be refilled before depletion, reducing the need for a mechanical float valve.",
+      "patent_date": "2013-09-17",
+      "assignees": [
+        { "assignee_organization": "Verdant Containers Corp." }
+      ],
+      "inventors": [
+        { "inventor_name_first": "Robert", "inventor_name_last": "Klein" },
+        { "inventor_name_first": "Aisha", "inventor_name_last": "Rahman" }
+      ],
+      "cpc_current": [
+        { "cpc_subclass_id": "A01G", "cpc_group_id": "A01G27/04" }
+      ]
+    }
+  ]
+}

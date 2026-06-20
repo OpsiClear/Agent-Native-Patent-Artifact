@@ -1,0 +1,41 @@
+---
+name: patentability-analysis
+description: "Build element-by-element claim charts mapping prior-art references to claim limitations and flag 101/102/103/112 issues as questions for a registered practitioner - never a conclusion. Includes an interview-driven statutory-bar screen and a 112(f) screen. Invoke as /apa-analyze."
+preamble-tier: 2
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep"
+triggers: "patentability, analyze claims, claim chart, /apa-analyze, 102 103 112 101, novelty obviousness"
+---
+
+# patentability-analysis (`/apa-analyze`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+Maps each prior-art `PA##` to each `CLM##.LIM##` (element-by-element claim charts) and writes
+`logic/patentability.md` as **flags and questions for a registered practitioner**. It renders NO
+patentability, novelty, non-obviousness, FTO, validity, or infringement conclusion. File-I/O only.
+
+## Procedure
+1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
+   the closest `PA##` references (use `logic/reference_matrix.md` if present). Mark, per cell, whether
+   the reference appears to teach that limitation - as an observation to verify, not a finding.
+2. **102 (anticipation):** flag any single reference that appears to teach ALL limitations of a claim.
+3. **102 statutory bars (interview-driven, NOT search):** screen the disclosure's captured bar-date
+   events (on-sale, public use, the inventor's own publication/demo) against the effective filing date
+   and the one-year grace window. These are not found by a database search - surface as flags for the human.
+4. **103 (obviousness):** for plausible combinations, name the KSR rationale and prompt for the Graham
+   factors; capture inventor-supplied secondary considerations (commercial success, long-felt need,
+   unexpected results) as rebuttal in a `secondary_considerations` note.
+5. **112:** (a) confirm each limitation has a resolving `supported_by` SPEC (the validator does the
+   mechanical part; sufficiency is a human flag); (b) flag terms of degree lacking an objective bound;
+   (f) flag any nonce/`means-for` limitation and check corresponding structure is disclosed.
+6. **101:** Alice/Mayo abstract-idea screen - flag risk and whether the claim recites concrete structure.
+7. Write findings with `questions_for_attorney` / `questions_for_inventor` arrays. Surface contradictions
+   (a reference that undermines a staged novelty claim) rather than resolving them.
+
+{{ANALYSIS_101_102_103_112}}
+
+## Do NOT
+- Render any conclusion (patentable / novel / non-obvious / clear / valid). Output is flags + questions.
+- Assert a search was complete or "no anticipating art found." Rules as of {{RULES_EFFECTIVE_DATE}}.

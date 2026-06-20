@@ -1,0 +1,45 @@
+{
+  "name": "apa-figure",
+  "version": "0.1.0",
+  "description": "Zero-dependency SVG patent-figure generator + reference-numeral legend builder for the Agent-Native-Patent-Artifact project. Plain ESM, Node >=18. SVG (text, no graphics library) reimplementation of the g2tree ReportLab figure primitives. SVG is a review/drafting format; 37 CFR 1.84 filing-ready conversion is a later phase.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "apa-figure": "cli.mjs"
+  },
+  "exports": {
+    ".": "./render.mjs",
+    "./render": "./render.mjs",
+    "./numerals": "./numerals.mjs",
+    "./quality": "./quality.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "main": "render.mjs",
+  "files": [
+    "render.mjs",
+    "numerals.mjs",
+    "quality.mjs",
+    "cli.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "render": "node cli.mjs render",
+    "render-dir": "node cli.mjs render-dir",
+    "review-dir": "node cli.mjs review-dir",
+    "legend": "node cli.mjs legend"
+  },
+  "dependencies": {},
+  "keywords": [
+    "patent",
+    "figure",
+    "svg",
+    "drawing",
+    "reference-numeral",
+    "37cfr1.84",
+    "apa"
+  ]
+}

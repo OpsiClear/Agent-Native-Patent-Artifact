@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="900" viewBox="0 0 1180 900" role="img" aria-label="FIG. 6">
+  <defs>
+    <marker id="FIG06-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1180" height="900" fill="white"/>
+  <text id="FIG06-title" x="590" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Authentication exchange</text>
+  <line id="FIG06-arrow-0-line" x1="318.08" y1="270" x2="374.58" y2="170" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-1-line" x1="430.29" y1="170" x2="588.46" y2="405" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-2-line" x1="614.62" y1="405" x2="648.51" y2="170" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-3-line" x1="760" y1="125" x2="815" y2="125" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-4-line" x1="905" y1="170" x2="905" y2="250" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-5-line" x1="895.14" y1="326" x2="838.3" y2="545" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <line id="FIG06-arrow-6-line" x1="827.88" y1="609" x2="822.52" y2="690" stroke="black" stroke-width="2" marker-end="url(#FIG06-arrowhead)"/>
+  <rect id="FIG06-part-600-shape" x="70" y="80" width="180" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-600-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="160" y="125">user device</tspan></text>
+  <line id="FIG06-part-600-lead" x1="94.38" y1="72.5" x2="103.75" y2="80" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-600-num" x="83.45" y="63.76" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">600</text>
+  <rect id="FIG06-part-602-shape" x="305" y="80" width="190" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-602-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="400" y="125">identity service</tspan></text>
+  <line id="FIG06-part-602-lead" x1="375.12" y1="69.04" x2="379.99" y2="80" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-602-num" x="369.43" y="56.24" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">602</text>
+  <rect id="FIG06-part-604-shape" x="550" y="80" width="210" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-604-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="655" y="125">entitlement service</tspan></text>
+  <line id="FIG06-part-604-lead" x1="678.06" y1="68.9" x2="673.5" y2="80" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-604-num" x="683.38" y="55.95" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">604</text>
+  <rect id="FIG06-part-606-shape" x="815" y="80" width="180" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-606-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="905" y="125">content server</tspan></text>
+  <line id="FIG06-part-606-lead" x1="970.62" y1="72.5" x2="961.25" y2="80" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-606-num" x="981.55" y="63.76" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">606</text>
+  <rect id="FIG06-part-608-shape" x="815" y="250" width="180" height="76" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-608-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="905" y="288">key manager</tspan></text>
+  <line id="FIG06-part-608-lead" x1="1006.28" y1="251.29" x2="995" y2="255.38" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-608-num" x="1019.44" y="246.52" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">608</text>
+  <rect id="FIG06-part-610-shape" x="170" y="270" width="260" height="64" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-610-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="300" y="302">request token</tspan></text>
+  <line id="FIG06-part-610-lead" x1="227.87" y1="264.46" x2="238.51" y2="270" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-610-num" x="215.45" y="258" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">610</text>
+  <rect id="FIG06-part-612-shape" x="470" y="405" width="280" height="64" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-612-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="610" y="437">verify entitlement</tspan></text>
+  <line id="FIG06-part-612-lead" x1="761.81" y1="464.42" x2="750" y2="462.29" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-612-num" x="775.59" y="466.91" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">612</text>
+  <rect id="FIG06-part-614-shape" x="690" y="545" width="280" height="64" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-614-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="830" y="577">deliver content</tspan></text>
+  <line id="FIG06-part-614-lead" x1="902.48" y1="614.52" x2="891.82" y2="609" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-614-num" x="914.91" y="620.95" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">614</text>
+  <rect id="FIG06-part-616-shape" x="690" y="690" width="260" height="76" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG06-part-616-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="820" y="728">secure module</tspan></text>
+  <line id="FIG06-part-616-lead" x1="864.05" y1="774.73" x2="855.82" y2="766" stroke="black" stroke-width="1"/>
+  <text id="FIG06-part-616-num" x="873.65" y="784.92" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">616</text>
+  <text id="FIG06-caption" x="590" y="882" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 6</text>
+</svg>

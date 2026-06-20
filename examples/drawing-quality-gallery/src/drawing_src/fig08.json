@@ -1,0 +1,19 @@
+{
+  "fig": "FIG08",
+  "title": "Sensor cartridge section",
+  "width": 1120,
+  "height": 820,
+  "parts": [
+    { "numeral": "800", "label": "housing", "shape": "box", "x": 90, "y": 170, "w": 760, "h": 320 },
+    { "numeral": "802", "label": "gasket", "shape": "box", "x": 170, "y": 230, "w": 500, "h": 56 },
+    { "numeral": "804", "label": "fluid channel", "shape": "box", "x": 210, "y": 315, "w": 420, "h": 74 },
+    { "numeral": "806", "label": "optical window", "shape": "box", "x": 345, "y": 405, "w": 180, "h": 58, "numX": 290, "numY": 430 },
+    { "numeral": "808", "label": "alignment rib", "shape": "box", "x": 705, "y": 220, "w": 110, "h": 160, "numX": 870, "numY": 250 },
+    { "numeral": "810", "label": "latch feature", "shape": "box", "x": 120, "y": 520, "w": 210, "h": 90 },
+    { "numeral": "812", "label": "circuit substrate", "shape": "box", "x": 390, "y": 530, "w": 300, "h": 80 },
+    { "numeral": "814", "label": "seal detail", "shape": "ellipse", "x": 810, "y": 525, "w": 210, "h": 100 }
+  ],
+  "arrows": [
+    { "from": "814", "to": "802", "kind": "flow" }
+  ]
+}

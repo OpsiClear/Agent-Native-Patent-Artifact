@@ -1,0 +1,40 @@
+{
+  "name": "apa-prosecute",
+  "version": "0.1.0",
+  "description": "OPTIONAL post-filing office-action package for the Agent-Native-Patent-Artifact project (docs/protocol.md §8, beyond the core pre-filing scope). Parses an Office Action (prosecution/oa-NN.md), ESTIMATES the 37 CFR 1.136(a) response period from a string mailing date, and scaffolds a flags-and-questions response under the new-matter guard. Everything is a flag/question for a registered practitioner; deadlines are estimates to verify; APA never files. Reuses the shared parser (lib/apa-parse.mjs). Plain ESM, Node >=18, zero dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "apa-prosecute": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./parse.mjs",
+    "./parse": "./parse.mjs",
+    "./deadlines": "./deadlines.mjs",
+    "./respond": "./respond.mjs"
+  },
+  "main": "parse.mjs",
+  "files": [
+    "parse.mjs",
+    "deadlines.mjs",
+    "respond.mjs",
+    "cli.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {},
+  "keywords": [
+    "patent",
+    "uspto",
+    "prosecution",
+    "office-action",
+    "37cfr1.136",
+    "post-filing",
+    "apa"
+  ]
+}

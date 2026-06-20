@@ -1,0 +1,50 @@
+---
+name: examiner-adversary
+description: "Role-play a USPTO examiner against a matter: enumerate the strongest likely 101/102/103/112 rejections, and for each pair the critique with a concrete fix, recording the critique->fix rationale. Hardens the application before the real examiner. Invoke as /apa-examiner."
+preamble-tier: 3
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
+triggers: "examiner critique, anticipate rejections, /apa-examiner, office action rehearsal, harden claims"
+---
+
+# examiner-adversary (`/apa-examiner`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+An adversarial loop: you take the examiner's side, enumerate the strongest rejections the matter would
+likely draw, and for each pair the critique with a concrete fix - hardening the application *before* a
+real examiner sees it and leaving a documented record. This complements the read-only `/apa-rigor`
+audit. Output is `trace/prosecution_rationale.md`. Findings are flags for a human, never conclusions.
+
+## Procedure
+1. **Read** the claims, spec, prior-art landscape (`logic/prior_art.md` + `reference_matrix.md`), and
+   `patent_rigor_report.json` if present. Identify the closest art and the weakest claim language.
+2. **Enumerate the strongest likely rejections**, numbered, across the statutes:
+   - **101:** abstract-idea / Alice-Mayo attacks on any claim lacking concrete structure.
+   - **102:** any single reference that arguably teaches every limitation of a claim (anticipation),
+     including interview-derived statutory bars (on-sale / public use / the inventor's own disclosure).
+   - **103:** the **strongest combination** of references + a KSR rationale (name it: combination of
+     known elements, simple substitution, obvious-to-try, ...); address the Graham factors.
+   - **112:** written-description / enablement gaps, indefinite terms of degree, 112(f) nonce limitations
+     lacking corresponding structure.
+3. **For each critique, write the fix you would make** (narrow a limitation to the defensible kernel,
+   add structure, define a term, push breadth to a dependent/continuation) and the **key distinction**
+   that survives it. This is the examiner-survival lens; keep the broader scope as a continuation note.
+4. **Record** each as a `### Critique N` block in `trace/prosecution_rationale.md`:
+   `Likely critique -> Why it matters -> Fix made -> Key distinction`. Log a corresponding `decision` or
+   `dead_end` node in `trace/prosecution.yaml` (a refused-and-foreclosed position becomes a `dead_end`
+   so it is never re-argued).
+5. **Re-check** after fixes: `node packages/apa-draft/claim-lint.mjs <matter>` and
+   `node packages/apa-validate/validate.mjs <matter>`; then re-run `/apa-rigor`. Iterate until the rigor
+   verdict clears (File-Ready / File-With-Revisions) or surface the residual risks for the human.
+
+{{ANALYSIS_101_102_103_112}}
+
+{{CLAIM_FORMAT_GUIDE}}
+
+## Do NOT
+- Present a rejection or a fix as a legal conclusion - these are anticipated arguments and drafting
+  recommendations for a registered practitioner.
+- Over-narrow silently: when you narrow a claim, record the broader scope as continuation-reserved.
+- Invent prior art or claim limitations (new matter). Rules as of {{RULES_EFFECTIVE_DATE}}.

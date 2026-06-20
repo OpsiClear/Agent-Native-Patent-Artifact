@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="860" viewBox="0 0 1100 860" role="img" aria-label="FIG. 7">
+  <defs>
+    <marker id="FIG07-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1100" height="860" fill="white"/>
+  <text id="FIG07-title" x="550" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Synchronization agent states</text>
+  <line id="FIG07-arrow-0-line" x1="501.76" y1="141.93" x2="371.49" y2="230.85" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <line id="FIG07-arrow-1-line" x1="378.9" y1="299.13" x2="501.1" y2="367.87" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <line id="FIG07-arrow-2-line" x1="503.05" y1="434.7" x2="372.82" y2="511.78" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <line id="FIG07-arrow-3-line" x1="420" y1="546" x2="460" y2="546" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <line id="FIG07-arrow-4-line" x1="606.89" y1="583.6" x2="718.45" y2="683.71" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <line id="FIG07-arrow-5-line" x1="618.49" y1="434.26" x2="757.57" y2="513.34" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <path id="FIG07-arrow-6-loop" d="M 815 505 C 858.8 395.5 1019.5 463.9 910 529.6" fill="none" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <text id="FIG07-arrow-6-loop-label" x="891.65" y="433.83" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">wait</text>
+  <line id="FIG07-arrow-7-line" x1="312.66" y1="586.99" x2="307.34" y2="680.01" stroke="black" stroke-width="2" marker-end="url(#FIG07-arrowhead)"/>
+  <ellipse id="FIG07-part-700-shape" cx="550" cy="109" rx="90" ry="39" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-700-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="550" y="109">idle</tspan></text>
+  <line id="FIG07-part-700-lead" x1="548.34" y1="58.01" x2="548.73" y2="70" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-700-num" x="547.88" y="44.02" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">700</text>
+  <ellipse id="FIG07-part-702-shape" cx="320" cy="266" rx="100" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-702-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="320" y="266">scanning</tspan></text>
+  <line id="FIG07-part-702-lead" x1="254.97" y1="225.36" x2="265.15" y2="231.72" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-702-num" x="243.1" y="217.94" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">702</text>
+  <ellipse id="FIG07-part-704-shape" cx="560" cy="401" rx="100" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-704-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="560" y="401">uploading</tspan></text>
+  <line id="FIG07-part-704-lead" x1="560" y1="348" x2="560" y2="360" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-704-num" x="560" y="334" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">704</text>
+  <ellipse id="FIG07-part-706-shape" cx="315" cy="546" rx="105" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-706-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="315" y="546">conflict</tspan></text>
+  <line id="FIG07-part-706-lead" x1="242.17" y1="584.65" x2="252.77" y2="579.02" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-706-num" x="229.8" y="591.21" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">706</text>
+  <ellipse id="FIG07-part-708-shape" cx="565" cy="546" rx="105" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-708-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="565" y="546">resolving</tspan></text>
+  <line id="FIG07-part-708-lead" x1="567.04" y1="598.99" x2="566.58" y2="587" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-708-num" x="567.58" y="612.98" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">708</text>
+  <ellipse id="FIG07-part-710-shape" cx="815" cy="546" rx="95" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-710-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="815" y="546">backoff</tspan></text>
+  <line id="FIG07-part-710-lead" x1="887.07" y1="582.74" x2="876.38" y2="577.29" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-710-num" x="899.55" y="589.1" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">710</text>
+  <ellipse id="FIG07-part-712-shape" cx="305" cy="721" rx="95" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-712-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="305" y="721">offline</tspan></text>
+  <line id="FIG07-part-712-lead" x1="265.06" y1="768.77" x2="272.76" y2="759.57" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-712-num" x="256.08" y="779.51" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">712</text>
+  <ellipse id="FIG07-part-714-shape" cx="760" cy="721" rx="100" ry="41" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG07-part-714-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="760" y="721">complete</tspan></text>
+  <line id="FIG07-part-714-lead" x1="792.54" y1="770.63" x2="785.96" y2="760.59" stroke="black" stroke-width="1"/>
+  <text id="FIG07-part-714-num" x="800.22" y="782.34" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">714</text>
+  <text id="FIG07-caption" x="550" y="842" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 7</text>
+</svg>

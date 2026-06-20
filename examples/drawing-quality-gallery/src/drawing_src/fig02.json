@@ -1,0 +1,24 @@
+{
+  "fig": "FIG02",
+  "title": "Rendering path method",
+  "width": 820,
+  "height": 1080,
+  "parts": [
+    { "numeral": "200", "label": "receive content", "shape": "box", "x": 250, "y": 70, "w": 320, "h": 74 },
+    { "numeral": "202", "label": "validate format", "shape": "box", "x": 250, "y": 190, "w": 320, "h": 74, "numX": 205, "numY": 227 },
+    { "numeral": "204", "label": "detect capability", "shape": "box", "x": 250, "y": 310, "w": 320, "h": 74, "numX": 205, "numY": 347 },
+    { "numeral": "206", "label": "hardware path", "shape": "box", "x": 80, "y": 470, "w": 280, "h": 74 },
+    { "numeral": "208", "label": "software path", "shape": "box", "x": 460, "y": 470, "w": 280, "h": 74 },
+    { "numeral": "210", "label": "retry on error", "shape": "box", "x": 250, "y": 620, "w": 320, "h": 74, "numX": 205, "numY": 657 },
+    { "numeral": "212", "label": "produce output", "shape": "box", "x": 250, "y": 780, "w": 320, "h": 74 }
+  ],
+  "arrows": [
+    { "from": "200", "to": "202", "kind": "flow" },
+    { "from": "202", "to": "204", "kind": "flow" },
+    { "from": "204", "to": "206", "kind": "flow", "label": "yes" },
+    { "from": "204", "to": "208", "kind": "flow", "label": "no" },
+    { "from": "206", "to": "210", "kind": "flow" },
+    { "from": "208", "to": "210", "kind": "flow" },
+    { "from": "210", "to": "212", "kind": "flow" }
+  ]
+}

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="720" viewBox="0 0 760 720" role="img" aria-label="FIG. 2">
+  <defs>
+    <marker id="FIG02-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="760" height="720" fill="white"/>
+  <text id="FIG02-title" x="380" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="14" fill="black" text-anchor="middle">Flowchart of the power-free door-closing method</text>
+  <line id="FIG02-arrow-0-line" x1="380" y1="150" x2="380" y2="230" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-1-line" x1="380" y1="320" x2="380" y2="400" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <line id="FIG02-arrow-2-line" x1="380" y1="490" x2="380" y2="570" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <text id="FIG02-arrow-2-label" x="380" y="524" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">optional</text>
+  <path id="FIG02-arrow-3-loop" d="M 380 570 C 443.6 411 689 501.6 530 597" fill="none" stroke="black" stroke-width="2" marker-end="url(#FIG02-arrowhead)"/>
+  <text id="FIG02-arrow-3-loop-label" x="491.3" y="466.65" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">resume damped close</text>
+  <rect id="FIG02-part-30-shape" x="230" y="60" width="300" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-30-label" x="380" y="105" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">store energy by opening door</text>
+  <line id="FIG02-part-30-lead" x1="380" y1="48" x2="380" y2="60" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-30-num" x="380" y="34" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">30</text>
+  <rect id="FIG02-part-32-shape" x="230" y="230" width="300" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-32-label" x="380" y="275" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">release: spring drives closing</text>
+  <line id="FIG02-part-32-lead" x1="380" y1="218" x2="380" y2="230" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-32-num" x="380" y="204" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">32</text>
+  <rect id="FIG02-part-34-shape" x="230" y="400" width="300" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-34-label" x="380" y="445" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">damp via metered fluid</text>
+  <line id="FIG02-part-34-lead" x1="380" y1="502" x2="380" y2="490" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-34-num" x="380" y="516" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">34</text>
+  <rect id="FIG02-part-36-shape" x="230" y="570" width="300" height="90" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG02-part-36-label" x="380" y="615" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">hold open until release torque</text>
+  <line id="FIG02-part-36-lead" x1="380" y1="672" x2="380" y2="660" stroke="black" stroke-width="1"/>
+  <text id="FIG02-part-36-num" x="380" y="686" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">36</text>
+  <text id="FIG02-caption" x="380" y="702" font-family="Liberation Serif, Times New Roman, serif" font-size="22" fill="black" text-anchor="middle" font-weight="bold">FIG. 2</text>
+</svg>

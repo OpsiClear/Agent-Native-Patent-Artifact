@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-label="FIG. 3">
+  <defs>
+    <marker id="FIG03-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1180" height="760" fill="white"/>
+  <text id="FIG03-title" x="590" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Atlas parameter layout</text>
+  <line id="FIG03-arrow-0-line" x1="594.35" y1="600" x2="590.77" y2="380" stroke="black" stroke-width="2" marker-end="url(#FIG03-arrowhead)"/>
+  <rect id="FIG03-part-300-shape" x="90" y="90" width="1000" height="470" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-300-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="590" y="325">atlas map</tspan></text>
+  <line id="FIG03-part-300-lead" x1="590" y1="78" x2="590" y2="90" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-300-num" x="590" y="64" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">300</text>
+  <rect id="FIG03-part-302-shape" x="115" y="125" width="180" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-302-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="205" y="180">region column</tspan></text>
+  <line id="FIG03-part-302-lead" x1="104.41" y1="126.44" x2="115" y2="132.08" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-302-num" x="92.05" y="119.86" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">302</text>
+  <rect id="FIG03-part-304-shape" x="295" y="125" width="190" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-304-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="390" y="180">bounds column</tspan></text>
+  <line id="FIG03-part-304-lead" x1="327.96" y1="116.41" x2="336.34" y2="125" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-304-num" x="318.19" y="106.39" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">304</text>
+  <rect id="FIG03-part-306-shape" x="485" y="125" width="190" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-306-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="580" y="180">priority column</tspan></text>
+  <line id="FIG03-part-306-lead" x1="576.73" y1="113.01" x2="577.32" y2="125" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-306-num" x="576.05" y="99.03" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">306</text>
+  <rect id="FIG03-part-308-shape" x="675" y="125" width="190" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-308-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="770" y="180">transform column</tspan></text>
+  <line id="FIG03-part-308-lead" x1="826.21" y1="115.98" x2="818.29" y2="125" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-308-num" x="835.45" y="105.46" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">308</text>
+  <rect id="FIG03-part-310-shape" x="865" y="125" width="200" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-310-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="965" y="180">cache column</tspan></text>
+  <line id="FIG03-part-310-lead" x1="1075.53" y1="119.58" x2="1065" y2="125.33" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-310-num" x="1087.81" y="112.86" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">310</text>
+  <rect id="FIG03-part-312-shape" x="115" y="285" width="950" height="95" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-312-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="590" y="332.5">row entry</tspan></text>
+  <line id="FIG03-part-312-lead" x1="590" y1="273" x2="590" y2="285" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-312-num" x="590" y="259" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">312</text>
+  <rect id="FIG03-part-314-shape" x="115" y="425" width="950" height="95" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-314-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="590" y="472.5">fallback entry</tspan></text>
+  <line id="FIG03-part-314-lead" x1="590" y1="532" x2="590" y2="520" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-314-num" x="590" y="546" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">314</text>
+  <ellipse id="FIG03-part-316-shape" cx="595" cy="640" rx="125" ry="40" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG03-part-316-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="595" y="640">z-order curve</tspan></text>
+  <line id="FIG03-part-316-lead" x1="596.02" y1="692" x2="595.78" y2="680" stroke="black" stroke-width="1"/>
+  <text id="FIG03-part-316-num" x="596.29" y="705.99" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">316</text>
+  <text id="FIG03-caption" x="590" y="742" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 3</text>
+</svg>

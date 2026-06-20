@@ -1,0 +1,27 @@
+{
+  "fig": "FIG01",
+  "title": "Sectional structural view of the self-closing door hinge",
+  "representative": true,
+  "width": 820,
+  "height": 620,
+  "parts": [
+    { "numeral": "10", "label": "hinge body", "shape": "box", "x": 250, "y": 90, "w": 320, "h": 440 },
+    { "numeral": "12", "label": "first leaf", "shape": "box", "x": 70, "y": 250, "w": 150, "h": 110 },
+    { "numeral": "14", "label": "second leaf", "shape": "box", "x": 600, "y": 250, "w": 150, "h": 110 },
+    { "numeral": "16", "label": "pivot spindle", "shape": "ellipse", "x": 380, "y": 150, "w": 60, "h": 320 },
+    { "numeral": "18", "label": "closing spring", "shape": "ellipse", "x": 300, "y": 150, "w": 70, "h": 130 },
+    { "numeral": "20", "label": "hydraulic damper", "shape": "box", "x": 300, "y": 340, "w": 110, "h": 150 },
+    { "numeral": "22", "label": "metering valve", "shape": "box", "x": 430, "y": 390, "w": 110, "h": 60 },
+    { "numeral": "28", "label": "adj. screw", "shape": "ellipse", "x": 460, "y": 470, "w": 50, "h": 50 },
+    { "numeral": "24", "label": "hold-open detent", "shape": "box", "x": 300, "y": 110, "w": 120, "h": 60 },
+    { "numeral": "26", "label": "cam profile", "shape": "ellipse", "x": 450, "y": 110, "w": 90, "h": 60 }
+  ],
+  "arrows": [
+    { "from": "18", "to": "16", "kind": "flow", "label": "biases" },
+    { "from": "16", "to": "20", "kind": "flow", "label": "drives" },
+    { "from": "20", "to": "22", "kind": "flow", "label": "meters" },
+    { "from": "22", "to": "28", "kind": "flow", "label": "sets" },
+    { "from": "26", "to": "24", "kind": "flow", "label": "seats" },
+    { "self": "20", "kind": "loop", "label": "damps closing" }
+  ]
+}

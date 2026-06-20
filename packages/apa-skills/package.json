@@ -1,0 +1,34 @@
+{
+  "name": "@apa/patent-skills",
+  "version": "0.1.0",
+  "description": "Install Agent-Native Patent Artifact (APA) agent skills into Claude Code, Codex, and Cursor. Standalone, zero-dependency.",
+  "type": "module",
+  "bin": {
+    "apa-skills": "bin/apa-skills.mjs"
+  },
+  "scripts": {
+    "start": "node bin/apa-skills.mjs",
+    "prepack": "node scripts/bundle-skills.mjs",
+    "test": "node --test"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    "README.md"
+  ],
+  "keywords": [
+    "apa",
+    "agent-native-patent-artifact",
+    "patent",
+    "skills",
+    "claude-code",
+    "codex",
+    "cursor",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "fig": "FIG07",
+  "title": "Synchronization agent states",
+  "width": 1100,
+  "height": 860,
+  "parts": [
+    { "numeral": "700", "label": "idle", "shape": "ellipse", "x": 460, "y": 70, "w": 180, "h": 78 },
+    { "numeral": "702", "label": "scanning", "shape": "ellipse", "x": 220, "y": 225, "w": 200, "h": 82 },
+    { "numeral": "704", "label": "uploading", "shape": "ellipse", "x": 460, "y": 360, "w": 200, "h": 82 },
+    { "numeral": "706", "label": "conflict", "shape": "ellipse", "x": 210, "y": 505, "w": 210, "h": 82 },
+    { "numeral": "708", "label": "resolving", "shape": "ellipse", "x": 460, "y": 505, "w": 210, "h": 82 },
+    { "numeral": "710", "label": "backoff", "shape": "ellipse", "x": 720, "y": 505, "w": 190, "h": 82 },
+    { "numeral": "712", "label": "offline", "shape": "ellipse", "x": 210, "y": 680, "w": 190, "h": 82 },
+    { "numeral": "714", "label": "complete", "shape": "ellipse", "x": 660, "y": 680, "w": 200, "h": 82 }
+  ],
+  "arrows": [
+    { "from": "700", "to": "702", "kind": "flow" },
+    { "from": "702", "to": "704", "kind": "flow" },
+    { "from": "704", "to": "706", "kind": "flow" },
+    { "from": "706", "to": "708", "kind": "flow" },
+    { "from": "708", "to": "714", "kind": "flow" },
+    { "from": "704", "to": "710", "kind": "flow" },
+    { "self": "710", "kind": "loop", "label": "wait" },
+    { "from": "706", "to": "712", "kind": "flow" }
+  ]
+}

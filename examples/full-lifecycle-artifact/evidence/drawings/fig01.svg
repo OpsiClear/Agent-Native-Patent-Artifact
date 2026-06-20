@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="620" viewBox="0 0 820 620" role="img" aria-label="FIG. 1">
+  <defs>
+    <marker id="FIG01-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="black" stroke="black"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="820" height="620" fill="white"/>
+  <text id="FIG01-title" x="410" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="14" fill="black" text-anchor="middle">Sectional structural view of the self-closing door hinge</text>
+  <line id="FIG01-arrow-0-line" x1="363.91" y1="251.63" x2="380.81" y2="273.03" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-0-label" x="372.36" y="256.33" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">biases</text>
+  <line id="FIG01-arrow-1-line" x1="381.76" y1="363.92" x2="394.29" y2="340" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-1-label" x="388.02" y="345.96" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">drives</text>
+  <line id="FIG01-arrow-2-line" x1="410" y1="417.12" x2="430" y2="417.88" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-2-label" x="420" y="411.5" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">meters</text>
+  <line id="FIG01-arrow-3-line" x1="485" y1="450" x2="485" y2="470" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-3-label" x="485" y="454" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">sets</text>
+  <line id="FIG01-arrow-4-line" x1="450" y1="140" x2="420" y2="140" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-4-label" x="435" y="134" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">seats</text>
+  <path id="FIG01-arrow-5-loop" d="M 355 340 C 391.6 248.5 501.5 330.1 410 385" fill="none" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <text id="FIG01-arrow-5-loop-label" x="419.05" y="280.52" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle">damps closing</text>
+  <rect id="FIG01-part-10-shape" x="250" y="90" width="320" height="440" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-10-label" x="410" y="310" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">hinge body</text>
+  <line id="FIG01-part-10-lead" x1="582" y1="310" x2="570" y2="310" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-10-num" x="596" y="310" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">10</text>
+  <rect id="FIG01-part-12-shape" x="70" y="250" width="150" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-12-label" x="145" y="305" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">first leaf</text>
+  <line id="FIG01-part-12-lead" x1="58" y1="303.36" x2="70" y2="303.58" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-12-num" x="44" y="303.09" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">12</text>
+  <rect id="FIG01-part-14-shape" x="600" y="250" width="150" height="110" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-14-label" x="675" y="305" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">second leaf</text>
+  <line id="FIG01-part-14-lead" x1="762" y1="303.36" x2="750" y2="303.58" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-14-num" x="776" y="303.09" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">14</text>
+  <ellipse id="FIG01-part-16-shape" cx="410" cy="310" rx="30" ry="160" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-16-label" x="410" y="310" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">pivot spindle</text>
+  <line id="FIG01-part-16-lead" x1="452" y1="310" x2="440" y2="310" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-16-num" x="466" y="310" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">16</text>
+  <ellipse id="FIG01-part-18-shape" cx="335" cy="215" rx="35" ry="65" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-18-label" x="335" y="215" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">closing spring</text>
+  <line id="FIG01-part-18-lead" x1="298.65" y1="168.96" x2="306.09" y2="178.37" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-18-num" x="289.97" y="157.97" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">18</text>
+  <rect id="FIG01-part-20-shape" x="300" y="340" width="110" height="150" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-20-label" x="355" y="415" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">hydraulic damper</text>
+  <line id="FIG01-part-20-lead" x1="310.15" y1="500.63" x2="315.71" y2="490" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-20-num" x="303.65" y="513.03" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">20</text>
+  <rect id="FIG01-part-22-shape" x="430" y="390" width="110" height="60" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-22-label" x="485" y="420" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">metering valve</text>
+  <line id="FIG01-part-22-lead" x1="512.21" y1="459.91" x2="505.45" y2="450" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-22-num" x="520.1" y="471.48" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">22</text>
+  <ellipse id="FIG01-part-28-shape" cx="485" cy="495" rx="25" ry="25" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-28-label" x="485" y="495" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">adj. screw</text>
+  <line id="FIG01-part-28-lead" x1="498.9" y1="529.29" x2="494.39" y2="518.17" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-28-num" x="504.16" y="542.26" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">28</text>
+  <rect id="FIG01-part-24-shape" x="300" y="110" width="120" height="60" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-24-label" x="360" y="140" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">hold-open detent</text>
+  <line id="FIG01-part-24-lead" x1="347.79" y1="98.49" x2="351.18" y2="110" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-24-num" x="343.84" y="85.06" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">24</text>
+  <ellipse id="FIG01-part-26-shape" cx="495" cy="140" rx="45" ry="30" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-26-label" x="495" y="140" font-family="Liberation Serif, Times New Roman, serif" font-size="13" fill="black" text-anchor="middle" dominant-baseline="middle">cam profile</text>
+  <line id="FIG01-part-26-lead" x1="514.6" y1="100.81" x2="509.23" y2="111.54" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-26-num" x="520.86" y="88.28" font-family="Liberation Serif, Times New Roman, serif" font-size="18" fill="black" text-anchor="middle" dominant-baseline="middle">26</text>
+  <text id="FIG01-caption" x="410" y="602" font-family="Liberation Serif, Times New Roman, serif" font-size="22" fill="black" text-anchor="middle" font-weight="bold">FIG. 1 (representative)</text>
+</svg>

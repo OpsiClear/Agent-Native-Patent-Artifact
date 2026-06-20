@@ -1,0 +1,26 @@
+{
+  "fig": "FIG06",
+  "title": "Authentication exchange",
+  "width": 1180,
+  "height": 900,
+  "parts": [
+    { "numeral": "600", "label": "user device", "shape": "box", "x": 70, "y": 80, "w": 180, "h": 90 },
+    { "numeral": "602", "label": "identity service", "shape": "box", "x": 305, "y": 80, "w": 190, "h": 90 },
+    { "numeral": "604", "label": "entitlement service", "shape": "box", "x": 550, "y": 80, "w": 210, "h": 90 },
+    { "numeral": "606", "label": "content server", "shape": "box", "x": 815, "y": 80, "w": 180, "h": 90 },
+    { "numeral": "608", "label": "key manager", "shape": "box", "x": 815, "y": 250, "w": 180, "h": 76 },
+    { "numeral": "610", "label": "request token", "shape": "box", "x": 170, "y": 270, "w": 260, "h": 64 },
+    { "numeral": "612", "label": "verify entitlement", "shape": "box", "x": 470, "y": 405, "w": 280, "h": 64 },
+    { "numeral": "614", "label": "deliver content", "shape": "box", "x": 690, "y": 545, "w": 280, "h": 64 },
+    { "numeral": "616", "label": "secure module", "shape": "box", "x": 690, "y": 690, "w": 260, "h": 76 }
+  ],
+  "arrows": [
+    { "from": "610", "to": "602", "kind": "flow" },
+    { "from": "602", "to": "612", "kind": "flow" },
+    { "from": "612", "to": "604", "kind": "flow" },
+    { "from": "604", "to": "606", "kind": "flow" },
+    { "from": "606", "to": "608", "kind": "flow" },
+    { "from": "608", "to": "614", "kind": "flow" },
+    { "from": "614", "to": "616", "kind": "flow" }
+  ]
+}

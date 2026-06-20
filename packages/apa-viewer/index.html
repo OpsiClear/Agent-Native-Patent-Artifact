@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>APA Viewer</title>
+  <link rel="stylesheet" href="style.css?v=1" />
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">
+      <span class="logo">§</span>
+      <span class="name">APA</span>
+    </div>
+    <div id="matter-meta" class="matter-meta"></div>
+    <div class="controls">
+      <input id="search" type="search" placeholder="filter by id or text…" autocomplete="off" />
+      <button id="expand-all" title="expand every claim's limitations">expand all</button>
+      <button id="collapse-all" title="collapse everything">collapse all</button>
+    </div>
+  </header>
+
+  <div id="disclaimer" class="disclaimer">
+    Draft artifact - not legal advice; for review by a registered practitioner.
+  </div>
+
+  <div id="layout">
+    <nav id="toc" aria-label="contents"></nav>
+    <main id="doc">
+      <div id="hero" class="hero"></div>
+      <div id="sections"></div>
+      <div id="loading" class="loading">loading…</div>
+    </main>
+  </div>
+
+  <script src="viewer.js?v=1"></script>
+</body>
+</html>

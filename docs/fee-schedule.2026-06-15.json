@@ -1,0 +1,38 @@
+{
+  "effectiveDate": "2025-01-19",
+  "retrievedDate": "2026-06-15",
+  "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+  "currency": "USD",
+  "entityMultipliers": {
+    "large": 1.0,
+    "small": 0.4,
+    "micro": 0.2
+  },
+  "utility": {
+    "basicFiling": 350,
+    "search": 770,
+    "examination": 880,
+    "excessIndependentOver3": 600,
+    "excessClaimsOver20": 200,
+    "multipleDependentClaim": 925,
+    "applicationSizePer50SheetsOver100": 450,
+    "nonDocxSurcharge": 430
+  },
+  "ids": {
+    "_model": "Cumulative-item tiers under 37 CFR 1.17(v) (effective 2025-01-19). The fee is a one-time, cumulative, large-entity amount keyed to the TOTAL number of items of information cited across all IDSs in the application; a later tier is reduced by amounts already paid in earlier tiers. APA does not auto-bill these; it surfaces the tier table for human review.",
+    "tiers": [
+      { "code": "1832", "label": "IDS size fee - cumulative items exceeding 50 but not exceeding 100", "minItemsExclusive": 50, "maxItemsInclusive": 100, "amount": 200 },
+      { "code": "1833", "label": "IDS size fee - cumulative items exceeding 100 but not exceeding 200 (less amounts previously paid)", "minItemsExclusive": 100, "maxItemsInclusive": 200, "amount": 500 },
+      { "code": "1834", "label": "IDS size fee - cumulative items exceeding 200 (less amounts previously paid)", "minItemsExclusive": 200, "maxItemsInclusive": null, "amount": 800 }
+    ]
+  },
+  "prosecution": {
+    "_model": "37 CFR 1.17(a) extension-of-time fees (LARGE entity, effective 2025-01-19), used by apa-prosecute for 1.136(a) response-deadline estimates. The fee is for the TOTAL extension length (NOT additive per month). For a standard 3-month shortened statutory period only tiers 1-3 are usable; a 4th/5th-month total response would exceed the 35 USC 133 six-month statutory maximum, so tiers 4-5 apply only when the shortened period is shorter than 3 months. Apply the entity multiplier; APA surfaces these as estimates to verify. Source: third_party/uspto-references/uspto-filing-and-fees.md (37 CFR 1.17(a)).",
+    "extensions": { "1": 235, "2": 690, "3": 1590, "4": 2495, "5": 3395 },
+    "extensionCodes": { "1": "1251", "2": "1252", "3": "1253", "4": "1254", "5": "1255" }
+  },
+  "_unverified": [
+    "ids.tiers"
+  ],
+  "_note": "ESTIMATE; verify against the live USPTO fee schedule (37 CFR 1.16/1.17). Amounts are LARGE-entity; multiply by entityMultipliers. IMPORTANT MULTIPLIER CORRECTION: the originally-templated multipliers of small=0.50/micro=0.25 are OUT OF DATE. The Unleashing American Innovators Act of 2022 raised the discounts to small=60%/micro=80%, so a small entity now pays 0.40 and a micro entity 0.20 of the large-entity fee (effective 2025-01-19). These corrected multipliers (0.40/0.20) are confirmed against the fetched USPTO fee reference (third_party/uspto-references/uspto-filing-and-fees.md, 37 CFR 1.16/1.17) and are no longer flagged unverified; statute/regulation still governs - verify currency before relying. The IDS size-based fee (37 CFR 1.17(v)) is a cumulative, one-time fee keyed to total items cited and is provided as a reference table only; APA does not compute or assert it automatically. APA never asserts micro-entity status (37 CFR 1.29 is a human certification, not an APA determination)."
+}

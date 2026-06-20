@@ -1,0 +1,23 @@
+{
+  "name": "agent-native-patent-artifact",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent-Native Patent Artifact (APA) - a full-stack, agent-native tool that automates the patent-prep lifecycle. Phase-1 MVP: capture/compile into a machine-executable patent artifact, mechanically validate it, view it, and guard confidentiality. Human-in-the-loop; not legal advice.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "bin": {
+    "apa-validate": "packages/apa-validate/validate.mjs",
+    "apa-redact": "packages/apa-redact/cli.mjs",
+    "apa-manifest": "packages/apa-viewer/build_manifest.mjs"
+  },
+  "scripts": {
+    "gen:skill-docs": "node scripts/gen-skill-docs.mjs",
+    "gen:skill-docs:check": "node scripts/gen-skill-docs.mjs --check",
+    "validate": "node packages/apa-validate/validate.mjs",
+    "viewer:build": "node packages/apa-viewer/build_manifest.mjs",
+    "test": "node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\"",
+    "build": "node scripts/gen-skill-docs.mjs && node scripts/gen-skill-docs.mjs --check && node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\"",
+    "setup": "node scripts/setup.mjs"
+  }
+}

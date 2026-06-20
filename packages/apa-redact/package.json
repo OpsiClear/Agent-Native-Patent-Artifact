@@ -1,0 +1,41 @@
+{
+  "name": "apa-redact",
+  "version": "0.1.0",
+  "description": "Confidentiality/PII/patent redaction guard for the Agent-Native-Patent-Artifact project. Scan-at-sink secrets/PII/legal guardrail. Zero dependencies, Node >=18, plain ESM. Ported from gstack's redaction engine.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "apa-redact": "bin/apa-redact"
+  },
+  "exports": {
+    ".": "./redact-engine.mjs",
+    "./engine": "./redact-engine.mjs",
+    "./patterns": "./redact-patterns.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "main": "redact-engine.mjs",
+  "files": [
+    "redact-patterns.mjs",
+    "redact-engine.mjs",
+    "cli.mjs",
+    "bin/apa-redact",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "redact": "node cli.mjs"
+  },
+  "dependencies": {},
+  "keywords": [
+    "redaction",
+    "pii",
+    "secrets",
+    "patent",
+    "confidentiality",
+    "guardrail",
+    "apa"
+  ]
+}

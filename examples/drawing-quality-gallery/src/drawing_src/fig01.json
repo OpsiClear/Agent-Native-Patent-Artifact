@@ -1,0 +1,28 @@
+{
+  "fig": "FIG01",
+  "title": "Adaptive processing system",
+  "representative": true,
+  "width": 1280,
+  "height": 760,
+  "parts": [
+    { "numeral": "100", "label": "processing system", "shape": "box", "x": 70, "y": 70, "w": 170, "h": 80 },
+    { "numeral": "102", "label": "input interface", "shape": "box", "x": 70, "y": 250, "w": 180, "h": 86 },
+    { "numeral": "104", "label": "parser", "shape": "box", "x": 310, "y": 250, "w": 160, "h": 86 },
+    { "numeral": "106", "label": "normalizer", "shape": "box", "x": 530, "y": 250, "w": 180, "h": 86 },
+    { "numeral": "108", "label": "rules engine", "shape": "box", "x": 770, "y": 250, "w": 180, "h": 86 },
+    { "numeral": "110", "label": "model service", "shape": "box", "x": 1010, "y": 250, "w": 180, "h": 86 },
+    { "numeral": "112", "label": "confidence scorer", "shape": "box", "x": 650, "y": 470, "w": 190, "h": 86 },
+    { "numeral": "114", "label": "audit logger", "shape": "box", "x": 410, "y": 470, "w": 170, "h": 86 },
+    { "numeral": "116", "label": "output formatter", "shape": "box", "x": 910, "y": 470, "w": 190, "h": 86 }
+  ],
+  "arrows": [
+    { "from": "100", "to": "102", "kind": "flow" },
+    { "from": "102", "to": "104", "kind": "flow" },
+    { "from": "104", "to": "106", "kind": "flow" },
+    { "from": "106", "to": "108", "kind": "flow" },
+    { "from": "108", "to": "110", "kind": "flow" },
+    { "from": "108", "to": "112", "kind": "flow" },
+    { "from": "112", "to": "116", "kind": "flow" },
+    { "from": "106", "to": "114", "kind": "flow" }
+  ]
+}

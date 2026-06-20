@@ -1,0 +1,32 @@
+{
+  "name": "apa-assemble",
+  "version": "0.1.0",
+  "description": "Filing-assembly helpers for the Agent-Native-Patent-Artifact project. Includes a DATA-DRIVEN USPTO fee worksheet engine that reads a dated fee schedule (docs/fee-schedule.<date>.json), counts claims via the shared parser, and emits an itemized, entity-adjusted ESTIMATE to verify. Never hardcodes amounts; never asserts micro-entity status. Plain ESM, Node >=18, zero dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "exports": {
+    ".": "./fees.mjs",
+    "./fees": "./fees.mjs"
+  },
+  "main": "fees.mjs",
+  "files": [
+    "fees.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {},
+  "keywords": [
+    "patent",
+    "uspto",
+    "fees",
+    "37cfr1.16",
+    "37cfr1.17",
+    "filing",
+    "apa"
+  ]
+}

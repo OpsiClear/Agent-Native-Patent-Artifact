@@ -1,0 +1,47 @@
+---
+name: specification-drafting
+description: "Draft the 37 CFR 1.77 specification sections for a matter from its embodiments and claims, keeping reference numerals and defined terms consistent, grounding every statement in the disclosure, and scoring against the writing rubric. Invoke as /apa-spec."
+preamble-tier: 3
+version: "0.1"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
+triggers: "draft specification, write spec, detailed description, /apa-spec, abstract, background"
+---
+
+# specification-drafting (`/apa-spec`)
+
+{{PATENT_PREAMBLE}}
+
+## What this does
+Generates the specification text from `src/embodiments.md` (`SPEC####` support paragraphs) and the
+claims, in 37 CFR 1.77 order, with numeral and lexicographic consistency. Every limitation in a claim
+must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the §112 spine.
+
+## Sections (37 CFR 1.77 order; include conditionally-present ones only when warranted)
+1. Title of the invention (matches `PATENT.md`, <=500 chars)
+2. Cross-reference to related applications (if any benefit/priority claim)
+3. Statement re: federally sponsored research (if any)
+4. Field of the invention
+5. Background (neutral - state the problem; do NOT disparage prior art or over-admit)
+6. Brief summary
+7. Brief description of the drawings (one line per figure; must list EVERY figure)
+8. Detailed description (definitions -> system overview -> worked examples -> additional embodiments;
+   every reference numeral introduced here and shown in a figure)
+9. Abstract (<=150 words)
+
+## Procedure
+1. For each claim limitation, ensure a `SPEC####` paragraph teaches and enables it; add/extend paragraphs
+   in `src/embodiments.md` with `grounding: transcribed` (inventor-sourced) or `reconstructed`
+   (drafted from figures), and `defines_numerals` for any numbered element.
+2. **Grounding discipline / new-matter guard:** never state a limitation, advantage, or figure detail
+   not grounded in the disclosure. Write any gap literally as **"Not specified in disclosure"** for the
+   human - do not fill it.
+3. Keep numerals and defined terms consistent with `evidence/drawings/*` and `logic/concepts.md`.
+4. Validate: `node packages/apa-validate/validate.mjs <matter>` (numeral definedness, support edges,
+   term bounds). Resolve or flag warnings; do not assert §112 sufficiency - that is the human's call.
+
+{{WRITING_RUBRIC}}
+
+## Do NOT
+- Invent subject matter (new matter is fatal). Disparage prior art. Claim the spec "enables" anything -
+  the validator proves the support EDGE resolves; enablement sufficiency is a human/LLM-judge flag.
+- Rules as of {{RULES_EFFECTIVE_DATE}}; verify currency.
