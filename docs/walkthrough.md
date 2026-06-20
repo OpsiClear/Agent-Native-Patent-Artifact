@@ -1,7 +1,7 @@
 # APA End-to-End Walkthrough
 
 A new-user tour of the Agent-Native Patent Artifact (APA) lifecycle: from invention disclosure to a
-frozen, filing-ready package. Each step pairs the **skill** you invoke (`/apa-*`) with the concrete
+frozen assembly package draft. Each step pairs the **skill** you invoke (`/apa-*`) with the concrete
 **CLI** that backs or checks it, what it produces, and the gate it must clear.
 
 > Prereqs: Node >= 21, zero dependencies. Run from the repo root. A "matter" is a directory holding the
@@ -92,7 +92,7 @@ phase skills and halts on every gate and human checkpoint.
   or inconsistent numerals).
 - **Produces:** `FIG##` SVGs under `evidence/drawings/` + a consolidated numeral legend.
 - **Gate:** legend must be flag-free; the authoritative numeral check remains `apa-validate`. (SVG is a
-  review format; 37 CFR 1.84 filing-ready raster/PDF conversion is a later phase.)
+  review format; formal 37 CFR 1.84 raster/PDF conversion is a later phase.)
 
 ### 7. Rigor review + examiner adversary
 - **Skill:** `/apa-rigor` (read-only six-dimension audit), then `/apa-examiner` (role-play examiner;

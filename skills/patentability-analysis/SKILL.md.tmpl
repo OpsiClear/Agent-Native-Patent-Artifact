@@ -18,8 +18,9 @@ patentability, novelty, non-obviousness, FTO, validity, or infringement conclusi
 
 ## Procedure
 1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
-   the closest `PA##` references (use `logic/reference_matrix.md` if present). Mark, per cell, whether
-   the reference appears to teach that limitation - as an observation to verify, not a finding.
+   the closest `PA##` references (use `logic/reference_matrix.md` if present). Each cell must carry
+   `appears_teaches: yes|partial|no|unknown`, a short quote or "not located", page/paragraph/location,
+   confidence, and `human_verified`. Mark teaching as an observation to verify, not a finding.
 2. **102 (anticipation):** flag any single reference that appears to teach ALL limitations of a claim.
 3. **102 statutory bars (interview-driven, NOT search):** screen the disclosure's captured bar-date
    events (on-sale, public use, the inventor's own publication/demo) against the effective filing date

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * apa-assemble - collate a matter into a filing-ready package and run the pre-filing gate. Produces the
+ * apa-assemble - collate a matter into an assembly package draft and run the pre-filing gate. Produces the
  * 1.77 specification (md + USPTO print-CSS HTML), an ADS draft, an SB/08 IDS seed, an UNSIGNED
  * declaration template, a fee worksheet (estimate), and a go/no-go preflight. STOPS at the submit
  * boundary - it never signs, certifies, or files. Node >=21, ESM, zero deps.

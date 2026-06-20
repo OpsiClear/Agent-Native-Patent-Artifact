@@ -70,6 +70,23 @@ export function preflight(matterDir, { assembledDir } = {}) {
   if (legend.flags.length) add("drawings", "warn", `${legend.flags.length} numeral flag(s).`);
   else add("drawings", "pass", `${legend.entries.length} numeral(s) reconciled.`);
 
+  // Drawing-quality review: deterministic figure QA is a review aid, not final 1.84 certification.
+  if (legend.entries.length > 0) {
+    const drawingReviewPath = join(matterDir, "evidence", "drawings", "quality-review.json");
+    if (!existsSync(drawingReviewPath)) {
+      add("drawing-quality", "warn", "drawing-quality review not found - run /apa-drawing-quality or apa-figure review-dir before final assembly review.");
+    } else {
+      try {
+        const review = JSON.parse(readFileSync(drawingReviewPath, "utf8"));
+        if ((review.blocking_count || 0) > 0) add("drawing-quality", "block", `${review.blocking_count} blocking drawing-quality finding(s).`);
+        else if ((review.min_score || 100) < 88) add("drawing-quality", "warn", `drawing-quality min_score ${review.min_score}; human/draftsperson review required.`);
+        else add("drawing-quality", "pass", `drawing-quality review passed (min_score ${review.min_score}).`);
+      } catch (e) {
+        add("drawing-quality", "warn", `cannot parse drawing-quality review: ${e.message}`);
+      }
+    }
+  }
+
   // Rigor review (Phase 5): read patent_rigor_report.json if present and enforce its computed verdict.
   const rigorPath = join(matterDir, "patent_rigor_report.json");
   if (existsSync(rigorPath)) {
@@ -79,10 +96,10 @@ export function preflight(matterDir, { assembledDir } = {}) {
       if (!ok) add("rigor-review", "block", `patent_rigor_report.json invalid: ${errors.slice(0, 3).join("; ")}`);
       else if (computed.verdict === "Incomplete") add("rigor-review", "block", "rigor report incomplete - all six dimensions must be scored.");
       else if (isFileable(computed.verdict)) add("rigor-review", "pass", `rigor verdict ${computed.verdict} (mean ${computed.mean}).`);
-      else add("rigor-review", "block", `rigor verdict ${computed.verdict} - resolve findings before filing.`);
+      else add("rigor-review", "block", `rigor verdict ${computed.verdict} - resolve findings before assembly.`);
     } catch (e) { add("rigor-review", "block", `cannot parse patent_rigor_report.json: ${e.message}`); }
   } else {
-    add("rigor-review", "warn", "rigor review not run - run /apa-rigor (File-Ready or File-With-Revisions required before filing).");
+    add("rigor-review", "warn", "rigor review not run - run /apa-rigor (File-Ready or File-With-Revisions required before assembly).");
   }
 
   // Assembled filing document present.

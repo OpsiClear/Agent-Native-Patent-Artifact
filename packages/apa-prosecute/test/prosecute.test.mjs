@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +15,7 @@ const FIXTURE = join(HERE, "fixtures", "oa-01.md");
 // packages/apa-prosecute/test -> repo root is three levels up.
 const REPO_ROOT = join(HERE, "..", "..", "..");
 const EXAMPLE_MATTER = join(REPO_ROOT, "examples", "minimal-patent-artifact");
+const CLI = join(HERE, "..", "cli.mjs");
 
 // -------------------------------------------------------------------------------------------------
 // parse
@@ -152,6 +155,22 @@ test("scaffoldResponse does not invent specification support", () => {
   // The amendment + support-basis fields both defer to counsel rather than inventing support.
   const guardCount = (markdown.match(/Not supported by the spec as filed - route to counsel\./g) || []).length;
   assert.ok(guardCount >= 2, "both the amendment and the support-basis defer to counsel");
+});
+
+test("respond CLI refuses proposed response scaffolds for pro-se matters", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-prosecute-"));
+  try {
+    cpSync(EXAMPLE_MATTER, d, { recursive: true });
+    const patent = join(d, "PATENT.md");
+    writeFileSync(patent, readFileSync(patent, "utf8").replace('user_role: "unknown"', 'user_role: "pro_se"'));
+    const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", FIXTURE, "--write"], {
+      encoding: "utf8",
+    });
+    assert.equal(res.status, 2);
+    assert.match(res.stderr, /practitioner-mode only/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });
 
 // -------------------------------------------------------------------------------------------------

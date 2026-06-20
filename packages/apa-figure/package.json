@@ -1,7 +1,7 @@
 {
   "name": "apa-figure",
   "version": "0.1.0",
-  "description": "Zero-dependency SVG patent-figure generator + reference-numeral legend builder for the Agent-Native-Patent-Artifact project. Plain ESM, Node >=21. SVG (text, no graphics library) reimplementation of the g2tree ReportLab figure primitives. SVG is a review/drafting format; 37 CFR 1.84 filing-ready conversion is a later phase.",
+  "description": "Zero-dependency SVG patent-figure generator + reference-numeral legend builder for the Agent-Native-Patent-Artifact project. Plain ESM, Node >=21. SVG (text, no graphics library) reimplementation of the g2tree ReportLab figure primitives. SVG is a review/drafting format; formal 37 CFR 1.84 conversion is a later phase.",
   "type": "module",
   "license": "MIT",
   "engines": {

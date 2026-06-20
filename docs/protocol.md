@@ -44,6 +44,7 @@ apa_version: "0.1"
 title: "<invention title; also the application title, <=500 chars>"
 application_type: "utility"        # provisional | utility | design | plant | pct | cip
 jurisdiction: "USPTO"
+user_role: "unknown"                 # registered_practitioner | pro_se | unknown
 inventors:                         # >=1 natural person; AI MUST NOT appear here
   - id: "AINVENTOR"                # short stable ID referenced by provenance inventor:<id>
     name: "<natural-person name, or 'TBD'>"

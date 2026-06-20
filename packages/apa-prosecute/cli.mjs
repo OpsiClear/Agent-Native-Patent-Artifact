@@ -15,8 +15,9 @@
  * Node.js >=21, ESM, zero dependencies.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
+import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
 import { computeDeadlines } from "./deadlines.mjs";
 import { scaffoldResponse, oaNumberFromFile } from "./respond.mjs";
@@ -50,6 +51,14 @@ function usage(msg) {
 
 function printDisclaimer() {
   process.stdout.write(`\n${DISCLAIMER}\n`);
+}
+
+function matterUserRole(matter) {
+  try {
+    return parseFrontmatter(readFileSync(join(matter, "PATENT.md"), "utf8")).user_role || "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -147,6 +156,9 @@ function cmdRespond(argv) {
 
   if (!matter) return usage("respond requires --matter <dir>");
   if (!oaFile) return usage("respond requires --oa <file>");
+  if (matterUserRole(matter) === "pro_se") {
+    return usage("respond scaffolds proposed amendments/arguments and is practitioner-mode only; pro-se matters should use parse/deadlines plus a neutral summary/checklist");
+  }
 
   let result;
   try {

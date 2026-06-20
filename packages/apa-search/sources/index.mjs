@@ -6,7 +6,7 @@
  */
 
 export const SOURCE_REGISTRY = [
-  { id: "patentsview", module: "./patentsview.mjs", accessMode: "api", jurisdiction: "US", requiresKey: true, enabledByDefault: true, status: "implemented", note: "PatentSearch API (search.patentsview.org); free key via patentsview.org." },
+  { id: "patentsview", module: "./patentsview.mjs", accessMode: "api", jurisdiction: "US", requiresKey: true, enabledByDefault: true, status: "implemented", note: "PatentsView PatentSearch API (search.patentsview.org); see docs/source-registry.md." },
   { id: "mock", module: "./mock.mjs", accessMode: "api", jurisdiction: "US", requiresKey: false, enabledByDefault: false, status: "implemented", note: "offline deterministic source for tests/demos." },
   { id: "pqai", module: null, accessMode: "api", jurisdiction: "US/NPL", requiresKey: false, enabledByDefault: false, status: "planned", note: "PQAI semantic search (free); Phase-2 follow-on." },
   { id: "epo-ops", module: null, accessMode: "api", jurisdiction: "EP/WO", requiresKey: true, enabledByDefault: false, status: "planned", note: "EPO Open Patent Services (OAuth); not in USPTO-only v1." },

@@ -102,6 +102,20 @@ test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-Fil
   } finally { rmSync(d2, { recursive: true, force: true }); }
 });
 
+test("preflight: blocking drawing-quality findings block assembly", () => {
+  const d = clone();
+  try {
+    writeFileSync(join(d, "evidence", "drawings", "quality-review.json"), JSON.stringify({
+      blocking_count: 1,
+      min_score: 92,
+      verdict: "redraw",
+    }));
+    const pf = preflight(d, {});
+    assert.equal(pf.blocked, true);
+    assert.ok(pf.gates.some((g) => g.name === "drawing-quality" && g.status === "block"), JSON.stringify(pf.gates));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("preflight: an ai-suggested claim limitation BLOCKS assembly (NO-GO)", () => {
   const d = clone();
   try {

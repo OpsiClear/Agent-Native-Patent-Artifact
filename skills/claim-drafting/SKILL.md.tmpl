@@ -14,13 +14,17 @@ triggers: "draft claims, write claims, claim set, /apa-claims, claim ladder, ind
 ## What this does
 Drafts the `CLM##`/`LIM##` claim set in `logic/claims.md` from the inventive concept, embodiments, and
 the prior-art landscape, in the protocol's binding format ({{PROTOCOL_REF}}). Claim **scope is a human
-decision**; you recommend a ladder and flag tradeoffs.
+decision**. In `registered_practitioner` mode, produce candidate ladder/redline drafts for practitioner
+approval. In `pro_se` mode, output neutral possible organizations and questions to discuss with counsel;
+do not select scope or apply narrowing edits.
 
 ## Procedure
 1. **Inputs:** read `logic/problem.md`, `src/embodiments.md`, `logic/prior_art.md` (+ `reference_matrix.md`
    if present), and `logic/patentability.md`. Identify the defensible kernel = the combination the
    closest art (`PA##`) lacks.
-2. **Build the ladder** (see the dual-lens guide below). For each claim write a `### CLM## - <title>`
+2. **Build the ladder** (see the dual-lens guide below). If `user_role: pro_se`, label it
+   `possible_organization_options` and do not choose among alternatives. For each claim write a
+   `### CLM## - <title>`
    section: prose claim text + a ```binding block with `type`, `category`, `depends_on` (dependents),
    `distinguished_over: [PA##]` (the closest art the independent claim reads past), `scope_set_at: [PH##]`
    (log the scope decision in `trace/prosecution.yaml`), and `limitations:` each with `id` (`LIM##`,
@@ -41,5 +45,6 @@ decision**; you recommend a ladder and flag tradeoffs.
 
 ## Do NOT
 - Invent a limitation the disclosure does not support (new matter). Write gaps as "Not specified in disclosure."
-- Decide or assert claim scope/breadth as final, or render a patentability conclusion - recommend and flag.
+- Decide or assert claim scope/breadth as final, render a patentability conclusion, or apply strategic
+  narrowing edits for a pro-se user. Practitioner-mode edits still require human approval.
 - Leave a formal claim limitation `ai-suggested` at assembly - it blocks. Rules as of {{RULES_EFFECTIVE_DATE}}.

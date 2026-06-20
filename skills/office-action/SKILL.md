@@ -11,9 +11,10 @@ version: 0.1
 ## Operating posture (human-in-the-loop)
 
 APA is supervised drafting/assistive software, **not** a registered practitioner and **not** legal
-advice. Every AI output is an unverified draft a competent human must independently review; merely
-relying on AI does not satisfy the 37 CFR 11.18 reasonable-inquiry duty (USPTO AI guidance, Apr 11,
-2024). The registered practitioner (or pro-se inventor) decides, signs, and files. APA assists.
+advice. Every AI output is an unverified draft a competent human must independently review. Only
+natural persons may be named as inventors; AI systems are tools, and ordinary inventorship /
+conception law applies (USPTO revised AI-inventorship guidance, Nov. 26, 2025). The registered
+practitioner (or pro-se inventor) decides, signs, and files. APA assists.
 
 **APA structurally refuses (no override):** it never (1) signs, certifies, or pre-fills an
 executed signature on any USPTO paper (oath/declaration 35 USC 115 / 37 CFR 1.63; certifications
@@ -26,10 +27,11 @@ substance to a non-zero-retention or foreign backend without explicit, logged hu
 **User-role awareness (practitioner vs pro-se).** If the user is a **registered practitioner**, frame
 output as drafts and flags they will verify. If the user is a **pro-se / unrepresented inventor**, you
 are closer to the unauthorized-practice-of-law line: do NOT recommend a course of action (which claim
-scope to pursue, which art to cite, whether/when to file). Reframe every analytical output as neutral
-self-education, lead with a prominent "This is not legal advice and is not a substitute for a registered
-patent attorney or agent," and recommend they consult one. If the user's role is unknown, ask once and
-persist it (matter config).
+scope to pursue, which art to cite, whether/when to file), do NOT apply narrowing amendments, and do
+NOT make strategic claim-scope selections. Reframe analytical output as neutral self-education,
+options, and questions to discuss with counsel; lead with a prominent "This is not legal advice and is
+not a substitute for a registered patent attorney or agent." If the user's role is unknown, ask once
+and persist `user_role` in `PATENT.md` (`registered_practitioner` | `pro_se` | `unknown`).
 
 **Must not claim / imply:** that APA is a registered patent attorney or agent; that it gives legal
 advice; that any 101/102/103/112, patentability, freedom-to-operate, validity, infringement, or
@@ -58,7 +60,8 @@ This is the **optional post-filing extension** (`docs/protocol.md` §8), beyond 
 scope. It models one examination round-trip: capture an Office Action, estimate the response period,
 and scaffold a response. It is **deeper UPL territory** - everything it emits is a **flag or question
 for a registered practitioner**, deadlines are **estimates to verify**, and **APA never signs or
-files**. Implemented by `packages/apa-prosecute`.
+files**. In `pro_se` mode, summarize the OA, neutral concepts, missing information, and questions for a
+registered practitioner; do not propose amendments or arguments. Implemented by `packages/apa-prosecute`.
 
 ## Workflow
 1. **Capture the OA** into `<matter>/prosecution/oa-NN.md` in the protocol format:
@@ -77,12 +80,14 @@ files**. Implemented by `packages/apa-prosecute`.
    statutory maximum, and the per-month 37 CFR 1.136(a) extension rows + 1.17(a) fees. These are
    **ESTIMATES - verify against PAIR/Patent Center; APA is not a docketing system of record** and
    computes no authoritative deadline.
-4. **Scaffold the response:**
+4. **Scaffold the response (registered-practitioner mode only):**
    `node packages/apa-prosecute/cli.mjs respond --matter <m> --oa <f> --write`
    writes `<matter>/prosecution/response-NN.md` (NN matching the OA). Per `REJ##` it emits the
    affected claims, a **flags-and-questions** argument block (NOT conclusions), and a proposed
    amendment under the **new-matter guard** - where the spec as filed does not support an amendment it
    says **"Not supported by the spec as filed - route to counsel"** rather than inventing support.
+   If `user_role: pro_se`, do not run `respond --write`; instead write a neutral OA summary/checklist
+   and recommend consultation with a registered practitioner.
 5. **Hand off.** The scaffold is a **draft** a registered practitioner completes, argues, and files.
    Update `PATENT.md` `status` (`office-action` -> `responded`) to reflect the round-trip.
 
@@ -91,6 +96,8 @@ files**. Implemented by `packages/apa-prosecute`.
   the argument. The practitioner decides what to argue and how.
 - **A registered practitioner argues and files.** APA never signs, certifies, or files a USPTO paper,
   and never asserts an authoritative deadline.
+- **Pro-se mode is summary-only.** No proposed amendments, traversal arguments, or strategic response
+  choices are generated for an unrepresented user.
 - **Deadlines are estimates.** Always re-verify dates and fees against PAIR/Patent Center before
   relying on them; APA is not a docketing system of record.
 - **No new matter.** A proposed amendment must be supported by the specification as filed
@@ -99,8 +106,9 @@ files**. Implemented by `packages/apa-prosecute`.
 See ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a
   practical application / concrete structure. Do not opine on eligibility.
-- **102 (novelty):** element-by-element — anticipation = every limitation in ONE reference. ALSO run
-  a statutory-bar screen from the INTERVIEW (on-sale, public use, the inventor's own disclosure, with
+- **102 (novelty):** element-by-element — anticipation = every limitation in ONE reference. Each
+  prior-art chart cell must be quote-backed with page/paragraph/location and human-verification state.
+  ALSO run a statutory-bar screen from the INTERVIEW (on-sale, public use, the inventor's own disclosure, with
   dates vs the effective filing date and the one-year grace window) — these are not found by search.
 - **103 (obviousness):** apply the Graham factors and name the relevant KSR rationale (MPEP 2143 A-G):
   (A) combine prior-art elements by known methods for predictable results; (B) simple substitution of one

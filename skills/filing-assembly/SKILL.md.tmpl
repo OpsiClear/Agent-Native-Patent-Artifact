@@ -1,6 +1,6 @@
 ---
 name: filing-assembly
-description: "Collate a matter into a filing-ready package - 1.77 specification (HTML print-to-PDF), ADS draft, SB/08 IDS seed, unsigned declaration, fee estimate, and a pre-filing go/no-go checklist. Enforces the inventorship-integrity gate and STOPS at the submit boundary (never signs or files). Invoke as /apa-assemble."
+description: "Collate a matter into an assembly package draft - 1.77 specification (HTML print-to-PDF), ADS draft, SB/08 IDS seed, unsigned declaration, fee estimate, and a pre-filing go/no-go checklist. Enforces the inventorship-integrity gate and STOPS at the submit boundary (never signs or files). Invoke as /apa-assemble."
 preamble-tier: 4
 version: "0.1"
 allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
@@ -12,7 +12,7 @@ triggers: "assemble filing, prepare filing, file-ready, /apa-assemble, ADS, IDS,
 {{PATENT_PREAMBLE}}
 
 ## What this does
-Collates the matter's drafted artifacts into a filing-ready package and runs the pre-filing gate. It
+Collates the matter's drafted artifacts into an **assembly package draft** and runs the pre-filing gate. It
 **collates**, it does not author (use the drafting skills first). Run:
 `node packages/apa-assemble/cli.mjs --matter <matter> --write`.
 
@@ -34,7 +34,7 @@ It produces, under `<matter>/assembled/`:
   a human must adopt each (-> `inventor`/`attorney`/`human-revised`) first.
 - **>= 1 natural-person inventor**, none AI-named.
 - **Mechanical validation** must pass (no errors); claim-form + numeral findings are surfaced.
-- **Rigor review** (/apa-rigor, Phase 5) must reach File-Ready / File-With-Revisions before filing.
+- **Rigor review** (/apa-rigor, Phase 5) must reach File-Ready / File-With-Revisions before assembly.
 
 {{REDACT_INVOCATION_BLOCK:filing}}
 

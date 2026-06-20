@@ -5,7 +5,7 @@
  * plain-Node reimplementation of the g2tree ReportLab figure primitives (box with a
  * numbered part + lead line, flow arrow with a computed arrowhead, self/loop feedback
  * arrow, FIG caption) described in DESIGN.md §11.3. SVG is a REVIEW/drafting format;
- * filing-ready 37 CFR 1.84 black-and-white raster/PDF conversion is a later phase.
+ * formal 37 CFR 1.84 black-and-white raster/PDF conversion is a later phase.
  *
  * Render rules (1.84-flavored): black strokes, white fills, NO color; each part is its
  * shape; a reference numeral is text near the part with a thin lead line to the part

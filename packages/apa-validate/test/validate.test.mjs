@@ -103,6 +103,15 @@ test("unsupported application_type fails loud", () => {
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("unknown user_role fails loud", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace("user_role: \"unknown\"", "user_role: \"robot_patent_agent\""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("USER_ROLE_UNKNOWN"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("ai-suggested claim limitation -> assembly-blocker warning", () => {
   const d = clone();
   try {

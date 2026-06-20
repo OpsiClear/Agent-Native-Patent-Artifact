@@ -19,7 +19,7 @@ preferred and UI scraping is off by default**. This phase implements the API pat
 ## Sources & access modes
 
 `node cli.mjs --list-sources`. Each source declares an access mode:
-- **api** — `patentsview` (USPTO PatentSearch API; free key) ✅, `mock` (offline, tests) ✅; `pqai`, `epo-ops` (planned).
+- **api** — `patentsview` (PatentsView PatentSearch API; free key) ✅, `mock` (offline, tests) ✅; `pqai`, `epo-ops` (planned).
 - **dataset** — `google-bigquery` (the sanctioned, free Google path; planned).
 - **ui-restricted** — `uspto-pps` (examiner-grade, UI-only → human-handoff), `google-patents-ui` (disabled; UI scraping violates Google ToS). Never auto-scraped.
 
@@ -30,7 +30,7 @@ preferred and UI scraping is off by default**. This phase implements the API pat
 node cli.mjs --query "self-watering planter float valve" --source mock
 
 # real USPTO search from a matter's claims (needs a free key):
-export PATENTSVIEW_API_KEY=...        # get one at patentsview.org
+export PATENTSVIEW_API_KEY=...        # see ../../docs/source-registry.md
 node cli.mjs --matter <matter> --source patentsview            # preview ranked candidates
 node cli.mjs --matter <matter> --source patentsview --write    # also file PA## + evidence + reference_matrix
 ```
@@ -49,4 +49,5 @@ patentability-analysis steps (and a human) fill in `discloses`/`lacks` and the m
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
 (untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `mock.mjs`) ·
-`lib/refs.mjs` (record contract + dedupe/rank) · `test/`.
+`lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in
+`../../docs/source-registry.md`.

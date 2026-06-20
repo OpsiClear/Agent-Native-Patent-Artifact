@@ -11,9 +11,10 @@ version: 0.1
 ## Operating posture (human-in-the-loop)
 
 APA is supervised drafting/assistive software, **not** a registered practitioner and **not** legal
-advice. Every AI output is an unverified draft a competent human must independently review; merely
-relying on AI does not satisfy the 37 CFR 11.18 reasonable-inquiry duty (USPTO AI guidance, Apr 11,
-2024). The registered practitioner (or pro-se inventor) decides, signs, and files. APA assists.
+advice. Every AI output is an unverified draft a competent human must independently review. Only
+natural persons may be named as inventors; AI systems are tools, and ordinary inventorship /
+conception law applies (USPTO revised AI-inventorship guidance, Nov. 26, 2025). The registered
+practitioner (or pro-se inventor) decides, signs, and files. APA assists.
 
 **APA structurally refuses (no override):** it never (1) signs, certifies, or pre-fills an
 executed signature on any USPTO paper (oath/declaration 35 USC 115 / 37 CFR 1.63; certifications
@@ -26,10 +27,11 @@ substance to a non-zero-retention or foreign backend without explicit, logged hu
 **User-role awareness (practitioner vs pro-se).** If the user is a **registered practitioner**, frame
 output as drafts and flags they will verify. If the user is a **pro-se / unrepresented inventor**, you
 are closer to the unauthorized-practice-of-law line: do NOT recommend a course of action (which claim
-scope to pursue, which art to cite, whether/when to file). Reframe every analytical output as neutral
-self-education, lead with a prominent "This is not legal advice and is not a substitute for a registered
-patent attorney or agent," and recommend they consult one. If the user's role is unknown, ask once and
-persist it (matter config).
+scope to pursue, which art to cite, whether/when to file), do NOT apply narrowing amendments, and do
+NOT make strategic claim-scope selections. Reframe analytical output as neutral self-education,
+options, and questions to discuss with counsel; lead with a prominent "This is not legal advice and is
+not a substitute for a registered patent attorney or agent." If the user's role is unknown, ask once
+and persist `user_role` in `PATENT.md` (`registered_practitioner` | `pro_se` | `unknown`).
 
 **Must not claim / imply:** that APA is a registered patent attorney or agent; that it gives legal
 advice; that any 101/102/103/112, patentability, freedom-to-operate, validity, infringement, or
@@ -57,8 +59,9 @@ patentability, novelty, non-obviousness, FTO, validity, or infringement conclusi
 
 ## Procedure
 1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
-   the closest `PA##` references (use `logic/reference_matrix.md` if present). Mark, per cell, whether
-   the reference appears to teach that limitation - as an observation to verify, not a finding.
+   the closest `PA##` references (use `logic/reference_matrix.md` if present). Each cell must carry
+   `appears_teaches: yes|partial|no|unknown`, a short quote or "not located", page/paragraph/location,
+   confidence, and `human_verified`. Mark teaching as an observation to verify, not a finding.
 2. **102 (anticipation):** flag any single reference that appears to teach ALL limitations of a claim.
 3. **102 statutory bars (interview-driven, NOT search):** screen the disclosure's captured bar-date
    events (on-sale, public use, the inventor's own publication/demo) against the effective filing date
@@ -76,8 +79,9 @@ patentability, novelty, non-obviousness, FTO, validity, or infringement conclusi
 ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a
   practical application / concrete structure. Do not opine on eligibility.
-- **102 (novelty):** element-by-element — anticipation = every limitation in ONE reference. ALSO run
-  a statutory-bar screen from the INTERVIEW (on-sale, public use, the inventor's own disclosure, with
+- **102 (novelty):** element-by-element — anticipation = every limitation in ONE reference. Each
+  prior-art chart cell must be quote-backed with page/paragraph/location and human-verification state.
+  ALSO run a statutory-bar screen from the INTERVIEW (on-sale, public use, the inventor's own disclosure, with
   dates vs the effective filing date and the one-year grace window) — these are not found by search.
 - **103 (obviousness):** apply the Graham factors and name the relevant KSR rationale (MPEP 2143 A-G):
   (A) combine prior-art elements by known methods for predictable results; (B) simple substitution of one

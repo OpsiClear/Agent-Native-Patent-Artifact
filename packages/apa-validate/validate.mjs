@@ -18,6 +18,7 @@ import { parseFrontmatter, extractBindingBlocks, loadYaml, iterEntitySections, a
 
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
+const SUPPORTED_USER_ROLES = new Set(["registered_practitioner", "pro_se", "unknown"]);
 // Unambiguous machine-inventor markers. Acronyms are matched CASE-SENSITIVELY so legitimate human
 // names ('Ai', 'Claude Monet', 'Neural Wang') are not blocked; phrase forms are case-insensitive.
 // DABUS is the AI from Thaler v. Vidal. (Tightened to remove human-name false positives.)
@@ -205,6 +206,11 @@ export function validateMatter(dir) {
   if (!type) E("TYPE_MISSING", "PATENT.md frontmatter has no application_type.");
   else if (UNSUPPORTED_TYPES.has(type)) E("TYPE_UNSUPPORTED", `application_type '${type}' is not supported in this version - route to counsel/tooling.`);
   else if (!SUPPORTED_TYPES.has(type)) E("TYPE_UNKNOWN", `application_type '${type}' is unknown (supported: provisional, utility, design).`);
+
+  // --- user_role (drives pro-se vs practitioner skill posture) ---
+  if (fm.user_role !== undefined && !SUPPORTED_USER_ROLES.has(fm.user_role)) {
+    E("USER_ROLE_UNKNOWN", `user_role '${fm.user_role}' is unknown (supported: registered_practitioner, pro_se, unknown).`);
+  }
 
   // --- mandatory core (type-aware) ---
   const need = ["PATENT.md", "logic/problem.md", "src/embodiments.md"];

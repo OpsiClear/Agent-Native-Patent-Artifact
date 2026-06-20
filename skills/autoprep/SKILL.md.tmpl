@@ -17,29 +17,37 @@ checkpoints**. It does not replace the individual skills - it sequences them. Ru
 start by creating one). Each step is the corresponding skill; invoke them in turn.
 
 ## Pipeline (stop on any gate failure or checkpoint)
-1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person), and
-   `jurisdiction`. If missing, AskUserQuestion once and persist. **Checkpoint:** confirm the user is a
-   registered practitioner vs. pro-se (drives the disclaimer posture).
+1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person),
+   `jurisdiction`, and `user_role` (`registered_practitioner` | `pro_se` | `unknown`). If missing,
+   AskUserQuestion once and persist. **Checkpoint:** confirm the user is a registered practitioner vs.
+   pro-se before any claim-scope or amendment work.
 2. **Capture / compile** - `/apa-disclose` (new disclosure) or `/apa-compile <path>` (existing patent).
    Then `node packages/apa-validate/validate.mjs <matter>` must be error-free before continuing.
 3. **Prior-art search** - `/apa-priorart` (external sink: the query is scanned at the sink first).
    **Checkpoint:** a human validates the closest-art selection (the search is never asserted complete).
 4. **Patentability** - `/apa-analyze` (claim charts + 101/102/103/112 flags; statutory-bar screen).
-5. **Claims** - `/apa-claims` (dual-lens ladder). Then `node packages/apa-draft/claim-lint.mjs <matter>`
-   and re-validate. **Checkpoint:** the practitioner approves claim scope.
+5. **Claims** - `/apa-claims` (dual-lens ladder for practitioner mode; neutral options/questions for
+   pro-se mode). Then `node packages/apa-draft/claim-lint.mjs <matter>` and re-validate.
+   **Checkpoint:** a registered practitioner approves any claim-scope selection or narrowing edit; in
+   pro-se mode, stop with options/questions rather than applying a strategic edit.
 6. **Specification** - `/apa-spec` (1.77 sections, grounding discipline). Re-validate.
-7. **Figures** - `/apa-figures` (render + reconcile numerals).
+7. **Figures** - `/apa-figures` (render + reconcile numerals). If drawings exist, run
+   `/apa-drawing-quality` after `/apa-figures`; blocking drawing findings stop assembly until a human
+   accepts the risk or fixes the drawings.
 8. **Rigor** - `/apa-rigor` -> `patent_rigor_report.json`. If the computed verdict is **Major-Rework or
-   Do-Not-File**, run `/apa-examiner` (critique->fix loop) and re-run `/apa-rigor` until it reaches
-   **File-Ready / File-With-Revisions** or you surface the residual risk to the human.
+   Do-Not-File**, run at most `max_examiner_loops` (default 2) of `/apa-examiner` -> human-approved
+   edits -> `/apa-rigor`. After the cap, stop with a residual-risk report instead of looping.
 9. **Adopt provenance.** Any claim limitation still `ai-suggested` blocks assembly - a human must adopt
    each (-> `inventor`/`attorney`/`human-revised`). **Checkpoint:** the inventor attests conception.
-10. **Filing assembly** - `/apa-assemble --write`. It enforces the inventorship-integrity gate and the
-    rigor verdict, produces the package (print the HTML to PDF), and **STOPS at the submit boundary**.
+10. **Assembly package draft** - `/apa-assemble --write`. It enforces the inventorship-integrity gate
+    and the rigor verdict, produces the package draft (print the HTML to PDF), and **STOPS at the
+    submit boundary**.
 
 ## Gates that halt the pipeline (do not override)
 - A validator error (Level 1) blocks the next drafting/assembly step.
 - A rigor verdict of Major-Rework / Do-Not-File blocks assembly.
+- Blocking drawing-quality findings block assembly until human review/fix.
+- The examiner-adversary loop stops after `max_examiner_loops` (default 2) and emits residual risk.
 - Any `ai-suggested` claim limitation blocks assembly until a human adopts it.
 - Every external sink passes the scan-at-sink redaction guard.
 

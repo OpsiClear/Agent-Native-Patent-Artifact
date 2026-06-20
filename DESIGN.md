@@ -30,8 +30,9 @@ is the non-negotiable posture, asserted up front:** APA is *supervised drafting/
 software*, never an autonomous practitioner. It will structurally refuse the two acts the law
 reserves for humans — **signing/certifying any USPTO paper** and **filing autonomously** — will
 treat every AI output as an unverified draft that a competent human must independently review
-(merely relying on AI never satisfies the 37 CFR 11.18 reasonable-inquiry duty per the USPTO
-April-2024 AI guidance), will force at least one named natural-person inventor (Thaler v. Vidal),
+(merely relying on AI does not satisfy the human reasonable-inquiry duty), will force at least one
+named natural-person inventor under ordinary inventorship law (Thaler v. Vidal; USPTO revised
+AI-inventorship guidance, Nov. 26, 2025),
 and will keep unfiled inventions confidential behind a scan-at-sink redaction guard. APA assists;
 the registered practitioner (or pro-se inventor) decides, signs, and files.
 
@@ -158,10 +159,11 @@ a **verbatim** affirmation by the *inventor* upgrades `ai-suggested -> inventor`
 evidence); a **paraphrased** human edit upgrades to `human-revised`; an attorney authoring/revision
 upgrades to `attorney`. ARA's other three closure signals license crystallization but **never**
 change provenance. The provenance distribution (surfaced in `PATENT.md` frontmatter) is a trust
-signal and a **human-attestation gate, not an AI-absence gate** (AI-*assisted* inventions are
-patentable per the USPTO Feb-2024 guidance): filing-ready assembly is blocked while any *claim
-limitation* still carries `ai-suggested`, forcing a human to adopt/attest each limitation (promoting
-it to `inventor`/`attorney`/`human-revised`) — see the attribution flow in §11.1.
+signal and a **human-attestation gate, not an AI-absence gate**: assembly-package generation is
+blocked while any *claim limitation* still carries `ai-suggested`, forcing a human to adopt/attest each
+limitation (promoting it to `inventor`/`attorney`/`human-revised`). AI systems are tools, not inventors,
+and ordinary inventorship/conception law applies under the USPTO revised guidance published Nov. 26,
+2025. See the attribution flow in §11.1.
 
 ### 2.5 Cross-layer binding (the load-bearing spine)
 
@@ -240,7 +242,7 @@ internal-rigor reviewer and capture skill are file-I/O-only (no fetch, no exec).
 | **prior-art-search** | `/apa-priorart` | Drives patent + NPL databases, dedupes, ranks, builds the landscape | Key features / claim concepts, CPC hints, assignee names | `prior_art.md` (PA## blocks), `evidence/prior_art/refN.{md,png}`, search-strategy log | gstack `/scrape` + `browse` daemon |
 | **patentability-analysis** | `/apa-analyze` | Element-by-element 101/102/103/112 flagging + claim charts (drafts, not legal opinions) | `claims.md`, closest `PA##` refs, `embodiments.md` | `patentability.md`, `derived_from_refN_chart.md`, questions-for-attorney | ARA `experiments.md` generation |
 | **claim-drafting** | `/apa-claims` | Drafts independent + dependent claims, builds the claim tree, enforces antecedent basis & spec support | Patentability analysis, embodiments, scope strategy | `claims.md` (CLM##/LIM## blocks), claim dependency tree, `concepts.md` term seeds | ARA `claims.md` (Statement/Interpretation split) |
-| **specification-drafting** | `/apa-spec` | Drafts the full 37 CFR 1.77 spec, keeping numerals/terms consistent with claims & drawings | `claims.md` + glossary, `embodiments.md`, drawing list | `embodiments.md`/`solution/*` -> filing-ready spec sections, abstract, brief-description-of-drawings | gstack `make-pdf` source + ARA `solution/` |
+| **specification-drafting** | `/apa-spec` | Drafts the full 37 CFR 1.77 spec, keeping numerals/terms consistent with claims & drawings | `claims.md` + glossary, `embodiments.md`, drawing list | `embodiments.md`/`solution/*` -> specification sections, abstract, brief-description-of-drawings | gstack `make-pdf` source + ARA `solution/` |
 | **figure-generation** | `/apa-figures` | Renders numbered patent drawings/flowcharts from diagram source; reconciles numerals | `drawing_src/*.mmd`, numeral table, method claims | `evidence/drawings/figureN.{md,png}`, numeral-to-element legend | gstack `make-pdf` diagram-prepass + `design` |
 | **filing-assembly** | `/apa-assemble` | Assembles the USPTO-formatted package & runs mechanical filing-readiness | Final spec/claims/abstract, drawings, matter config | Spec/claims/abstract DOCX+PDF, ADS draft, IDS (SB/08) seed, fee worksheet, pre-filing checklist | gstack `make-pdf` orchestrator |
 | **rigor-review** | `/apa-rigor` (+ `/apa-rigor-only`) | Internal §112/antecedent/support rigor audit -> `File-Ready..Do-Not-File` verdict | The assembled artifact (read-only) | `patent_rigor_report.json` (verdict + severity-ranked findings + amendments) | ARA `rigor-reviewer` |
@@ -296,7 +298,7 @@ How each works (2-4 sentences):
 - **filing-assembly.** Renders each part to USPTO-formatted DOCX+PDF via `apa-make-doc` (§4), auto-
   populates the ADS from `PATENT.md` frontmatter, generates the SB/08 IDS from the `prior_art.md`
   index, computes fees from entity status, and runs the mechanical Level-1 filing-readiness checklist.
-  It **stops at the submit boundary** — it produces a filing-ready package and a checklist, but cannot
+  It **stops at the submit boundary** — it produces an assembly package draft and a checklist, but cannot
   sign or file (§7). It surfaces inconsistencies (a numeral used for two parts, an undefined claim
   term) for human resolution rather than auto-harmonizing.
 
@@ -563,7 +565,7 @@ deterministic and judgment halves.
   clamping — patent text is long and adversarial-input-prone.
 
 - **Tier 2 — E2E (paid, periodic).** Fork `session-runner.ts`: spawn `claude -p` on a fixture
-  disclosure and assert the full pipeline runs end to end and produces a filing-ready package.
+  disclosure and assert the full pipeline runs end to end and produces an assembly package draft.
 
 - **Gate vs periodic split.** All **confidentiality/PII guardrail tests are gate-tier** and block
   every PR ("planted HIGH secret in a disclosure is blocked", "a confidential-marked disclosure cannot
@@ -634,9 +636,9 @@ documented in `docs/legal-guardrails.md`.
 2. **Filing autonomously** — Patent Center exposes a *view/status* API (Workbench XML, since Apr 2025)
    but **no public submission/filing API**; filing requires an identity-verified human account +
    per-submission human authorization. `/apa-assemble` stops at the submit boundary and emits a checklist.
-3. **Naming AI as inventor** — at least one natural-person inventor who made a *significant contribution
-   to the conception of each claim* is required (Thaler v. Vidal; cf. the USPTO Feb-2024 guidance that
-   AI-*assisted* human inventions remain patentable). The `PATENT.md` validator rejects a frontmatter
+3. **Naming AI as inventor** — at least one natural-person inventor must be named, and the conception of
+   each claim must be attested by listed natural-person inventors (Thaler v. Vidal; USPTO revised
+   AI-inventorship guidance, Nov. 26, 2025). The `PATENT.md` validator rejects a frontmatter
    with zero `inventors` or any AI-named inventor; the inventorship gate measures **human attestation of
    conception**, not AI absence (§11.1).
 4. **Sending unfiled-disclosure substance to a non-zero-retention or foreign backend without explicit,
@@ -645,7 +647,7 @@ documented in `docs/legal-guardrails.md`.
    secrets but does not make it safe to ship invention substance to an unvetted model.
 
 **Gates that block downstream stages:**
-- Filing-ready assembly is **blocked while any claim limitation carries `ai-suggested`** (inventorship-
+- Assembly-package generation is **blocked while any claim limitation carries `ai-suggested`** (inventorship-
   integrity gate) — a formal claim must be `inventor`/`attorney`/`human-revised`.
 - The rigor verdict must be **File-Ready or File-With-Revisions** (a human accepts the revisions list)
   before assembly proceeds; **Do-Not-File** blocks.
@@ -653,8 +655,8 @@ documented in `docs/legal-guardrails.md`.
 
 **Persistent disclaimers (surfaced, not buried):** APA is drafting/assistive software, not a law firm
 or registered practitioner, and gives no legal advice; all outputs are drafts requiring independent
-human review (relying solely on AI does not satisfy 37 CFR 11.18 reasonable inquiry per the USPTO
-April-2024 guidance, and does not discharge the 37 CFR 1.56 duty of candor — AI may hallucinate prior
+human review (relying solely on AI does not satisfy the human reasonable-inquiry duty, and does not
+discharge the 37 CFR 1.56 duty of candor — AI may hallucinate prior
 art/citations/facts); APA cannot sign/certify/file; only natural persons may be inventors;
 confidentiality/privilege/work-product/trade-secret status of inputs is not guaranteed; do not
 publicly disclose/sell/offer the invention before filing (US one-year grace, absolute novelty abroad);

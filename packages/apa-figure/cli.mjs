@@ -2,7 +2,7 @@
 /**
  * apa-figure CLI - render a patent-figure DSL to SVG, or build a numeral legend.
  *
- * SVG is a REVIEW/drafting format; filing-ready 37 CFR 1.84 black-and-white raster/PDF
+ * SVG is a REVIEW/drafting format; formal 37 CFR 1.84 black-and-white raster/PDF
  * conversion is a later phase. The figures themselves are black-stroke / white-fill, no color.
  *
  * Usage:
@@ -206,7 +206,7 @@ function cmdLegend(args) {
       for (const f of legend.flags) console.log(`  ${f.code}: ${f.msg}`);
     }
     console.log("");
-    console.log("NOTE: drafting aid - the authoritative numeral check is apa-validate. SVG figures are a review format; 1.84 filing-ready conversion is a later phase.");
+    console.log("NOTE: drafting aid - the authoritative numeral check is apa-validate. SVG figures are a review format; formal 1.84 conversion is a later phase.");
   }
 
   return legend.flags.length > 0 ? 1 : 0;

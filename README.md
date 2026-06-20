@@ -25,7 +25,7 @@ injection, bounded parser recursion). Node-only, zero-dependency.
 
 - **Phase 1 — capture & protocol** (fully local, fully confidential): capture/compile an invention into
   a validated artifact, view it, guard confidentiality.
-- **Phase 2 — prior-art search**: API-first (USPTO PatentSearch); every query scanned at the sink first.
+- **Phase 2 — prior-art search**: API-first (PatentsView PatentSearch API); every query scanned at the sink first.
 - **Phase 3 — drafting**: claims, spec, figures, patentability skills + a claim legal-form lint + an SVG figure generator.
 - **Phase 4 — filing assembly**: 1.77 spec (HTML print-to-PDF), ADS, SB/08 IDS, unsigned declaration,
   dated-schedule fee estimate, and a pre-filing go/no-go gate that **stops at the submit boundary**.
@@ -41,11 +41,12 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | Component | What it does | State |
 |---|---|---|
 | `docs/protocol.md` | The canonical on-disk artifact format (manifest + four layers + binding blocks) | ✅ |
+| `docs/source-registry.md` | Prior-art source IDs, access modes, and human-verification requirements | ✅ |
 | `examples/minimal-patent-artifact/` | A worked (fictional) artifact that exercises the protocol | ✅ |
 | `packages/apa-validate/` | Level-1 **mechanical** validator (antecedent basis, claim deps, edge resolution, type-aware core) | ✅ tested |
 | `packages/apa-viewer/` | Static, claims-first viewer + manifest builder (unresolved §112-support edges shown, never dropped) | ✅ tested |
 | `packages/apa-redact/` | Scan-at-sink confidentiality/PII guard (3-tier, patent-extended) | ✅ tested |
-| `packages/apa-search/` | **(Phase 2)** API-first prior-art search (USPTO PatentSearch); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
+| `packages/apa-search/` | **(Phase 2)** API-first prior-art search (PatentsView PatentSearch API); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
 | `packages/apa-draft/` | **(Phase 3)** claim legal-form lint (single-sentence, transitional phrase, numbering, multi-dependent, 112(f) nonce) | ✅ tested |
 | `packages/apa-figure/` | **(Phase 3)** zero-dep SVG patent-figure generator (numbered parts, lead lines, arrows) + numeral reconciliation | ✅ tested |
 | `packages/apa-assemble/` | **(Phase 4)** collate 1.77 spec (HTML print-to-PDF) + ADS + SB/08 IDS + unsigned declaration + fee worksheet + pre-filing gate | ✅ tested |
@@ -88,8 +89,9 @@ node packages/apa-eval/cli.mjs --matter examples/minimal-patent-artifact --mock 
 node scripts/gen-skill-docs.mjs --all-hosts                       # generate per-host skills into dist/ (claude/codex/cursor)
 ```
 
-Live USPTO prior-art search needs a free PatentSearch API key: `export PATENTSVIEW_API_KEY=...`
-(from patentsview.org), then `node packages/apa-search/cli.mjs --matter <matter> --source patentsview --write`.
+Live USPTO prior-art search uses source id `patentsview` (PatentsView PatentSearch API) and needs
+`export PATENTSVIEW_API_KEY=...`; see [docs/source-registry.md](docs/source-registry.md), then run
+`node packages/apa-search/cli.mjs --matter <matter> --source patentsview --write`.
 
 ## Use it in your own project (zero-install drop-in)
 

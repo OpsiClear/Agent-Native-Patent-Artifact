@@ -3,6 +3,7 @@ apa_version: "0.1"
 title: "Self-Watering Planter Insert with a Float-Actuated Valve"
 application_type: "utility"
 jurisdiction: "USPTO"
+user_role: "unknown"
 inventors:
   - id: "AINVENTOR"
     name: "Alex Example"

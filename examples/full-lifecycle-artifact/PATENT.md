@@ -3,6 +3,7 @@ apa_version: "0.1"
 title: "Self-Closing Door Hinge with an Integrated Hydraulic Damper and a Hold-Open Detent"
 application_type: "utility"
 jurisdiction: "USPTO"
+user_role: "unknown"
 inventors:
   - id: "RMORALES"
     name: "Rosa Morales"

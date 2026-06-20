@@ -13,9 +13,10 @@ triggers: "examiner critique, anticipate rejections, /apa-examiner, office actio
 
 ## What this does
 An adversarial loop: you take the examiner's side, enumerate the strongest rejections the matter would
-likely draw, and for each pair the critique with a concrete fix - hardening the application *before* a
-real examiner sees it and leaving a documented record. This complements the read-only `/apa-rigor`
-audit. Output is `trace/prosecution_rationale.md`. Findings are flags for a human, never conclusions.
+likely draw, and pair each critique with a candidate fix - hardening the application *before* a real
+examiner sees it and leaving a documented record. This complements the read-only `/apa-rigor` audit.
+Output is `trace/prosecution_rationale.md`. Findings are flags for a human, never conclusions. In
+`pro_se` mode, output issues and optional discussion points only; do not edit claims or select a fix.
 
 ## Procedure
 1. **Read** the claims, spec, prior-art landscape (`logic/prior_art.md` + `reference_matrix.md`), and
@@ -28,16 +29,17 @@ audit. Output is `trace/prosecution_rationale.md`. Findings are flags for a huma
      known elements, simple substitution, obvious-to-try, ...); address the Graham factors.
    - **112:** written-description / enablement gaps, indefinite terms of degree, 112(f) nonce limitations
      lacking corresponding structure.
-3. **For each critique, write the fix you would make** (narrow a limitation to the defensible kernel,
-   add structure, define a term, push breadth to a dependent/continuation) and the **key distinction**
-   that survives it. This is the examiner-survival lens; keep the broader scope as a continuation note.
+3. **For each critique, write the candidate fix** (narrow a limitation to the defensible kernel, add
+   structure, define a term, push breadth to a dependent/continuation) and the **key distinction** that
+   would survive it. In `registered_practitioner` mode, wait for explicit approval before editing any
+   claim/spec file. In `pro_se` mode, do not apply the fix; output questions/options to take to counsel.
 4. **Record** each as a `### Critique N` block in `trace/prosecution_rationale.md`:
    `Likely critique -> Why it matters -> Fix made -> Key distinction`. Log a corresponding `decision` or
    `dead_end` node in `trace/prosecution.yaml` (a refused-and-foreclosed position becomes a `dead_end`
    so it is never re-argued).
-5. **Re-check** after fixes: `node packages/apa-draft/claim-lint.mjs <matter>` and
-   `node packages/apa-validate/validate.mjs <matter>`; then re-run `/apa-rigor`. Iterate until the rigor
-   verdict clears (File-Ready / File-With-Revisions) or surface the residual risks for the human.
+5. **Re-check** only after human-approved edits: `node packages/apa-draft/claim-lint.mjs <matter>` and
+   `node packages/apa-validate/validate.mjs <matter>`; then re-run `/apa-rigor`. Stop after the caller's
+   `max_examiner_loops` cap (default 2) and surface residual risks rather than looping indefinitely.
 
 {{ANALYSIS_101_102_103_112}}
 
@@ -46,5 +48,7 @@ audit. Output is `trace/prosecution_rationale.md`. Findings are flags for a huma
 ## Do NOT
 - Present a rejection or a fix as a legal conclusion - these are anticipated arguments and drafting
   recommendations for a registered practitioner.
+- Apply claim/spec edits without explicit registered-practitioner approval, or apply any strategic
+  amendment in pro-se mode.
 - Over-narrow silently: when you narrow a claim, record the broader scope as continuation-reserved.
 - Invent prior art or claim limitations (new matter). Rules as of {{RULES_EFFECTIVE_DATE}}.
