@@ -1,0 +1,33 @@
+{
+  "id": "uspto-v1",
+  "jurisdiction": "USPTO",
+  "label": "USPTO utility/provisional/design MVP rule pack",
+  "status": "active",
+  "effective_date": "2026-06-15",
+  "freshness_max_days": 180,
+  "supported_application_types": ["provisional", "utility", "design"],
+  "unsupported_application_types": ["plant", "pct", "cip"],
+  "rule_anchors": [
+    "37 CFR 1.75",
+    "37 CFR 1.77",
+    "37 CFR 1.83",
+    "37 CFR 1.84",
+    "37 CFR 1.97",
+    "37 CFR 1.98",
+    "35 USC 101",
+    "35 USC 102",
+    "35 USC 103",
+    "35 USC 112"
+  ],
+  "disabled_extension_points": [
+    {
+      "jurisdiction": "PCT",
+      "reason": "No PCT rule pack, forms, validation, or examples are implemented."
+    },
+    {
+      "jurisdiction": "EPO",
+      "reason": "No EPO rule pack, forms, validation, or examples are implemented."
+    }
+  ],
+  "disclaimer": "Mechanical drafting support only. Verify current USPTO/eCFR/MPEP sources before filing or relying on any legal position."
+}

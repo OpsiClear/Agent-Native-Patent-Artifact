@@ -54,6 +54,15 @@ function validateCheckpoint(errors, path, cp) {
   if (typeof cp.satisfied !== "boolean") push(errors, pathOf(path, "satisfied"), "must be boolean");
 }
 
+function validateRulePack(errors, path, rulePack) {
+  if (!isObject(rulePack)) return push(errors, path, "must be an object");
+  for (const key of ["id", "jurisdiction", "effective_date", "status", "source"]) {
+    if (!rulePack[key] || typeof rulePack[key] !== "string") {
+      push(errors, pathOf(path, key), "must be a non-empty string");
+    }
+  }
+}
+
 function validateFinding(errors, path, f) {
   if (!isObject(f)) return push(errors, path, "must be an object");
   if (!FINDING_TYPES.includes(f.finding_type)) {
@@ -80,6 +89,7 @@ function validateCommon(errors, report, cfg) {
   if (report.skill !== cfg.skill) push(errors, "skill", `must be ${cfg.skill}`);
   if (!report.matter || typeof report.matter !== "string") push(errors, "matter", "must be a non-empty string");
   if (report.legal_posture !== LEGAL_POSTURE) push(errors, "legal_posture", `must be ${LEGAL_POSTURE}`);
+  validateRulePack(errors, "rule_pack", report.rule_pack);
   if (report.legal_conclusion != null && report.legal_conclusion !== false) {
     push(errors, "legal_conclusion", "must be false when present");
   }
@@ -176,4 +186,3 @@ export function validateReport(report, { kind = "" } = {}) {
 export function formatErrors(errors) {
   return errors.map((e) => `${e.path}: ${e.message}`);
 }
-

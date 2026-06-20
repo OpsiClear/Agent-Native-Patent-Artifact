@@ -44,7 +44,7 @@ YAML frontmatter (the ~200-token L1 relevance gate) followed by Layer Index tabl
 apa_version: "0.1"
 title: "<invention title; also the application title, <=500 chars>"
 application_type: "utility"        # provisional | utility | design | plant | pct | cip
-jurisdiction: "USPTO"
+jurisdiction: "USPTO"                 # only active jurisdiction in v0.1; other values fail loud
 user_role: "unknown"                 # registered_practitioner | pro_se | unknown
 source_span_policy: "warning"        # warning | relaxed  (relaxed = compiled/public imports)
 inventors:                         # >=1 natural person; AI MUST NOT appear here
@@ -62,13 +62,24 @@ provenance_summary: { inventor: 0, attorney: 0, ai-suggested: 0, ai-executed: 0,
 inventorship_matrix: {}            # CLM## -> [inventor id, ...]  (per-claim conception, 35 USC 116)
 claims_summary: []                 # one-line gist per INDEPENDENT claim
 abstract: "<=150-word abstract draft"
-rules_effective_date: "2026-06-15" # the date the encoded USPTO rules/fees were valid; surfaced in output
+rules_effective_date: "2026-06-15" # must match the active dated rule pack; surfaced in outputs/reports
 confidentiality: "UNFILED - CONFIDENTIAL. Do not externally disclose."
 ---
 ```
 
 **Progressive disclosure:** L1 = `PATENT.md` only; L2 = a layer file (`claims.md`, `prior_art.md`,
 `evidence/README.md`); L3 = a detail (one claim's support, one reference's chart, one figure).
+
+### Rule Pack Contract
+
+APA v0.1 has exactly one active rule pack: `docs/rule-packs/uspto.json` (`uspto-v1`,
+`jurisdiction: USPTO`, effective date `2026-06-15`). Validators, generated skill references,
+viewer manifests, and semantic reports surface that rule-pack metadata so a reviewer can see which
+dated assumptions were applied.
+
+Non-USPTO jurisdictions such as PCT or EPO are extension points only. A matter that sets
+`jurisdiction` to anything other than `USPTO` must fail validation instead of silently applying USPTO
+rules. A missing or stale `rules_effective_date` produces a warning requiring currency verification.
 
 ---
 

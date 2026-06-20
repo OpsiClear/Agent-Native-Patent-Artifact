@@ -6,6 +6,8 @@
  * patentability, novelty, validity, FTO, filing readiness, or compliance.
  */
 
+import { rulePackSummary } from "../apa-rules/rule-packs.mjs";
+
 export const REPORT_SCHEMA_VERSION = 1;
 
 export const SEVERITIES = ["blocking", "fix-before-filing", "warning", "info"];
@@ -88,6 +90,7 @@ function commonBase(type, { matter = "", inputs = [], outputs = [] } = {}) {
     title: cfg.title,
     matter: String(matter || ""),
     generated_at: new Date().toISOString(),
+    rule_pack: rulePackSummary(),
     legal_posture: LEGAL_POSTURE,
     inputs,
     outputs,
@@ -159,4 +162,3 @@ export function defaultReportFor(type, opts = {}) {
 
   throw new Error(`unknown report type: ${type}`);
 }
-

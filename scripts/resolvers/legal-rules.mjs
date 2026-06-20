@@ -5,7 +5,10 @@
  * Update the date and content together; CI freshness-checks the generated SKILL.md.
  */
 
-export const rulesEffectiveDate = "2026-06-15";
+import { currentRulePack } from "../../packages/apa-rules/rule-packs.mjs";
+
+export const ACTIVE_USPTO_RULE_PACK = currentRulePack();
+export const rulesEffectiveDate = ACTIVE_USPTO_RULE_PACK.effective_date;
 
 export function claimFormatGuide() {
   return [

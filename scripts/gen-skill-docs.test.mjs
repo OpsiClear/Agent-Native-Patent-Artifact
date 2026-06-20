@@ -53,6 +53,7 @@ test("generated safety references are retained for every host", () => {
     ]);
     assert.match(refs.find((r) => r.path.endsWith("legal-guardrails.md")).content, /APA structurally refuses/);
     assert.match(refs.find((r) => r.path.endsWith("uspto-rule-pack.md")).content, /101\/102\/103\/112/);
+    assert.match(refs.find((r) => r.path.endsWith("uspto-rule-pack.md")).content, /Rule pack: uspto-v1/);
     assert.match(refs.find((r) => r.path.endsWith("confidentiality-sinks.md")).content, /Scan-at-sink/);
     assert.match(refs.find((r) => r.path.endsWith("drawing-standards.md")).content, /37 CFR 1\.84/);
     assert.match(refs.find((r) => r.path.endsWith("source-registry.md")).content, /patentsview/);

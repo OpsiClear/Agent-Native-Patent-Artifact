@@ -39,6 +39,7 @@ export function scaffoldReport(matterDir, opts = {}) {
   return {
     apa_rigor_version: "0.1",
     note: "ARA Seal Level 2 (semantic). Assumes Level 1 (mechanical) passed. READ-ONLY. Every finding is a flag/question for a registered practitioner - NEVER a patentability conclusion or §112 clearance. The verdict is computed deterministically from the scores (apa-rigor check), not chosen.",
+    rule_pack: v.meta.rule_pack,
     level1: { passed: v.errors.length === 0, errorCodes: [...errCodes], warningCount: v.warnings.length, claimFormFindings: lint.findings.map((f) => f.code) },
     prior_art_state: buildPriorArtState(matterDir, opts),
     dimensions,

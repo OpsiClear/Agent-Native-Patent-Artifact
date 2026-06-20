@@ -31,6 +31,7 @@ import {
   loadYaml,
   iterEntitySections,
 } from "../../lib/apa-parse.mjs";
+import { rulePackSummary } from "../apa-rules/rule-packs.mjs";
 
 // ------------------------------------------------------------------------------------------------
 // small fs helpers
@@ -302,6 +303,7 @@ export function build(matterRoot) {
       application_type: fm.application_type || "",
       status: fm.status || "",
       rules_effective_date: fm.rules_effective_date || "",
+      rule_pack: rulePackSummary(),
       provenance_summary:
         fm.provenance_summary && typeof fm.provenance_summary === "object"
           ? fm.provenance_summary

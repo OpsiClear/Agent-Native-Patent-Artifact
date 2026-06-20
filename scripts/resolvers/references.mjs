@@ -17,6 +17,7 @@ import {
   claimFormatGuide,
   drawingStandards,
   idsRequirements,
+  ACTIVE_USPTO_RULE_PACK,
   rulesEffectiveDate,
 } from "./legal-rules.mjs";
 import { redactInvocationBlock } from "./redact-doc.mjs";
@@ -73,6 +74,7 @@ function usptoRulePack() {
   return [
     "# USPTO Rule Pack",
     "",
+    `Rule pack: ${ACTIVE_USPTO_RULE_PACK.id} (${ACTIVE_USPTO_RULE_PACK.jurisdiction}), source \`${ACTIVE_USPTO_RULE_PACK.path}\`.`,
     `Rules effective date: ${rulesEffectiveDate}. Verify current USPTO/eCFR/MPEP sources before filing or relying on any legal position.`,
     "",
     claimFormatGuide(),

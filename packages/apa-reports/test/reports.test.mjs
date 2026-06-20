@@ -20,9 +20,19 @@ function run(args) {
 test("default reports for all four semantic skills validate", () => {
   for (const kind of ["claims", "patentability", "examiner_adversary", "office_action"]) {
     const report = defaultReportFor(kind, { matter: EXAMPLE });
+    assert.equal(report.rule_pack.id, "uspto-v1");
+    assert.equal(report.rule_pack.effective_date, "2026-06-15");
     const result = validateReport(report, { kind });
     assert.equal(result.ok, true, `${kind}: ${JSON.stringify(result.errors)}`);
   }
+});
+
+test("reports require rule-pack metadata", () => {
+  const report = defaultReportFor("claims", { matter: EXAMPLE });
+  delete report.rule_pack.effective_date;
+  const result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "rule_pack.effective_date"));
 });
 
 test("findings require severity, rule anchor, evidence span, and recommendation", () => {
@@ -73,4 +83,3 @@ test("CLI scaffolds and checks minimal reports for an example matter", () => {
     rmSync(d, { recursive: true, force: true });
   }
 });
-

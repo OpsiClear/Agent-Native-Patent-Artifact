@@ -23,6 +23,8 @@ test("scaffoldReport: clean example -> Level-1 passed, mechanical dims prefilled
   assert.equal(s.prior_art_state.dossiers_found, 0);
   assert.equal(s.prior_art_state.cap_required, true);
   assert.ok(s.prior_art_state.cap_reasons.includes("no-search-dossier"));
+  assert.equal(s.rule_pack.id, "uspto-v1");
+  assert.equal(s.rule_pack.effective_date, "2026-06-15");
   assert.ok(s.dimensions.P1.anchors && s.dimensions.P1.anchors[1]);
   assert.deepEqual(s.findings, []);
 });

@@ -27,6 +27,8 @@ test("builds a manifest with meta.title from the example matter", () => {
   assert.equal(typeof m.meta.title, "string");
   assert.ok(m.meta.title.length > 0, "meta.title is non-empty");
   assert.equal(m.meta.application_type, "utility");
+  assert.equal(m.meta.rule_pack.id, "uspto-v1");
+  assert.equal(m.meta.rule_pack.effective_date, "2026-06-15");
 });
 
 test("emits a claim node CLM01 and a claim-limitation node LIM03", () => {

@@ -2,6 +2,7 @@
 
 # USPTO Rule Pack
 
+Rule pack: uspto-v1 (USPTO), source `docs/rule-packs/uspto.json`.
 Rules effective date: 2026-06-15. Verify current USPTO/eCFR/MPEP sources before filing or relying on any legal position.
 
 ### Claim format (37 CFR 1.75; MPEP 608.01) — drafting rules the agent enforces

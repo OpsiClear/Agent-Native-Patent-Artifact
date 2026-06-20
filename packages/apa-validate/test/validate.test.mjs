@@ -25,6 +25,9 @@ test("clean example: no errors, no warnings", () => {
   const r = validateMatter(EXAMPLE);
   assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
   assert.equal(r.warnings.length, 0, JSON.stringify(r.warnings));
+  assert.equal(r.meta.jurisdiction, "USPTO");
+  assert.equal(r.meta.rule_pack.id, "uspto-v1");
+  assert.equal(r.meta.rule_pack.effective_date, "2026-06-15");
 });
 
 test("dangling supported_by -> UNSUPPORTED_EDGE warning, not an error", () => {
@@ -109,6 +112,30 @@ test("unknown user_role fails loud", () => {
     edit(d, "PATENT.md", (t) => t.replace("user_role: \"unknown\"", "user_role: \"robot_patent_agent\""));
     const r = validateMatter(d);
     assert.ok(codes(r.errors).includes("USER_ROLE_UNKNOWN"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("non-USPTO jurisdiction fails loud instead of validating under USPTO rules", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('jurisdiction: "USPTO"', 'jurisdiction: "EPO"'));
+    const r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("JURISDICTION_UNSUPPORTED"), JSON.stringify(r.errors));
+    assert.equal(r.meta.rule_pack.id, "uspto-v1");
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("missing or stale rules_effective_date warns with active rule-pack metadata", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('rules_effective_date: "2026-06-15"', 'rules_effective_date: "2025-01-01"'));
+    let r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("RULE_PACK_DATE_MISMATCH"), JSON.stringify(r.warnings));
+    assert.equal(r.meta.rule_pack.effective_date, "2026-06-15");
+
+    edit(d, "PATENT.md", (t) => t.replace('rules_effective_date: "2025-01-01"\n', ""));
+    r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("RULES_EFFECTIVE_DATE_MISSING"), JSON.stringify(r.warnings));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 

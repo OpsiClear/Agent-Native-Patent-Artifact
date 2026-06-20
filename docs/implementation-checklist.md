@@ -478,11 +478,11 @@ Verification:
 ### 2.3 Jurisdiction And Rule Packs
 
 Tasks:
-- [ ] Keep USPTO as the only default active jurisdiction.
-- [ ] Move USPTO-specific rules into an explicit rule pack.
-- [ ] Add fail-loud behavior for unsupported jurisdictions.
-- [ ] Add dated rule-pack metadata and freshness warnings.
-- [ ] Prepare extension points for PCT/EPO without enabling them prematurely.
+- [x] Keep USPTO as the only default active jurisdiction.
+- [x] Move USPTO-specific rules into an explicit rule pack.
+- [x] Add fail-loud behavior for unsupported jurisdictions.
+- [x] Add dated rule-pack metadata and freshness warnings.
+- [x] Prepare extension points for PCT/EPO without enabling them prematurely.
 
 Suggested targets:
 - `docs/rule-packs/`
@@ -491,12 +491,12 @@ Suggested targets:
 - `packages/apa-validate/validate.mjs`
 
 Acceptance criteria:
-- [ ] USPTO matters behave exactly as before.
-- [ ] Non-USPTO jurisdiction does not silently validate under USPTO rules.
-- [ ] Rule effective date appears in outputs and reports.
+- [x] USPTO matters behave exactly as before.
+- [x] Non-USPTO jurisdiction does not silently validate under USPTO rules.
+- [x] Rule effective date appears in outputs and reports.
 
 Verification:
-- [ ] `node --test packages/apa-validate/test/*.test.mjs scripts/**/*.test.mjs`
+- [x] `node --test packages/apa-rules/test/*.test.mjs packages/apa-validate/test/*.test.mjs packages/apa-reports/test/*.test.mjs packages/apa-rigor/test/*.test.mjs packages/apa-viewer/test/*.test.mjs scripts/gen-skill-docs.test.mjs`
 
 ### 2.4 Counsel / Work-Product Mode
 

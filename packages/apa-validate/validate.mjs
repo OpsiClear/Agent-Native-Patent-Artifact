@@ -20,6 +20,7 @@ import {
   sourceSpanFindings,
   sourceSpanPolicyOf,
 } from "./source-spans.mjs";
+import { evaluateMatterRulePack } from "../apa-rules/rule-packs.mjs";
 
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
@@ -175,6 +176,12 @@ export function validateMatter(dir) {
   const fm = m.frontmatter;
   const reg = buildNodeIds(m);
   const type = fm.application_type;
+  const rulePackState = evaluateMatterRulePack({
+    jurisdiction: fm.jurisdiction,
+    rulesEffectiveDate: fm.rules_effective_date,
+  });
+  for (const e of rulePackState.errors) E(e.code, e.msg);
+  for (const w of rulePackState.warnings) W(w.code, w.msg);
 
   // --- global ID uniqueness (protocol: CLM/LIM/TERM/PA/SPEC/FIG ids are globally unique) ---
   {
@@ -367,8 +374,9 @@ export function validateMatter(dir) {
   info.push({ code: "PROVENANCE_LIMITATIONS", msg: `claim-limitation provenance counts: ${JSON.stringify(counts)}` });
 
   const meta = {
-    title: fm.title, application_type: type, status: fm.status,
+    title: fm.title, application_type: type, jurisdiction: rulePackState.jurisdiction, status: fm.status,
     rules_effective_date: fm.rules_effective_date, claims: m.claims.length,
+    rule_pack: rulePackState.rule_pack,
     inventors: inventors.length, figures: m.figures.length, prior_art: m.priorArt.length,
   };
   return { dir, errors, warnings, info, meta };
@@ -401,7 +409,9 @@ function main(argv) {
   if (asJson) {
     console.log(JSON.stringify(report, null, 2));
   } else {
-    const stamp = report.meta.rules_effective_date ? ` (rules as of ${report.meta.rules_effective_date}; verify currency)` : "";
+    const stamp = report.meta.rule_pack
+      ? ` (rule pack ${report.meta.rule_pack.id} as of ${report.meta.rule_pack.effective_date}; verify currency)`
+      : report.meta.rules_effective_date ? ` (rules as of ${report.meta.rules_effective_date}; verify currency)` : "";
     console.log(`APA Level-1 validation: ${report.dir}${stamp}`);
     console.log(`  ${report.meta.title || "(untitled)"} - ${report.meta.application_type || "?"} - ${report.meta.claims} claim(s)`);
     for (const e of report.errors) console.log(`  ERROR   [${e.code}] ${e.msg}`);
