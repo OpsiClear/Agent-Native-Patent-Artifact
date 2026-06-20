@@ -19,7 +19,9 @@ start by creating one). Each step is the corresponding skill; invoke them in tur
 Maintain `<matter>/trace/runlog.jsonl` as the audit ledger whenever a step writes files, runs a
 command, touches an external sink, or reaches a human checkpoint. If resuming a long run, keep
 `<matter>/trace/autoprep_state.json` with the stage name, input hashes, output hashes, and whether the
-human checkpoint was satisfied.
+human checkpoint was satisfied. Use the deterministic helper in
+`packages/apa-trace/autoprep-state.mjs` for stage completion, hash-based skip checks, restarts, and
+`max_examiner_loops` enforcement; do not rely on prompt text alone for resumability.
 
 ## Pipeline (stop on any gate failure or checkpoint)
 1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person),

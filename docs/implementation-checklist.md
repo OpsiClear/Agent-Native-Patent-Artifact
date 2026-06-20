@@ -576,30 +576,31 @@ not overstate the remaining gap.
 ### 3.1 `/apa-autoprep`
 
 Detailed tasks:
-- [ ] Implement `trace/autoprep_state.json` with current stage, stage input hashes, output hashes,
+- [x] Implement `trace/autoprep_state.json` with current stage, stage input hashes, output hashes,
   last completed timestamp, and next recommended stage.
-- [ ] Stage hashes prevent unnecessary reruns when inputs and outputs have not changed.
-- [ ] Human checkpoints are written to `trace/runlog.jsonl` and resumable from
+- [x] Stage hashes prevent unnecessary reruns when inputs and outputs have not changed.
+- [x] Human checkpoints are written to `trace/runlog.jsonl` and resumable from
   `trace/autoprep_state.json`.
 - [x] Skill text caps examiner loops and requires residual-risk output after the cap.
-- [ ] Enforce `max_examiner_loops` in an autoprep runner or deterministic state helper, not only in
+- [x] Enforce `max_examiner_loops` in an autoprep runner or deterministic state helper, not only in
   prompt instructions.
-- [ ] Add a recovery path for interrupted runs: resume, restart stage, or emit blocked-state report.
+- [x] Add a recovery path for interrupted runs: resume, restart stage, or emit blocked-state report.
 
 Suggested targets:
 - `skills/autoprep/SKILL.md.tmpl`
 - `packages/apa-trace/runlog.mjs`
+- `packages/apa-trace/autoprep-state.mjs`
 - `packages/apa-trace/test/*.test.mjs`
 - Optional future runner: `packages/apa-autoprep/*`
 
 Acceptance criteria:
-- [ ] Re-running autoprep after no input changes does not repeat file-writing stages.
-- [ ] A partially completed run can resume without losing earlier checkpoint state.
-- [ ] Examiner loop count is recorded and cannot exceed configured cap without a human override.
+- [x] Re-running autoprep after no input changes does not repeat file-writing stages.
+- [x] A partially completed run can resume without losing earlier checkpoint state.
+- [x] Examiner loop count is recorded and cannot exceed configured cap without a human override.
 
 Verification:
-- [ ] `node --test packages/apa-trace/test/*.test.mjs`
-- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node --test packages/apa-trace/test/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.2 `/apa-disclose`
 

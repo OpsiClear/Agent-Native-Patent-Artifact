@@ -14,12 +14,20 @@ The runlog is not a legal conclusion and does not mark a filing act complete. It
 can reconstruct what ran, what bytes left the machine, which artifacts changed, and which human checks
 remain open.
 
+`autoprep-state.mjs` writes and validates the resumable state file
+`<matter>/trace/autoprep_state.json`. It records the current stage, completed-stage input/output
+hashes, last completion timestamp, next recommended stage, human checkpoints, and examiner loop
+count. It also exposes hash comparison for skip decisions, restart helpers, blocked-state reports,
+and machine enforcement of `max_examiner_loops`.
+
 Current integrations:
 
 - `apa-search --write` logs prior-art query sink hash, generated prior-art outputs, the search dossier,
   and the closest-art human checkpoint.
 - `apa-assemble --write` logs generated assembly outputs and the human filing checkpoints APA refuses
   to perform.
+- `/apa-autoprep` state helpers record resumable stage state and append checkpoint records to the
+  runlog when a stage completes.
 
 Validation:
 
