@@ -1,0 +1,21 @@
+{
+  "schema": "apa-benchmark-expected-v1",
+  "case_id": "synthetic-disclosure-to-assembly",
+  "mechanical": {
+    "validation_errors": 0,
+    "validation_warnings": 0,
+    "preflight_go": true,
+    "claims": 2,
+    "limitations": 4,
+    "unresolved_edges": 0,
+    "review_blocking_count": 0
+  },
+  "semantic_snapshot": {
+    "source_class": "synthetic_disclosure",
+    "mock_eval_scores": {
+      "claim": 4,
+      "spec": 4,
+      "patentability": 4
+    }
+  }
+}

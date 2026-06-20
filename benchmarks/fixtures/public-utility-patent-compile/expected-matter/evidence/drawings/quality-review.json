@@ -1,0 +1,8 @@
+{
+  "schema": "apa-drawing-quality-review-v1",
+  "verdict": "benchmark-transcription-only",
+  "min_score": 100,
+  "mean_score": 100,
+  "findings": [],
+  "blocking_count": 0
+}

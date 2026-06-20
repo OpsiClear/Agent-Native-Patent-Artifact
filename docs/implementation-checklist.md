@@ -432,13 +432,18 @@ Verification:
 
 ### 2.1 Benchmark Suite
 
+Current state: `benchmarks/` contains one public utility patent compile fixture, one public USPTO
+Office Action/sample fixture, and one synthetic disclosure-to-assembly fixture. `scripts/benchmark.mjs
+--mock` verifies fixture policy, expected mechanical outputs, and semantic snapshots offline; live LLM
+evaluation remains periodic/advisory outside the commit gate.
+
 Tasks:
-- [ ] Create benchmark fixture policy: public patents, public OAs, and synthetic disclosures only.
-- [ ] Add one public utility patent compile fixture.
-- [ ] Add one public Office Action fixture.
-- [ ] Add one synthetic disclosure-to-assembly fixture.
-- [ ] Add expected mechanical outputs and semantic review snapshots.
-- [ ] Keep fixtures small enough for offline CI.
+- [x] Create benchmark fixture policy: public patents, public OAs, and synthetic disclosures only.
+- [x] Add one public utility patent compile fixture.
+- [x] Add one public Office Action fixture.
+- [x] Add one synthetic disclosure-to-assembly fixture.
+- [x] Add expected mechanical outputs and semantic review snapshots.
+- [x] Keep fixtures small enough for offline CI.
 
 Suggested targets:
 - `benchmarks/`
@@ -447,12 +452,12 @@ Suggested targets:
 - `.github/workflows/periodic-evals.yml`
 
 Acceptance criteria:
-- [ ] Benchmarks run offline in deterministic mode.
-- [ ] Paid LLM evaluation remains periodic/advisory, not per-commit required.
-- [ ] Benchmark results are visible as artifacts or JSON summaries.
+- [x] Benchmarks run offline in deterministic mode.
+- [x] Paid LLM evaluation remains periodic/advisory, not per-commit required.
+- [x] Benchmark results are visible as artifacts or JSON summaries.
 
 Verification:
-- [ ] `node scripts/benchmark.mjs --mock`
+- [x] `node scripts/benchmark.mjs --mock`
 
 ### 2.2 Skill Trigger Tests
 
@@ -935,17 +940,17 @@ Verification:
 6. [x] Add rigor staleness caps.
 7. [x] Decide and implement legal-preamble progressive disclosure.
 8. [x] Add trigger tests.
-9. [ ] Add benchmarks.
+9. [x] Add benchmarks.
 10. [x] Add human review UI.
 
 ## Release Gate
 
 Before declaring this implementation plan complete:
 
-- [ ] `docs/review-coverage.md` has no "Deferred" item without a linked issue, checklist item, or
+- [x] `docs/review-coverage.md` has no "Deferred" item without a linked issue, checklist item, or
   explicit out-of-scope rationale.
 - [ ] Every skill that writes files emits or references a machine-readable report.
 - [ ] Every external sink goes through a package-level guard, not only prompt instructions.
 - [ ] Every human checkpoint is represented in a machine-readable artifact.
-- [ ] The example matters still validate and smoke-test cleanly.
+- [x] The example matters still validate and smoke-test cleanly.
 - [ ] The final repository state is pushed only after `npm run build` passes.

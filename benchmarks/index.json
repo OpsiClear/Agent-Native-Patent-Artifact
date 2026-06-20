@@ -1,0 +1,36 @@
+{
+  "schema": "apa-benchmark-index-v1",
+  "policy": {
+    "allowed_source_classes": [
+      "public_patent",
+      "public_office_action",
+      "synthetic_disclosure"
+    ],
+    "offline_commit_gate": true,
+    "live_llm_eval": "periodic-advisory-only"
+  },
+  "cases": [
+    {
+      "id": "public-utility-patent-compile",
+      "kind": "compiled-public-patent",
+      "source_class": "public_patent",
+      "source": "benchmarks/fixtures/public-utility-patent-compile/source.md",
+      "matter": "benchmarks/fixtures/public-utility-patent-compile/expected-matter",
+      "expected": "benchmarks/fixtures/public-utility-patent-compile/expected.json"
+    },
+    {
+      "id": "public-office-action",
+      "kind": "public-office-action",
+      "source_class": "public_office_action",
+      "office_action": "benchmarks/fixtures/public-office-action/office-action.md",
+      "expected": "benchmarks/fixtures/public-office-action/expected.json"
+    },
+    {
+      "id": "synthetic-disclosure-to-assembly",
+      "kind": "synthetic-disclosure-to-assembly",
+      "source_class": "synthetic_disclosure",
+      "matter": "examples/minimal-patent-artifact",
+      "expected": "benchmarks/fixtures/synthetic-disclosure-to-assembly/expected.json"
+    }
+  ]
+}

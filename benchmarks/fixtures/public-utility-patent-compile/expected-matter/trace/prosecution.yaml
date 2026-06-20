@@ -1,0 +1,10 @@
+root: PH01
+nodes:
+  - id: PH01
+    type: decision
+    summary: "Compiled public patent source; conception path not reconstructed."
+    choice: "Represent the public source as source-extracted benchmark content only."
+    alternatives: []
+    evidence: ["Public patent source does not prove private conception facts."]
+    children: []
+    provenance: not-recoverable

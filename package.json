@@ -24,6 +24,7 @@
     "syntax": "node scripts/check-syntax.mjs",
     "skills:check": "node scripts/check-skills.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "benchmark": "node scripts/benchmark.mjs --mock",
     "coverage": "node scripts/coverage-summary.mjs",
     "test": "node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\"",
     "build": "node scripts/gen-skill-docs.mjs && node scripts/gen-skill-docs.mjs --check && node scripts/check-syntax.mjs && node scripts/check-skills.mjs && node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\" && node scripts/smoke.mjs",

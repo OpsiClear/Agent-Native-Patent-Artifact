@@ -1,0 +1,19 @@
+{
+  "schema": "apa-benchmark-expected-v1",
+  "case_id": "public-utility-patent-compile",
+  "mechanical": {
+    "validation_errors": 0,
+    "validation_warnings": 0,
+    "claims": 1,
+    "limitations": 3,
+    "unresolved_edges": 0,
+    "review_blocking_count": 0,
+    "review_warning_count": 0
+  },
+  "semantic_snapshot": {
+    "source_class": "public_patent",
+    "compiled_provenance": "source-extracted",
+    "must_not_reconstruct_conception": true,
+    "expected_title": "Compiled Public Patent Fixture - Flying-machine"
+  }
+}

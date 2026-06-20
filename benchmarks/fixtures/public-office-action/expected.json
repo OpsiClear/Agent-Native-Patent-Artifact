@@ -1,0 +1,16 @@
+{
+  "schema": "apa-benchmark-expected-v1",
+  "case_id": "public-office-action",
+  "mechanical": {
+    "rejections": 2,
+    "grounds": ["102", "103"],
+    "mailing_date": "2026-01-15",
+    "statutory_3_month": "2026-04-15",
+    "statutory_6_month": "2026-07-15"
+  },
+  "semantic_snapshot": {
+    "source_class": "public_office_action",
+    "authoritative_deadline": false,
+    "requires_human_deadline_verification": true
+  }
+}
