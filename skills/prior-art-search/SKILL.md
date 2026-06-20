@@ -84,6 +84,9 @@ airtight enforcement.
    USPTO Patent Public Search (`uspto-pps`) is examiner-grade but **UI-only** and the Google Patents UI
    (`google-patents-ui`) is **ToS-restricted** - these are **human-handoff**, never auto-scraped. Run
    `--list-sources` to see each source's access mode/status.
+   If a specific URL must be fetched for verification, use
+   `node packages/apa-safe/cli.mjs fetch <url> --matter <matter> --out <matter>/evidence/prior_art/<id>-fetched.md`;
+   do not use raw `WebFetch` or ad hoc network `Bash`.
 3. **File the landscape and dossier.** Re-run with `--write` to append `PA##` blocks + write
    `evidence/prior_art/` records + a `logic/reference_matrix.md` scaffold + a timestamped
    `evidence/prior_art/search-dossier-*.json`. Every reference is written **UNVERIFIED**.

@@ -215,20 +215,23 @@ Verification:
 ### 1.3 External Sink Wrappers
 
 Current state: `apa-search` has scan-at-sink; `apa-eval` has network bounds and injection fencing.
-Generic wrappers such as `apa-safe-fetch`, `apa-safe-npx`, and `apa-safe-cloud-llm` are not implemented.
+`packages/apa-safe` now provides generic guarded wrappers for send/fetch/npx, with exact-byte
+redaction scanning, MEDIUM approval, runlog sink hashes, untrusted fetch envelopes, and pinned-npx
+policy. `apa-safe-send --kind cloud-llm` is the generic cloud-payload guard; `apa-eval` keeps its
+native bounded client/injection fence.
 
 Tasks:
-- [ ] Define the external sink contract: exact bytes scanned, redaction verdict, human approval policy,
+- [x] Define the external sink contract: exact bytes scanned, redaction verdict, human approval policy,
   and runlog entry.
-- [ ] Add `apa-safe-fetch` for URL fetches with untrusted-content envelope output.
-- [ ] Add `apa-safe-npx` for network package execution with version pinning and approval checks.
-- [ ] Add `apa-safe-send` for generic outbound payloads.
-- [ ] Add `apa-safe-cloud-llm` or extend `apa-eval` so cloud sends share the same guardrail contract.
-- [ ] Make wrappers use `packages/apa-redact` exact-byte scanning.
-- [ ] Make wrappers fail closed on HIGH findings.
-- [ ] Make wrappers require `--yes` or explicit approval for MEDIUM findings.
-- [ ] Make wrappers write runlog sink hashes when `--matter <dir>` is supplied.
-- [ ] Update skills to call wrappers instead of raw `WebFetch`, raw network `Bash`, or unpinned `npx`.
+- [x] Add `apa-safe-fetch` for URL fetches with untrusted-content envelope output.
+- [x] Add `apa-safe-npx` for network package execution with version pinning and approval checks.
+- [x] Add `apa-safe-send` for generic outbound payloads.
+- [x] Add `apa-safe-cloud-llm` or extend `apa-eval` so cloud sends share the same guardrail contract.
+- [x] Make wrappers use `packages/apa-redact` exact-byte scanning.
+- [x] Make wrappers fail closed on HIGH findings.
+- [x] Make wrappers require `--yes` or explicit approval for MEDIUM findings.
+- [x] Make wrappers write runlog sink hashes when `--matter <dir>` is supplied.
+- [x] Update skills to call wrappers instead of raw `WebFetch`, raw network `Bash`, or unpinned `npx`.
 
 Suggested targets:
 - `packages/apa-safe/cli.mjs`
@@ -241,15 +244,15 @@ Suggested targets:
 - `skills/rigor-review/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] HIGH secret in outbound payload exits nonzero before egress.
-- [ ] MEDIUM finding exits hold state unless approved.
-- [ ] `apa-safe-npx @pkg@version -- ...` records exact package spec and command.
-- [ ] Unpinned `npx @pkg` is refused unless an explicit override is provided and logged.
-- [ ] Fetched content is wrapped as untrusted data with canary protection before any model-facing use.
+- [x] HIGH secret in outbound payload exits nonzero before egress.
+- [x] MEDIUM finding exits hold state unless approved.
+- [x] `apa-safe-npx @pkg@version -- ...` records exact package spec and command.
+- [x] Unpinned `npx @pkg` is refused unless an explicit override is provided and logged.
+- [x] Fetched content is wrapped as untrusted data with canary protection before any model-facing use.
 
 Verification:
-- [ ] `node --test packages/apa-safe/test/*.test.mjs packages/apa-redact/test/*.test.mjs`
-- [ ] `npm run build`
+- [x] `node --test packages/apa-safe/test/*.test.mjs packages/apa-redact/test/*.test.mjs`
+- [x] `npm run build`
 
 ### 1.4 Progressive Disclosure For Legal Preamble
 
@@ -578,7 +581,7 @@ Verification:
 
 ### 3.9 `/apa-svg-upgrader`
 
-- [ ] Route unpinned external generators through `apa-safe-npx`.
+- [x] Route unpinned external generators through `apa-safe-npx`.
 - [ ] Require pre/post SVG diff.
 - [ ] Require numeral parity report.
 - [ ] Require `svg_upgrade_report.json`.
@@ -616,9 +619,9 @@ Verification:
 
 ## Recommended Execution Order
 
-1. [ ] Implement runlog helper and integrate `apa-search` + `apa-assemble`.
+1. [x] Implement runlog helper and integrate `apa-search` + `apa-assemble`.
 2. [x] Expand source-span validation in warning mode.
-3. [ ] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
+3. [x] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
 4. [ ] Add report schema package and wire claims/patentability/examiner/OA reports.
 5. [ ] Expand prior-art dossier and upload manifest fields.
 6. [ ] Add rigor staleness caps.

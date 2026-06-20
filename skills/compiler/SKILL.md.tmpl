@@ -3,7 +3,7 @@ name: compiler
 description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile <path>."
 preamble-tier: 3
 version: "0.1"
-allowed-tools: "Read, Write, Edit, Glob, Grep, WebFetch"
+allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
 triggers: "compile patent, lift patent, /apa-compile, build artifact from patent, convert patent to artifact"
 ---
 
@@ -18,6 +18,12 @@ Reverse-engineers a patent / published application / disclosure document into a 
 a PDF/text patent, a publication, or a pile of notes.
 
 {{REDACT_INVOCATION_BLOCK:cloud-llm}}
+
+For URL inputs, do not call raw `WebFetch`. Fetch through the guarded wrapper so the outbound URL is
+scanned and the response is wrapped as untrusted data:
+`node packages/apa-safe/cli.mjs fetch <url> --matter <matter> --out <matter>/staging/source-fetch.md`.
+If the matter directory does not exist yet, create it first or fetch into a temporary local file and
+record the command in the compile notes.
 
 ## Stages (run in order)
 

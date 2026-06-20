@@ -18,7 +18,7 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **216 tests, all passing** (`bash
+generation, CI, and an end-to-end integration test. The suite is **239 tests, all passing** (`bash
 build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.
@@ -46,6 +46,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `packages/apa-validate/` | Level-1 **mechanical** validator (antecedent basis, claim deps, edge resolution, type-aware core) | ✅ tested |
 | `packages/apa-viewer/` | Static, claims-first viewer + manifest builder (unresolved §112-support edges shown, never dropped) | ✅ tested |
 | `packages/apa-redact/` | Scan-at-sink confidentiality/PII guard (3-tier, patent-extended) | ✅ tested |
+| `packages/apa-safe/` | Guarded external-sink wrappers (`send`, `fetch`, `npx`): exact-byte scan, MEDIUM approval, runlog sink hashes, untrusted fetch envelope | ✅ tested |
 | `packages/apa-search/` | **(Phase 2)** API-first prior-art search (PatentsView PatentSearch API); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
 | `packages/apa-draft/` | **(Phase 3)** claim legal-form lint (single-sentence, transitional phrase, numbering, multi-dependent, 112(f) nonce) | ✅ tested |
 | `packages/apa-figure/` | **(Phase 3)** zero-dep SVG patent-figure generator (numbered parts, lead lines, arrows) + numeral reconciliation | ✅ tested |
@@ -83,6 +84,7 @@ npm run syntax                                                   # parse-check f
 npm run coverage                                                 # V8 first-party function coverage summary
 npm run smoke                                                    # cross-package CLI smoke checks
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
+node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@0.1.0 --dry-run -- --help   # guarded network-tool demo
 node scripts/setup.mjs --install                                  # optional: copy skills into ~/.claude/skills/apa-*
 node packages/apa-skills/bin/apa-skills.mjs list                  # the npx installer (also: install [--host] / uninstall)
 node packages/apa-eval/cli.mjs --matter examples/minimal-patent-artifact --mock   # LLM-judge eval, offline

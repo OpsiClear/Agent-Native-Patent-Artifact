@@ -28,8 +28,9 @@ Choose one canonical source and preserve it:
 - **PatentDSL / `.pdg`** for new block diagrams, flowcharts, sequence diagrams, and state diagrams
   where automatic patent-style layout is useful. The public `@shibayama/pdgkit` package can validate
   and render `.pdg` to SVG/PDF; use it as an optional external generator, not as an unreviewed black box.
-  If installed through `npx`, pin an exact version or get explicit approval before an unpinned network
-  execution, and record the package/version in the report.
+  If installed through `npx`, use `apa-safe-npx` / `node packages/apa-safe/cli.mjs npx` with a pinned
+  exact version and record the package/version in the report. Unpinned network execution requires
+  `--allow-unpinned --yes` and must appear in the runlog.
 - **Manual SVG** only when starting from an existing high-value drawing that must be normalized.
 - **CAD/DXF-derived source** only for mechanical/device embodiments where geometry matters.
 
@@ -54,8 +55,8 @@ Produce SVGs and sheets with these properties:
    `src/drawing_src/*`, and drawing numeral markdown. Note which figures are merely rough.
 2. **Pick the upgrade route.**
    - For APA JSON figures, revise the JSON coordinates/labels and re-render with `apa-figure`.
-   - For new diagrammatic figures, consider `.pdg` via `pdgkit`: run a pinned `npx
-     @shibayama/pdgkit@<version>` command after approval, write a `.pdg`, validate, render, then
+   - For new diagrammatic figures, consider `.pdg` via `pdgkit`: run pinned commands through
+     `node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@<version> -- ...`, write a `.pdg`, validate, render, then
      import the resulting SVG and numeral table into APA.
    - For existing SVGs, normalize the SVG directly only when source JSON/PDG is unavailable.
 3. **Normalize style.** Remove color, gradients, shadows, filters, images, foreignObject, frames,
@@ -82,9 +83,9 @@ box/ellipse renderer is too crude.
 
 Recommended commands (pin the exact version used in real work):
 ```sh
-npx @shibayama/pdgkit@<version> guide
-npx @shibayama/pdgkit@<version> validate fig01.pdg
-npx @shibayama/pdgkit@<version> render fig01.pdg -o fig01.svg
+node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@<version> -- guide
+node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@<version> -- validate fig01.pdg
+node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@<version> -- render fig01.pdg -o fig01.svg
 ```
 
 Keep the `.pdg` beside the APA source, for example `src/drawing_src/fig01.pdg`, and preserve any

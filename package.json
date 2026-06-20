@@ -9,7 +9,11 @@
   "bin": {
     "apa-validate": "packages/apa-validate/validate.mjs",
     "apa-redact": "packages/apa-redact/cli.mjs",
-    "apa-manifest": "packages/apa-viewer/build_manifest.mjs"
+    "apa-manifest": "packages/apa-viewer/build_manifest.mjs",
+    "apa-safe": "packages/apa-safe/cli.mjs",
+    "apa-safe-send": "packages/apa-safe/cli.mjs",
+    "apa-safe-fetch": "packages/apa-safe/cli.mjs",
+    "apa-safe-npx": "packages/apa-safe/cli.mjs"
   },
   "scripts": {
     "gen:skill-docs": "node scripts/gen-skill-docs.mjs",
