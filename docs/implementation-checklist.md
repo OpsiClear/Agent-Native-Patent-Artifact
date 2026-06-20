@@ -10,6 +10,12 @@ This checklist converts the latest implementation plan into executable work item
 more operational than `docs/review-coverage.md`: every open item lists target files, acceptance
 criteria, and verification commands.
 
+Status legend:
+- `[x]` means implemented and covered by at least the verification listed for that item.
+- `[ ]` means open work.
+- "Covered by Phase N" means the detailed implementation is tracked in that earlier section; the
+  skill-by-skill item is kept so future reviewers can see which skill concern it closes.
+
 ## Global Definition Of Done
 
 Every implementation PR or commit must satisfy:
@@ -539,95 +545,366 @@ Verification:
 
 ## Phase 3 - Skill-By-Skill Cleanup Items
 
+This section reconciles the skill-by-skill review against the package-level work above. When a skill
+item is already covered by a Phase 1 implementation, it is marked done here too so this checklist does
+not overstate the remaining gap.
+
 ### 3.1 `/apa-autoprep`
 
-- [ ] Implement `trace/autoprep_state.json`.
-- [ ] Stage hashes prevent unnecessary reruns.
-- [ ] Human checkpoints are written and resumed.
-- [ ] Examiner loop cap is machine-enforced, not just skill text.
+Detailed tasks:
+- [ ] Implement `trace/autoprep_state.json` with current stage, stage input hashes, output hashes,
+  last completed timestamp, and next recommended stage.
+- [ ] Stage hashes prevent unnecessary reruns when inputs and outputs have not changed.
+- [ ] Human checkpoints are written to `trace/runlog.jsonl` and resumable from
+  `trace/autoprep_state.json`.
+- [x] Skill text caps examiner loops and requires residual-risk output after the cap.
+- [ ] Enforce `max_examiner_loops` in an autoprep runner or deterministic state helper, not only in
+  prompt instructions.
+- [ ] Add a recovery path for interrupted runs: resume, restart stage, or emit blocked-state report.
+
+Suggested targets:
+- `skills/autoprep/SKILL.md.tmpl`
+- `packages/apa-trace/runlog.mjs`
+- `packages/apa-trace/test/*.test.mjs`
+- Optional future runner: `packages/apa-autoprep/*`
+
+Acceptance criteria:
+- [ ] Re-running autoprep after no input changes does not repeat file-writing stages.
+- [ ] A partially completed run can resume without losing earlier checkpoint state.
+- [ ] Examiner loop count is recorded and cannot exceed configured cap without a human override.
+
+Verification:
+- [ ] `node --test packages/apa-trace/test/*.test.mjs`
+- [ ] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.2 `/apa-disclose`
 
-- [ ] Source spans on every promoted observation.
-- [ ] Limitation-level inventor attribution prompt.
-- [ ] Bar-date facts get immutable trace entries.
+Detailed tasks:
+- [ ] Source spans on every promoted observation that becomes claim, embodiment, or spec support.
+- [ ] Limitation-level inventor attribution prompt: "who conceived this limitation?" not only
+  claim-level attribution.
+- [ ] Bar-date facts get immutable trace entries with source, speaker, timestamp/date, and hash.
+- [ ] Distinguish raw transcript/upload facts from agent observations and human-adopted conclusions.
+- [ ] Add relaxed-mode guidance for public/compiled imports where source spans cannot be recovered.
+
+Suggested targets:
+- `skills/disclosure-capture/SKILL.md.tmpl`
+- `docs/protocol.md`
+- `packages/apa-validate/source-spans.mjs`
+
+Acceptance criteria:
+- [ ] New promoted observations include `source`, `source_span`, `source_sha256`, and adoption state.
+- [ ] Inventorship prompt operates at limitation granularity.
+- [ ] Bar-date/candor facts are not silently overwritten by later disclosure sessions.
+
+Verification:
+- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [ ] `node --test packages/apa-validate/test/*.test.mjs`
 
 ### 3.3 `/apa-compile`
 
-- [ ] Add OCR/text-quality flags.
-- [ ] Preserve claim page/line spans.
+Detailed tasks:
+- [ ] Add OCR/text-quality flags for each imported document and each claim extraction.
+- [ ] Preserve claim page/line/paragraph spans where the source supports it.
 - [ ] Use `source-extracted`, `inferred-from-document`, and `not-recoverable` labels.
 - [ ] Never reconstruct conception decisions from public documents without evidence.
-- [ ] Wrap fetched content in untrusted envelope.
+- [x] Skills route raw fetched content through safe wrappers and untrusted-content handling.
+- [ ] Add compile report output describing extraction confidence, OCR uncertainty, and unrecoverable
+  provenance.
+
+Suggested targets:
+- `skills/compiler/SKILL.md.tmpl`
+- `skills/compiler/references/validation-checklist.md`
+- `packages/apa-safe/*`
+- Future compile package files if a deterministic compiler is added.
+
+Acceptance criteria:
+- [ ] Compiled public patent claims retain original numbering and source spans.
+- [ ] Inferred facts are never upgraded to invention-conception provenance.
+- [ ] Low-confidence OCR/text extraction blocks automatic claim drafting from that text.
+
+Verification:
+- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [ ] Future deterministic compile tests once compiler code exists.
 
 ### 3.4 `/apa-priorart`
 
-- [ ] Expand search dossier as described in Phase 1.6.
-- [ ] Add closest-art human verification update flow.
-- [ ] Preserve all unverified defaults.
+Detailed tasks:
+- [x] Expand search dossier as described in Phase 1.6.
+- [x] Add closest-art human verification update flow.
+- [x] Preserve all unverified defaults.
+- [ ] Add quote-backed chart handoff from prior-art records into `/apa-analyze`.
+- [ ] Add a "search coverage limits" field that records known unsearched sources/classes.
+
+Suggested targets:
+- `packages/apa-search/writers.mjs`
+- `packages/apa-search/cli.mjs`
+- `skills/prior-art-search/SKILL.md.tmpl`
+- `skills/patentability-analysis/SKILL.md.tmpl`
+
+Acceptance criteria:
+- [x] Dossier records what was searched, where, when, with what parameters, and why results were
+  assigned/excluded.
+- [x] Closest-art selection remains human-unverified by default.
+- [ ] `/apa-analyze` can consume prior-art records without losing quote/page/paragraph proof.
+
+Verification:
+- [x] `node --test packages/apa-search/test/*.test.mjs`
+- [ ] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.5 `/apa-analyze`
 
-- [ ] Make every chart cell quote-backed.
-- [ ] Add exact obviousness motivation/rationale.
-- [ ] Add reasonable expectation of success.
-- [ ] Add secondary-consideration nexus fields.
+Detailed tasks:
+- [ ] Make every chart cell quote-backed: `appears_teaches`, quote, page/paragraph, confidence, and
+  human verification.
+- [ ] Add exact obviousness motivation/rationale and identify whether it is record evidence, common
+  sense, design need, market pressure, or another KSR-style rationale.
+- [ ] Add reasonable expectation of success field for each proposed combination.
+- [ ] Add secondary-consideration nexus fields and require evidence citation before relying on them.
+- [x] Require `patentability_report.json` schema validation for material analysis outputs.
+
+Suggested targets:
+- `skills/patentability-analysis/SKILL.md.tmpl`
+- `packages/apa-reports/schemas.mjs`
+- `packages/apa-reports/test/*.test.mjs`
+- Future patentability-analysis package if deterministic chart writing is added.
+
+Acceptance criteria:
+- [ ] No limitation chart cell can be marked `yes` or `partial` without a source quote/span.
+- [ ] Obviousness combinations separate rationale, expectation of success, and counter-teaching.
+- [ ] Analysis report remains flags/questions, not a legal conclusion of patentability.
+
+Verification:
+- [x] `node --test packages/apa-reports/test/*.test.mjs`
+- [ ] Add report fixture tests for quote-backed chart cells.
 
 ### 3.6 `/apa-claims`
 
-- [ ] Keep multiple-dependent claims unsupported unless implemented deliberately.
+Detailed tasks:
+- [x] Keep multiple-dependent claims unsupported unless implemented deliberately.
 - [ ] If implemented, update fee logic, claim lint, validator, examples, and docs together.
-- [ ] Preserve pro-se neutral options only.
+- [x] Preserve pro-se neutral options only.
+- [x] Require `claims_report.json` schema validation when claim-lint writes a report.
+- [ ] Add an explicit unsupported-feature warning when a user requests multiple-dependent claims in
+  MVP mode.
+
+Suggested targets:
+- `skills/claim-drafting/SKILL.md.tmpl`
+- `packages/apa-validate/validate.mjs`
+- `packages/apa-draft/*`
+- `packages/apa-reports/*`
+
+Acceptance criteria:
+- [ ] Multiple-dependent claim syntax is either rejected clearly or fully supported across fees,
+  dependencies, examples, and validation.
+- [ ] Pro-se mode returns neutral organization options/questions, not strategic claim-scope advice.
+- [x] AI-suggested limitations still block assembly until human adoption.
+
+Verification:
+- [ ] `node --test packages/apa-validate/test/*.test.mjs packages/apa-draft/test/*.test.mjs packages/apa-reports/test/*.test.mjs`
 
 ### 3.7 `/apa-spec`
 
-- [ ] Add conditional 37 CFR 1.77 sections to output when warranted.
-- [ ] Fail loud on unsupported domains such as ST.26 sequence listings.
+Detailed tasks:
+- [ ] Add conditional 37 CFR 1.77 sections to output when warranted, including government support,
+  joint research agreement parties, sequence listings, and incorporation by reference.
+- [ ] Fail loud on unsupported domains such as ST.26 sequence listings instead of drafting around
+  them.
 - [ ] Require source-span proof for `SPEC####` in strict mode.
+- [x] Validator warns on adopted `SPEC####` paragraphs missing source-span metadata.
+- [ ] Add `specification_report.json` or extend shared report schemas if spec drafting becomes a
+  deterministic writer.
+
+Suggested targets:
+- `skills/specification-drafting/SKILL.md.tmpl`
+- `docs/protocol.md`
+- `packages/apa-validate/validate.mjs`
+- `packages/apa-reports/schemas.mjs`
+
+Acceptance criteria:
+- [ ] Conditional sections appear only when supported by matter facts or are marked not applicable.
+- [ ] Unsupported sequence-listing cases stop with a counsel/tooling handoff.
+- [ ] Strict source-span mode can block assembly on unsupported `SPEC####` content if enabled.
+
+Verification:
+- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [ ] `node --test packages/apa-validate/test/*.test.mjs`
 
 ### 3.8 `/apa-figures`
 
-- [ ] Keep drawing-quality review as downstream gate.
-- [ ] Ensure figure generator does not add unsupported visual matter.
-- [ ] Keep numeral reconciliation deterministic.
+Detailed tasks:
+- [x] Keep drawing-quality review as downstream gate.
+- [ ] Ensure figure generator does not add unsupported visual matter by requiring support edges or
+  source facts for each newly visualized element.
+- [x] Keep numeral reconciliation deterministic.
+- [ ] Add figure-generation report fields for generated numerals, removed numerals, and unsupported
+  visual-change risks.
+
+Suggested targets:
+- `skills/figure-generation/SKILL.md.tmpl`
+- `packages/apa-figure/*`
+- `packages/apa-assemble/preflight.mjs`
+- `packages/apa-reports/schemas.mjs`
+
+Acceptance criteria:
+- [x] Missing drawing QA warns and blocking drawing findings block assembly.
+- [ ] New numerals/elements are traceable to claim/spec/support facts.
+- [ ] Figure report can be reviewed without manually diffing SVG text.
+
+Verification:
+- [x] `node --test packages/apa-figure/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 3.9 `/apa-svg-upgrader`
 
+Detailed tasks:
 - [x] Route unpinned external generators through `apa-safe-npx`.
-- [ ] Require pre/post SVG diff.
-- [ ] Require numeral parity report.
+- [ ] Require pre/post SVG diff for every upgraded file.
+- [ ] Require numeral parity report comparing before/after reference numerals and labels.
 - [ ] Require `svg_upgrade_report.json`.
+- [ ] Block upgrades that add new visual structures not present in the source drawing spec.
+
+Suggested targets:
+- `skills/patent-svg-upgrader/SKILL.md.tmpl`
+- `packages/apa-figure/*`
+- `packages/apa-safe/*`
+- `packages/apa-reports/schemas.mjs`
+
+Acceptance criteria:
+- [ ] The upgrade report lists changed files, preflight before/after, numerals added/removed, and
+  human-review-required flags.
+- [ ] Version-pinned external tools are logged; unpinned tools require explicit override and runlog
+  entry.
+- [ ] Numeral parity failure blocks marking the upgrade ready for drawing QA.
+
+Verification:
+- [ ] `node --test packages/apa-figure/test/*.test.mjs packages/apa-safe/test/*.test.mjs`
 
 ### 3.10 `/apa-drawing-quality`
 
+Detailed tasks:
 - [ ] Persist machine-readable findings with sheet, figure, bbox, severity, rule reference, and
   measured/visual status.
-- [ ] Add visual regression examples: good set, crowded flowchart, bad callouts, PDF font substitution.
+- [ ] Add visual regression examples: good set, crowded flowchart, bad callouts, PDF font
+  substitution.
+- [ ] Record when text-size, line-weight, and margin checks are measured versus visually assessed.
+- [ ] Keep final-compliance caveat explicit: drawing QA is a precheck, not USPTO compliance
+  certification.
+
+Suggested targets:
+- `skills/patent-drawing-quality/SKILL.md.tmpl`
+- `packages/apa-figure/*`
+- `examples/*/evidence/drawings/`
+- `packages/apa-assemble/preflight.mjs`
+
+Acceptance criteria:
+- [ ] `evidence/drawings/quality-review.json` contains actionable findings with locations.
+- [ ] Example gallery includes known-good and known-bad drawing sets.
+- [ ] Blocking drawing findings still block assembly.
+
+Verification:
+- [ ] `node --test packages/apa-figure/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 3.11 `/apa-assemble`
 
-- [ ] Expand `upload_manifest.json` as described in Phase 1.7.
-- [ ] Keep final package language as "assembly package draft."
-- [ ] Add runlog integration.
+Detailed tasks:
+- [x] Expand `upload_manifest.json` as described in Phase 1.7.
+- [x] Keep final package language as "assembly package draft."
+- [x] Add runlog integration.
+- [ ] Add explicit issue/link from any deferred human filing/signature act to the relevant upload
+  manifest field.
+- [ ] Keep generated-source files separate from human-produced upload PDFs.
+
+Suggested targets:
+- `packages/apa-assemble/upload-manifest.mjs`
+- `packages/apa-assemble/cli.mjs`
+- `packages/apa-assemble/preflight.mjs`
+- `skills/filing-assembly/SKILL.md.tmpl`
+
+Acceptance criteria:
+- [x] Upload manifest hashes generated local files and defaults human filing acts to incomplete.
+- [x] Assembly output never says APA signed, certified, uploaded, or filed.
+- [ ] Human-signature and Patent Center actions can be tracked without being auto-completed.
+
+Verification:
+- [x] `node --test packages/apa-assemble/test/*.test.mjs`
 
 ### 3.12 `/apa-rigor`
 
-- [ ] Add prior-art staleness checks.
-- [ ] Add human-verified closest-art cap.
-- [ ] Consider display aliases for verdict labels.
+Detailed tasks:
+- [x] Add prior-art staleness checks.
+- [x] Add human-verified closest-art cap.
+- [x] Add display aliases for verdict labels while retaining historical enum compatibility.
+- [ ] Add runlog entry when `apa-rigor scaffold` writes a report.
+- [ ] Add a report freshness summary that states which prior-art dossier was used.
+
+Suggested targets:
+- `packages/apa-rigor/cli.mjs`
+- `packages/apa-rigor/scaffold.mjs`
+- `packages/apa-rigor/verdict.mjs`
+- `skills/rigor-review/SKILL.md.tmpl`
+
+Acceptance criteria:
+- [x] Stale or unverified prior art prevents overconfident filing-quality verdicts.
+- [ ] Rigor report generation appends inputs, outputs, command record, and human checkpoint to
+  `trace/runlog.jsonl` when attached to a matter.
+- [ ] Rigor output identifies prior-art search age and closest-art verification state.
+
+Verification:
+- [x] `node --test packages/apa-rigor/test/*.test.mjs`
+- [ ] Add runlog integration tests for `apa-rigor`.
 
 ### 3.13 `/apa-examiner`
 
-- [ ] Make loop cap machine-enforced.
-- [ ] Ensure no claim/spec edits happen without registered-practitioner approval.
-- [ ] Keep privilege/work-product caution visible.
+Detailed tasks:
+- [x] Skill text and autoprep routing cap examiner loops.
+- [ ] Make loop cap machine-enforced through autoprep state or examiner report metadata.
+- [x] Ensure no claim/spec edits happen without registered-practitioner approval.
+- [x] Keep privilege/work-product caution visible.
+- [x] Require `examiner_adversary_report.json` schema validation for material examiner reports.
+- [ ] Add report field for `dead_end` arguments so later prosecution work does not reuse them.
+
+Suggested targets:
+- `skills/examiner-adversary/SKILL.md.tmpl`
+- `packages/apa-reports/schemas.mjs`
+- Future autoprep/examiner deterministic runner if added.
+
+Acceptance criteria:
+- [ ] Examiner loop count is visible in machine-readable state.
+- [ ] Pro-se mode produces neutral issues/questions only.
+- [ ] Any proposed amendment is a proposal requiring practitioner/human approval before adoption.
+
+Verification:
+- [x] `node --test packages/apa-reports/test/*.test.mjs`
+- [ ] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.14 `/apa-office-action`
 
+Detailed tasks:
 - [ ] Expand taxonomy for restriction/election, final/non-final, advisory actions, after-final, RCE,
   appeal, ODP/terminal disclaimer, 101 examples, and drawing objections.
 - [ ] Fail loud on unsupported event types.
-- [ ] Keep pro-se mode summary-only.
+- [x] Keep pro-se mode summary-only.
+- [x] `apa-prosecute respond --write` refuses pro-se write mode.
+- [x] `apa-prosecute respond --write` emits `office_action_report.json`.
+- [ ] Add runlog entry for OA parse/scaffold actions in practitioner mode.
+- [ ] Add deadline-support matrix that explicitly identifies which event types the estimator supports.
+
+Suggested targets:
+- `packages/apa-prosecute/cli.mjs`
+- `packages/apa-prosecute/deadlines.mjs`
+- `packages/apa-prosecute/test/*.test.mjs`
+- `skills/office-action/SKILL.md.tmpl`
+
+Acceptance criteria:
+- [ ] Unsupported OA event types produce a clear unsupported-event finding instead of a misleading
+  draft response.
+- [x] Pro-se mode cannot write amendment/argument scaffolds.
+- [ ] Practitioner-mode OA scaffold writes runlog inputs, outputs, command record, and required human
+  checkpoints.
+
+Verification:
+- [x] `node --test packages/apa-prosecute/test/*.test.mjs`
+- [ ] Add OA runlog integration test.
 
 ## Recommended Execution Order
 
