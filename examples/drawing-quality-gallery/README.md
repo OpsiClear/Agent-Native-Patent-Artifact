@@ -11,3 +11,9 @@ node packages/apa-figure/cli.mjs review-dir examples/drawing-quality-gallery/src
 ```
 
 The review command is a drafting aid, not a formal USPTO compliance certification.
+
+The gallery also includes known-bad regression cases under `src/known_bad/` and
+`evidence/known_bad/`: a crowded flowchart, bad callouts, and a PDF/font-substitution style SVG with
+tiny text and line weights. These fixtures are expected to fail the deterministic review and are used
+to verify that machine-readable findings include sheet, figure, bbox, issue type, rule reference, and
+measured/visual status.

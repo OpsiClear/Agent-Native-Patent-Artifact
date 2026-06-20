@@ -25,7 +25,9 @@ ReportLab path is reimplemented in plain Node.
    builds a consolidated numeral legend, a Brief Description of the Drawings list, and drafting-time
    flags that mirror the validator's numeral checks.
 3. **`quality.mjs`** — deterministic SVG/spec quality preflight for black/white styling, forbidden
-   SVG constructs, numerals, lead lines, crowding, caption clearance, and long labels.
+   SVG constructs, numerals, lead lines, crowding, caption clearance, long labels, text size, and
+   line weight. Findings include sheet, figure, bbox, issue type, rule reference, measured/visual
+   status, and a suggested fix.
 4. **`cli.mjs`** — `render`, `render-dir`, `review-dir`, and `legend` subcommands.
 
 ---
@@ -98,6 +100,11 @@ node cli.mjs render-dir src/drawing_src --out-dir evidence/drawings
 # run the deterministic drawing-quality preflight on rendered SVGs
 node cli.mjs review-dir src/drawing_src --svg-dir evidence/drawings --out drawing-review.json --min-score 88
 ```
+
+The review report includes a flattened `findings` array for dashboards and per-figure `reviews[*]`
+entries for detailed inspection. Each finding carries `sheet`, `figure`, `bbox`, `issue_type`,
+`rule_reference`, `measured_or_visual`, and `suggested_fix`; the report also summarizes measured vs.
+visual checks in `measurement_summary`.
 
 As a library:
 
@@ -174,4 +181,6 @@ Covers: `renderFigure` output (FIG caption, every numeral, an arrowhead `<marker
 `stroke="black"`/`fill="white"` with no color, determinism); `buildLegend` on the example matter (the
 four numerals, a FIG. 1 brief line, no flags); and synthesized drawings producing
 `NUMERAL_UNDEFINED` and `NUMERAL_INCONSISTENT` flags. The `examples/drawing-quality-gallery/`
-fixture exercises eight drawing classes and must pass the deterministic quality review.
+fixture exercises eight known-good drawing classes and must pass the deterministic quality review.
+It also includes known-bad regression cases for crowded flowcharts, bad callouts, and PDF/font
+substitution artifacts.

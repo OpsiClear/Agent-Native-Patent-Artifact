@@ -223,6 +223,48 @@ test("cli render: --out before the positional figdef resolves the figdef as inpu
   }
 });
 
+test("cli review-dir writes quality-review.json with structured findings", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-figure-review-"));
+  try {
+    const src = join(dir, "src", "drawing_src");
+    const svgDir = join(dir, "evidence", "drawings");
+    mkdirSync(src, { recursive: true });
+    mkdirSync(svgDir, { recursive: true });
+    const figDef = {
+      fig: "FIG01",
+      width: 600,
+      height: 420,
+      parts: [
+        { numeral: "10", label: "input", shape: "box", x: 80, y: 110, w: 160, h: 80 },
+        { numeral: "12", label: "processor", shape: "box", x: 360, y: 110, w: 170, h: 80 },
+      ],
+      arrows: [{ from: "10", to: "12", kind: "flow" }],
+    };
+    const figPath = join(src, "fig01.json");
+    const svgPath = join(svgDir, "fig01.svg");
+    const reportPath = join(svgDir, "quality-review.json");
+    writeFileSync(figPath, JSON.stringify(figDef, null, 2), "utf8");
+    writeFileSync(svgPath, renderFigure(figDef), "utf8");
+
+    const code = figureCli(["node", "cli.mjs", "review-dir", src, "--svg-dir", svgDir, "--out", reportPath, "--min-score", "88"]);
+    assert.equal(code, 0);
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.equal(report.figure_count, 1);
+    assert.ok(Array.isArray(report.findings));
+    assert.ok(report.measurement_summary.measured >= 1);
+    const finding = report.findings[0];
+    assert.equal(finding.sheet, "SHEET 1");
+    assert.equal(finding.figure, "FIG. 1");
+    assert.ok("bbox" in finding);
+    assert.ok(finding.issue_type);
+    assert.ok(finding.rule_reference);
+    assert.match(finding.measured_or_visual, /^(measured|visual)$/);
+    assert.ok(finding.suggested_fix);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("buildLegend: the same numeral mapping to different elements is flagged NUMERAL_INCONSISTENT", () => {
   const dir = mkdtempSync(join(tmpdir(), "apa-figure-"));
   try {

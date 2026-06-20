@@ -1,0 +1,15 @@
+{
+  "fig": "FIG91",
+  "title": "Bad callout regression",
+  "width": 560,
+  "height": 360,
+  "parts": [
+    { "numeral": "910", "label": "first member", "shape": "box", "x": 80, "y": 95, "w": 140, "h": 76 },
+    { "numeral": "910", "label": "second member", "shape": "box", "x": 320, "y": 95, "w": 150, "h": 76 },
+    { "numeral": "912", "label": "controller", "shape": "box", "x": 200, "y": 230, "w": 150, "h": 72 }
+  ],
+  "arrows": [
+    { "from": "910", "to": "999", "kind": "flow" },
+    { "from": "912", "to": "910", "kind": "flow" }
+  ]
+}

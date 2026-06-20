@@ -44,7 +44,9 @@ zoomed views.
 
 If the matter uses APA figure JSON, run the deterministic SVG preflight first:
 `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
-Treat a clean preflight as a useful screen, not as final professional judgment.
+Treat a clean preflight as a useful screen, not as final professional judgment. The deterministic
+report contains a flattened `findings` list, per-figure `reviews[*].findings`, and a
+`measurement_summary`; preserve those fields if you add human visual findings.
 
 ## Review workflow
 1. **Render and measure risk.** Check page size, margins, `FIG.` labels, sheet numbering, and whether
@@ -104,6 +106,9 @@ Return:
 
 Also emit machine-readable findings when writing a report file:
 ```yaml
+measurement_summary:
+  measured: 0
+  visual: 0
 findings:
   - sheet: "SHEET 1"
     figure: "FIG. 1"

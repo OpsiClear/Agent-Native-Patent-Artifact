@@ -1,0 +1,39 @@
+{
+  "fig": "FIG90",
+  "title": "Crowded method path",
+  "width": 420,
+  "height": 300,
+  "parts": [
+    {
+      "numeral": "900",
+      "label": "receive and classify a very long input data structure using many nested policy fields",
+      "shape": "box",
+      "x": 8,
+      "y": 190,
+      "w": 175,
+      "h": 74
+    },
+    {
+      "numeral": "902",
+      "label": "apply overlapping transformation rules",
+      "shape": "box",
+      "x": 120,
+      "y": 204,
+      "w": 185,
+      "h": 74
+    },
+    {
+      "numeral": "904",
+      "label": "emit result",
+      "shape": "box",
+      "x": 292,
+      "y": 206,
+      "w": 115,
+      "h": 68
+    }
+  ],
+  "arrows": [
+    { "from": "900", "to": "902", "kind": "flow" },
+    { "from": "902", "to": "904", "kind": "flow" }
+  ]
+}

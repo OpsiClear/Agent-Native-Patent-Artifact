@@ -10,5 +10,23 @@
     { "fig": "FIG06", "kind": "sequence diagram", "risk": "UML clutter and message crossings" },
     { "fig": "FIG07", "kind": "state machine", "risk": "tangled loops and verbose transitions" },
     { "fig": "FIG08", "kind": "cross-section detail view", "risk": "hatching/labels obscuring structure" }
+  ],
+  "known_bad_examples": [
+    {
+      "file": "crowded-flowchart.json",
+      "kind": "crowded flowchart",
+      "expected_codes": ["PART_OVERLAP", "CAPTION_CROWDING"]
+    },
+    {
+      "file": "bad-callouts.json",
+      "kind": "bad callouts and unresolved lead-line target",
+      "expected_codes": ["DUPLICATE_NUMERAL_IN_FIGURE", "ARROW_UNRESOLVED_NUMERAL"]
+    },
+    {
+      "file": "pdf-font-substitution.json",
+      "svg": "pdf-font-substitution.svg",
+      "kind": "PDF/font-substitution regression",
+      "expected_codes": ["SMALL_TEXT", "STROKE_WIDTH_OUT_OF_RANGE"]
+    }
   ]
 }

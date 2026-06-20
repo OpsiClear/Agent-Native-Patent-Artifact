@@ -807,12 +807,12 @@ Verification:
 ### 3.10 `/apa-drawing-quality`
 
 Detailed tasks:
-- [ ] Persist machine-readable findings with sheet, figure, bbox, severity, rule reference, and
+- [x] Persist machine-readable findings with sheet, figure, bbox, severity, rule reference, and
   measured/visual status.
-- [ ] Add visual regression examples: good set, crowded flowchart, bad callouts, PDF font
+- [x] Add visual regression examples: good set, crowded flowchart, bad callouts, PDF font
   substitution.
-- [ ] Record when text-size, line-weight, and margin checks are measured versus visually assessed.
-- [ ] Keep final-compliance caveat explicit: drawing QA is a precheck, not USPTO compliance
+- [x] Record when text-size, line-weight, and margin checks are measured versus visually assessed.
+- [x] Keep final-compliance caveat explicit: drawing QA is a precheck, not USPTO compliance
   certification.
 
 Suggested targets:
@@ -822,12 +822,13 @@ Suggested targets:
 - `packages/apa-assemble/preflight.mjs`
 
 Acceptance criteria:
-- [ ] `evidence/drawings/quality-review.json` contains actionable findings with locations.
-- [ ] Example gallery includes known-good and known-bad drawing sets.
-- [ ] Blocking drawing findings still block assembly.
+- [x] `evidence/drawings/quality-review.json` contains actionable findings with locations.
+- [x] Example gallery includes known-good and known-bad drawing sets.
+- [x] Blocking drawing findings still block assembly.
 
 Verification:
-- [ ] `node --test packages/apa-figure/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-figure/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.11 `/apa-assemble`
 

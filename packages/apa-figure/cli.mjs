@@ -23,7 +23,7 @@ import process from "node:process";
 
 import { renderFigure } from "./render.mjs";
 import { buildLegend } from "./numerals.mjs";
-import { aggregateReviews, reviewFigure } from "./quality.mjs";
+import { aggregateReviews, missingSvgReview, reviewFigure } from "./quality.mjs";
 
 function argValue(args, name) {
   const i = args.indexOf(name);
@@ -136,14 +136,7 @@ function cmdReviewDir(args) {
     reviews = jsonFiles(dir).map((file) => {
       const svgPath = join(svgDir, `${basename(file, ".json")}.svg`);
       if (!existsSync(svgPath)) {
-        return {
-          fig: basename(file, ".json"),
-          score: 0,
-          verdict: "redraw",
-          blocking: 1,
-          fixes: 0,
-          findings: [{ severity: "blocking", code: "SVG_MISSING", message: `Missing rendered SVG: ${svgPath}` }],
-        };
+        return missingSvgReview(basename(file, ".json"), svgPath);
       }
       const figDef = JSON.parse(readFileSync(file, "utf8"));
       const svg = readFileSync(svgPath, "utf8");

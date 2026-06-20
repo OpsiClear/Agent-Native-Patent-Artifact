@@ -1,0 +1,10 @@
+{
+  "fig": "FIG92",
+  "title": "PDF font substitution regression",
+  "width": 500,
+  "height": 360,
+  "parts": [
+    { "numeral": "920", "label": "substituted label", "shape": "box", "x": 130, "y": 120, "w": 220, "h": 100 }
+  ],
+  "arrows": []
+}

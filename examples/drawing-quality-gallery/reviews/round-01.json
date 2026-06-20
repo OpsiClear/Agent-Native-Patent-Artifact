@@ -1,129 +1,318 @@
 {
   "figure_count": 8,
-  "mean_score": 98,
-  "min_score": 86,
+  "mean_score": 100,
+  "min_score": 100,
   "blocking_count": 0,
-  "fix_before_filing_count": 2,
-  "verdict": "polish-before-filing",
+  "fix_before_filing_count": 0,
+  "verdict": "candidate-ready-for-human-review",
+  "measurement_summary": {
+    "measured": 8,
+    "visual": 0
+  },
+  "findings": [
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 1",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 2",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 3",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 4",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 5",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 6",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 7",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    },
+    {
+      "severity": "acceptable",
+      "code": "CLEAN",
+      "message": "No deterministic drawing-quality findings.",
+      "sheet": "SHEET 1",
+      "figure": "FIG. 8",
+      "bbox": null,
+      "issue_type": "rendering",
+      "rule_reference": "apa-protocol",
+      "measured_or_visual": "measured",
+      "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
+    }
+  ],
   "reviews": [
     {
       "fig": "FIG01",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 1",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG02",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 2",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG03",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 3",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG04",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 4",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG05",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 5",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG06",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 6",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG07",
+      "sheet": "SHEET 1",
       "score": 100,
       "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
       "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
           "severity": "acceptable",
           "code": "CLEAN",
-          "message": "No deterministic drawing-quality findings."
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 7",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     },
     {
       "fig": "FIG08",
-      "score": 86,
-      "verdict": "polish-before-filing",
+      "sheet": "SHEET 1",
+      "score": 100,
+      "verdict": "candidate-ready-for-human-review",
       "blocking": 0,
-      "fixes": 2,
+      "fixes": 0,
+      "measurement_summary": {
+        "measured": 1,
+        "visual": 0
+      },
       "findings": [
         {
-          "severity": "fix-before-filing",
-          "code": "PART_OVERLAP",
-          "message": "Two parts overlap without containment.",
-          "a": "800",
-          "b": "806"
-        },
-        {
-          "severity": "fix-before-filing",
-          "code": "PART_OVERLAP",
-          "message": "Two parts overlap without containment.",
-          "a": "800",
-          "b": "808"
+          "severity": "acceptable",
+          "code": "CLEAN",
+          "message": "No deterministic drawing-quality findings.",
+          "sheet": "SHEET 1",
+          "figure": "FIG. 8",
+          "bbox": null,
+          "issue_type": "rendering",
+          "rule_reference": "apa-protocol",
+          "measured_or_visual": "measured",
+          "suggested_fix": "No deterministic fix required; keep human/draftsperson review."
         }
       ]
     }
