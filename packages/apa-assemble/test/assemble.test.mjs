@@ -83,7 +83,14 @@ test("preflight: clean example is GO with a rigor-review warning", () => {
 
 test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-File BLOCKS", () => {
   const okDims = (n) => { const d = {}; for (const id of ["P1", "P2", "P3", "P4", "P5", "P6"]) d[id] = { score: n, weaknesses: [] }; return d; };
-  const mk = (dims) => ({ dimensions: dims, findings: [], questions_for_attorney: [], questions_for_inventor: [], read_order: ["logic/claims.md"] });
+  const priorArtState = {
+    evaluated_at: "2026-06-20T00:00:00.000Z",
+    staleness_max_days: 180,
+    dossiers_found: 1,
+    newest_dossier: { path: "evidence/prior_art/search-dossier-current.json", generated_at: "2026-06-01T00:00:00.000Z" },
+    closest_art: { human_verified: true, selected_pa_ids: ["PA01"], verified_at: "2026-06-02T00:00:00.000Z" },
+  };
+  const mk = (dims) => ({ dimensions: dims, prior_art_state: priorArtState, findings: [], questions_for_attorney: [], questions_for_inventor: [], read_order: ["logic/claims.md"] });
 
   const d1 = clone();
   try {

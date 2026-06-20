@@ -35,8 +35,10 @@ function main() {
     else {
       console.log(`apa-rigor check: ${file}`);
       if (!ok) errors.forEach((e) => console.log(`  SCHEMA  ${e}`));
-      console.log(`  scores -> mean ${computed.mean}${computed.capped ? " (capped by a weak dimension)" : ""}`);
+      console.log(`  scores -> mean ${computed.mean}${computed.capped ? " (capped by a weak dimension or prior-art state)" : ""}`);
       console.log(`  VERDICT: ${computed.verdict}${computed.missing.length ? ` (missing: ${computed.missing.join(",")})` : ""}`);
+      console.log(`  DISPLAY: ${computed.display}`);
+      if (computed.scoreCaps?.length) console.log(`  CAPS: ${computed.scoreCaps.map((c) => `${c.dimension} ${c.original_score}->${c.effective_score} (${c.reasons.join(",")})`).join("; ")}`);
       console.log("  NOTE: findings are flags for a registered practitioner, never a patentability conclusion.");
     }
     if (!ok) process.exit(2);

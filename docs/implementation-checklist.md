@@ -388,14 +388,17 @@ Verification:
 
 ### 1.8 Rigor Staleness And Verdict Wording
 
-Current state: historical verdict strings are retained for compatibility.
+Current state: historical verdict strings are retained for compatibility, safer display aliases are
+returned with computed verdicts, and stale/missing/unverified prior-art state caps P5 to a non-fileable
+Major-Rework maximum.
 
 Tasks:
-- [ ] Add staleness checks for prior-art search date and human closest-art verification.
-- [ ] Cap P5 / prior-art distinction score when no human-verified closest art exists.
-- [ ] Decide whether to rename `File-Ready` verdicts or add display aliases while keeping internal enum
+- [x] Add staleness checks for prior-art search date and human closest-art verification.
+- [x] Cap P5 / prior-art distinction score when no human-verified closest art exists.
+- [x] Decide whether to rename `File-Ready` verdicts or add display aliases while keeping internal enum
   compatibility.
-- [ ] If renaming, migrate tests, docs, and preflight gates in one compatibility-aware change.
+- [x] If renaming, migrate tests, docs, and preflight gates in one compatibility-aware change. No enum
+  rename was made; display aliases preserve backward compatibility.
 
 Suggested targets:
 - `packages/apa-rigor/verdict.mjs`
@@ -404,11 +407,11 @@ Suggested targets:
 - `skills/rigor-review/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] Stale or unverified prior-art state cannot produce an overconfident filing-quality signal.
-- [ ] Any verdict label change preserves backward compatibility or includes a deliberate migration.
+- [x] Stale or unverified prior-art state cannot produce an overconfident filing-quality signal.
+- [x] Any verdict label change preserves backward compatibility or includes a deliberate migration.
 
 Verification:
-- [ ] `node --test packages/apa-rigor/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-rigor/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ## Phase 2 - Broaden Assurance And Product Surface
 
@@ -631,7 +634,7 @@ Verification:
 3. [x] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
 4. [x] Add report schema package and wire claims/patentability/examiner/OA reports.
 5. [x] Expand upload manifest fields. Prior-art dossier expansion complete.
-6. [ ] Add rigor staleness caps.
+6. [x] Add rigor staleness caps.
 7. [ ] Decide and implement legal-preamble progressive disclosure.
 8. [ ] Add trigger tests.
 9. [ ] Add benchmarks.

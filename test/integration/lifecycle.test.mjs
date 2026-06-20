@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url";
 import { iterEntitySections, extractBindingBlocks } from "../../lib/apa-parse.mjs";
 import { validateMatter } from "../../packages/apa-validate/validate.mjs";
 import { buildQueryFromClaims, runSearch } from "../../packages/apa-search/search.mjs";
-import { writeLandscape } from "../../packages/apa-search/writers.mjs";
+import { updateClosestArtSelection, writeLandscape, writeSearchDossier } from "../../packages/apa-search/writers.mjs";
 import { lintClaims } from "../../packages/apa-draft/claim-lint.mjs";
 import { buildLegend } from "../../packages/apa-figure/numerals.mjs";
 import { assembleMatter } from "../../packages/apa-assemble/assemble.mjs";
@@ -98,6 +98,24 @@ test("the patent lifecycle composes end-to-end across every package", async () =
     assert.equal(new Set(docKeys).size, docKeys.length, "ranked refs are deduped by doc number");
 
     const { assigned } = writeLandscape(dir, search.ranked);
+    const { path: searchDossierPath } = writeSearchDossier(dir, {
+      query,
+      result: search,
+      assigned,
+      generatedAt: "2026-06-20T00:00:00.000Z",
+    });
+    updateClosestArtSelection(searchDossierPath, {
+      selectedPaIds: [assigned[0].paId],
+      rationale: "integration-test closest art after deterministic mock search",
+      reviewer: "integration-test",
+      verifiedAt: "2026-06-20T00:00:00.000Z",
+      checks: {
+        title_verified: true,
+        venue_verified: true,
+        canonical_link_verified: true,
+        relied_on_passage_verified: true,
+      },
+    });
     // The example already ships PA01, so the new blocks continue from PA02.
     assert.deepEqual(
       assigned.map((a) => a.paId),
@@ -173,13 +191,15 @@ test("the patent lifecycle composes end-to-end across every package", async () =
 
     // Synthesize a File-Ready patent_rigor_report.json so the rigor-review gate computes GO.
     // (Step 6 builds the report the proper way; here we just need a fileable one on disk for preflight.)
-    const fileReadyReport = makeRigorReport(scaffoldReport(dir), {
+    const fileReadyReport = makeRigorReport(scaffoldReport(dir, {
+      evaluatedAt: "2026-06-20T00:00:00.000Z",
+    }), {
       P1: 5,
       P2: 5,
       P5: 5,
       P6: 5,
     });
-    const computedReady = computeVerdict(scoresOf(fileReadyReport));
+    const computedReady = computeVerdict(scoresOf(fileReadyReport), { priorArtState: fileReadyReport.prior_art_state });
     fileReadyReport.verdict = computedReady.verdict; // must equal the deterministic computation
     assert.ok(isFileable(computedReady.verdict), "synthesized report is File-Ready/File-With-Revisions");
     writeFileSync(

@@ -95,8 +95,8 @@ export function preflight(matterDir, { assembledDir } = {}) {
       const { ok, errors, computed } = validateReport(report);
       if (!ok) add("rigor-review", "block", `patent_rigor_report.json invalid: ${errors.slice(0, 3).join("; ")}`);
       else if (computed.verdict === "Incomplete") add("rigor-review", "block", "rigor report incomplete - all six dimensions must be scored.");
-      else if (isFileable(computed.verdict)) add("rigor-review", "pass", `rigor verdict ${computed.verdict} (mean ${computed.mean}).`);
-      else add("rigor-review", "block", `rigor verdict ${computed.verdict} - resolve findings before assembly.`);
+      else if (isFileable(computed.verdict)) add("rigor-review", "pass", `rigor verdict ${computed.display || computed.verdict} [${computed.verdict}] (mean ${computed.mean}).`);
+      else add("rigor-review", "block", `rigor verdict ${computed.display || computed.verdict} [${computed.verdict}] - resolve findings before assembly.`);
     } catch (e) { add("rigor-review", "block", `cannot parse patent_rigor_report.json: ${e.message}`); }
   } else {
     add("rigor-review", "warn", "rigor review not run - run /apa-rigor (File-Ready or File-With-Revisions required before assembly).");

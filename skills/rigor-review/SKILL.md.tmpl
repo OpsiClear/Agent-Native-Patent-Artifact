@@ -25,14 +25,17 @@ anchors and emits `patent_rigor_report.json`; the **verdict is computed determin
 3. **Score the judgment dimensions** by reading the artifact and reasoning against the anchors:
    - **P1 101 Eligibility** - Alice/Mayo: abstract idea vs. concrete structure / practical application.
    - **P2 112 WD/Enablement/Definiteness** - is every limitation described and enabled? terms of degree bounded? 112(f) structure present?
-   - **P5 Prior-art Distinction** - is every `distinguished_over` reference substantively distinguished, or does one anticipate?
+   - **P5 Prior-art Distinction** - is every `distinguished_over` reference substantively distinguished, or does one anticipate? The report's `prior_art_state` must show a current search dossier and human-verified closest-art selection; stale or unverified prior art deterministically caps P5.
    - **P6 Prosecution Integrity** - is the decision record honest? does any claim re-argue a recorded `dead_end` (estoppel)?
    Confirm or adjust the mechanical P3/P4 with reasoning. Score each 1-5; a single weak dimension caps the verdict.
 4. **Findings:** for each issue add `{ dimension, severity (critical|major|minor|suggestion), evidence_span (VERBATIM quote from the artifact), weakness, amendment (a concrete suggested fix) }`. Severity maps to statutory fatality (critical = 102/101/missing antecedent; major = 103/enablement; minor = definiteness; suggestion = scope).
 5. Fill `questions_for_inventor` / `questions_for_attorney` and `read_order` (the files you reviewed).
 6. **Compute + validate:** `node packages/apa-rigor/cli.mjs check <matter>/patent_rigor_report.json`.
-   It schema-validates and computes the verdict: **File-Ready / File-With-Revisions / Major-Rework /
-   Do-Not-File** (mean band, but any dimension scoring 1 caps at Do-Not-File, a 2 at Major-Rework).
+   It schema-validates and computes the legacy internal verdict: **File-Ready / File-With-Revisions /
+   Major-Rework / Do-Not-File / Incomplete**, plus a safer display alias such as
+   `Artifact-Quality: High For Human Final Review`. The LLM never sets the verdict; any dimension
+   scoring 1 caps at Do-Not-File, a 2 caps at Major-Rework, and stale or unverified prior-art state caps
+   P5 to 2.
    The filing gate (`/apa-assemble`) reads this verdict and blocks unless File-Ready/File-With-Revisions.
 
 {{ANALYSIS_101_102_103_112}}
