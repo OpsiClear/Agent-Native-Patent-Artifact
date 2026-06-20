@@ -22,7 +22,7 @@ For the detailed implementation checklist derived from these items, see
 | Review item | Current coverage |
 |---|---|
 | Move long legal preamble into references | Deferred. The generator keeps the full hard-refusal preamble inline because safety posture currently relies on every host loading it. Progressive-disclosure refactoring should be a separate compatibility change. |
-| Add artifact-wide run log | Partially covered. `docs/protocol.md` now specifies optional `trace/runlog.jsonl` with hashes, commands, external sinks, and human checkpoints. CLI-wide automatic logging remains future work. |
+| Add artifact-wide run log | Partially covered. `docs/protocol.md` specifies `trace/runlog.jsonl`; `packages/apa-trace` implements append/validation/hash helpers; `apa-search --write` and `apa-assemble --write` append runlog entries. Rigor, prosecution, and eval integrations remain future work. |
 | Add source-span hashes | Partially covered by skill instructions: disclosure/spec/claim skills require source-span metadata for promoted observations, limitations, and spec paragraphs. Validator enforcement remains future work. |
 | Add prior-art search dossier | Covered. `apa-search --write` writes `evidence/prior_art/search-dossier-<timestamp>.json` with query hash, scan result, source summaries, ranked candidates, assigned PA IDs, and human closest-art verification state. |
 | Add upload manifest | Covered. `apa-assemble --write` writes `assembled/upload_manifest.json` with generated-file hashes, intended upload set, submit boundary, and human-verification flags. |

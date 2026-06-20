@@ -13,6 +13,17 @@
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
 import { writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { listSources } from "./sources/index.mjs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import {
+  appendRunlog,
+  buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
+  externalSinkRecord,
+  humanCheckpoint,
+} from "../apa-trace/runlog.mjs";
 
 function parseArgs(argv) {
   const a = { sources: [], limit: 25 };
@@ -33,6 +44,7 @@ function parseArgs(argv) {
 function mask(f) { return `${f.tier} ${f.patternName} @${f.start}`; }
 
 async function main() {
+  const startedAt = new Date().toISOString();
   const a = parseArgs(process.argv.slice(2));
   if (a.listSources) {
     for (const s of listSources()) console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${s.note}`);
@@ -76,6 +88,36 @@ async function main() {
       assigned,
       limit: a.limit,
     });
+    const outputPaths = [
+      join(a.matter, "logic", "prior_art.md"),
+      join(a.matter, "logic", "reference_matrix.md"),
+      dossierPath,
+      ...assigned.map((x) => join(a.matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
+    ];
+    appendRunlog(a.matter, buildRunlogEntry({
+      timestamp: new Date().toISOString(),
+      skill: "apa-priorart",
+      ruleVersion: ruleVersionOf(a.matter),
+      inputs: existingFileRecords(a.matter, [
+        join(a.matter, "PATENT.md"),
+        join(a.matter, "logic", "claims.md"),
+      ]),
+      outputs: existingFileRecords(a.matter, outputPaths),
+      commands: [commandRecord({
+        argv: ["node", "packages/apa-search/cli.mjs", ...process.argv.slice(2)],
+        cwd: process.cwd(),
+        exitCode: 0,
+        startedAt,
+        endedAt: new Date().toISOString(),
+      })],
+      externalSinks: [externalSinkRecord({
+        kind: "prior-art-query",
+        bytes: res.verdict?.text || JSON.stringify(query),
+        scanVerdict: res.verdict,
+        humanApproved: Boolean(res.verdict?.needsConfirm && a.yes),
+      })],
+      humanCheckpoints: [humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false })],
+    }));
     console.log(`\nWrote ${assigned.length} reference(s) into ${a.matter}: ${assigned.map((x) => x.paId).join(", ")}`);
     console.log(`Updated logic/prior_art.md + evidence/prior_art/ + logic/reference_matrix.md (scaffold).`);
     console.log(`Wrote search dossier: ${dossierPath}`);
@@ -84,6 +126,14 @@ async function main() {
   console.log("\nNOTE: candidates are UNVERIFIED and possibly incomplete (examiner-grade PPS is UI-only; NPL is");
   console.log("paywalled). A human must verify each reference and select the closest art. This is NOT a clearance");
   console.log("and never asserts \"no anticipating art found.\"");
+}
+
+function ruleVersionOf(matterDir) {
+  try {
+    return parseFrontmatter(readFileSync(join(matterDir, "PATENT.md"), "utf8")).rules_effective_date || "";
+  } catch {
+    return "";
+  }
 }
 
 main().catch((e) => { console.error("error:", e.message); process.exit(1); });

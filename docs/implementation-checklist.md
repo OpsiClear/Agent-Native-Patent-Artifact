@@ -144,18 +144,19 @@ Verification:
 
 ### 1.1 Runlog Automation
 
-Current state: `docs/protocol.md` specifies optional `trace/runlog.jsonl`; skills request it. CLI-wide
-automatic logging is not implemented.
+Current state: `docs/protocol.md` specifies optional `trace/runlog.jsonl`; `packages/apa-trace`
+implements append/validation/hash helpers; `apa-search --write` and `apa-assemble --write` append
+runlog entries. Rigor, prosecution, and eval integrations remain open.
 
 Tasks:
-- [ ] Add a zero-dependency runlog helper module.
-- [ ] Compute SHA-256 hashes for inputs and outputs.
-- [ ] Append one JSON object per line to `<matter>/trace/runlog.jsonl`.
-- [ ] Support command records: argv, cwd, exit code, started/ended timestamps.
-- [ ] Support external sink records: kind, bytes SHA-256, scan verdict, human approval state.
-- [ ] Support human checkpoint records: required, satisfied, reviewer, timestamp.
-- [ ] Make helper tolerate missing `trace/` by creating it.
-- [ ] Make helper fail loud on invalid JSONL only when asked to validate; appending must not rewrite
+- [x] Add a zero-dependency runlog helper module.
+- [x] Compute SHA-256 hashes for inputs and outputs.
+- [x] Append one JSON object per line to `<matter>/trace/runlog.jsonl`.
+- [x] Support command records: argv, cwd, exit code, started/ended timestamps.
+- [x] Support external sink records: kind, bytes SHA-256, scan verdict, human approval state.
+- [x] Support human checkpoint records: required, satisfied, reviewer, timestamp.
+- [x] Make helper tolerate missing `trace/` by creating it.
+- [x] Make helper fail loud on invalid JSONL only when asked to validate; appending must not rewrite
   prior records.
 
 Suggested targets:
@@ -164,22 +165,22 @@ Suggested targets:
 - `docs/protocol.md`
 
 Integration tasks:
-- [ ] `apa-search --write` logs query sink hash, dossier output, PA outputs, and closest-art checkpoint.
-- [ ] `apa-assemble --write` logs generated package outputs and human filing checkpoints.
+- [x] `apa-search --write` logs query sink hash, dossier output, PA outputs, and closest-art checkpoint.
+- [x] `apa-assemble --write` logs generated package outputs and human filing checkpoints.
 - [ ] `apa-rigor` logs report generation.
 - [ ] `apa-prosecute respond` logs OA parse/scaffold actions in practitioner mode.
 - [ ] `apa-eval` logs cloud LLM sink only when attached to a matter and not in `--mock`.
 
 Acceptance criteria:
-- [ ] Running `apa-search --matter <tmp> --source mock --write` creates or appends
+- [x] Running `apa-search --matter <tmp> --source mock --write` creates or appends
   `trace/runlog.jsonl`.
-- [ ] Running `apa-assemble --matter <tmp> --write` appends generated-file output records.
-- [ ] Re-running a command appends a second record; it does not mutate the first record.
-- [ ] JSONL validation catches malformed entries with useful line numbers.
+- [x] Running `apa-assemble --matter <tmp> --write` appends generated-file output records.
+- [x] Re-running a command appends a second record; it does not mutate the first record.
+- [x] JSONL validation catches malformed entries with useful line numbers.
 
 Verification:
-- [ ] `node --test packages/apa-trace/test/*.test.mjs`
-- [ ] `node --test packages/apa-search/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-trace/test/*.test.mjs`
+- [x] `node --test packages/apa-search/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 1.2 Source-Span Validation
 

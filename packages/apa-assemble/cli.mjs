@@ -19,6 +19,13 @@ import { preflight } from "./preflight.mjs";
 import { validateMatter } from "../apa-validate/validate.mjs";
 import { buildLegend } from "../apa-figure/numerals.mjs";
 import { buildUploadManifest } from "./upload-manifest.mjs";
+import {
+  appendRunlog,
+  buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
+  humanCheckpoint,
+} from "../apa-trace/runlog.mjs";
 
 function fmOf(dir) { try { return parseFrontmatter(readFileSync(join(dir, "PATENT.md"), "utf8")); } catch { return {}; } }
 
@@ -56,6 +63,7 @@ function feeWorksheet(fees) {
 function gateLine(g) { const tag = g.status === "block" ? "BLOCK" : g.status === "warn" ? "warn " : "pass "; return `  [${tag}] ${g.name}: ${g.msg}`; }
 
 async function main() {
+  const startedAt = new Date().toISOString();
   const argv = process.argv.slice(2);
   const matter = argv[argv.indexOf("--matter") + 1];
   const doWrite = argv.includes("--write");
@@ -96,6 +104,45 @@ async function main() {
     writeFileSync(join(assembledDir, "upload_set", "MANIFEST.txt"), pf.uploadSet.join("\n") + "\n\n" + pf.submitBoundary + "\n");
     const uploadManifest = buildUploadManifest(matter, assembledDir, pf);
     writeFileSync(join(assembledDir, "upload_manifest.json"), JSON.stringify(uploadManifest, null, 2) + "\n");
+    appendRunlog(matter, buildRunlogEntry({
+      timestamp: new Date().toISOString(),
+      skill: "apa-assemble",
+      ruleVersion: fm.rules_effective_date || "",
+      inputs: existingFileRecords(matter, [
+        join(matter, "PATENT.md"),
+        join(matter, "logic", "claims.md"),
+        join(matter, "logic", "prior_art.md"),
+        join(matter, "src", "embodiments.md"),
+        join(matter, "evidence", "drawings", "quality-review.json"),
+        join(matter, "patent_rigor_report.json"),
+      ]),
+      outputs: existingFileRecords(matter, [
+        join(assembledDir, "specification.md"),
+        join(assembledDir, "specification.html"),
+        join(assembledDir, "ADS.md"),
+        join(assembledDir, "IDS_SB08.md"),
+        join(assembledDir, "declaration_UNSIGNED.md"),
+        join(assembledDir, "FEE_WORKSHEET.md"),
+        join(assembledDir, "PREFLIGHT.md"),
+        join(assembledDir, "upload_set", "MANIFEST.txt"),
+        join(assembledDir, "upload_manifest.json"),
+      ]),
+      commands: [commandRecord({
+        argv: ["node", "packages/apa-assemble/cli.mjs", ...argv],
+        cwd: process.cwd(),
+        exitCode: pf.blocked ? 2 : 0,
+        startedAt,
+        endedAt: new Date().toISOString(),
+      })],
+      humanCheckpoints: [
+        humanCheckpoint({ id: "print-to-pdf-and-visual-qa", required: true, satisfied: false }),
+        humanCheckpoint({ id: "ads-human-completion", required: true, satisfied: false }),
+        humanCheckpoint({ id: "ids-reference-verification", required: true, satisfied: false }),
+        humanCheckpoint({ id: "inventor-declaration-signature", required: true, satisfied: false }),
+        humanCheckpoint({ id: "fee-entity-status-verification", required: true, satisfied: false }),
+        humanCheckpoint({ id: "patent-center-human-upload", required: true, satisfied: false }),
+      ],
+    }));
   }
 
   if (asJson) { console.log(JSON.stringify({ warnings: asm.warnings, adsFlags: ads.flags, ids, fees, preflight: pf }, null, 2)); }
