@@ -92,9 +92,14 @@ Produce SVGs and sheets with these properties:
 7. **Check parity before quality.** Compare pre/post SVGs and numeral tables. The upgrade may move,
    split, relabel, or clean geometry, but it must not add unsupported structures, remove claimed
    features, or change the meaning of a reference numeral without a human-approved trace note.
-8. **Run deterministic SVG preflight.** For APA figure JSON, run
+8. **Write the upgrade report.** Preserve the pre-upgrade SVGs in a separate directory and run:
+   `node packages/apa-figure/cli.mjs upgrade-report --before-dir <matter>/evidence/drawings-before-upgrade --after-dir <matter>/evidence/drawings --source-dir <matter>/src/drawing_src --source-route <APA JSON|PDG|manual-svg|CAD/DXF|mixed> --out <matter>/evidence/drawings/svg_upgrade_report.json`.
+   The report schema is `apa-svg-upgrade-report-v1`. It must list every changed SVG, preflight
+   before/after, numeral additions/removals/remaps, unsupported visual changes, human-review flags,
+   and external tool notes. A nonzero exit means the upgrade is not ready for drawing-quality review.
+9. **Run deterministic SVG preflight.** For APA figure JSON, run
    `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
-9. **Run quality review.** Use `/apa-drawing-quality` on the final sheets. Iterate until no blocking
+10. **Run quality review.** Use `/apa-drawing-quality` on the final sheets. Iterate until no blocking
    or fix-before-filing issues remain other than human/legal sign-off.
 
 ## When using pdgkit / PatentDSL
@@ -123,16 +128,16 @@ what makes future amendments auditable.
 - Preserve every reference numeral consistently across all views.
 
 ## Report format
-Return:
+Write `evidence/drawings/svg_upgrade_report.json` with
+`node packages/apa-figure/cli.mjs upgrade-report`. The report must include:
 1. `source_route`: APA JSON, PDG, manual SVG, CAD/DXF, or mixed.
-2. `files_changed_or_created`: source, SVG, sheet, and QA-report paths.
-3. `preflight_before` and `preflight_after`: deterministic quality status, if available.
-4. `numerals_added_removed`: every numeral added, removed, or remapped; should be empty unless a human
-   approved the change.
-5. `major_layout_changes`: split figures, shortened labels, moved numerals, added detail views.
-6. `unsupported_visual_changes`: structures/details that lack disclosure support; should be empty.
-7. `remaining_quality_flags`: anything `/apa-drawing-quality` should still review.
-8. `external_tool_notes`: exact external commands used, versions if known, and whether output is
+2. `files_changed_or_created`: source, SVG, hashes, and changed flags.
+3. `preflight_before` and `preflight_after`: deterministic quality status, if source JSON exists.
+4. `numerals_added_removed`: every numeral added, removed, or remapped; must be empty to proceed.
+5. `unsupported_visual_changes`: semantic structures/details that lack drawing-spec support; must be
+   empty to proceed.
+6. `human_review_required` and `ready_for_drawing_quality`: machine gate for the next skill.
+7. `external_tool_notes`: exact external commands used, versions if known, and whether output is
    deterministic enough to preserve as source.
 
 ## Do NOT

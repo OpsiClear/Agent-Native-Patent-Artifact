@@ -28,7 +28,10 @@ ReportLab path is reimplemented in plain Node.
    SVG constructs, numerals, lead lines, crowding, caption clearance, long labels, text size, and
    line weight. Findings include sheet, figure, bbox, issue type, rule reference, measured/visual
    status, and a suggested fix.
-4. **`cli.mjs`** — `render`, `render-dir`, `review-dir`, and `legend` subcommands.
+4. **`upgrade-report.mjs`** - deterministic pre/post SVG upgrade report for `/apa-svg-upgrader`:
+   SVG diffs, numeral parity, visual-structure additions, preflight before/after, and readiness for
+   `/apa-drawing-quality`.
+5. **`cli.mjs`** — `render`, `render-dir`, `review-dir`, `upgrade-report`, and `legend` subcommands.
 
 ---
 
@@ -99,12 +102,27 @@ node cli.mjs render-dir src/drawing_src --out-dir evidence/drawings
 
 # run the deterministic drawing-quality preflight on rendered SVGs
 node cli.mjs review-dir src/drawing_src --svg-dir evidence/drawings --out drawing-review.json --min-score 88
+
+# write a pre/post upgrade-control report before drawing-quality review
+node cli.mjs upgrade-report \
+  --before-dir evidence/drawings-before-upgrade \
+  --after-dir evidence/drawings \
+  --source-dir src/drawing_src \
+  --source-route manual-svg \
+  --out evidence/drawings/svg_upgrade_report.json
 ```
 
 The review report includes a flattened `findings` array for dashboards and per-figure `reviews[*]`
 entries for detailed inspection. Each finding carries `sheet`, `figure`, `bbox`, `issue_type`,
 `rule_reference`, `measured_or_visual`, and `suggested_fix`; the report also summarizes measured vs.
 visual checks in `measurement_summary`.
+
+The upgrade report exits nonzero unless the post-upgrade SVG set is ready for drawing-quality review.
+It blocks readiness when reference numerals are added, removed, or remapped, or when source-backed
+semantic visual structures are added outside the drawing JSON. The report schema is
+`apa-svg-upgrade-report-v1`; it records `files_changed_or_created`, `preflight_before`,
+`preflight_after`, `numerals_added_removed`, `unsupported_visual_changes`,
+`human_review_required`, `ready_for_drawing_quality`, and `external_tool_notes`.
 
 As a library:
 

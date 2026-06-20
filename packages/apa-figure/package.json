@@ -15,6 +15,7 @@
     "./render": "./render.mjs",
     "./numerals": "./numerals.mjs",
     "./quality": "./quality.mjs",
+    "./upgrade-report": "./upgrade-report.mjs",
     "./cli": "./cli.mjs"
   },
   "main": "render.mjs",
@@ -22,6 +23,7 @@
     "render.mjs",
     "numerals.mjs",
     "quality.mjs",
+    "upgrade-report.mjs",
     "cli.mjs",
     "README.md"
   ],
@@ -30,6 +32,7 @@
     "render": "node cli.mjs render",
     "render-dir": "node cli.mjs render-dir",
     "review-dir": "node cli.mjs review-dir",
+    "upgrade-report": "node cli.mjs upgrade-report",
     "legend": "node cli.mjs legend"
   },
   "dependencies": {},

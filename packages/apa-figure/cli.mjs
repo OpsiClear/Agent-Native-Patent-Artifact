@@ -24,10 +24,18 @@ import process from "node:process";
 import { renderFigure } from "./render.mjs";
 import { buildLegend } from "./numerals.mjs";
 import { aggregateReviews, missingSvgReview, reviewFigure } from "./quality.mjs";
+import { buildSvgUpgradeReport } from "./upgrade-report.mjs";
 
 function argValue(args, name) {
   const i = args.indexOf(name);
   return i >= 0 && i + 1 < args.length ? args[i + 1] : undefined;
+}
+function argValues(args, name) {
+  const values = [];
+  for (let i = 0; i < args.length - 1; i++) {
+    if (args[i] === name) values.push(args[i + 1]);
+  }
+  return values;
 }
 function hasFlag(args, name) {
   return args.includes(name);
@@ -38,11 +46,12 @@ const USAGE = [
   "  node cli.mjs render <figdef.json> [--out f.svg]",
   "  node cli.mjs render-dir <drawing_src_dir> --out-dir <svg_dir>",
   "  node cli.mjs review-dir <drawing_src_dir> --svg-dir <svg_dir> [--out report.json] [--min-score N]",
+  "  node cli.mjs upgrade-report --before-dir <svg_dir> --after-dir <svg_dir> [--source-dir drawing_src] --out svg_upgrade_report.json",
   "  node cli.mjs legend --matter <dir> [--json]",
 ].join("\n");
 
 // Flags that consume the following token as their value (so it is NOT the positional figdef path).
-const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--min-score"]);
+const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--min-score", "--before-dir", "--after-dir", "--source-dir", "--source-route", "--tool-note"]);
 
 function positional(args) {
   return args.find((a, i) => !a.startsWith("--") && !VALUE_FLAGS.has(args[i - 1]));
@@ -156,6 +165,32 @@ function cmdReviewDir(args) {
   return report.blocking_count > 0 || report.min_score < minScore ? 1 : 0;
 }
 
+function cmdUpgradeReport(args) {
+  const beforeDir = argValue(args, "--before-dir");
+  const afterDir = argValue(args, "--after-dir");
+  const sourceDir = argValue(args, "--source-dir") || "";
+  const out = argValue(args, "--out");
+  const sourceRoute = argValue(args, "--source-route") || "manual-svg";
+  const externalToolNotes = argValues(args, "--tool-note");
+  if (!beforeDir || !afterDir || !out) {
+    console.error("error: upgrade-report requires --before-dir <svg_dir> --after-dir <svg_dir> --out <report.json>\n" + USAGE);
+    return 1;
+  }
+  let report;
+  try {
+    report = buildSvgUpgradeReport({ beforeDir, afterDir, sourceDir, sourceRoute, externalToolNotes });
+    writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  } catch (e) {
+    console.error(`error: upgrade-report failed: ${e.message}`);
+    return 1;
+  }
+  console.log(
+    `wrote ${out}: files=${report.file_count} verdict=${report.verdict} ` +
+      `numeral_changes=${report.numerals_added_removed.length} unsupported_visual_changes=${report.unsupported_visual_changes.length}`,
+  );
+  return report.ready_for_drawing_quality ? 0 : 1;
+}
+
 function cmdLegend(args) {
   const matter = argValue(args, "--matter");
   if (!matter) {
@@ -212,6 +247,7 @@ function main(argv) {
   if (cmd === "render") return cmdRender(rest);
   if (cmd === "render-dir") return cmdRenderDir(rest);
   if (cmd === "review-dir") return cmdReviewDir(rest);
+  if (cmd === "upgrade-report") return cmdUpgradeReport(rest);
   if (cmd === "legend") return cmdLegend(rest);
   console.error(USAGE);
   return 1;

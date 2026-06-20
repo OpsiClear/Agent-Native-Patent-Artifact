@@ -826,12 +826,18 @@ Verification:
 
 ### 3.9 `/apa-svg-upgrader`
 
+Current state: `packages/apa-figure` provides
+`node packages/apa-figure/cli.mjs upgrade-report --before-dir <dir> --after-dir <dir> --source-dir <drawing_src> --out <matter>/evidence/drawings/svg_upgrade_report.json`.
+The `apa-svg-upgrade-report-v1` report records per-file SVG diffs, preflight before/after, numeral
+parity, unsupported semantic visual additions, human-review flags, and external tool notes. The CLI
+exits nonzero unless the upgraded SVG set is ready for `/apa-drawing-quality`.
+
 Detailed tasks:
 - [x] Route unpinned external generators through `apa-safe-npx`.
-- [ ] Require pre/post SVG diff for every upgraded file.
-- [ ] Require numeral parity report comparing before/after reference numerals and labels.
-- [ ] Require `svg_upgrade_report.json`.
-- [ ] Block upgrades that add new visual structures not present in the source drawing spec.
+- [x] Require pre/post SVG diff for every upgraded file.
+- [x] Require numeral parity report comparing before/after reference numerals and labels.
+- [x] Require `svg_upgrade_report.json`.
+- [x] Block upgrades that add new visual structures not present in the source drawing spec.
 
 Suggested targets:
 - `skills/patent-svg-upgrader/SKILL.md.tmpl`
@@ -840,14 +846,14 @@ Suggested targets:
 - `packages/apa-reports/schemas.mjs`
 
 Acceptance criteria:
-- [ ] The upgrade report lists changed files, preflight before/after, numerals added/removed, and
+- [x] The upgrade report lists changed files, preflight before/after, numerals added/removed, and
   human-review-required flags.
-- [ ] Version-pinned external tools are logged; unpinned tools require explicit override and runlog
+- [x] Version-pinned external tools are logged; unpinned tools require explicit override and runlog
   entry.
-- [ ] Numeral parity failure blocks marking the upgrade ready for drawing QA.
+- [x] Numeral parity failure blocks marking the upgrade ready for drawing QA.
 
 Verification:
-- [ ] `node --test packages/apa-figure/test/*.test.mjs packages/apa-safe/test/*.test.mjs`
+- [x] `node --test packages/apa-figure/test/*.test.mjs packages/apa-safe/test/*.test.mjs`
 
 ### 3.10 `/apa-drawing-quality`
 
