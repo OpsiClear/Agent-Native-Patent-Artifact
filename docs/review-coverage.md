@@ -3,6 +3,9 @@
 This tracks the external patent-skill review items against the current repository so future agents do
 not need to rediscover which gaps are closed, partially covered, or intentionally deferred.
 
+For the detailed implementation checklist derived from these items, see
+`docs/implementation-checklist.md`.
+
 ## P0 Items
 
 | Review item | Current coverage |
