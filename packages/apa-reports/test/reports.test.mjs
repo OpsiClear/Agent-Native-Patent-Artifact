@@ -62,6 +62,24 @@ test("claims reports validate unsupported-feature entries", () => {
   assert.ok(result.errors.some((e) => e.path === "unsupported_features[0].recommendation"));
 });
 
+test("claims reports disallow strategic claim changes in pro-se mode", () => {
+  const report = defaultReportFor("claims", { matter: EXAMPLE });
+  report.user_role = "pro_se";
+  report.possible_organization_options.push({
+    label: "one independent apparatus claim plus dependent fallback claims",
+    neutral_question: "Ask counsel whether this organization matches the intended filing strategy.",
+  });
+  let result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  report.claim_changes.push({ claim: "CLM01", change: "narrow to hardware decoder path" });
+  report.scope_decisions.push({ claim: "CLM01", decision: "choose narrow path" });
+  result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "claim_changes"));
+  assert.ok(result.errors.some((e) => e.path === "scope_decisions"));
+});
+
 test("reports reject legal-conclusion fields and overbroad search assertions", () => {
   const report = defaultReportFor("patentability", { matter: EXAMPLE });
   report.search_completeness = "complete";

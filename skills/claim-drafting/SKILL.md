@@ -57,7 +57,9 @@ do not select scope or apply narrowing edits.
    `findings`, `unsupported_features`, and `human_checkpoints`. Multiple-dependent claims are
    unsupported in APA MVP unless deliberately implemented across claim lint, validation, fees,
    examples, and filing review; an apparent multiple-dependent form must be listed in
-   `unsupported_features` and rewritten or explicitly routed to practitioner review. Then run
+   `unsupported_features` and rewritten or explicitly routed to practitioner review. If
+   `user_role: pro_se`, set `user_role: "pro_se"`, put alternatives in
+   `possible_organization_options`, and leave `claim_changes` and `scope_decisions` empty. Then run
    `node packages/apa-draft/claim-lint.mjs <matter> --report-out <matter>/logic/claims_report.json`
    (legal form + report scaffold/update) and
    `node packages/apa-validate/validate.mjs <matter>` (antecedent basis, dependency, edge resolution).

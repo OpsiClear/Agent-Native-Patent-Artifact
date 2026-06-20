@@ -12,7 +12,7 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { iterEntitySections, extractBindingBlocks, asArray } from "../../lib/apa-parse.mjs";
+import { iterEntitySections, extractBindingBlocks, asArray, parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { defaultReportFor } from "../apa-reports/schemas.mjs";
 import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
 import { existingFileRecords } from "../apa-trace/runlog.mjs";
@@ -64,12 +64,22 @@ function ruleAnchorFor(code) {
   return "37-cfr-1.75";
 }
 
+function matterUserRole(matterDir) {
+  try {
+    const fm = parseFrontmatter(readFileSync(join(matterDir, "PATENT.md"), "utf8"));
+    return ["registered_practitioner", "pro_se", "unknown"].includes(fm.user_role) ? fm.user_role : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 export function buildClaimsReport(matterDir, lintResult = lintClaims(matterDir)) {
   const claimsPath = join(matterDir, "logic", "claims.md");
   const report = defaultReportFor("claims", {
     matter: matterDir,
     inputs: existingFileRecords(matterDir, [claimsPath].filter(existsSync)),
   });
+  report.user_role = matterUserRole(matterDir);
   report.claims_reviewed = Array.from({ length: lintResult.claims || 0 }, (_, i) => `CLM${String(i + 1).padStart(2, "0")}`);
   report.findings = (lintResult.findings || []).map((f) => ({
     finding_type: "flag",

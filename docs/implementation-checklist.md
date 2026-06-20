@@ -804,6 +804,10 @@ Verification:
 
 ### 3.6 `/apa-claims`
 
+Current state: `claims_report.json` carries `user_role` and `possible_organization_options`.
+`packages/apa-reports` rejects `claim_changes` or `scope_decisions` in `user_role: pro_se` reports,
+so pro-se output stays neutral options/questions instead of selected scope strategy.
+
 Detailed tasks:
 - [x] Keep multiple-dependent claims unsupported unless implemented deliberately.
 - [ ] If implemented, update fee logic, claim lint, validator, examples, and docs together.
@@ -821,7 +825,7 @@ Suggested targets:
 Acceptance criteria:
 - [x] Multiple-dependent claim syntax is either rejected clearly or fully supported across fees,
   dependencies, examples, and validation.
-- [ ] Pro-se mode returns neutral organization options/questions, not strategic claim-scope advice.
+- [x] Pro-se mode returns neutral organization options/questions, not strategic claim-scope advice.
 - [x] AI-suggested limitations still block assembly until human adoption.
 
 Verification:

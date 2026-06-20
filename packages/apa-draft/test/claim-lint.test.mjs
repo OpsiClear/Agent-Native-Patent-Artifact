@@ -61,6 +61,7 @@ test("two sentences -> LINT_ONE_SENTENCE", () => {
 test("claim-lint --report-out writes a valid claims_report.json", () => {
   const d = clone();
   try {
+    writeFileSync(join(d, "PATENT.md"), readFileSync(join(d, "PATENT.md"), "utf8").replace('user_role: "unknown"', 'user_role: "pro_se"'), "utf8");
     const out = join(d, "logic", "claims_report.json");
     const res = spawnSync(process.execPath, [CLI, d, "--report-out", out, "--json"], { encoding: "utf8" });
     assert.equal(res.status, 0, res.stderr);
@@ -69,6 +70,7 @@ test("claim-lint --report-out writes a valid claims_report.json", () => {
     assert.equal(check.ok, true, JSON.stringify(check.errors));
     assert.equal(report.report_type, "claims");
     assert.equal(report.legal_posture, "flags-not-conclusions");
+    assert.equal(report.user_role, "pro_se");
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

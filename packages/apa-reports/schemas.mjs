@@ -115,6 +115,8 @@ export function defaultReportFor(type, opts = {}) {
   if (normalized === "claims") {
     return {
       ...report,
+      user_role: "unknown",
+      possible_organization_options: [],
       claims_reviewed: [],
       claim_changes: [],
       scope_decisions: [],

@@ -26,6 +26,7 @@ const FORBIDDEN_TOP_LEVEL = [
 const TEACHING_STATUS = ["yes", "partial", "no", "unknown"];
 const CONFIDENCE = ["high", "medium", "low", "unknown"];
 const RATIONALE_SOURCES = ["record-evidence", "common-sense", "design-need", "market-pressure", "other"];
+const USER_ROLES = ["registered_practitioner", "pro_se", "unknown"];
 
 function isObject(v) {
   return v && typeof v === "object" && !Array.isArray(v);
@@ -123,8 +124,22 @@ function validateCommon(errors, report, cfg) {
 
 function validateTypeSpecific(errors, report, type) {
   if (type === "claims") {
+    if (report.user_role !== undefined && !USER_ROLES.includes(report.user_role)) {
+      push(errors, "user_role", `must be ${USER_ROLES.join("|")}`);
+    }
+    if (report.possible_organization_options !== undefined && !Array.isArray(report.possible_organization_options)) {
+      push(errors, "possible_organization_options", "must be an array");
+    }
     for (const key of ["claims_reviewed", "claim_changes", "scope_decisions", "unsupported_features"]) {
       if (!Array.isArray(report[key])) push(errors, key, "must be an array");
+    }
+    if (report.user_role === "pro_se") {
+      if (asArray(report.claim_changes).length > 0) {
+        push(errors, "claim_changes", "must be empty for pro_se reports; provide neutral options/questions only");
+      }
+      if (asArray(report.scope_decisions).length > 0) {
+        push(errors, "scope_decisions", "must be empty for pro_se reports; do not select claim scope");
+      }
     }
     asArray(report.unsupported_features).forEach((feature, i) => validateUnsupportedFeature(errors, `unsupported_features[${i}]`, feature));
     return;
