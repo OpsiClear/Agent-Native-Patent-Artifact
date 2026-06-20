@@ -21,11 +21,13 @@ the redaction guard and a human reviewer approve it.
 
 ## Procedure
 1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
-   the closest `PA##` references (use `logic/reference_matrix.md` if present). Each cell must carry
-   `limitation`, `appears_teaches: yes|partial|no|unknown`, a short `quote` or "not located",
-   `page_or_para`, `confidence: high|medium|low|unknown`, and `human_verified`. A `yes` or `partial`
-   cell must have an actual quote and location, not "not located." Mark teaching as an observation to
-   verify, not a finding.
+   the closest `PA##` references (use `logic/reference_matrix.md` and the latest
+   `evidence/prior_art/search-dossier-*.json` `analysis_handoff.candidate_cells` if present). Each
+   cell must carry `limitation`, `appears_teaches: yes|partial|no|unknown`, a short `quote` or
+   "not located", `page_or_para`, `confidence: high|medium|low|unknown`, and `human_verified`.
+   Preserve quote/location candidates from the prior-art dossier; do not drop them when translating
+   into `/apa-analyze` chart cells. A `yes` or `partial` cell must have an actual quote and location,
+   not "not located." Mark teaching as an observation to verify, not a finding.
 2. **102 (anticipation):** flag any single reference that appears to teach ALL limitations of a claim.
 3. **102 statutory bars (interview-driven, NOT search):** screen the disclosure's captured bar-date
    events (on-sale, public use, the inventor's own publication/demo) against the effective filing date

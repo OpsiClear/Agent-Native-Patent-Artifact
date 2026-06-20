@@ -48,7 +48,8 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 - Writes a raw record per reference under `evidence/prior_art/<paN>.md`.
 - Writes `evidence/prior_art/search-dossier-*.json` with query hash, exact source parameters,
   top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
-  assigned `PA##` IDs, and the closest-art human-verification state.
+  assigned `PA##` IDs, coverage limits, quote handoff fields, analysis handoff candidate cells, and
+  the closest-art human-verification state.
 - Writes `logic/reference_matrix.md` — the "Blocks / Does-NOT-block" scaffold for analysis + a human.
 
 The written matter still passes `apa-validate` (Level-1 mechanical). The hardened-verification and

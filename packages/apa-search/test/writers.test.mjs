@@ -84,7 +84,17 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
   assert.equal(dossier.top_n.after_ranking.length, 2);
   assert.equal(dossier.dedupe_clusters.length, 1);
   assert.equal(dossier.excluded_results[0].reason, "duplicate-doc-number");
+  assert.equal(dossier.coverage_limits.search_complete_asserted, false);
+  assert.ok(dossier.coverage_limits.known_unsearched_sources.some((s) => s.source_id === "uspto-pps"));
+  assert.ok(dossier.coverage_limits.known_unsearched_sources.some((s) => s.source_id === "non-patent-literature"));
   assert.equal(dossier.ranked_candidates.length, 2);
+  assert.equal(dossier.ranked_candidates[0].quote_handoff.quote, "a reservoir feeds a wick");
+  assert.equal(dossier.ranked_candidates[0].quote_handoff.page_or_para, "mock abstract/snippet");
+  assert.equal(dossier.analysis_handoff.schema, "apa-search-to-patentability-handoff-v1");
+  assert.equal(dossier.analysis_handoff.candidate_cells[0].pa_id, "PA02");
+  assert.equal(dossier.analysis_handoff.candidate_cells[0].appears_teaches, "unknown");
+  assert.equal(dossier.analysis_handoff.candidate_cells[0].quote, "a reservoir feeds a wick");
+  assert.equal(dossier.analysis_handoff.candidate_cells[0].page_or_para, "mock abstract/snippet");
   assert.equal(dossier.closest_art_selection.human_verified, false);
   assert.equal(dossier.assigned_references[0].verification.ids_ready, false);
   assert.match(dossier.caveats.join("\n"), /not a complete search/);

@@ -73,11 +73,14 @@ airtight enforcement.
 6. **Build the reference matrix** (the g2tree "Blocks / Does-NOT-block" pattern): per reference, the
    exact claim language it blocks vs. does not block; then name the strongest examiner combination and
    the practical claim boundary. This drives claim narrowing - as flags for the human.
-7. **Update audit state.** The search dossier must record the serialized-query SHA-256, source IDs,
-   exact source parameters, source counts/errors, top-N candidates before dedupe, after dedupe, and
-   after ranking, dedupe clusters, excluded results/reasons, assigned `PA##` IDs, and
-   `closest_art_selection.human_verified: false` until a human fills it. Add a `trace/runlog.jsonl`
-   entry for the command and external-sink bytes hash when the run is part of an APA matter.
+7. **Update audit and analysis-handoff state.** The search dossier must record the serialized-query
+   SHA-256, source IDs, exact source parameters, source counts/errors, top-N candidates before
+   dedupe, after dedupe, and after ranking, dedupe clusters, excluded results/reasons, assigned
+   `PA##` IDs, `coverage_limits.search_complete_asserted: false`, known unsearched source classes,
+   candidate `quote_handoff` fields, `analysis_handoff.candidate_cells`, and
+   `closest_art_selection.human_verified: false` until a human fills it. Add a
+   `trace/runlog.jsonl` entry for the command and external-sink bytes hash when the run is part of an
+   APA matter.
 8. **Human closest-art verification.** After the human chooses closest art, update the dossier:
    `node packages/apa-search/cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/<dossier>.json --pa PA## --rationale "<why selected>" --reviewer "<name>"`.
    Add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`

@@ -94,6 +94,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
     },
     dedupe_clusters: dedupeClusters,
     excluded_results: [...dedupeExclusions, ...sourceExclusions],
+    coverage_limits: coverageLimits(result?.perSource || []),
     ranked_candidates: ranked.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1 })),
     assigned_references: assigned.map((a) => ({
       pa_id: a.paId,
@@ -101,6 +102,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
       title: a.title || "",
       verification: idsVerificationStatus(),
     })),
+    analysis_handoff: analysisHandoff({ assigned, ranked }),
     closest_art_selection: {
       human_verified: false,
       selected_pa_ids: [],
@@ -181,7 +183,75 @@ function candidateRecord(ref, extra = {}) {
     ...extra,
     ...refSummary(ref),
     score: ref?.score ?? null,
+    quote_handoff: quoteHandoff(ref),
     verification: idsVerificationStatus(),
+  };
+}
+
+function analysisHandoff({ assigned = [], ranked = [] } = {}) {
+  return {
+    schema: "apa-search-to-patentability-handoff-v1",
+    purpose: "Preserve quote/location candidates for /apa-analyze claim-chart cells; does not decide whether a limitation is taught.",
+    candidate_cells: assigned.map((a) => {
+      const ref = ranked.find((r) => String(r.docNumber || "") === String(a.docNumber || "")) || {};
+      return {
+        pa_id: a.paId,
+        reference: a.docNumber || ref.docNumber || "",
+        title: a.title || ref.title || "",
+        appears_teaches: "unknown",
+        ...quoteHandoff(ref),
+      };
+    }),
+  };
+}
+
+function quoteHandoff(ref = {}) {
+  const quote = oneLine(ref.snippet || ref.abstract || "");
+  return {
+    quote: quote || "not located",
+    page_or_para: quote ? `${ref.source || "unknown"} abstract/snippet` : "not located",
+    confidence: "unknown",
+    human_verified: false,
+  };
+}
+
+function coverageLimits(perSource) {
+  const searched = new Set((perSource || []).filter((s) => !s.skipped && !s.error).map((s) => s.id));
+  const sourceLimitRows = [
+    {
+      source_id: "uspto-pps",
+      access_mode: "ui-only",
+      status: searched.has("uspto-pps") ? "searched" : "unsearched",
+      reason: "USPTO Patent Public Search is UI-only/human-handoff in APA; not automated.",
+    },
+    {
+      source_id: "google-patents-ui",
+      access_mode: "ui-restricted",
+      status: searched.has("google-patents-ui") ? "searched" : "unsearched",
+      reason: "Google Patents UI scraping is disabled by source-registry policy.",
+    },
+    {
+      source_id: "non-patent-literature",
+      access_mode: "paywalled/human-handoff",
+      status: "unsearched",
+      reason: "Paywalled NPL and web literature are not covered by the default API search.",
+    },
+    {
+      source_id: "foreign-patent-full-text",
+      access_mode: "dataset/API-dependent",
+      status: "unsearched",
+      reason: "Foreign full-text coverage is not enabled in the USPTO-only v0.1 source set.",
+    },
+  ];
+  return {
+    search_complete_asserted: false,
+    searched_source_ids: [...searched].sort(),
+    known_unsearched_sources: sourceLimitRows.filter((r) => r.status === "unsearched"),
+    source_errors_or_skips: (perSource || []).filter((s) => s.skipped || s.error).map((s) => ({
+      source_id: s.id,
+      status: s.skipped ? "skipped" : "error",
+      reason: s.error || (s.notes || []).join("; ") || "not queried",
+    })),
   };
 }
 
@@ -209,6 +279,10 @@ function sourceLevelExclusions(perSource) {
 function asList(v) {
   if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
   return String(v || "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function oneLine(text) {
+  return String(text == null ? "" : text).replace(/[\r\n\u2028\u2029]+/g, " ").trim();
 }
 
 export function writeSearchDossier(matterDir, opts) {

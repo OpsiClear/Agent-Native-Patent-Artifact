@@ -658,8 +658,8 @@ Detailed tasks:
 - [x] Expand search dossier as described in Phase 1.6.
 - [x] Add closest-art human verification update flow.
 - [x] Preserve all unverified defaults.
-- [ ] Add quote-backed chart handoff from prior-art records into `/apa-analyze`.
-- [ ] Add a "search coverage limits" field that records known unsearched sources/classes.
+- [x] Add quote-backed chart handoff from prior-art records into `/apa-analyze`.
+- [x] Add a "search coverage limits" field that records known unsearched sources/classes.
 
 Suggested targets:
 - `packages/apa-search/writers.mjs`
@@ -671,11 +671,11 @@ Acceptance criteria:
 - [x] Dossier records what was searched, where, when, with what parameters, and why results were
   assigned/excluded.
 - [x] Closest-art selection remains human-unverified by default.
-- [ ] `/apa-analyze` can consume prior-art records without losing quote/page/paragraph proof.
+- [x] `/apa-analyze` can consume prior-art records without losing quote/page/paragraph proof.
 
 Verification:
 - [x] `node --test packages/apa-search/test/*.test.mjs`
-- [ ] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.5 `/apa-analyze`
 
