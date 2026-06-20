@@ -8,7 +8,7 @@
  *
  * This module reuses the SHARED parser (../../lib/apa-parse.mjs) - it never re-implements YAML.
  *
- * Node.js >=18, ESM, zero dependencies.
+ * Node.js >=21, ESM, zero dependencies.
  */
 
 import { readFileSync } from "node:fs";

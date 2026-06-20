@@ -1,7 +1,7 @@
 /**
  * apa-assemble/ids - seed an Information Disclosure Statement (SB/08) from the matter's prior-art index.
  * Every reference is marked UNVERIFIED: a human must confirm each before it is listed/relied on (37 CFR
- * 1.97/1.98), and the duty of candor is CONTINUING. APA does not file the IDS. Node >=18, ESM, zero deps.
+ * 1.97/1.98), and the duty of candor is CONTINUING. APA does not file the IDS. Node >=21, ESM, zero deps.
  */
 
 import { readFileSync } from "node:fs";

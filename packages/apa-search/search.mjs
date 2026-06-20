@@ -1,6 +1,6 @@
 /**
  * apa-search orchestrator: build a query from a matter's claims, SCAN IT AT THE SINK (confidentiality)
- * before it egresses, run the enabled sources, then dedupe + rank. Node >=18, ESM, zero deps.
+ * before it egresses, run the enabled sources, then dedupe + rank. Node >=21, ESM, zero deps.
  * Fetched content is wrapped via envelope.mjs before any LLM sees it; closest-art selection is always
  * left to a human (this is not a clearance and never asserts "no anticipating art found").
  */

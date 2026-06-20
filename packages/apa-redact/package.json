@@ -1,11 +1,11 @@
 {
   "name": "apa-redact",
   "version": "0.1.0",
-  "description": "Confidentiality/PII/patent redaction guard for the Agent-Native-Patent-Artifact project. Scan-at-sink secrets/PII/legal guardrail. Zero dependencies, Node >=18, plain ESM. Ported from gstack's redaction engine.",
+  "description": "Confidentiality/PII/patent redaction guard for the Agent-Native-Patent-Artifact project. Scan-at-sink secrets/PII/legal guardrail. Zero dependencies, Node >=21, plain ESM. Ported from gstack's redaction engine.",
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=21"
   },
   "bin": {
     "apa-redact": "bin/apa-redact"

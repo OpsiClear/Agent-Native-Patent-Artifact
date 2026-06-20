@@ -13,13 +13,17 @@
  *   - score clamping: any numeric `score` the model returns is clamped into 1-5 (never trust the model
  *     to stay in range).
  *
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 export const API_URL = "https://api.anthropic.com/v1/messages";
 export const ANTHROPIC_VERSION = "2023-06-01";
 export const DEFAULT_MODEL = "claude-opus-4-8";
 export const MAX_TOKENS = 1024;
+export const DEFAULT_TIMEOUT_MS = 30_000;
+export const DEFAULT_RETRY_ATTEMPTS = 3;
+export const DEFAULT_RETRY_DELAY_MS = 500;
+export const DEFAULT_MAX_RESPONSE_BYTES = 1_048_576;
 const VERDICT_TOOL = "submit_verdict";
 
 /**
@@ -88,20 +92,91 @@ export function parseResponse(data) {
   return { verdict: clampVerdict(toolUse.input), usage, refused: false };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizePositiveInt(n, fallback) {
+  const v = Number(n);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+
+function shouldRetryStatus(status) {
+  return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+}
+
+async function readTextLimited(res, maxBytes) {
+  if (typeof res.text !== "function") return "";
+  const text = await res.text();
+  const bytes = Buffer.byteLength(text, "utf8");
+  if (bytes > maxBytes) {
+    throw new Error(`Anthropic API response too large: ${bytes} bytes exceeds ${maxBytes}`);
+  }
+  return text;
+}
+
+async function readJsonLimited(res, maxBytes) {
+  const text = await readTextLimited(res, maxBytes);
+  if (text) return JSON.parse(text);
+  if (typeof res.json === "function") {
+    const data = await res.json();
+    const bytes = Buffer.byteLength(JSON.stringify(data), "utf8");
+    if (bytes > maxBytes) {
+      throw new Error(`Anthropic API response too large: ${bytes} bytes exceeds ${maxBytes}`);
+    }
+    return data;
+  }
+  return {};
+}
+
+async function fetchWithTimeout(doFetch, url, init, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await doFetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestWithRetry(doFetch, url, init, opts) {
+  const attempts = normalizePositiveInt(opts.retryAttempts, DEFAULT_RETRY_ATTEMPTS);
+  const delayMs = normalizePositiveInt(opts.retryDelayMs, DEFAULT_RETRY_DELAY_MS);
+  const timeoutMs = normalizePositiveInt(opts.timeoutMs, DEFAULT_TIMEOUT_MS);
+  const maxResponseBytes = normalizePositiveInt(opts.maxResponseBytes, DEFAULT_MAX_RESPONSE_BYTES);
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetchWithTimeout(doFetch, url, init, timeoutMs);
+      if (res.ok || !shouldRetryStatus(res.status) || i + 1 >= attempts) return res;
+      let text = "";
+      try { text = await readTextLimited(res, maxResponseBytes); } catch (e) { lastErr = e; throw e; }
+      lastErr = new Error(`Anthropic API ${res.status} ${res.statusText || ""}: ${text}`.trim());
+    } catch (e) {
+      lastErr = e;
+      if (i + 1 >= attempts) throw e;
+    }
+    if (delayMs > 0) await sleep(delayMs * (i + 1));
+  }
+  throw lastErr || new Error("Anthropic API request failed");
+}
+
 /**
  * Make a live (or fetch-injected) judge client.
  *
- *   const client = makeClient({ apiKey, model, fetchImpl });
+ *   const client = makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts });
  *   const verdict = await client.judge(systemPrompt, userPrompt, verdictSchema);  // verdict | null
  *
  * `fetchImpl` defaults to `globalThis.fetch` so tests inject a mock and make NO live call.
  * The API key is read from `apiKey` or `ANTHROPIC_API_KEY`; if absent the first judge() call throws.
  * After each call `client.lastUsage` holds the API usage object (for the cost gate), if returned.
  */
-export function makeClient({ apiKey, model, fetchImpl } = {}) {
+export function makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts, retryDelayMs, maxResponseBytes } = {}) {
   const key = apiKey || process.env.ANTHROPIC_API_KEY;
   const resolvedModel = model || process.env.APA_JUDGE_MODEL || DEFAULT_MODEL;
   const doFetch = fetchImpl || globalThis.fetch;
+  const requestOpts = { timeoutMs, retryAttempts, retryDelayMs, maxResponseBytes };
+  const responseByteLimit = normalizePositiveInt(maxResponseBytes, DEFAULT_MAX_RESPONSE_BYTES);
 
   const client = {
     model: resolvedModel,
@@ -109,9 +184,9 @@ export function makeClient({ apiKey, model, fetchImpl } = {}) {
     lastUsage: undefined,
     async judge(systemPrompt, userPrompt, verdictSchema) {
       if (!key) throw new Error("set ANTHROPIC_API_KEY");
-      if (typeof doFetch !== "function") throw new Error("no fetch implementation available (Node >=18 or inject fetchImpl)");
+      if (typeof doFetch !== "function") throw new Error("no fetch implementation available (Node >=21 or inject fetchImpl)");
       const body = buildRequestBody({ model: resolvedModel, systemPrompt, userPrompt, verdictSchema });
-      const res = await doFetch(API_URL, {
+      const res = await requestWithRetry(doFetch, API_URL, {
         method: "POST",
         headers: {
           "x-api-key": key,
@@ -119,13 +194,13 @@ export function makeClient({ apiKey, model, fetchImpl } = {}) {
           "content-type": "application/json",
         },
         body: JSON.stringify(body),
-      });
+      }, requestOpts);
       if (!res.ok) {
         let text = "";
-        try { text = await res.text(); } catch { /* ignore */ }
+        try { text = await readTextLimited(res, responseByteLimit); } catch { /* ignore */ }
         throw new Error(`Anthropic API ${res.status} ${res.statusText || ""}: ${text}`.trim());
       }
-      const data = await res.json();
+      const data = await readJsonLimited(res, responseByteLimit);
       const { verdict, usage } = parseResponse(data);
       client.lastUsage = usage;
       return verdict;

@@ -13,7 +13,7 @@
  *
  * Counts come from the SHARED parser (../../lib/apa-parse.mjs) - there is no second parser here.
  *
- * Node.js >=18, ESM, zero dependencies.
+ * Node.js >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, readdirSync } from "node:fs";

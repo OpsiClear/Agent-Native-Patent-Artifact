@@ -8,7 +8,7 @@
  *
  * A response is NEVER a legal conclusion: a registered practitioner authors, argues, and files it.
  *
- * Node.js >=18, ESM, zero dependencies.
+ * Node.js >=21, ESM, zero dependencies.
  */
 
 import { readFileSync } from "node:fs";

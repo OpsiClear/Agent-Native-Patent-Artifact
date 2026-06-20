@@ -11,7 +11,7 @@
  * ANTHROPIC_API_KEY (and optionally APA_JUDGE_MODEL) from the environment.
  *
  * Exit: 0 ok · 1 regression (budget gate failed) · 2 usage error.
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { makeClient, MockClient } from "./client.mjs";

@@ -9,9 +9,11 @@
  *
  *   cd <your-project> && node <path-to-kit>/scripts/dropin.mjs
  *   node scripts/dropin.mjs --project /path/to/your-project
+ *   node scripts/dropin.mjs --project /path/to/your-project --dry-run
  *
  * Re-run any time (e.g. after moving the kit): the block is delimited by markers and updated in place,
- * never duplicated. Node >=18, ESM, zero dependencies.
+ * never duplicated. Existing files are backed up before a write unless `--no-backup` is passed.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
@@ -63,8 +65,16 @@ export function pointerBlock(relKit) {
   ].join("\n");
 }
 
-/** Insert/refresh the marked block in `file`. Returns 'created'|'appended'|'updated'|'unchanged'. */
-export function upsertBlock(file, block) {
+function writeWithBackup(file, cur, next, { backup }) {
+  if (backup && existsSync(file)) writeFileSync(`${file}.bak`, cur);
+  writeFileSync(file, next);
+}
+
+/**
+ * Insert/refresh the marked block in `file`.
+ * Returns 'created'|'appended'|'updated'|'unchanged' or dry-run variants 'would-*'.
+ */
+export function upsertBlock(file, block, { dryRun = false, backup = true } = {}) {
   const cur = existsSync(file) ? readFileSync(file, "utf8") : "";
   const s = cur.indexOf(START);
   if (s !== -1) {
@@ -72,17 +82,23 @@ export function upsertBlock(file, block) {
     if (e === -1) throw new Error(`${file} has an APA start marker but no end marker; remove the stray marker and re-run.`);
     const next = cur.slice(0, s) + block + cur.slice(e + END.length);
     if (next === cur) return "unchanged";
-    writeFileSync(file, next);
+    if (dryRun) return "would-update";
+    writeWithBackup(file, cur, next, { backup });
     return "updated";
   }
-  if (cur === "") { writeFileSync(file, block + "\n"); return "created"; }
+  if (cur === "") {
+    if (dryRun) return "would-create";
+    writeFileSync(file, block + "\n");
+    return "created";
+  }
   const sep = cur.endsWith("\n") ? "\n" : "\n\n";
-  writeFileSync(file, cur + sep + block + "\n");
+  if (dryRun) return "would-append";
+  writeWithBackup(file, cur, cur + sep + block + "\n", { backup });
   return "appended";
 }
 
 /** Wire the pointer into a project dir. Returns { rel, results: [{file,status}] }. */
-export function dropin(projectDir) {
+export function dropin(projectDir, options = {}) {
   const project = resolve(projectDir);
   if (!existsSync(project) || !statSync(project).isDirectory()) {
     throw new Error(`project dir not found: ${project}`);
@@ -94,7 +110,7 @@ export function dropin(projectDir) {
   const block = pointerBlock(rel);
   const results = [];
   for (const name of ["CLAUDE.md", "AGENTS.md"]) {
-    results.push({ file: name, status: upsertBlock(join(project, name), block) });
+    results.push({ file: name, status: upsertBlock(join(project, name), block, options) });
   }
   return { rel: fwd(rel), results };
 }
@@ -102,13 +118,15 @@ export function dropin(projectDir) {
 function main() {
   const argv = process.argv.slice(2);
   let project = process.cwd();
+  const options = { dryRun: argv.includes("--dry-run"), backup: !argv.includes("--no-backup") };
   for (let i = 0; i < argv.length; i++) if (argv[i] === "--project") project = argv[++i] || ".";
   let out;
-  try { out = dropin(project); }
+  try { out = dropin(project, options); }
   catch (e) { process.stderr.write(`error: ${e && e.message ? e.message : e}\n`); process.exit(2); }
-  process.stdout.write(`APA drop-in wired into ${resolve(project)}\n`);
+  process.stdout.write(`APA drop-in ${options.dryRun ? "previewed for" : "wired into"} ${resolve(project)}\n`);
   process.stdout.write(`  kit at (relative): ${out.rel}\n`);
   out.results.forEach((r) => process.stdout.write(`  ${r.file}: ${r.status}\n`));
+  if (!options.dryRun && options.backup) process.stdout.write("  backups: existing files are saved as *.bak before edits\n");
   process.stdout.write("\nNext: open this project in Claude Code or Codex and say e.g.\n");
   process.stdout.write("  \"use the APA toolkit to capture a disclosure for my invention\"\n");
 }

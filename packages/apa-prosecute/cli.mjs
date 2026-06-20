@@ -12,7 +12,7 @@
  *
  * Exit: 0 = ok · 2 = usage error.
  *
- * Node.js >=18, ESM, zero dependencies.
+ * Node.js >=21, ESM, zero dependencies.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";

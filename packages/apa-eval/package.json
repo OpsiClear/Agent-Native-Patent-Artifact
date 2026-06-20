@@ -1,11 +1,11 @@
 {
   "name": "apa-eval",
   "version": "0.1.0",
-  "description": "Tier-3 LLM-as-judge quality-eval harness for the Agent-Native-Patent-Artifact (APA) project. Paid, periodic (not per-commit). Calls the Anthropic Messages API with raw fetch (no SDK), obtains a structured verdict via forced tool use, runs a deterministic regex-before-LLM pre-pass to skip broken matters, and budget-gates on claim-quality regression or >2x cost growth. Zero dependencies, plain ESM, Node >=18. Human-in-the-loop; scores are drafts for a registered practitioner, never a legal opinion.",
+  "description": "Tier-3 LLM-as-judge quality-eval harness for the Agent-Native-Patent-Artifact (APA) project. Paid, periodic (not per-commit). Calls the Anthropic Messages API with raw fetch (no SDK), obtains a structured verdict via forced tool use, runs a deterministic regex-before-LLM pre-pass to skip broken matters, and budget-gates on claim-quality regression or >2x cost growth. Zero dependencies, plain ESM, Node >=21. Human-in-the-loop; scores are drafts for a registered practitioner, never a legal opinion.",
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=21"
   },
   "bin": {
     "apa-eval": "cli.mjs"

@@ -2,7 +2,7 @@
 
 API-first prior-art search for a Patent Artifact. Builds a query from a matter's claims, **scans it at
 the sink** (confidentiality) before egress, queries sanctioned sources, dedupes + ranks, and files the
-landscape as `PA##` blocks + raw evidence records + a reference-matrix scaffold. Node ≥ 18, ESM, zero
+landscape as `PA##` blocks + raw evidence records + a reference-matrix scaffold. Node >= 21, ESM, zero
 dependencies. Fetched text is wrapped in an untrusted-content envelope before any LLM sees it.
 
 > **Not a clearance.** Candidates are UNVERIFIED and structurally incomplete (examiner-grade USPTO PPS

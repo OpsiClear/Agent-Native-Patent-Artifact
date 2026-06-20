@@ -19,7 +19,7 @@
  * S112-support / unsupported-edge warning surface; it must live in both the builder and viewer.js.
  *
  * Zero dependencies. Reuses the shared parser at ../../lib/apa-parse.mjs (no private YAML parser).
- * Node.js >= 18, ES module.
+ * Node.js >= 21, ES module.
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";

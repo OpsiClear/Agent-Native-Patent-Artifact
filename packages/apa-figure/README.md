@@ -1,7 +1,7 @@
 # apa-figure
 
 Zero-dependency **SVG patent-figure generator** + **reference-numeral legend builder** for the
-Agent-Native-Patent-Artifact (APA) project. Plain ESM, Node `>=18`, **no npm dependencies** (SVG is
+Agent-Native-Patent-Artifact (APA) project. Plain ESM, Node `>=21`, **no npm dependencies** (SVG is
 just text — no graphics library is needed).
 
 This is a Node/SVG reimplementation of the g2tree ReportLab figure primitives referenced in

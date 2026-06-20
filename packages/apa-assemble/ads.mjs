@@ -2,7 +2,7 @@
  * apa-assemble/ads - draft the Application Data Sheet (37 CFR 1.76) from PATENT.md frontmatter. The ADS
  * is the controlling document for inventor names, applicant, and benefit/priority claims (a wrong/missing
  * benefit claim forfeits priority), so missing required fields are marked [REQUIRED] for the human. The
- * human signs the declaration; APA never does. Node >=18, ESM, zero deps.
+ * human signs the declaration; APA never does. Node >=21, ESM, zero deps.
  */
 
 import { readFileSync } from "node:fs";

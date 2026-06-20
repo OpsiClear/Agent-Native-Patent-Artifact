@@ -32,8 +32,14 @@ jobs:
       - name: Multi-host generation (exercises HostConfig + non-suppressible safety denylist)
         run: node scripts/gen-skill-docs.mjs --all-hosts
 
+      - name: Syntax sweep
+        run: npm run syntax
+
       - name: Full test suite (offline; no API key required)
         run: npm test
+
+      - name: Core CLI smoke checks (offline)
+        run: npm run smoke
 
       - name: Validate worked example - minimal
         run: node packages/apa-validate/validate.mjs examples/minimal-patent-artifact

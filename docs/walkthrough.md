@@ -4,7 +4,7 @@ A new-user tour of the Agent-Native Patent Artifact (APA) lifecycle: from invent
 frozen, filing-ready package. Each step pairs the **skill** you invoke (`/apa-*`) with the concrete
 **CLI** that backs or checks it, what it produces, and the gate it must clear.
 
-> Prereqs: Node >= 18, zero dependencies. Run from the repo root. A "matter" is a directory holding the
+> Prereqs: Node >= 21, zero dependencies. Run from the repo root. A "matter" is a directory holding the
 > artifact (`PATENT.md` + `logic/`, `src/`, `trace/`, `evidence/`). The worked example throughout is
 > `examples/minimal-patent-artifact`.
 

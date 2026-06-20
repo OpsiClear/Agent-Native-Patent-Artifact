@@ -3,7 +3,7 @@
  * apa-claim-lint - deterministic legal-FORM lint for claims (DESIGN.md §7.1 Tier-1). Complements
  * apa-validate (which resolves antecedent basis + dependency + edges); this checks single-sentence
  * form, transitional phrases, claim numbering, multiple-dependent form, and flags 112(f) nonce words.
- * Form/advisory only - it asserts NO patentability merit. Node >=18, ESM, zero deps.
+ * Form/advisory only - it asserts NO patentability merit. Node >=21, ESM, zero deps.
  *
  * Usage:  node claim-lint.mjs <matter-dir> [--json]
  * Exit:   0 = no findings · 1 = findings (advisory)

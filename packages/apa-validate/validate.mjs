@@ -8,7 +8,7 @@
  *
  * Exit codes:  0 = clean   1 = warnings only   2 = errors (do not proceed)
  * Usage:  node validate.mjs <matter-dir> [--json]
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";

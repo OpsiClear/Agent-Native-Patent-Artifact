@@ -13,7 +13,7 @@
  *   node scripts/gen-skill-docs.mjs --check         # freshness gate on the Claude outputs (no writes)
  *   node scripts/gen-skill-docs.mjs --host cursor    # one host -> dist/cursor/<name>/SKILL.md
  *   node scripts/gen-skill-docs.mjs --all-hosts      # claude (skills/) + codex/cursor (dist/)
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs";

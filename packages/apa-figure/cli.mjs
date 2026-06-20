@@ -13,7 +13,7 @@
  *   0  ok / legend clean
  *   1  legend flags exist (undefined or inconsistent numerals), OR a usage/IO error
  *
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";

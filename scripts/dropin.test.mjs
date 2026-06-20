@@ -57,6 +57,32 @@ test("upsertBlock refreshes a stale block in place when the kit path changes", (
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("dropin dry-run reports intended writes without touching files", () => {
+  const d = tmpProject();
+  try {
+    const out = dropin(d, { dryRun: true });
+    assert.deepEqual(out.results.map((r) => r.status).sort(), ["would-create", "would-create"]);
+    assert.throws(() => readFileSync(join(d, "CLAUDE.md"), "utf8"));
+    assert.throws(() => readFileSync(join(d, "AGENTS.md"), "utf8"));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("upsertBlock backs up existing files before append and update", () => {
+  const d = tmpProject();
+  try {
+    const f = join(d, "CLAUDE.md");
+    writeFileSync(f, "# My project\n");
+    assert.equal(upsertBlock(f, pointerBlock("old/path")), "appended");
+    assert.equal(readFileSync(`${f}.bak`, "utf8"), "# My project\n");
+
+    const beforeUpdate = readFileSync(f, "utf8");
+    assert.equal(upsertBlock(f, pointerBlock("new/path")), "updated");
+    assert.equal(readFileSync(`${f}.bak`, "utf8"), beforeUpdate);
+    const txt = readFileSync(f, "utf8");
+    assert.ok(txt.includes("new/path") && !txt.includes("old/path"));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("dropin refuses to point the kit at itself, and fails loud on a missing dir", () => {
   assert.throws(() => dropin(KIT_ROOT), /kit itself/);
   assert.throws(() => dropin(join(tmpdir(), "apa-does-not-exist-xyz")), /not found/);

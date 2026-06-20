@@ -2,7 +2,7 @@
  * Write a ranked prior-art landscape into a matter: append PA## blocks to logic/prior_art.md, write a
  * raw record per reference under evidence/prior_art/, and emit a reference-matrix scaffold. Every
  * reference is written UNVERIFIED (verification: false) - a human must confirm discloses-vs-lacks
- * before it is relied on or listed on an IDS. Node >=18, ESM, zero deps.
+ * before it is relied on or listed on an IDS. Node >=21, ESM, zero deps.
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";

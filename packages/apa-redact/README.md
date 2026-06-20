@@ -6,7 +6,7 @@ scans the **exact bytes about to leave at any external sink** — a prior-art
 search query, a cloud-LLM payload carrying unfiled disclosure text, a filing
 submission — and blocks or flags secrets before they go out.
 
-This is a plain-ESM, **zero-dependency** Node.js (>=18) port of
+This is a plain-ESM, **zero-dependency** Node.js (>=21) port of
 [gstack](https://github.com/garrytan/gstack)'s redaction engine
 (`lib/redact-patterns.ts`, `lib/redact-engine.ts`, `bin/gstack-redact`),
 extended with patent-specific categories. Everything runs under plain `node` —

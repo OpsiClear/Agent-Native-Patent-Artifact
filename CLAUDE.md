@@ -6,7 +6,7 @@ the on-disk format is in `docs/protocol.md`; the non-negotiable legal posture is
 
 ## Runtime: Node.js only (no Python, no Bun)
 
-This project targets **Node.js ≥ 18, plain ESM `.mjs`, zero npm dependencies**. The dev machine has
+This project targets **Node.js >= 21, plain ESM `.mjs`, zero npm dependencies**. CI runs Node 22. The dev machine has
 Node (via nvm4w) but no Python and no Bun, so all MVP tooling must run under plain `node`. (gstack's
 Bun-compiled browser/PDF binaries get forked in later phases when those capabilities land; the Phase-1
 MVP needs neither.) Use only Node built-ins (`node:fs`, `node:test`, `String.prototype.normalize`, …).

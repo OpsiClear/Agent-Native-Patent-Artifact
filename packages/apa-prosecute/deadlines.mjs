@@ -12,7 +12,7 @@
  * Extension fees come from a dated fee schedule's `prosecution`/`extensions` key if present;
  * otherwise CLEARLY-LABELED PLACEHOLDER amounts are used and the result is flagged `_unverified`.
  *
- * Node.js >=18, ESM, zero dependencies.
+ * Node.js >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, readdirSync } from "node:fs";

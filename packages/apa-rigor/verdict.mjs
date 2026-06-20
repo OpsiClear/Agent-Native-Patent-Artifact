@@ -2,7 +2,7 @@
  * Deterministic rigor verdict + report validation (DESIGN.md §7.3). The verdict is computed from the
  * six dimension scores by code (NOT chosen by the LLM): mean band, hardened by a per-dimension floor -
  * any dimension scoring 1 caps the result at Do-Not-File regardless of mean; a 2 caps at Major-Rework.
- * Node >=18, ESM, zero deps.
+ * Node >=21, ESM, zero deps.
  */
 
 import { DIM_IDS, SEVERITIES } from "./dimensions.mjs";

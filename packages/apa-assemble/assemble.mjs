@@ -3,7 +3,7 @@
  * (canonical markdown + USPTO print-CSS HTML). PDF is the filing-faithful format (DESIGN.md §4.2): this
  * machine has no Chromium, so we emit HTML with the 1.52 print stylesheet and the human prints to PDF
  * in a browser (exactly what Chromium page.pdf would render). Schema-valid DOCX is deferred (build-new).
- * Node >=18, ESM, zero deps. This COLLATES drafted text; it does not author it (that is /apa-spec).
+ * Node >=21, ESM, zero deps. This COLLATES drafted text; it does not author it (that is /apa-spec).
  */
 
 import { readFileSync, existsSync } from "node:fs";

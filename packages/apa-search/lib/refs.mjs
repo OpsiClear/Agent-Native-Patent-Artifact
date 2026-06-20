@@ -1,5 +1,5 @@
 /**
- * Shared prior-art record contract + helpers for apa-search. Node >=18, zero deps, ESM.
+ * Shared prior-art record contract + helpers for apa-search. Node >=21, zero deps, ESM.
  *
  * @typedef {Object} Query
  * @property {string[]} keywords    free-text terms (from claim limitations / inventive concept)

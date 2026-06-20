@@ -13,7 +13,7 @@
  *                           * NUMERAL_INCONSISTENT - a numeral that appears in more than one figure
  *                             mapping to a DIFFERENT element (inconsistent numbering)
  *
- * This is a drafting aid, not the authoritative validator. Node >=18, ESM, zero deps.
+ * This is a drafting aid, not the authoritative validator. Node >=21, ESM, zero deps.
  */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";

@@ -54,6 +54,9 @@ the verdict JSON schema, with `tool_choice: {type:"tool", name:"submit_verdict"}
   long and adversarial-input-prone.
 - **Score clamping.** Any returned numeric `score` is clamped into 1-5 (the model is never trusted to
   stay in range).
+- **Network bounds.** Live calls use an `AbortSignal` timeout, bounded retries, and a response-size cap
+  while staying zero-dependency. Defaults: `timeoutMs=30000`, `retryAttempts=3`,
+  `retryDelayMs=500`, `maxResponseBytes=1048576`.
 
 ## Deterministic pre-pass (the cost saver)
 
@@ -105,10 +108,10 @@ const client = makeClient();              // reads ANTHROPIC_API_KEY / APA_JUDGE
 const claim = await judgeClaim(client, "./path/to/matter");
 ```
 
-`makeClient({ apiKey, model, fetchImpl })` — `fetchImpl` defaults to `globalThis.fetch`, so tests
-inject a mock and make no live call.
+`makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts, retryDelayMs, maxResponseBytes })` —
+`fetchImpl` defaults to `globalThis.fetch`, so tests inject a mock and make no live call.
 
 ## Constraints
 
-Zero npm dependencies, Node built-ins only, Node >=18, plain ESM. No `Date.now()` / `Math.random()`
+Zero npm dependencies, Node built-ins only, Node >=21, plain ESM. No `Date.now()` / `Math.random()`
 inside pure functions (timestamps are passed in). `node --test` is fully offline.

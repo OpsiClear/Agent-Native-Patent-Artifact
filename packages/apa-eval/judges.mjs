@@ -14,7 +14,7 @@
  * STRUCTURALLY BROKEN (Level-1 ERRORS), we SKIP the LLM call and return score 1 with the rationale
  * "structural failure - not sent to judge" - cheap structure failures never reach the expensive judge.
  *
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { readFileSync } from "node:fs";

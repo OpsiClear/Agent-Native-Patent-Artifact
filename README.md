@@ -18,7 +18,7 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **206 tests, all passing** (`bash
+generation, CI, and an end-to-end integration test. The suite is **216 tests, all passing** (`bash
 build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.
@@ -70,7 +70,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/autoprep/` | `/apa-autoprep` — orchestrates the whole lifecycle, enforcing the gates and human checkpoints between phases | ✅ |
 | `scripts/` + `hosts/` | The `.tmpl → SKILL.md` generator + dated legal-rule resolvers + host config (claude / codex / cursor) | ✅ |
 
-## Quickstart (Node ≥ 18; no install step, zero dependencies)
+## Quickstart (Node >= 21; no install step, zero dependencies)
 
 ```bash
 node scripts/gen-skill-docs.mjs                                   # generate the skills from templates
@@ -78,6 +78,8 @@ node packages/apa-validate/validate.mjs examples/minimal-patent-artifact   # mec
 node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --out examples/minimal-patent-artifact/manifest.json
 # then open packages/apa-viewer/index.html (it loads a sibling manifest.json, or ?manifest=<path>)
 node --test "packages/**/*.test.mjs" "lib/**/*.test.mjs" "scripts/**/*.test.mjs" "hosts/**/*.test.mjs" "test/**/*.test.mjs"   # the whole suite (or just: bash build.sh)
+npm run syntax                                                   # parse-check first-party JS/MJS
+npm run smoke                                                    # cross-package CLI smoke checks
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
 node scripts/setup.mjs --install                                  # optional: copy skills into ~/.claude/skills/apa-*
 node packages/apa-skills/bin/apa-skills.mjs list                  # the npx installer (also: install [--host] / uninstall)
@@ -135,5 +137,6 @@ merits are surfaced as **flags and questions for a human**, never a clearance.
 - **`third_party/uspto-references/`** — the authoritative **public-domain** sources APA's encoded rules are checked against: 35 USC (101/102/103/112/…), 37 CFR (the filing/format/candor/claims/ADS/drawings/IDS/extension rules), key MPEP sections, and the USPTO filing & fee schedule. The dated fee schedule (`docs/fee-schedule.*.json`) and the legal-rule resolvers cite these; figures/multipliers carry an effective date and "verify currency."
 
 ## License
-[MIT](LICENSE). Reference repos under `third_party/` retain their own licenses; the US-government works under
-`third_party/uspto-references/` are public domain (17 USC §105).
+[MIT](LICENSE). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for provenance, upstream license
+notices, and public-domain reference material. Contribution terms and patent-domain guardrails are in
+[CONTRIBUTING.md](CONTRIBUTING.md).

@@ -2,7 +2,7 @@
 
 One-command installer for the **Agent-Native Patent Artifact (APA)** agent skills.
 It copies APA's skills into your coding agent's skill directory. Standalone,
-zero runtime dependencies (Node built-ins only), Node >= 18.
+zero runtime dependencies (Node built-ins only), Node >= 21.
 
 > APA is assistive, not legal advice; a human signs and files.
 

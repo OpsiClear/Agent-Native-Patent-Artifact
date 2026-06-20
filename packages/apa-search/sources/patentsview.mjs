@@ -30,7 +30,7 @@
  *   export const meta (SourceMeta)
  *   export async function search(query, opts) -> { records: NormalizedRef[], rawCount, notes }
  *
- * Node >= 18, ESM, zero npm deps (uses global fetch).
+ * Node >= 21, ESM, zero npm deps (uses global fetch).
  */
 
 import { formatUsDocNumber } from "../lib/refs.mjs";
@@ -198,7 +198,7 @@ export async function search(query, opts = {}) {
 
   const doFetch = opts.fetch || globalThis.fetch;
   if (typeof doFetch !== "function") {
-    return { records: [], rawCount: 0, notes: ["patentsview: global fetch unavailable (need Node >=18)"] };
+    return { records: [], rawCount: 0, notes: ["patentsview: global fetch unavailable (need Node >=21)"] };
   }
 
   let res;

@@ -2,7 +2,7 @@
  * apa-assemble/preflight - the pre-filing readiness gate. Enforces the structural guardrails (DESIGN.md
  * §7.4 / §11): the inventorship-integrity gate (no claim limitation may remain `ai-suggested`), no
  * AI/zero inventors, mechanical validity, and a submit-boundary stop (APA never signs or files). Returns
- * a go/no-go + a frozen upload-set manifest. Node >=18, ESM, zero deps.
+ * a go/no-go + a frozen upload-set manifest. Node >=21, ESM, zero deps.
  */
 
 import { readFileSync, existsSync } from "node:fs";

@@ -13,7 +13,7 @@ This is **deeper UPL territory** than the pre-filing tools. Accordingly:
 - **APA never signs and never files.** A registered practitioner authors the response, decides
   every argument and amendment, and files it.
 
-Plain Node.js ESM, **zero dependencies**, Node >= 18, Node built-ins only. It reuses the shared
+Plain Node.js ESM, **zero dependencies**, Node >= 21, Node built-ins only. It reuses the shared
 parser at `lib/apa-parse.mjs` (no second YAML parser).
 
 ## The `prosecution/` format

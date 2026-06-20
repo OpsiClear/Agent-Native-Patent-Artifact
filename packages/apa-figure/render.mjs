@@ -15,7 +15,7 @@
  *
  * Determinism: every id is derived from the fig id + numeral - no random ids, no clocks.
  *
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 // -------------------------------------------------------------------------------------------------

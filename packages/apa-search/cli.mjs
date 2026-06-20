@@ -2,7 +2,7 @@
 /**
  * apa-search - prior-art search CLI. Builds a query (from --query or a matter's claims), SCANS IT at
  * the sink before egress, queries enabled sources, ranks, and optionally writes the landscape into a
- * matter. Node >=18, ESM, zero deps.
+ * matter. Node >=21, ESM, zero deps.
  *
  *   node cli.mjs --query "self-watering planter float valve" --source mock
  *   node cli.mjs --matter <dir> --source patentsview --write        # PATENTSVIEW_API_KEY required

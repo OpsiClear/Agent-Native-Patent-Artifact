@@ -86,13 +86,14 @@ test("client.judge parses the forced-tool verdict and clamps an out-of-range sco
 test("client uses the documented endpoint + headers", async () => {
   let seen = null;
   const fetchImpl = async (url, opts) => {
-    seen = { url, headers: opts.headers, method: opts.method };
+    seen = { url, headers: opts.headers, method: opts.method, signal: opts.signal };
     return { ok: true, status: 200, statusText: "OK", async json() { return { content: [{ type: "tool_use", name: "submit_verdict", input: { score: 3, rationale: "ok" } }] }; }, async text() { return ""; } };
   };
   const client = makeClient({ apiKey: "sk-test", fetchImpl });
   await client.judge("s", "u", SCHEMA);
   assert.equal(seen.url, API_URL);
   assert.equal(seen.method, "POST");
+  assert.ok(seen.signal, "client passes an AbortSignal for timeout enforcement");
   assert.equal(seen.headers["x-api-key"], "sk-test");
   assert.equal(seen.headers["anthropic-version"], "2023-06-01");
   assert.equal(seen.headers["content-type"], "application/json");
@@ -107,8 +108,39 @@ test("a refusal stop_reason yields a null verdict (never crashes)", async () => 
 
 test("a non-200 response throws a clear error with status + body", async () => {
   const fetchImpl = async () => ({ ok: false, status: 429, statusText: "Too Many Requests", async json() { return {}; }, async text() { return "rate limited"; } });
-  const client = makeClient({ apiKey: "sk-test", fetchImpl });
+  const client = makeClient({ apiKey: "sk-test", fetchImpl, retryAttempts: 1 });
   await assert.rejects(() => client.judge("s", "u", SCHEMA), /429.*rate limited/s);
+});
+
+test("client retries transient fetch failures then parses the verdict", async () => {
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls === 1) throw new Error("temporary network failure");
+    return {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      async json() { return { content: [{ type: "tool_use", name: "submit_verdict", input: { score: 4, rationale: "recovered" } }] }; },
+      async text() { return ""; },
+    };
+  };
+  const client = makeClient({ apiKey: "sk-test", fetchImpl, retryAttempts: 2, retryDelayMs: 1 });
+  const verdict = await client.judge("s", "u", SCHEMA);
+  assert.equal(calls, 2);
+  assert.equal(verdict.score, 4);
+  assert.equal(verdict.rationale, "recovered");
+});
+
+test("client rejects an oversized API response before JSON parsing", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    async text() { return JSON.stringify({ content: [{ type: "tool_use", name: "submit_verdict", input: { score: 3, rationale: "x".repeat(200) } }] }); },
+  });
+  const client = makeClient({ apiKey: "sk-test", fetchImpl, maxResponseBytes: 80, retryAttempts: 1 });
+  await assert.rejects(() => client.judge("s", "u", SCHEMA), /response too large/);
 });
 
 test("missing ANTHROPIC_API_KEY (non-mock) throws 'set ANTHROPIC_API_KEY'", async () => {

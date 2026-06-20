@@ -12,7 +12,7 @@
  * A "run" is `{ dimensions: { claim:{score,...}, spec:{...}, ... }, cost?, usage?, ... }`.
  * Cost = sum of judge usage (input+output tokens) if present, else the count of judge calls.
  *
- * Node >=18, ESM, zero dependencies.
+ * Node >=21, ESM, zero dependencies.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";

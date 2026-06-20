@@ -2,7 +2,7 @@
  * Build a patent_rigor_report.json SKELETON for a matter. Runs the Level-1 mechanical validator and
  * the claim-form lint, pre-fills the mechanical dimensions (P3 antecedent basis, P4 support/numeral)
  * from those signals, and leaves the judgment dimensions (P1/P2/P5/P6) for the /apa-rigor skill to
- * score semantically. Read-only. Node >=18, ESM, zero deps.
+ * score semantically. Read-only. Node >=21, ESM, zero deps.
  */
 
 import { validateMatter } from "../apa-validate/validate.mjs";

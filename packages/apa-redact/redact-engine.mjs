@@ -34,7 +34,7 @@
  * on THAT file, then send the SAME file. Never scan a rendered string and then
  * re-render — that reopens a scan-vs-send gap.
  *
- * Node.js >=18, ES module, zero dependencies.
+ * Node.js >=21, ES module, zero dependencies.
  */
 
 import { readFileSync, statSync } from "node:fs";

@@ -43,7 +43,7 @@
  * the `action` field. HIGH -> 'block' (exit 3). MEDIUM -> 'confirm' (exit 2).
  * LOW -> 'fyi' (does not gate the exit code).
  *
- * Node.js >=18, ES module, zero dependencies.
+ * Node.js >=21, ES module, zero dependencies.
  */
 
 // ── Tier -> action map ────────────────────────────────────────────────────────

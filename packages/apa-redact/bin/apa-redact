@@ -3,7 +3,7 @@
  * apa-redact — thin entry shim over cli.mjs.
  *
  * Resolves cli.mjs relative to this file so the `apa-redact` command works
- * regardless of the caller's CWD. Zero dependencies; plain ESM; Node >=18.
+ * regardless of the caller's CWD. Zero dependencies; plain ESM; Node >=21.
  */
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
