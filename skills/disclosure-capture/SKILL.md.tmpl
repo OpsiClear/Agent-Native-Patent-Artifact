@@ -36,18 +36,22 @@ disclosure interview; it reviews the turn and writes new events into the artifac
    claim. When an interpretive observation about novelty crystallizes, write it as a claim seed in
    `logic/claims.md` / a defined term in `logic/concepts.md` / a prior-art block in `logic/prior_art.md`.
 
-4. **Provenance on every entry.** Default `ai-suggested`. Upgrade only on an explicit human act: a
-   verbatim inventor statement -> `inventor:<id>` (conception evidence); a paraphrase the human accepts
-   -> `human-revised`; attorney authorship -> `attorney`. Provenance never auto-upgrades. A claim
-   limitation left `ai-suggested` is an assembly blocker until a human adopts it.
+4. **Provenance and source spans on every entry.** Default `ai-suggested`. Upgrade only on an explicit
+   human act: a verbatim inventor statement -> `inventor:<id>` (conception evidence); a paraphrase the
+   human accepts -> `human-revised`; attorney authorship -> `attorney`. For every promoted claim seed,
+   embodiment, or bar-date fact, include source metadata where available: `source`
+   (`transcript|upload|inventor-confirmation|attorney-note`), `source_span`, `speaker`, `timestamp`,
+   and `source_sha256`. Provenance never auto-upgrades. A claim limitation left `ai-suggested` is an
+   assembly blocker until a human adopts it.
 
 5. **Bar-date / candor prompt (always ask).** Has the invention been offered for sale, sold, publicly
    used, demonstrated, or described in a publication? Capture each with its date as a journey event -
    these statutory-bar facts are not findable by any later search and bear on 35 USC 102 and the duty
    of candor. Record, never auto-assert or judge.
 
-6. **Inventorship.** Attribute conception to specific named natural persons; keep the
-   `inventorship_matrix` in `PATENT.md` current (which inventor conceived which claim, 35 USC 116).
+6. **Inventorship.** Attribute conception to specific named natural persons at the limitation level
+   when possible; keep the `inventorship_matrix` in `PATENT.md` current (which inventor conceived
+   which claim, 35 USC 116).
 
 7. **Validate.** After writing, run `node packages/apa-validate/validate.mjs <matter>` and surface the
    errors/warnings to the human. Do not claim the matter is ready to file - that is a later, gated stage.

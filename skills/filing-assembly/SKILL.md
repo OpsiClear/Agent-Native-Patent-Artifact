@@ -70,6 +70,9 @@ It produces, under `<matter>/assembled/`:
 - `declaration_UNSIGNED.md` - the 1.63 oath template with a **[SIGNATURE REQUIRED]** placeholder.
 - `FEE_WORKSHEET.md` - an **estimate** from a dated fee schedule (verify currency).
 - `PREFLIGHT.md` + `upload_set/MANIFEST.txt` - the go/no-go checklist and the frozen authoritative set.
+- `upload_manifest.json` - SHA-256 hashes for generated files, the intended upload set, submit
+  boundary, and `human_verified: false` flags for PDF export, ADS completion, IDS verification,
+  declaration signatures, fee/entity checks, and Patent Center upload.
 
 ### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
 - Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/
@@ -100,6 +103,8 @@ airtight enforcement.
 APA never signs or certifies a USPTO paper, never generates an executed/signed declaration, never
 asserts micro-entity status, and never files. Patent Center has no public submission API and requires
 an identity-verified human account; a human files. Rules as of 2026-06-15; verify currency.
+Do not treat `upload_manifest.json` as proof of filing readiness; it is an audit checklist for the
+human filing acts APA refuses to perform.
 
 ## Do NOT
 - Mark the package "filed" or "ready to file" without human review, signature, and rigor sign-off.

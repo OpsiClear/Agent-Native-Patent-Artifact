@@ -4,7 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeLandscape } from "../writers.mjs";
+import { writeLandscape, buildSearchDossier, writeSearchDossier } from "../writers.mjs";
 import { validateMatter } from "../../apa-validate/validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -39,5 +39,44 @@ test("writeLandscape appends valid PA## blocks and keeps the matter mechanically
     // The appended blocks must parse and not introduce mechanical errors.
     const after = validateMatter(dir);
     assert.equal(after.errors.length, 0, JSON.stringify(after.errors));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("search dossier records query hash, source summary, ranked refs, and unverified closest-art state", () => {
+  const query = { keywords: ["reservoir", "float"], cpc: ["A01G27/00"], limit: 2 };
+  const result = {
+    verdict: { text: "reservoir float A01G27/00\n{}", high: [], medium: [] },
+    perSource: [{ id: "mock", count: 2, rawCount: 3, notes: ["offline"] }],
+    ranked: REFS.map((r, i) => ({ ...r, score: 10 - i })),
+  };
+  const dossier = buildSearchDossier({
+    query,
+    result,
+    assigned: [{ paId: "PA02", docNumber: "US-9000002-B1", title: "Wicking self-watering container" }],
+    limit: 2,
+    generatedAt: "2026-06-20T00:00:00.000Z",
+  });
+  assert.equal(dossier.schema, "apa-search-dossier-v1");
+  assert.match(dossier.query.serialized_sha256, /^[0-9a-f]{64}$/);
+  assert.deepEqual(dossier.sources.map((s) => s.source_id), ["mock"]);
+  assert.equal(dossier.ranked_candidates.length, 2);
+  assert.equal(dossier.closest_art_selection.human_verified, false);
+  assert.match(dossier.caveats.join("\n"), /not a complete search/);
+});
+
+test("writeSearchDossier writes a timestamped JSON dossier under evidence/prior_art", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-dossier-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const { path, dossier } = writeSearchDossier(dir, {
+      query: { keywords: ["reservoir"], cpc: [], limit: 1 },
+      result: { verdict: { text: "reservoir\n{}", high: [], medium: [] }, perSource: [], ranked: REFS.slice(0, 1) },
+      assigned: [],
+      limit: 1,
+      generatedAt: "2026-06-20T00:00:00.000Z",
+    });
+    assert.ok(existsSync(path));
+    assert.equal(JSON.parse(readFileSync(path, "utf8")).schema, dossier.schema);
+    assert.match(path.replace(/\\/g, "/"), /evidence\/prior_art\/search-dossier-2026-06-20T00-00-00-000Z\.json$/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

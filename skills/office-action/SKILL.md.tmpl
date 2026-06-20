@@ -27,6 +27,10 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
      `ground` (101 | 102 | 103 | 112a | 112b | 112f | double-patenting), `claims: [CLM##]`,
      `references: [PA##]`, and the `examiner_reasoning` (verbatim or summarized). Capture the
      reasoning faithfully; do not paraphrase it into a conclusion.
+   If the paper is an advisory action, after-final communication, notice of appeal, appeal brief,
+   RCE decision, ODP/terminal-disclaimer issue, drawing objection-only paper, or other unsupported
+   event type, fail loud and route to practitioner review rather than forcing it into the response
+   scaffold.
 2. **Parse it** to confirm the capture is well-formed:
    `node packages/apa-prosecute/cli.mjs parse --oa <matter>/prosecution/oa-NN.md`
    (add `--json` for the machine view). Verify the rejection count, grounds, claims, and references.

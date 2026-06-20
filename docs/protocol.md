@@ -21,6 +21,7 @@ by **epistemic role**, not by document section, so an agent loads only what a qu
     embodiments.md     # * SPEC#### paragraphs (the specification support text)
   trace/
     prosecution.yaml   # * decision DAG: PH## nodes (decision / dead_end / pivot / question / experiment)
+    runlog.jsonl       #   append-only skill/tool execution ledger (optional but recommended)
   evidence/
     README.md          # * index: every reference & drawing -> the claims it bears on
     prior_art/<paN>.md #   raw bibliographic record + the relied-on passage of one reference
@@ -117,6 +118,11 @@ type: claim-independent
 Never auto-upgrades. A claim limitation tagged `ai-suggested` is an **assembly blocker** (human must
 adopt it). See DESIGN §2.4 / §11.1.
 
+**Source-span metadata** should accompany promoted facts where available: `source`
+(`transcript|upload|inventor-confirmation|attorney-note|figure-reconstruction`), `source_span`,
+`speaker`, `timestamp`, and `source_sha256`. The MVP validator treats these as optional, but reviewers
+should prefer adopted limitations and `SPEC####` paragraphs whose human source is traceable.
+
 ---
 
 ## 3. Layer file formats
@@ -211,6 +217,30 @@ nodes:
     provenance: attorney
 ```
 `trace/` and `staging/` are **append-only / immutable**; `logic/` is the mutable clean current draft.
+
+### `trace/runlog.jsonl`
+Append-only execution ledger for agent/tool runs. It is optional in the MVP validator but recommended
+for every skill that writes files, calls an external sink, or requires a human checkpoint. One JSON
+object per line:
+
+```json
+{
+  "schema": "apa-runlog-v1",
+  "timestamp": "2026-06-20T00:00:00.000Z",
+  "skill": "apa-priorart",
+  "rule_version": "2026-06-15",
+  "inputs": [{ "path": "logic/claims.md", "sha256": "..." }],
+  "outputs": [{ "path": "evidence/prior_art/search-dossier-2026-06-20T00-00-00-000Z.json", "sha256": "..." }],
+  "commands": [{ "argv": ["node", "packages/apa-search/cli.mjs", "--matter", "<matter>", "--source", "patentsview"], "exit_code": 0 }],
+  "external_sinks": [{ "kind": "prior-art-query", "bytes_sha256": "...", "human_approved": true }],
+  "human_checkpoints": [{ "id": "closest-art-selection", "required": true, "satisfied": false }],
+  "adopted_changes": [],
+  "rejected_changes": []
+}
+```
+
+Runlog entries do not make a legal conclusion. They exist so a reviewer can tell what was run, what
+bytes left the machine, which outputs were produced, and which human checks remain open.
 
 ---
 

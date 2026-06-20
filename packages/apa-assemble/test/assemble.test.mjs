@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ import { assembleMatter } from "../assemble.mjs";
 import { assembleAds } from "../ads.mjs";
 import { assembleIds } from "../ids.mjs";
 import { preflight } from "../preflight.mjs";
+import { buildUploadManifest } from "../upload-manifest.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
@@ -172,4 +173,25 @@ test("preflight: 'Claude Monet' is NOT AI-named but 'DABUS' IS blocked", () => {
     assert.equal(pf.blocked, true);
     assert.equal(pf.goNoGo, "NO-GO");
   } finally { rmSync(ai, { recursive: true, force: true }); }
+});
+
+test("buildUploadManifest hashes generated files and marks human filing acts unverified", () => {
+  const d = clone();
+  try {
+    const assembled = join(d, "assembled");
+    mkdirSync(join(assembled, "upload_set"), { recursive: true });
+    writeFileSync(join(assembled, "specification.html"), "<html>spec</html>");
+    writeFileSync(join(assembled, "ADS.md"), "# ADS");
+    writeFileSync(join(assembled, "IDS_SB08.md"), "# IDS");
+    writeFileSync(join(assembled, "declaration_UNSIGNED.md"), "# Declaration");
+    writeFileSync(join(assembled, "FEE_WORKSHEET.md"), "# Fees");
+    writeFileSync(join(assembled, "PREFLIGHT.md"), "# Preflight");
+    writeFileSync(join(assembled, "upload_set", "MANIFEST.txt"), "specification.pdf\n");
+    const pf = preflight(d, { assembledDir: assembled });
+    const manifest = buildUploadManifest(d, assembled, pf, { generatedAt: "2026-06-20T00:00:00.000Z" });
+    assert.equal(manifest.schema, "apa-upload-manifest-v1");
+    assert.ok(manifest.generated_files.some((f) => f.path === "assembled/specification.html" && /^[0-9a-f]{64}$/.test(f.sha256)));
+    assert.ok(manifest.intended_upload_set.some((x) => x.document.startsWith("declaration.pdf") && x.human_verified === false));
+    assert.match(manifest.human_verification_required.join("\n"), /IDS reference/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
 });

@@ -77,6 +77,8 @@ Choose one canonical source and preserve it:
 - **PatentDSL / `.pdg`** for new block diagrams, flowcharts, sequence diagrams, and state diagrams
   where automatic patent-style layout is useful. The public `@shibayama/pdgkit` package can validate
   and render `.pdg` to SVG/PDF; use it as an optional external generator, not as an unreviewed black box.
+  If installed through `npx`, pin an exact version or get explicit approval before an unpinned network
+  execution, and record the package/version in the report.
 - **Manual SVG** only when starting from an existing high-value drawing that must be normalized.
 - **CAD/DXF-derived source** only for mechanical/device embodiments where geometry matters.
 
@@ -101,8 +103,9 @@ Produce SVGs and sheets with these properties:
    `src/drawing_src/*`, and drawing numeral markdown. Note which figures are merely rough.
 2. **Pick the upgrade route.**
    - For APA JSON figures, revise the JSON coordinates/labels and re-render with `apa-figure`.
-   - For new diagrammatic figures, consider `.pdg` via `pdgkit`: run `npx @shibayama/pdgkit guide`,
-     write a `.pdg`, validate, render, then import the resulting SVG and numeral table into APA.
+   - For new diagrammatic figures, consider `.pdg` via `pdgkit`: run a pinned `npx
+     @shibayama/pdgkit@<version>` command after approval, write a `.pdg`, validate, render, then
+     import the resulting SVG and numeral table into APA.
    - For existing SVGs, normalize the SVG directly only when source JSON/PDG is unavailable.
 3. **Normalize style.** Remove color, gradients, shadows, filters, images, foreignObject, frames,
    title blocks, and non-patent styling. Use fixed fonts, fixed physical sizes, and consistent strokes.
@@ -114,20 +117,23 @@ Produce SVGs and sheets with these properties:
    numeral or create an enlarged/detail view.
 6. **Reassemble sheets.** Inline SVG into fixed HTML sheets or export from the chosen renderer to PDF.
    Use fixed `@page` size/margins and visually inspect the final sheet view.
-7. **Run deterministic SVG preflight.** For APA figure JSON, run
+7. **Check parity before quality.** Compare pre/post SVGs and numeral tables. The upgrade may move,
+   split, relabel, or clean geometry, but it must not add unsupported structures, remove claimed
+   features, or change the meaning of a reference numeral without a human-approved trace note.
+8. **Run deterministic SVG preflight.** For APA figure JSON, run
    `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
-8. **Run quality review.** Use `/apa-drawing-quality` on the final sheets. Iterate until no blocking
+9. **Run quality review.** Use `/apa-drawing-quality` on the final sheets. Iterate until no blocking
    or fix-before-filing issues remain other than human/legal sign-off.
 
 ## When using pdgkit / PatentDSL
 Use this route for block diagrams, flowcharts, sequence diagrams, and state diagrams when APA's current
 box/ellipse renderer is too crude.
 
-Recommended commands:
+Recommended commands (pin the exact version used in real work):
 ```sh
-npx @shibayama/pdgkit guide
-npx @shibayama/pdgkit validate fig01.pdg
-npx @shibayama/pdgkit render fig01.pdg -o fig01.svg
+npx @shibayama/pdgkit@<version> guide
+npx @shibayama/pdgkit@<version> validate fig01.pdg
+npx @shibayama/pdgkit@<version> render fig01.pdg -o fig01.svg
 ```
 
 Keep the `.pdg` beside the APA source, for example `src/drawing_src/fig01.pdg`, and preserve any
@@ -148,9 +154,13 @@ what makes future amendments auditable.
 Return:
 1. `source_route`: APA JSON, PDG, manual SVG, CAD/DXF, or mixed.
 2. `files_changed_or_created`: source, SVG, sheet, and QA-report paths.
-3. `major_layout_changes`: split figures, shortened labels, moved numerals, added detail views.
-4. `remaining_quality_flags`: anything `/apa-drawing-quality` should still review.
-5. `external_tool_notes`: exact external commands used, versions if known, and whether output is
+3. `preflight_before` and `preflight_after`: deterministic quality status, if available.
+4. `numerals_added_removed`: every numeral added, removed, or remapped; should be empty unless a human
+   approved the change.
+5. `major_layout_changes`: split figures, shortened labels, moved numerals, added detail views.
+6. `unsupported_visual_changes`: structures/details that lack disclosure support; should be empty.
+7. `remaining_quality_flags`: anything `/apa-drawing-quality` should still review.
+8. `external_tool_notes`: exact external commands used, versions if known, and whether output is
    deterministic enough to preserve as source.
 
 ## Do NOT

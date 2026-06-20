@@ -18,6 +18,7 @@ import { assembleIds } from "./ids.mjs";
 import { preflight } from "./preflight.mjs";
 import { validateMatter } from "../apa-validate/validate.mjs";
 import { buildLegend } from "../apa-figure/numerals.mjs";
+import { buildUploadManifest } from "./upload-manifest.mjs";
 
 function fmOf(dir) { try { return parseFrontmatter(readFileSync(join(dir, "PATENT.md"), "utf8")); } catch { return {}; } }
 
@@ -93,6 +94,8 @@ async function main() {
   if (doWrite) {
     writeFileSync(join(assembledDir, "PREFLIGHT.md"), renderPreflightMd(pf));
     writeFileSync(join(assembledDir, "upload_set", "MANIFEST.txt"), pf.uploadSet.join("\n") + "\n\n" + pf.submitBoundary + "\n");
+    const uploadManifest = buildUploadManifest(matter, assembledDir, pf);
+    writeFileSync(join(assembledDir, "upload_manifest.json"), JSON.stringify(uploadManifest, null, 2) + "\n");
   }
 
   if (asJson) { console.log(JSON.stringify({ warnings: asm.warnings, adsFlags: ads.flags, ids, fees, preflight: pf }, null, 2)); }
@@ -106,7 +109,7 @@ async function main() {
     pf.gates.forEach((g) => console.log(gateLine(g)));
     console.log(`  => ${pf.goNoGo}`);
     console.log(`  ${pf.submitBoundary}`);
-    if (doWrite) console.log(`  wrote ${assembledDir}/ (specification.md/html, ADS, IDS, declaration_UNSIGNED, fee worksheet, preflight, upload_set/MANIFEST)`);
+    if (doWrite) console.log(`  wrote ${assembledDir}/ (specification.md/html, ADS, IDS, declaration_UNSIGNED, fee worksheet, preflight, upload_set/MANIFEST, upload_manifest.json)`);
   }
   process.exit(pf.blocked ? 2 : 0);
 }

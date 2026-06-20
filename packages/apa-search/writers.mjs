@@ -6,9 +6,11 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { iterEntitySections } from "../../lib/apa-parse.mjs";
 import { refToPaBlock, refToEvidence } from "./lib/refs.mjs";
+import { queryToString } from "./search.mjs";
 
 function nextPaNumber(priorArtPath) {
   let max = 0;
@@ -49,6 +51,68 @@ export function writeLandscape(matterDir, rankedRefs) {
   const referenceMatrix = renderReferenceMatrix(assigned);
   writeFileSync(join(matterDir, "logic", "reference_matrix.md"), referenceMatrix);
   return { assigned, referenceMatrix };
+}
+
+export function buildSearchDossier({ query, result, assigned = [], limit = 25, generatedAt = new Date().toISOString() }) {
+  const queryBytes = result?.verdict?.text || `${queryToString(query)}\n${JSON.stringify(query || {})}`;
+  return {
+    schema: "apa-search-dossier-v1",
+    generated_at: generatedAt,
+    query: {
+      keywords: query?.keywords || [],
+      cpc: query?.cpc || [],
+      limit,
+      serialized_sha256: createHash("sha256").update(queryBytes).digest("hex"),
+      scan_verdict: {
+        blocked: Boolean(result?.blocked),
+        needs_confirm: Boolean(result?.needsConfirm),
+        high_count: result?.verdict?.high?.length || 0,
+        medium_count: result?.verdict?.medium?.length || 0,
+      },
+    },
+    sources: (result?.perSource || []).map((s) => ({
+      source_id: s.id,
+      count: s.count || 0,
+      raw_count: s.rawCount ?? null,
+      error: s.error || null,
+      notes: s.notes || [],
+    })),
+    ranked_candidates: (result?.ranked || []).slice(0, limit).map((r, index) => ({
+      rank: index + 1,
+      source_id: r.source || "unknown",
+      doc_number: r.docNumber || "",
+      title: r.title || "",
+      score: r.score ?? null,
+      url: r.url || "",
+      verification: { verified: false, confidence: "unverified" },
+    })),
+    assigned_references: assigned.map((a) => ({
+      pa_id: a.paId,
+      doc_number: a.docNumber,
+      title: a.title || "",
+      verification: { verified: false, confidence: "unverified" },
+    })),
+    closest_art_selection: {
+      human_verified: false,
+      selected_pa_ids: [],
+      rationale: "",
+    },
+    caveats: [
+      "This run is not a complete search and never asserts no anticipating art was found.",
+      "USPTO Patent Public Search and paywalled NPL sources require human handoff/verification.",
+      "Do not rely on or list a reference on an IDS until a human verifies the citation and relied-on passages.",
+    ],
+  };
+}
+
+export function writeSearchDossier(matterDir, opts) {
+  const evidenceDir = join(matterDir, "evidence", "prior_art");
+  mkdirSync(evidenceDir, { recursive: true });
+  const dossier = buildSearchDossier(opts);
+  const stamp = dossier.generated_at.replace(/[^0-9A-Za-z]+/g, "-").replace(/^-|-$/g, "");
+  const path = join(evidenceDir, `search-dossier-${stamp}.json`);
+  writeFileSync(path, JSON.stringify(dossier, null, 2) + "\n");
+  return { path, dossier };
 }
 
 /** A reference/claim matrix SCAFFOLD (the g2tree "Blocks / Does-NOT-block" pattern) for human+agent completion. */

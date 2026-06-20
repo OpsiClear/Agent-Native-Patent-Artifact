@@ -16,6 +16,11 @@ Orchestrates the phase skills in order, validating between steps and **stopping 
 checkpoints**. It does not replace the individual skills - it sequences them. Run from a matter (or
 start by creating one). Each step is the corresponding skill; invoke them in turn.
 
+Maintain `<matter>/trace/runlog.jsonl` as the audit ledger whenever a step writes files, runs a
+command, touches an external sink, or reaches a human checkpoint. If resuming a long run, keep
+`<matter>/trace/autoprep_state.json` with the stage name, input hashes, output hashes, and whether the
+human checkpoint was satisfied.
+
 ## Pipeline (stop on any gate failure or checkpoint)
 1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person),
    `jurisdiction`, and `user_role` (`registered_practitioner` | `pro_se` | `unknown`). If missing,
@@ -24,7 +29,8 @@ start by creating one). Each step is the corresponding skill; invoke them in tur
 2. **Capture / compile** - `/apa-disclose` (new disclosure) or `/apa-compile <path>` (existing patent).
    Then `node packages/apa-validate/validate.mjs <matter>` must be error-free before continuing.
 3. **Prior-art search** - `/apa-priorart` (external sink: the query is scanned at the sink first).
-   **Checkpoint:** a human validates the closest-art selection (the search is never asserted complete).
+   Confirm it writes `evidence/prior_art/search-dossier-*.json`. **Checkpoint:** a human validates the
+   closest-art selection in the dossier (the search is never asserted complete).
 4. **Patentability** - `/apa-analyze` (claim charts + 101/102/103/112 flags; statutory-bar screen).
 5. **Claims** - `/apa-claims` (dual-lens ladder for practitioner mode; neutral options/questions for
    pro-se mode). Then `node packages/apa-draft/claim-lint.mjs <matter>` and re-validate.
@@ -40,8 +46,8 @@ start by creating one). Each step is the corresponding skill; invoke them in tur
 9. **Adopt provenance.** Any claim limitation still `ai-suggested` blocks assembly - a human must adopt
    each (-> `inventor`/`attorney`/`human-revised`). **Checkpoint:** the inventor attests conception.
 10. **Assembly package draft** - `/apa-assemble --write`. It enforces the inventorship-integrity gate
-    and the rigor verdict, produces the package draft (print the HTML to PDF), and **STOPS at the
-    submit boundary**.
+    and the rigor verdict, produces the package draft plus `assembled/upload_manifest.json` (print the
+    HTML to PDF), and **STOPS at the submit boundary**.
 
 ## Gates that halt the pipeline (do not override)
 - A validator error (Level 1) blocks the next drafting/assembly step.

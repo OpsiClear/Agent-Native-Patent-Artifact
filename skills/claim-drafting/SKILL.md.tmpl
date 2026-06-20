@@ -32,7 +32,8 @@ do not select scope or apply narrowing edits.
    earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, and `provenance`.
 3. **Provenance.** Default every drafted limitation to `ai-suggested` - it is an **assembly blocker**
    until a human (inventor verbatim -> `inventor:<id>`; attorney -> `attorney`; paraphrase accepted ->
-   `human-revised`) adopts it. Never name AI as an inventor.
+   `human-revised`) adopts it. When a limitation is adopted, preserve source metadata where available:
+   `source`, `source_span`, `speaker`, `timestamp`, and `source_sha256`. Never name AI as an inventor.
 4. **Seed `concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
    objective bound.
 5. **Check.** Run `node packages/apa-draft/claim-lint.mjs <matter>` (legal form) and

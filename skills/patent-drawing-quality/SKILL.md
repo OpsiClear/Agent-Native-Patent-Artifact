@@ -151,6 +151,22 @@ Return:
 6. `html_svg_pdf_recommendation`: whether to keep SVG canonical, use HTML as compositor, or change
    export flow.
 
+Also emit machine-readable findings when writing a report file:
+```yaml
+findings:
+  - sheet: "SHEET 1"
+    figure: "FIG. 1"
+    bbox: null                 # or [x, y, width, height] when measured
+    issue_type: "lead-line|margin|text-size|crowding|coverage|numeral|rendering|new-matter"
+    severity: "blocking|fix-before-filing|acceptable"
+    rule_reference: "37-cfr-1.84|37-cfr-1.83|mpep-608.02|apa-protocol"
+    measured_or_visual: "measured|visual"
+    message: "short finding"
+    suggested_fix: "specific next action"
+```
+If text or numeral size is judged visually rather than measured on a rendered sheet, set
+`measured_or_visual: visual` and say so in the message.
+
 ## Do NOT
 - Certify formal USPTO compliance or legal sufficiency.
 - Infer that clean line art means every claimed feature is shown.

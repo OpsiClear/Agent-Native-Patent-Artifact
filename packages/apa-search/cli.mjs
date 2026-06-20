@@ -11,7 +11,7 @@
  */
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
-import { writeLandscape } from "./writers.mjs";
+import { writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { listSources } from "./sources/index.mjs";
 
 function parseArgs(argv) {
@@ -70,8 +70,15 @@ async function main() {
     // Honor --limit on WRITE too (some sources, e.g. mock, ignore query.limit and return all matches,
     // so the preview showed N but the un-sliced array would file every match).
     const { assigned } = writeLandscape(a.matter, res.ranked.slice(0, a.limit));
+    const { path: dossierPath } = writeSearchDossier(a.matter, {
+      query,
+      result: { ...res, ranked: res.ranked.slice(0, a.limit) },
+      assigned,
+      limit: a.limit,
+    });
     console.log(`\nWrote ${assigned.length} reference(s) into ${a.matter}: ${assigned.map((x) => x.paId).join(", ")}`);
     console.log(`Updated logic/prior_art.md + evidence/prior_art/ + logic/reference_matrix.md (scaffold).`);
+    console.log(`Wrote search dossier: ${dossierPath}`);
   }
 
   console.log("\nNOTE: candidates are UNVERIFIED and possibly incomplete (examiner-grade PPS is UI-only; NPL is");
