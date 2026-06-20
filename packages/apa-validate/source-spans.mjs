@@ -1,8 +1,9 @@
 /**
  * Source-span metadata rules for adopted patent facts.
  *
- * These checks are warning-mode guardrails. They do not decide inventorship, written-description
- * sufficiency, or legal adequacy; they surface weak provenance so a human can review it.
+ * These checks are provenance guardrails. They do not decide inventorship, written-description
+ * sufficiency, or legal adequacy; they surface weak provenance so a human can review it. The caller
+ * decides whether findings are warnings or strict validation errors.
  */
 
 export const SOURCE_SPAN_FIELDS = ["source", "source_span", "source_sha256"];
@@ -18,7 +19,7 @@ export const SOURCE_SPAN_SOURCES = new Set([
   "not-recoverable",
 ]);
 
-export const SOURCE_SPAN_POLICIES = new Set(["warning", "relaxed"]);
+export const SOURCE_SPAN_POLICIES = new Set(["warning", "relaxed", "strict"]);
 
 const SHA256_RE = /^[0-9a-f]{64}$/i;
 

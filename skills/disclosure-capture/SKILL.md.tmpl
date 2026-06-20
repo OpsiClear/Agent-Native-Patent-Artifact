@@ -45,9 +45,11 @@ disclosure interview; it reviews the turn and writes new events into the artifac
    assembly blocker until a human adopts it.
 
 5. **Bar-date / candor prompt (always ask).** Has the invention been offered for sale, sold, publicly
-   used, demonstrated, or described in a publication? Capture each with its date as a journey event -
-   these statutory-bar facts are not findable by any later search and bear on 35 USC 102 and the duty
-   of candor. Record, never auto-assert or judge.
+   used, demonstrated, or described in a publication? Capture each with its date as an append-only
+   journey event - these statutory-bar facts are not findable by any later search and bear on 35 USC
+   102 and the duty of candor. Record, never auto-assert or judge. Do not overwrite an earlier
+   bar-date/candor fact; append a correction with a new `trace_id`, `supersedes_trace_id`,
+   `recorded_at`, `fact_sha256`, and `immutable: true`.
 
 6. **Inventorship.** Attribute conception to specific named natural persons at the limitation level
    when possible; keep the `inventorship_matrix` in `PATENT.md` current (which inventor conceived
@@ -58,7 +60,9 @@ disclosure interview; it reviews the turn and writes new events into the artifac
    `promoted_observations`, `bar_date_facts`, `limitation_inventorship`, `raw_fact_boundaries`, and
    any `relaxed_import_notes`. Each promoted observation, bar-date fact, and limitation-inventorship
    entry must carry source metadata (`source`, `source_span`, `source_sha256`) and the relevant
-   speaker/timestamp/trace id when available. Then run
+   speaker/timestamp/trace id when available. Each `bar_date_facts[]` entry must also include
+   `recorded_at`, `fact_sha256`, and `immutable: true`; corrections append a new entry with
+   `supersedes_trace_id` rather than replacing the earlier fact. Then run
    `node packages/apa-reports/cli.mjs check <matter>/staging/disclosure_session_report.json --kind disclosure_capture`.
 
 8. **Validate.** After writing, run `node packages/apa-validate/validate.mjs <matter>` and surface the

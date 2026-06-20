@@ -42,6 +42,11 @@ const TEXT_QUALITY = ["native-text", "ocr-high", "ocr-medium", "ocr-low", "unkno
 const EXTRACTION_CONFIDENCE = ["high", "medium", "low", "unknown"];
 const PROVENANCE_LABELS = ["source-extracted", "inferred-from-document", "not-recoverable"];
 const CONDITIONAL_SECTION_STATUS = ["supported", "not_applicable", "unsupported", "human_reviewed"];
+const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+
+function isOcrQuality(value) {
+  return typeof value === "string" && value.startsWith("ocr-");
+}
 
 function isObject(v) {
   return v && typeof v === "object" && !Array.isArray(v);
@@ -193,7 +198,7 @@ function validateTypeSpecific(errors, report, type) {
     if (!Array.isArray(report.promoted_observations)) push(errors, "promoted_observations", "must be an array");
     else report.promoted_observations.forEach((entry, i) => validatePromotedObservation(errors, `promoted_observations[${i}]`, entry));
     if (!Array.isArray(report.bar_date_facts)) push(errors, "bar_date_facts", "must be an array");
-    else report.bar_date_facts.forEach((entry, i) => validateBarDateFact(errors, `bar_date_facts[${i}]`, entry));
+    else validateBarDateFacts(errors, report.bar_date_facts);
     if (!Array.isArray(report.limitation_inventorship)) push(errors, "limitation_inventorship", "must be an array");
     else report.limitation_inventorship.forEach((entry, i) => validateLimitationInventorship(errors, `limitation_inventorship[${i}]`, entry));
     for (const key of ["raw_fact_boundaries", "relaxed_import_notes"]) {
@@ -286,9 +291,38 @@ function validatePromotedObservation(errors, path, entry) {
 }
 
 function validateBarDateFact(errors, path, entry) {
+  if (!isObject(entry)) return validateSourceSpanRecord(errors, path, entry);
   validateSourceSpanRecord(errors, path, entry);
-  for (const key of ["fact_type", "date", "speaker", "trace_id"]) {
+  for (const key of ["fact_type", "date", "speaker", "trace_id", "recorded_at", "fact_sha256"]) {
     if (!entry[key] || typeof entry[key] !== "string") push(errors, pathOf(path, key), "must be a non-empty string");
+  }
+  if (entry.recorded_at && !ISO_TIMESTAMP_RE.test(String(entry.recorded_at))) {
+    push(errors, pathOf(path, "recorded_at"), "must be an ISO-8601 UTC timestamp");
+  }
+  if (entry.fact_sha256 && !/^[0-9a-f]{64}$/i.test(String(entry.fact_sha256))) {
+    push(errors, pathOf(path, "fact_sha256"), "must be a 64-character SHA-256 hex digest");
+  }
+  if (entry.immutable !== true) {
+    push(errors, pathOf(path, "immutable"), "must be true; corrections are appended as new facts with supersedes_trace_id");
+  }
+  if (entry.supersedes_trace_id != null && typeof entry.supersedes_trace_id !== "string") {
+    push(errors, pathOf(path, "supersedes_trace_id"), "must be a string when present");
+  }
+}
+
+function validateBarDateFacts(errors, entries) {
+  const seen = new Set();
+  for (const [i, entry] of entries.entries()) {
+    const path = `bar_date_facts[${i}]`;
+    validateBarDateFact(errors, path, entry);
+    if (!isObject(entry)) continue;
+    if (entry.trace_id && seen.has(entry.trace_id)) {
+      push(errors, pathOf(path, "trace_id"), "must be unique; append corrections with a new trace_id and supersedes_trace_id");
+    }
+    if (entry.trace_id) seen.add(entry.trace_id);
+    if (entry.supersedes_trace_id && !seen.has(entry.supersedes_trace_id)) {
+      push(errors, pathOf(path, "supersedes_trace_id"), "must reference an earlier bar-date trace_id");
+    }
   }
 }
 
@@ -311,6 +345,9 @@ function validateCompileDocument(errors, path, entry) {
   if (entry.source_sha256 != null && !/^[0-9a-f]{64}$/i.test(String(entry.source_sha256))) {
     push(errors, pathOf(path, "source_sha256"), "must be a 64-character SHA-256 hex digest when present");
   }
+  if (isOcrQuality(entry.text_quality) && entry.untrusted_content_wrapped !== true) {
+    push(errors, pathOf(path, "untrusted_content_wrapped"), "must be true for OCR-derived document text");
+  }
 }
 
 function validateClaimExtraction(errors, path, entry) {
@@ -323,6 +360,12 @@ function validateClaimExtraction(errors, path, entry) {
   }
   if (!TEXT_QUALITY.includes(entry.text_quality)) {
     push(errors, pathOf(path, "text_quality"), `must be ${TEXT_QUALITY.join("|")}`);
+  }
+  if (isOcrQuality(entry.text_quality) && entry.untrusted_content_wrapped !== true) {
+    push(errors, pathOf(path, "untrusted_content_wrapped"), "must be true for OCR-derived claim text");
+  }
+  if ((entry.text_quality === "ocr-low" || entry.extraction_confidence === "low") && entry.automatic_claim_drafting_blocked !== true) {
+    push(errors, pathOf(path, "automatic_claim_drafting_blocked"), "must be true for low-confidence OCR/extraction");
   }
 }
 

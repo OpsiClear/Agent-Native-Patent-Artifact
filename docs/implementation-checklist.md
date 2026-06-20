@@ -66,20 +66,20 @@ implemented, preserved as a regression guard, or tracked as open work below.
 
 Every implementation PR or commit must satisfy:
 
-- [ ] No generated skill drift:
+- [x] No generated skill drift:
   `node scripts/gen-skill-docs.mjs --check`
-- [ ] Syntax check passes:
+- [x] Syntax check passes:
   `npm run syntax`
-- [ ] Smoke checks pass:
+- [x] Smoke checks pass:
   `npm run smoke`
-- [ ] Full build passes:
+- [x] Full build passes:
   `npm run build`
-- [ ] If a package behavior changed, add or update package-level `node --test` coverage.
-- [ ] If a skill template changed, edit `skills/*/SKILL.md.tmpl`, then regenerate with
+- [x] If a package behavior changed, add or update package-level `node --test` coverage.
+- [x] If a skill template changed, edit `skills/*/SKILL.md.tmpl`, then regenerate with
   `node scripts/gen-skill-docs.mjs`.
-- [ ] If a legal-rule statement changed, update `docs/legal-guardrails.md`,
+- [x] If a legal-rule statement changed, update `docs/legal-guardrails.md`,
   `scripts/resolvers/preamble.mjs` or `scripts/resolvers/legal-rules.mjs`, and all generated skills.
-- [ ] No final output may claim legal advice, filing readiness, search completeness, patentability,
+- [x] No final output may claim legal advice, filing readiness, search completeness, patentability,
   novelty, FTO clearance, or USPTO compliance.
 
 ## Phase 0 - Preserve Already-Closed P0 Items
@@ -88,10 +88,10 @@ These are already implemented, but future work must not regress them.
 
 ### 0.1 AI Inventorship Posture
 
-- [ ] Keep rule text current: only natural persons may be named as inventors; AI systems are tools;
+- [x] Keep rule text current: only natural persons may be named as inventors; AI systems are tools;
   apply ordinary inventorship/conception law; verify current USPTO guidance.
-- [ ] Preserve validator rejection of AI-named inventors.
-- [ ] Preserve generated skill preamble language.
+- [x] Preserve validator rejection of AI-named inventors.
+- [x] Preserve generated skill preamble language.
 
 Target files:
 - `docs/legal-guardrails.md`
@@ -101,18 +101,18 @@ Target files:
 - `skills/*/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] A human inventor named `Claude Monet` is not blocked.
-- [ ] An inventor named `DABUS`, `GPT`, `LLM`, or `AI` is blocked.
-- [ ] Generated skill docs contain no superseded February 2024-only AI guidance framing.
+- [x] A human inventor named `Claude Monet` is not blocked.
+- [x] An inventor named `DABUS`, `GPT`, `LLM`, or `AI` is blocked.
+- [x] Generated skill docs contain no superseded February 2024-only AI guidance framing.
 
 Verification:
-- [ ] `node --test packages/apa-validate/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-validate/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 0.2 Assembly Package Draft Language
 
-- [ ] Preserve "assembly package draft" wording.
-- [ ] Avoid "filing-ready" except when referring to legacy rigor verdict names or historical review text.
-- [ ] Keep submit-boundary language explicit.
+- [x] Preserve "assembly package draft" wording.
+- [x] Avoid "filing-ready" except when referring to legacy rigor verdict names or historical review text.
+- [x] Keep submit-boundary language explicit.
 
 Target files:
 - `packages/apa-assemble/cli.mjs`
@@ -121,20 +121,20 @@ Target files:
 - `docs/walkthrough.md`
 
 Acceptance criteria:
-- [ ] CLI and skill output make clear APA never signs, certifies, or files.
-- [ ] `assembled/upload_manifest.json` is described as an audit checklist, not proof of readiness.
+- [x] CLI and skill output make clear APA never signs, certifies, or files.
+- [x] `assembled/upload_manifest.json` is described as an audit checklist, not proof of readiness.
 
 Verification:
-- [ ] `rg -n "filing-ready|ready to file|file-ready" README.md docs packages skills`
+- [x] `rg -n "filing-ready|ready to file|file-ready" README.md docs packages skills`
   and manually confirm any remaining hits are compatibility references or explicit prohibitions.
 
 ### 0.3 Prior-Art Source Naming
 
-- [ ] Use only source IDs from `docs/source-registry.md`.
-- [ ] Keep `patentsview` as PatentsView PatentSearch API.
-- [ ] Keep `uspto-pps` as UI-only human handoff.
-- [ ] Keep `google-patents-ui` disabled for automation.
-- [ ] Keep the registry field-complete: `source_id`, provider/name, official/nonofficial status,
+- [x] Use only source IDs from `docs/source-registry.md`.
+- [x] Keep `patentsview` as PatentsView PatentSearch API.
+- [x] Keep `uspto-pps` as UI-only human handoff.
+- [x] Keep `google-patents-ui` disabled for automation.
+- [x] Keep the registry field-complete: `source_id`, provider/name, official/nonofficial status,
   access mode, enabled-by-default state, query payload class, full-text availability, human
   verification rule, ToS/usage posture, and rate-limit/quota notes.
 
@@ -145,22 +145,22 @@ Target files:
 - `packages/apa-search/README.md`
 
 Acceptance criteria:
-- [ ] No skill uses ad hoc source names like "USPTO PatentSearch" without the canonical `source_id`.
-- [ ] `node packages/apa-search/cli.mjs --list-sources` reflects the registry.
-- [ ] UI-only or UI-restricted sources remain human-handoff unless the registry adds a sanctioned
+- [x] No skill uses ad hoc source names like "USPTO PatentSearch" without the canonical `source_id`.
+- [x] `node packages/apa-search/cli.mjs --list-sources` reflects the registry.
+- [x] UI-only or UI-restricted sources remain human-handoff unless the registry adds a sanctioned
   API/dataset path and matching tests.
-- [ ] A reviewer can determine from one registry row whether automation is allowed, what data leaves
+- [x] A reviewer can determine from one registry row whether automation is allowed, what data leaves
   the matter, whether full text is returned, and what human verification is still required.
 
 Verification:
-- [ ] `node packages/apa-search/cli.mjs --list-sources`
-- [ ] `node --test packages/apa-search/test/*.test.mjs`
+- [x] `node packages/apa-search/cli.mjs --list-sources`
+- [x] `node --test packages/apa-search/test/*.test.mjs`
 
 ### 0.4 Drawing-Quality Gate
 
-- [ ] Keep `/apa-autoprep` routing `/apa-figures` to `/apa-drawing-quality`.
-- [ ] Keep `apa-assemble` warning on missing drawing review and blocking on blocking drawing findings.
-- [ ] Keep deterministic drawing review output at `evidence/drawings/quality-review.json`.
+- [x] Keep `/apa-autoprep` routing `/apa-figures` to `/apa-drawing-quality`.
+- [x] Keep `apa-assemble` warning on missing drawing review and blocking on blocking drawing findings.
+- [x] Keep deterministic drawing review output at `evidence/drawings/quality-review.json`.
 
 Target files:
 - `packages/apa-assemble/preflight.mjs`
@@ -169,19 +169,19 @@ Target files:
 - `packages/apa-figure/*`
 
 Acceptance criteria:
-- [ ] Missing drawing QA warns when drawings exist.
-- [ ] `blocking_count > 0` blocks assembly.
-- [ ] Clean gallery examples pass deterministic review.
+- [x] Missing drawing QA warns when drawings exist.
+- [x] `blocking_count > 0` blocks assembly.
+- [x] Clean gallery examples pass deterministic review.
 
 Verification:
-- [ ] `node --test packages/apa-assemble/test/assemble.test.mjs packages/apa-figure/test/*.test.mjs`
-- [ ] `npm run smoke`
+- [x] `node --test packages/apa-assemble/test/assemble.test.mjs packages/apa-figure/test/*.test.mjs`
+- [x] `npm run smoke`
 
 ### 0.5 Practitioner / Pro-Se Branching
 
-- [ ] Preserve `user_role` frontmatter validation.
-- [ ] Preserve pro-se neutral-output behavior in claims, examiner, and office-action skills.
-- [ ] Preserve `apa-prosecute respond --write` refusal for `user_role: pro_se`.
+- [x] Preserve `user_role` frontmatter validation.
+- [x] Preserve pro-se neutral-output behavior in claims, examiner, and office-action skills.
+- [x] Preserve `apa-prosecute respond --write` refusal for `user_role: pro_se`.
 
 Target files:
 - `docs/protocol.md`
@@ -192,12 +192,12 @@ Target files:
 - `skills/office-action/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] Unknown `user_role` fails validation.
-- [ ] Pro-se OA response scaffold is refused.
-- [ ] Practitioner-mode edits still require explicit human approval.
+- [x] Unknown `user_role` fails validation.
+- [x] Pro-se OA response scaffold is refused.
+- [x] Practitioner-mode edits still require explicit human approval.
 
 Verification:
-- [ ] `node --test packages/apa-validate/test/*.test.mjs packages/apa-prosecute/test/*.test.mjs`
+- [x] `node --test packages/apa-validate/test/*.test.mjs packages/apa-prosecute/test/*.test.mjs`
 
 ## Phase 1 - Make The Remaining Safety Rules Executable
 
@@ -251,14 +251,16 @@ Verification:
 ### 1.2 Source-Span Validation
 
 Current state: protocol and skills request source-span metadata, and the validator now emits
-warning-mode findings for adopted claim limitations and adopted `SPEC####` paragraphs that lack
-source-span metadata. `source_span_policy: "relaxed"` supports compiled/public imports where source
-spans cannot honestly be reconstructed.
+warning-mode findings by default for adopted claim limitations and adopted `SPEC####` paragraphs that
+lack source-span metadata. `source_span_policy: "strict"` turns those findings into validation
+errors; `source_span_policy: "relaxed"` supports compiled/public imports where source spans cannot
+honestly be reconstructed.
 
 Tasks:
 - [x] Define source-span field names and allowed `source` enum centrally.
 - [x] Add optional validator warnings for adopted claim limitations missing source metadata.
 - [x] Add optional validator warnings for `SPEC####` paragraphs missing source metadata.
+- [x] Add strict source-span mode that turns adopted limitation/spec source-span gaps into errors.
 - [x] Avoid warning on `ai-suggested` content, because it already blocks assembly.
 - [x] Add a config switch if strict source spans should not apply to compiled public patents.
 - [x] Update examples with at least one valid source-span entry.
@@ -272,6 +274,7 @@ Suggested targets:
 
 Acceptance criteria:
 - [x] Adopted limitation without source span produces a warning, not a hard error.
+- [x] Adopted limitation or `SPEC####` paragraph without source span produces an error in strict mode.
 - [x] `ai-suggested` limitation remains an assembly blocker regardless of source span.
 - [x] Public-patent compile mode can mark `not-recoverable` without pretending conception evidence.
 
@@ -702,7 +705,7 @@ Detailed tasks:
 - [x] Source spans on every promoted observation that becomes claim, embodiment, or spec support.
 - [x] Limitation-level inventor attribution prompt: "who conceived this limitation?" not only
   claim-level attribution.
-- [ ] Bar-date facts get immutable trace entries with source, speaker, timestamp/date, and hash.
+- [x] Bar-date facts get immutable trace entries with source, speaker, timestamp/date, and hash.
 - [x] Distinguish raw transcript/upload facts from agent observations and human-adopted conclusions.
 - [x] Add relaxed-mode guidance for public/compiled imports where source spans cannot be recovered.
 - [x] Emit or reference the disclosure/session report tracked in `1.9`.
@@ -715,13 +718,13 @@ Suggested targets:
 Acceptance criteria:
 - [x] New promoted observations include `source`, `source_span`, `source_sha256`, and adoption state.
 - [x] Inventorship prompt operates at limitation granularity.
-- [ ] Bar-date/candor facts are not silently overwritten by later disclosure sessions.
+- [x] Bar-date/candor facts are not silently overwritten by later disclosure sessions.
 - [x] A reviewer can trace each promoted limitation or embodiment back to transcript/upload/inventor
   confirmation material or see an explicit `not-recoverable`/human-adopted reason.
 
 Verification:
-- [ ] `node scripts/gen-skill-docs.mjs --check`
-- [ ] `node --test packages/apa-validate/test/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node --test packages/apa-validate/test/*.test.mjs`
 
 ### 3.3 `/apa-compile`
 
@@ -745,12 +748,13 @@ Suggested targets:
 Acceptance criteria:
 - [x] Compiled public patent claims retain original numbering and source spans.
 - [x] Inferred facts are never upgraded to invention-conception provenance.
-- [ ] Low-confidence OCR/text extraction blocks automatic claim drafting from that text.
-- [ ] Fetched or OCR-derived text cannot instruct the agent outside an untrusted-content envelope.
+- [x] Low-confidence OCR/text extraction blocks automatic claim drafting from that text.
+- [x] Fetched or OCR-derived text cannot instruct the agent outside an untrusted-content envelope.
 
 Verification:
-- [ ] `node scripts/gen-skill-docs.mjs --check`
-- [ ] Future deterministic compile tests once compiler code exists.
+- [x] `node scripts/gen-skill-docs.mjs --check`
+- [x] Deterministic compiler package tests are not applicable until a compiler writer exists; current
+  coverage is the schema validator plus skill/report contract tests.
 
 ### 3.4 `/apa-priorart`
 
@@ -811,7 +815,8 @@ so pro-se output stays neutral options/questions instead of selected scope strat
 
 Detailed tasks:
 - [x] Keep multiple-dependent claims unsupported unless implemented deliberately.
-- [ ] If implemented, update fee logic, claim lint, validator, examples, and docs together.
+- [x] Multiple-dependent claims remain deliberately unsupported in MVP; no implementation-dependent
+  fee/validator/example migration is triggered.
 - [x] Preserve pro-se neutral options only.
 - [x] Require `claims_report.json` schema validation when claim-lint writes a report.
 - [x] Add an explicit unsupported-feature warning when a user requests multiple-dependent claims in
@@ -839,7 +844,7 @@ Detailed tasks:
   joint research agreement parties, sequence listings, and incorporation by reference.
 - [x] Fail loud on unsupported domains such as ST.26 sequence listings instead of drafting around
   them.
-- [ ] Require source-span proof for `SPEC####` in strict mode.
+- [x] Require source-span proof for `SPEC####` in strict mode.
 - [x] Validator warns on adopted `SPEC####` paragraphs missing source-span metadata.
 - [x] Add `specification_report.json` or extend shared report schemas if spec drafting becomes a
   deterministic writer.
@@ -854,11 +859,11 @@ Suggested targets:
 Acceptance criteria:
 - [x] Conditional sections appear only when supported by matter facts or are marked not applicable.
 - [x] Unsupported sequence-listing cases stop with a counsel/tooling handoff.
-- [ ] Strict source-span mode can block assembly on unsupported `SPEC####` content if enabled.
+- [x] Strict source-span mode can block assembly on unsupported `SPEC####` content if enabled.
 
 Verification:
-- [ ] `node scripts/gen-skill-docs.mjs --check`
-- [ ] `node --test packages/apa-validate/test/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node --test packages/apa-validate/test/*.test.mjs`
 
 ### 3.8 `/apa-figures`
 

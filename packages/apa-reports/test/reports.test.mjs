@@ -41,6 +41,9 @@ test("disclosure reports require promoted observations, bar dates, and limitatio
     date: "2026-01-15",
     speaker: "AINVENTOR",
     trace_id: "PH01",
+    recorded_at: "2026-06-20T12:00:00Z",
+    fact_sha256: "f".repeat(64),
+    immutable: true,
     source: "inventor-confirmation",
     source_span: "interview-001:22:00-22:20",
     source_sha256: "b".repeat(64),
@@ -61,6 +64,48 @@ test("disclosure reports require promoted observations, bar dates, and limitatio
   assert.ok(result.errors.some((e) => e.path === "promoted_observations[0].source_sha256"));
 });
 
+test("disclosure bar-date facts are append-only and auditable", () => {
+  const report = defaultReportFor("disclosure_capture", { matter: EXAMPLE });
+  report.bar_date_facts.push({
+    fact_type: "public_use",
+    date: "2026-01-15",
+    speaker: "AINVENTOR",
+    trace_id: "PH01",
+    recorded_at: "2026-06-20T12:00:00Z",
+    fact_sha256: "a".repeat(64),
+    immutable: true,
+    source: "inventor-confirmation",
+    source_span: "interview-001:22:00-22:20",
+    source_sha256: "b".repeat(64),
+  });
+  report.bar_date_facts.push({
+    fact_type: "public_use_correction",
+    date: "2026-01-16",
+    speaker: "AINVENTOR",
+    trace_id: "PH02",
+    supersedes_trace_id: "PH01",
+    recorded_at: "2026-06-20T12:05:00Z",
+    fact_sha256: "c".repeat(64),
+    immutable: true,
+    source: "inventor-confirmation",
+    source_span: "interview-001:25:00-25:20",
+    source_sha256: "d".repeat(64),
+  });
+  let result = validateReport(report, { kind: "disclosure_capture" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  report.bar_date_facts[1].trace_id = "PH01";
+  result = validateReport(report, { kind: "disclosure_capture" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "bar_date_facts[1].trace_id"));
+
+  report.bar_date_facts[1].trace_id = "PH02";
+  report.bar_date_facts[1].immutable = false;
+  result = validateReport(report, { kind: "disclosure_capture" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "bar_date_facts[1].immutable"));
+});
+
 test("compile reports preserve text quality and prevent inferred conception upgrades", () => {
   const report = defaultReportFor("compile", { matter: EXAMPLE });
   report.documents.push({
@@ -68,6 +113,7 @@ test("compile reports preserve text quality and prevent inferred conception upgr
     source_type: "public-patent",
     text_quality: "ocr-medium",
     source_sha256: "d".repeat(64),
+    untrusted_content_wrapped: true,
   });
   report.claim_extractions.push({
     claim: "CLM01",
@@ -75,6 +121,7 @@ test("compile reports preserve text quality and prevent inferred conception upgr
     source_span: "source.pdf p. 8 lines 1-12",
     extraction_confidence: "medium",
     text_quality: "ocr-medium",
+    untrusted_content_wrapped: true,
   });
   report.provenance_labels.push({
     artifact: "PH01",
@@ -91,6 +138,39 @@ test("compile reports preserve text quality and prevent inferred conception upgr
   result = validateReport(report, { kind: "compile" });
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((e) => e.path === "provenance_labels[0].conception_decision"));
+});
+
+test("compile reports block automatic claim drafting from low-confidence OCR", () => {
+  const report = defaultReportFor("compile", { matter: EXAMPLE });
+  report.documents.push({
+    path: "source.pdf",
+    source_type: "public-patent",
+    text_quality: "ocr-low",
+    source_sha256: "d".repeat(64),
+    untrusted_content_wrapped: true,
+  });
+  report.claim_extractions.push({
+    claim: "CLM01",
+    original_number: "1",
+    source_span: "source.pdf p. 8 lines 1-12",
+    extraction_confidence: "low",
+    text_quality: "ocr-low",
+    untrusted_content_wrapped: true,
+    automatic_claim_drafting_blocked: true,
+  });
+  let result = validateReport(report, { kind: "compile" });
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+
+  delete report.claim_extractions[0].automatic_claim_drafting_blocked;
+  result = validateReport(report, { kind: "compile" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "claim_extractions[0].automatic_claim_drafting_blocked"));
+
+  report.claim_extractions[0].automatic_claim_drafting_blocked = true;
+  delete report.documents[0].untrusted_content_wrapped;
+  result = validateReport(report, { kind: "compile" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "documents[0].untrusted_content_wrapped"));
 });
 
 test("specification reports require conditional-section status and source-backed SPEC paragraphs", () => {

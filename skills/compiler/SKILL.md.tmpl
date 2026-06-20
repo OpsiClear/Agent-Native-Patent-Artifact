@@ -43,8 +43,12 @@ record the command in the compile notes.
 
 5. **Compile report.** Emit `staging/compile_report.json` using the shared report schema
    (`schema: apa-compile-report-v1`, `legal_posture: flags-not-conclusions`). Record each imported
-   document's `text_quality` / OCR status, each verbatim claim extraction's original number and
-   page/line/paragraph `source_span`, the `provenance_labels` used (`source-extracted`,
+   document's `text_quality` / OCR status and whether OCR-derived text was wrapped as untrusted data
+   (`untrusted_content_wrapped: true`). Record each verbatim claim extraction's original number and
+   page/line/paragraph `source_span`, `extraction_confidence`, `text_quality`, and untrusted wrapper
+   state. If extraction confidence is `low` or text quality is `ocr-low`, set
+   `automatic_claim_drafting_blocked: true` and do not draft claims from that text without a fresh
+   human/OCR-quality review. Record the `provenance_labels` used (`source-extracted`,
    `inferred-from-document`, `not-recoverable`), any `ocr_text_quality_flags`, and all
    `unrecoverable_provenance`. Then run
    `node packages/apa-reports/cli.mjs check <matter>/staging/compile_report.json --kind compile`.

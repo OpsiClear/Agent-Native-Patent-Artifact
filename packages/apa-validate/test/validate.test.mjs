@@ -219,6 +219,26 @@ test("source_span_policy relaxed suppresses missing source-span warnings but not
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("source_span_policy strict turns adopted claim source-span gaps into errors", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "strict"'));
+    edit(d, "logic/claims.md", (t) => t.replace('    source_span: "demo-minimal:claims:LIM01"\n', ""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("source_span_policy strict turns adopted spec source-span gaps into errors", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "strict"'));
+    edit(d, "src/embodiments.md", (t) => t.replace('source_span: "demo-minimal:spec:SPEC0002"\n', ""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("not-recoverable source is allowed without source span or hash", () => {
   const d = clone();
   try {
@@ -233,7 +253,7 @@ test("not-recoverable source is allowed without source span or hash", () => {
 test("unknown source_span_policy fails loud", () => {
   const d = clone();
   try {
-    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "strict"'));
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "strictest"'));
     const r = validateMatter(d);
     assert.ok(codes(r.errors).includes("SOURCE_SPAN_POLICY_UNKNOWN"), JSON.stringify(r.errors));
   } finally { rmSync(d, { recursive: true, force: true }); }

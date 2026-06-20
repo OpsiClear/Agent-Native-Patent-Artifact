@@ -47,7 +47,7 @@ application_type: "utility"        # provisional | utility | design | plant | pc
 jurisdiction: "USPTO"                 # only active jurisdiction in v0.1; other values fail loud
 user_role: "unknown"                 # registered_practitioner | pro_se | unknown
 confidential_workflow_mode: "ordinary_local" # ordinary_local | counsel_controlled | shareable_redacted
-source_span_policy: "warning"        # warning | relaxed  (relaxed = compiled/public imports)
+source_span_policy: "warning"        # warning | strict | relaxed  (relaxed = compiled/public imports)
 inventors:                         # >=1 natural person; AI MUST NOT appear here
   - id: "AINVENTOR"                # short stable ID referenced by provenance inventor:<id>
     name: "<natural-person name, or 'TBD'>"
@@ -151,9 +151,11 @@ adopt it). See DESIGN §2.4 / §11.1.
 `source_span`, optional `speaker` / `timestamp`, and `source_sha256`. In the default
 `source_span_policy: "warning"` mode, the validator warns when adopted claim limitations or adopted
 `SPEC####` paragraphs lack `source`, `source_span`, and `source_sha256`. Use
-`source_span_policy: "relaxed"` for compiled public patents or imports where conception/source spans
-cannot honestly be reconstructed; invalid source-span values still warn. Use `source: not-recoverable`
-only when the source cannot be recovered without pretending conception evidence.
+`source_span_policy: "strict"` to make those source-span findings validation errors before assembly.
+Use `source_span_policy: "relaxed"` for compiled public patents or imports where conception/source
+spans cannot honestly be reconstructed; invalid source-span values still warn. Use
+`source: not-recoverable` only when the source cannot be recovered without pretending conception
+evidence.
 
 ---
 

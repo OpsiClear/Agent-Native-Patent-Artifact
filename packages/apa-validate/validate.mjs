@@ -243,9 +243,10 @@ export function validateMatter(dir) {
   }
   const sourceSpanPolicy = sourceSpanPolicyOf(fm);
   if (fm.source_span_policy !== undefined && !isSourceSpanPolicy(fm.source_span_policy)) {
-    E("SOURCE_SPAN_POLICY_UNKNOWN", `source_span_policy '${fm.source_span_policy}' is unknown (supported: warning, relaxed).`);
+    E("SOURCE_SPAN_POLICY_UNKNOWN", `source_span_policy '${fm.source_span_policy}' is unknown (supported: warning, relaxed, strict).`);
   }
   const requireSourceSpan = sourceSpanPolicy !== "relaxed";
+  const sourceSpanFinding = sourceSpanPolicy === "strict" ? E : W;
 
   // --- mandatory core (type-aware) ---
   const need = ["PATENT.md", "logic/problem.md", "src/embodiments.md"];
@@ -335,7 +336,7 @@ export function validateMatter(dir) {
       // provenance: an ai-suggested claim limitation is an assembly blocker. A MISSING provenance is
       // the protocol default 'ai-suggested' (protocol §2.4) - treat it as the blocker, not as clean.
       if ((lim.provenance || "ai-suggested") === "ai-suggested") W("AI_SUGGESTED_LIMITATION", `${c.id}.${lim.id} is provenance 'ai-suggested'${lim.provenance ? "" : " (missing -> protocol default)"} (assembly blocker; a human must adopt it).`);
-      else for (const finding of sourceSpanFindings(lim, `${c.id}.${lim.id}`, { requireComplete: requireSourceSpan })) W(finding.code, finding.msg);
+      else for (const finding of sourceSpanFindings(lim, `${c.id}.${lim.id}`, { requireComplete: requireSourceSpan })) sourceSpanFinding(finding.code, finding.msg);
     }
   }
 
@@ -364,7 +365,7 @@ export function validateMatter(dir) {
   // Warning-only: this surfaces weak provenance without deciding written-description sufficiency.
   for (const s of m.specs) {
     if ((s.binding.provenance || "ai-suggested") === "ai-suggested") continue;
-    for (const finding of sourceSpanFindings(s.binding, s.id, { requireComplete: requireSourceSpan })) W(finding.code, finding.msg);
+    for (const finding of sourceSpanFindings(s.binding, s.id, { requireComplete: requireSourceSpan })) sourceSpanFinding(finding.code, finding.msg);
   }
 
   // --- figure numeral consistency ---
