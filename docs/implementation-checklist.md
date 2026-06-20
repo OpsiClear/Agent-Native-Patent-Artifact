@@ -361,15 +361,17 @@ Verification:
 
 ### 1.7 Upload Manifest Expansion
 
-Current state: `apa-assemble --write` writes `assembled/upload_manifest.json` with hashes and human
+Current state: `apa-assemble --write` writes `assembled/upload_manifest.json` with generated-source
+hashes, human-produced upload-PDF placeholders, form/version metadata, fee-schedule provenance,
+PDF-export verification fields, IDS caveats, Patent Center human-upload checklist fields, and human
 verification flags.
 
 Tasks:
-- [ ] Add form/version metadata for ADS, IDS, declaration template, fee schedule, and generated date.
-- [ ] Add current fee schedule source hash and effective date.
-- [ ] Add explicit "not an admission of materiality" IDS note in machine-readable form.
-- [ ] Add PDF export verification fields: page size, page count, visual QA completed, reviewer.
-- [ ] Add Patent Center upload checklist fields without implying APA files.
+- [x] Add form/version metadata for ADS, IDS, declaration template, fee schedule, and generated date.
+- [x] Add current fee schedule source hash and effective date.
+- [x] Add explicit "not an admission of materiality" IDS note in machine-readable form.
+- [x] Add PDF export verification fields: page size, page count, visual QA completed, reviewer.
+- [x] Add Patent Center upload checklist fields without implying APA files.
 
 Suggested targets:
 - `packages/apa-assemble/upload-manifest.mjs`
@@ -377,12 +379,12 @@ Suggested targets:
 - `packages/apa-assemble/test/*.test.mjs`
 
 Acceptance criteria:
-- [ ] Manifest distinguishes generated files from human-produced upload PDFs.
-- [ ] Manifest hashes every generated local file.
-- [ ] Manifest never marks a human filing act complete by default.
+- [x] Manifest distinguishes generated files from human-produced upload PDFs.
+- [x] Manifest hashes every generated local file.
+- [x] Manifest never marks a human filing act complete by default.
 
 Verification:
-- [ ] `node --test packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-assemble/test/*.test.mjs`
 
 ### 1.8 Rigor Staleness And Verdict Wording
 
@@ -628,7 +630,7 @@ Verification:
 2. [x] Expand source-span validation in warning mode.
 3. [x] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
 4. [x] Add report schema package and wire claims/patentability/examiner/OA reports.
-5. [ ] Expand upload manifest fields. Prior-art dossier expansion complete.
+5. [x] Expand upload manifest fields. Prior-art dossier expansion complete.
 6. [ ] Add rigor staleness caps.
 7. [ ] Decide and implement legal-preamble progressive disclosure.
 8. [ ] Add trigger tests.

@@ -190,8 +190,30 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     const pf = preflight(d, { assembledDir: assembled });
     const manifest = buildUploadManifest(d, assembled, pf, { generatedAt: "2026-06-20T00:00:00.000Z" });
     assert.equal(manifest.schema, "apa-upload-manifest-v1");
-    assert.ok(manifest.generated_files.some((f) => f.path === "assembled/specification.html" && /^[0-9a-f]{64}$/.test(f.sha256)));
-    assert.ok(manifest.intended_upload_set.some((x) => x.document.startsWith("declaration.pdf") && x.human_verified === false));
+    assert.ok(manifest.generated_files.some((f) => (
+      f.path === "assembled/specification.html" &&
+      f.artifact_class === "apa-generated-local-source" &&
+      /^[0-9a-f]{64}$/.test(f.sha256)
+    )));
+    assert.ok(manifest.intended_upload_set.some((x) => (
+      x.document.startsWith("declaration.pdf") &&
+      x.artifact_class === "human-produced-upload-pdf" &&
+      x.generated_by_apa === false &&
+      x.human_verified === false
+    )));
+    const specPdf = manifest.intended_upload_set.find((x) => x.document.startsWith("specification.pdf"));
+    assert.equal(specPdf.pdf_export_verification.visual_qa_completed, false);
+    assert.equal(specPdf.pdf_export_verification.page_count, null);
+    assert.equal(specPdf.pdf_export_verification.reviewer, "");
+    assert.equal(manifest.forms.ids.not_admission_of_materiality, true);
+    assert.equal(manifest.forms.ids.not_search_completeness_representation, true);
+    assert.equal(manifest.forms.declaration_template.unsigned_template_only, true);
+    assert.equal(manifest.forms.fee_schedule.effective_date, "2025-01-19");
+    assert.equal(manifest.forms.fee_schedule.source_path, "docs/fee-schedule.2026-06-15.json");
+    assert.match(manifest.forms.fee_schedule.source_hash_sha256, /^[0-9a-f]{64}$/);
+    assert.equal(manifest.patent_center_upload_checklist.apa_performs_filing, false);
+    assert.equal(manifest.patent_center_upload_checklist.submitted_by_human, false);
+    assert.ok(manifest.patent_center_upload_checklist.items.every((x) => x.human_verified === false));
     assert.match(manifest.human_verification_required.join("\n"), /IDS reference/);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

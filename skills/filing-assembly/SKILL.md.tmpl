@@ -26,9 +26,11 @@ It produces, under `<matter>/assembled/`:
 - `declaration_UNSIGNED.md` - the 1.63 oath template with a **[SIGNATURE REQUIRED]** placeholder.
 - `FEE_WORKSHEET.md` - an **estimate** from a dated fee schedule (verify currency).
 - `PREFLIGHT.md` + `upload_set/MANIFEST.txt` - the go/no-go checklist and the frozen authoritative set.
-- `upload_manifest.json` - SHA-256 hashes for generated files, the intended upload set, submit
-  boundary, and `human_verified: false` flags for PDF export, ADS completion, IDS verification,
-  declaration signatures, fee/entity checks, and Patent Center upload.
+- `upload_manifest.json` - SHA-256 hashes for generated source files; separate human-produced upload
+  PDF placeholders; ADS/IDS/declaration/fee-schedule metadata; fee schedule source hash/effective
+  date; machine-readable IDS no-admission/no-search-completeness notes; PDF export verification fields;
+  and `human_verified: false` flags for ADS completion, IDS verification, declaration signatures,
+  fee/entity checks, and Patent Center upload.
 
 {{IDS_REQUIREMENTS}}
 
