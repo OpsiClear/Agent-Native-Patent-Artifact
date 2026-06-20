@@ -10,6 +10,7 @@ import { parseOfficeAction, parseOfficeActionFile } from "../parse.mjs";
 import { computeDeadlines } from "../deadlines.mjs";
 import { scaffoldResponse } from "../respond.mjs";
 import { validateReport } from "../../apa-reports/validate.mjs";
+import { validateRunlog } from "../../apa-trace/runlog.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = join(HERE, "fixtures", "oa-01.md");
@@ -190,6 +191,16 @@ test("respond CLI writes a valid office_action_report.json in practitioner mode"
     assert.equal(report.response_mode, "practitioner_scaffold");
     assert.equal(report.authoritative_deadline, false);
     assert.equal(report.findings.length, 2);
+    const log = validateRunlog(d);
+    assert.equal(log.ok, true, JSON.stringify(log.errors));
+    assert.equal(log.entries.length, 1);
+    const entry = log.entries[0];
+    assert.equal(entry.skill, "apa-office-action");
+    assert.ok(entry.outputs.some((o) => /prosecution\/response-01\.md$/.test(o.path)));
+    assert.ok(entry.outputs.some((o) => o.path === "prosecution/office_action_report.json"));
+    assert.ok(entry.human_checkpoints.some((c) => c.id === "registered-practitioner-review"));
+    assert.ok(entry.human_checkpoints.some((c) => c.id === "deadline-verification"));
+    assert.ok(entry.human_checkpoints.some((c) => c.id === "new-matter-review"));
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

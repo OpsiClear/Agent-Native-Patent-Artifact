@@ -23,7 +23,13 @@ import { computeDeadlines } from "./deadlines.mjs";
 import { scaffoldResponse, oaNumberFromFile } from "./respond.mjs";
 import { defaultReportFor, expectedReportPath } from "../apa-reports/schemas.mjs";
 import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
-import { existingFileRecords } from "../apa-trace/runlog.mjs";
+import {
+  appendRunlog,
+  buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
+  humanCheckpoint,
+} from "../apa-trace/runlog.mjs";
 
 const DISCLAIMER =
   "Post-filing assistance: flags and estimates for a registered practitioner. " +
@@ -61,6 +67,14 @@ function matterUserRole(matter) {
     return parseFrontmatter(readFileSync(join(matter, "PATENT.md"), "utf8")).user_role || "unknown";
   } catch {
     return "unknown";
+  }
+}
+
+function ruleVersionOf(matter) {
+  try {
+    return parseFrontmatter(readFileSync(join(matter, "PATENT.md"), "utf8")).rules_effective_date || "";
+  } catch {
+    return "";
   }
 }
 
@@ -202,6 +216,7 @@ function cmdDeadlines(argv) {
 }
 
 function cmdRespond(argv) {
+  const startedAt = new Date().toISOString();
   const matter = flag(argv, "--matter");
   const oaFile = flag(argv, "--oa");
   const doWrite = argv.includes("--write");
@@ -237,6 +252,32 @@ function cmdRespond(argv) {
     if (!check.ok) return usage(`office_action_report.json failed validation: ${formatErrors(check.errors).join("; ")}`);
     mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+  }
+  if (doWrite) {
+    appendRunlog(matter, buildRunlogEntry({
+      timestamp: new Date().toISOString(),
+      skill: "apa-office-action",
+      ruleVersion: ruleVersionOf(matter),
+      inputs: existingFileRecords(matter, [
+        join(matter, "PATENT.md"),
+        join(matter, "logic", "claims.md"),
+        oaFile,
+      ]),
+      outputs: existingFileRecords(matter, [outPath, reportPath].filter(Boolean)),
+      commands: [commandRecord({
+        argv: ["node", "packages/apa-prosecute/cli.mjs", "respond", ...argv],
+        cwd: process.cwd(),
+        exitCode: 0,
+        startedAt,
+        endedAt: new Date().toISOString(),
+      })],
+      humanCheckpoints: [
+        humanCheckpoint({ id: "registered-practitioner-review", required: true, satisfied: false }),
+        humanCheckpoint({ id: "deadline-verification", required: true, satisfied: false }),
+        humanCheckpoint({ id: "new-matter-review", required: true, satisfied: false }),
+        humanCheckpoint({ id: "human-filing-if-approved", required: true, satisfied: false }),
+      ],
+    }));
   }
 
   if (asJson) {

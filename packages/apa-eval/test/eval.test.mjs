@@ -12,7 +12,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, cpSync, readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,9 +21,12 @@ import { fileURLToPath } from "node:url";
 import { makeClient, MockClient, clampScore, buildRequestBody, parseResponse, API_URL, DEFAULT_MODEL } from "../client.mjs";
 import { judgeClaim, judgeSpec, judgePatentability, prePass, SKIP_RATIONALE } from "../judges.mjs";
 import { budgetGate, compare, recordRun, latestRun, costOf, costUnitOf } from "../store.mjs";
+import { appendEvalRunlog } from "../runlog.mjs";
+import { validateRunlog } from "../../apa-trace/runlog.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
+const CLI = join(HERE, "..", "cli.mjs");
 
 // A mock fetch returning a forced-tool verdict. Records that it was called, and lets the test set the
 // returned input (incl. an out-of-range score to prove clamping).
@@ -97,6 +101,45 @@ test("client uses the documented endpoint + headers", async () => {
   assert.equal(seen.headers["x-api-key"], "sk-test");
   assert.equal(seen.headers["anthropic-version"], "2023-06-01");
   assert.equal(seen.headers["content-type"], "application/json");
+});
+
+test("client onRequest sees exact egress bytes and can block before fetch", async () => {
+  let seenBodyText = "";
+  let calls = 0;
+  const fetchImpl = async (url, opts) => {
+    calls += 1;
+    assert.equal(opts.body, seenBodyText, "fetch sends the exact body audited by onRequest");
+    return {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      async json() {
+        return { content: [{ type: "tool_use", name: "submit_verdict", input: { score: 3, rationale: "ok" } }] };
+      },
+      async text() { return ""; },
+    };
+  };
+  const client = makeClient({
+    apiKey: "sk-test",
+    fetchImpl,
+    onRequest({ bodyText }) {
+      seenBodyText = bodyText;
+      assert.match(bodyText, /submit_verdict/);
+    },
+  });
+  await client.judge("s", "u", SCHEMA);
+  assert.equal(calls, 1);
+
+  const blocked = makeClient({
+    apiKey: "sk-test",
+    fetchImpl: async () => {
+      throw new Error("fetch should not run after onRequest blocks");
+    },
+    onRequest() {
+      throw new Error("blocked before egress");
+    },
+  });
+  await assert.rejects(() => blocked.judge("s", "u", SCHEMA), /blocked before egress/);
 });
 
 test("a refusal stop_reason yields a null verdict (never crashes)", async () => {
@@ -280,6 +323,38 @@ test("recordRun/latestRun round-trips a timestamped record (timestamp passed in)
   assert.equal(latest.timestamp, "2026-06-15T11:00:00.000Z");
   assert.equal(latest.dimensions.claim.score, 5);
   assert.throws(() => recordRun(dir, runWith(4, 100)), /timestamp is required/);
+});
+
+test("appendEvalRunlog records cloud LLM sink hashes for live eval runs", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-eval-runlog-"));
+  cpSync(EXAMPLE, d, { recursive: true });
+  appendEvalRunlog({
+    matter: d,
+    argv: ["node", "packages/apa-eval/cli.mjs", "--matter", d],
+    exitCode: 0,
+    sinkAudits: [{
+      kind: "cloud-llm",
+      bytes: JSON.stringify({ messages: [{ role: "user", content: "artifact" }] }),
+      scanVerdict: { blocked: false, needsConfirm: false, high: [], medium: [] },
+    }],
+  });
+  const log = validateRunlog(d);
+  assert.equal(log.ok, true, JSON.stringify(log.errors));
+  assert.equal(log.entries.length, 1);
+  assert.equal(log.entries[0].skill, "apa-eval");
+  assert.equal(log.entries[0].external_sinks.length, 1);
+  assert.equal(log.entries[0].external_sinks[0].kind, "cloud-llm");
+  assert.match(log.entries[0].external_sinks[0].bytes_sha256, /^[a-f0-9]{64}$/);
+});
+
+test("apa-eval --mock does not create a cloud sink runlog", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-eval-mock-runlog-"));
+  cpSync(EXAMPLE, d, { recursive: true });
+  const res = spawnSync(process.execPath, [CLI, "--matter", d, "--mock", "--json"], {
+    encoding: "utf8",
+  });
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(existsSync(join(d, "trace", "runlog.jsonl")), false);
 });
 
 // ------------------------------------------------------------------------------------------------

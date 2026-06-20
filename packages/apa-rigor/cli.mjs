@@ -10,10 +10,28 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { scaffoldReport } from "./scaffold.mjs";
 import { validateReport, computeVerdict, isFileable } from "./verdict.mjs";
+import {
+  appendRunlog,
+  buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
+  humanCheckpoint,
+} from "../apa-trace/runlog.mjs";
+
+function ruleVersionOf(matterDir) {
+  try {
+    return parseFrontmatter(readFileSync(join(matterDir, "PATENT.md"), "utf8")).rules_effective_date || "";
+  } catch {
+    return "";
+  }
+}
 
 function main() {
+  const startedAt = new Date().toISOString();
   const [cmd, ...rest] = process.argv.slice(2);
   if (cmd === "scaffold") {
     const matter = rest[rest.indexOf("--matter") + 1];
@@ -21,7 +39,33 @@ function main() {
     const skel = scaffoldReport(matter);
     const out = rest.includes("--out") ? rest[rest.indexOf("--out") + 1] : null;
     const json = JSON.stringify(skel, null, 2);
-    if (out) { writeFileSync(out, json); console.log(`wrote ${out} (Level-1 ${skel.level1.passed ? "passed" : "NOT passed - resolve mechanical errors first"})`); }
+    if (out) {
+      writeFileSync(out, json);
+      appendRunlog(matter, buildRunlogEntry({
+        timestamp: new Date().toISOString(),
+        skill: "apa-rigor",
+        ruleVersion: ruleVersionOf(matter),
+        inputs: existingFileRecords(matter, [
+          join(matter, "PATENT.md"),
+          join(matter, "logic", "claims.md"),
+          join(matter, "logic", "prior_art.md"),
+          join(matter, "src", "embodiments.md"),
+        ]),
+        outputs: existingFileRecords(matter, [out]),
+        commands: [commandRecord({
+          argv: ["node", "packages/apa-rigor/cli.mjs", cmd, ...rest],
+          cwd: process.cwd(),
+          exitCode: 0,
+          startedAt,
+          endedAt: new Date().toISOString(),
+        })],
+        humanCheckpoints: [
+          humanCheckpoint({ id: "semantic-rigor-review", required: true, satisfied: false }),
+          humanCheckpoint({ id: "prior-art-state-review", required: true, satisfied: false }),
+        ],
+      }));
+      console.log(`wrote ${out} (Level-1 ${skel.level1.passed ? "passed" : "NOT passed - resolve mechanical errors first"})`);
+    }
     else console.log(json);
     process.exit(0);
   }

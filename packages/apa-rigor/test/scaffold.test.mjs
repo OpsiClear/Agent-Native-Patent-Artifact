@@ -1,12 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { scaffoldReport } from "../scaffold.mjs";
 import { validateReport } from "../verdict.mjs";
+import { validateRunlog } from "../../apa-trace/runlog.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
+const CLI = join(HERE, "..", "cli.mjs");
 
 test("scaffoldReport: clean example -> Level-1 passed, mechanical dims prefilled, judgment dims null", () => {
   const s = scaffoldReport(EXAMPLE);
@@ -36,4 +41,26 @@ test("a scaffold completed with scores validates and computes a verdict", () => 
   assert.equal(r.ok, true, JSON.stringify(r.errors));
   // P3=P4=5, P1=P2=P5=P6=4 -> mean ~4.33 -> File-With-Revisions
   assert.equal(r.computed.verdict, "File-With-Revisions");
+});
+
+test("apa-rigor scaffold --out appends a runlog entry", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-rigor-runlog-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    const out = join(d, "patent_rigor_report.json");
+    const res = spawnSync(process.execPath, [CLI, "scaffold", "--matter", d, "--out", out], {
+      encoding: "utf8",
+    });
+    assert.equal(res.status, 0, res.stderr);
+    const log = validateRunlog(d);
+    assert.equal(log.ok, true, JSON.stringify(log.errors));
+    assert.equal(log.entries.length, 1);
+    const entry = log.entries[0];
+    assert.equal(entry.skill, "apa-rigor");
+    assert.ok(entry.outputs.some((o) => o.path === "patent_rigor_report.json"));
+    assert.ok(entry.human_checkpoints.some((c) => c.id === "semantic-rigor-review"));
+    assert.ok(entry.human_checkpoints.some((c) => c.id === "prior-art-state-review"));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });

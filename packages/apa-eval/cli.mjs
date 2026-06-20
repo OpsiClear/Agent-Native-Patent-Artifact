@@ -17,6 +17,8 @@
 import { makeClient, MockClient } from "./client.mjs";
 import { JUDGES } from "./judges.mjs";
 import { recordRun, latestRun, budgetGate, costOf } from "./store.mjs";
+import { scanBytesAtSink, exitCodeForApproval } from "../apa-safe/sinks.mjs";
+import { appendEvalRunlog } from "./runlog.mjs";
 
 const ALL_JUDGES = ["claim", "spec", "patentability"];
 
@@ -29,12 +31,13 @@ function parseArgs(argv) {
     else if (t === "--judges") a.judges = (argv[++i] || "").split(",").map((s) => s.trim()).filter(Boolean);
     else if (t === "--out") a.out = argv[++i];
     else if (t === "--json") a.json = true;
+    else if (t === "--yes") a.yes = true;
     else if (t === "-h" || t === "--help") a.help = true;
   }
   return a;
 }
 
-const USAGE = "usage: node cli.mjs --matter <dir> [--mock] [--judges claim,spec,patentability] [--out <store-dir>] [--json]";
+const USAGE = "usage: node cli.mjs --matter <dir> [--mock] [--judges claim,spec,patentability] [--out <store-dir>] [--json] [--yes]";
 
 // Deterministic canned verdicts for --mock (offline). One per dimension; the patentability mock also
 // flags a candidate so the offline run exercises that field. Scores are mid-high so the gate passes.
@@ -49,6 +52,7 @@ function mockVerdictFor(dimension) {
 }
 
 async function main() {
+  const startedAt = new Date().toISOString();
   const a = parseArgs(process.argv.slice(2));
   if (a.help) { console.log(USAGE); process.exit(0); }
   if (!a.matter) { console.error(USAGE); process.exit(2); }
@@ -56,6 +60,7 @@ async function main() {
   const bad = a.judges.filter((j) => !ALL_JUDGES.includes(j));
   if (bad.length) { console.error(`unknown judge(s): ${bad.join(", ")} (known: ${ALL_JUDGES.join(", ")})`); process.exit(2); }
 
+  const sinkAudits = [];
   let client;
   try {
     client = a.mock
@@ -63,7 +68,24 @@ async function main() {
           const dim = /PRIOR-ART DETECTION/.test(sys) ? "patentability" : /WRITTEN DESCRIPTION/.test(sys) ? "spec" : "claim";
           return mockVerdictFor(dim);
         })
-      : makeClient({});
+      : makeClient({
+          onRequest({ bodyText }) {
+            const verdict = scanBytesAtSink(bodyText);
+            const approvalExit = exitCodeForApproval(verdict, a.yes);
+            sinkAudits.push({
+              kind: "cloud-llm",
+              bytes: bodyText,
+              scanVerdict: verdict,
+              humanApproved: Boolean(verdict.needsConfirm && a.yes),
+            });
+            if (approvalExit === 3) {
+              throw new Error("cloud LLM payload blocked by HIGH-tier redaction finding");
+            }
+            if (approvalExit === 2) {
+              throw new Error("cloud LLM payload contains MEDIUM-tier sensitive content; re-run with --yes after human approval");
+            }
+          },
+        });
   } catch (e) {
     console.error("error:", e.message); process.exit(2);
   }
@@ -77,6 +99,18 @@ async function main() {
       dimensions[name] = verdict;
     } catch (e) {
       console.error(`judge '${name}' failed:`, e.message);
+      if (!a.mock) {
+        appendEvalRunlog({
+          matter: a.matter,
+          argv: ["node", "packages/apa-eval/cli.mjs", ...process.argv.slice(2)],
+          cwd: process.cwd(),
+          exitCode: 1,
+          startedAt,
+          endedAt: new Date().toISOString(),
+          sinkAudits,
+          notes: [`judge '${name}' failed before eval completion: ${e.message}`],
+        });
+      }
       process.exit(a.mock ? 2 : 1);
     }
   }
@@ -106,9 +140,24 @@ async function main() {
     if (gate.notes && gate.notes.length) console.log(`    note: ${gate.notes.join("; ")}`);
   }
 
+  let recordedFile = "";
   if (a.out) {
-    const file = recordRun(a.out, run, new Date().toISOString());
-    if (!a.json) console.log(`  recorded run -> ${file}`);
+    recordedFile = recordRun(a.out, run, new Date().toISOString());
+    if (!a.json) console.log(`  recorded run -> ${recordedFile}`);
+  }
+
+  if (!a.mock) {
+    appendEvalRunlog({
+      matter: a.matter,
+      argv: ["node", "packages/apa-eval/cli.mjs", ...process.argv.slice(2)],
+      cwd: process.cwd(),
+      exitCode: gate.ok ? 0 : 1,
+      startedAt,
+      endedAt: new Date().toISOString(),
+      outputPaths: [recordedFile].filter(Boolean),
+      sinkAudits,
+      notes: sinkAudits.length ? [] : ["no cloud LLM egress occurred; deterministic pre-pass skipped all requested judges"],
+    });
   }
 
   if (!a.json) {

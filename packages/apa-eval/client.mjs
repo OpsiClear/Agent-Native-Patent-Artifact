@@ -171,7 +171,7 @@ async function requestWithRetry(doFetch, url, init, opts) {
  * The API key is read from `apiKey` or `ANTHROPIC_API_KEY`; if absent the first judge() call throws.
  * After each call `client.lastUsage` holds the API usage object (for the cost gate), if returned.
  */
-export function makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts, retryDelayMs, maxResponseBytes } = {}) {
+export function makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts, retryDelayMs, maxResponseBytes, onRequest } = {}) {
   const key = apiKey || process.env.ANTHROPIC_API_KEY;
   const resolvedModel = model || process.env.APA_JUDGE_MODEL || DEFAULT_MODEL;
   const doFetch = fetchImpl || globalThis.fetch;
@@ -186,6 +186,8 @@ export function makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts,
       if (!key) throw new Error("set ANTHROPIC_API_KEY");
       if (typeof doFetch !== "function") throw new Error("no fetch implementation available (Node >=21 or inject fetchImpl)");
       const body = buildRequestBody({ model: resolvedModel, systemPrompt, userPrompt, verdictSchema });
+      const bodyText = JSON.stringify(body);
+      if (onRequest) await onRequest({ url: API_URL, body, bodyText });
       const res = await requestWithRetry(doFetch, API_URL, {
         method: "POST",
         headers: {
@@ -193,7 +195,7 @@ export function makeClient({ apiKey, model, fetchImpl, timeoutMs, retryAttempts,
           "anthropic-version": ANTHROPIC_VERSION,
           "content-type": "application/json",
         },
-        body: JSON.stringify(body),
+        body: bodyText,
       }, requestOpts);
       if (!res.ok) {
         let text = "";

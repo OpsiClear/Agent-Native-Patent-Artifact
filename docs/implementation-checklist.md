@@ -151,8 +151,9 @@ Verification:
 ### 1.1 Runlog Automation
 
 Current state: `docs/protocol.md` specifies optional `trace/runlog.jsonl`; `packages/apa-trace`
-implements append/validation/hash helpers; `apa-search --write` and `apa-assemble --write` append
-runlog entries. Rigor, prosecution, and eval integrations remain open.
+implements append/validation/hash helpers; `apa-search --write`, `apa-assemble --write`,
+`apa-rigor scaffold --out`, `apa-prosecute respond --write`, and live `apa-eval --matter` runs append
+runlog entries. `apa-eval --mock` remains offline and does not create a cloud-sink ledger.
 
 Tasks:
 - [x] Add a zero-dependency runlog helper module.
@@ -173,20 +174,26 @@ Suggested targets:
 Integration tasks:
 - [x] `apa-search --write` logs query sink hash, dossier output, PA outputs, and closest-art checkpoint.
 - [x] `apa-assemble --write` logs generated package outputs and human filing checkpoints.
-- [ ] `apa-rigor` logs report generation.
-- [ ] `apa-prosecute respond` logs OA parse/scaffold actions in practitioner mode.
-- [ ] `apa-eval` logs cloud LLM sink only when attached to a matter and not in `--mock`.
+- [x] `apa-rigor` logs report generation.
+- [x] `apa-prosecute respond` logs OA parse/scaffold actions in practitioner mode.
+- [x] `apa-eval` logs cloud LLM sink only when attached to a matter and not in `--mock`.
 
 Acceptance criteria:
 - [x] Running `apa-search --matter <tmp> --source mock --write` creates or appends
   `trace/runlog.jsonl`.
 - [x] Running `apa-assemble --matter <tmp> --write` appends generated-file output records.
+- [x] Running `apa-rigor scaffold --matter <tmp> --out <tmp>/patent_rigor_report.json`
+  appends report-generation records and review checkpoints.
+- [x] Running `apa-prosecute respond --matter <tmp> --oa <file> --write` in practitioner mode
+  appends OA scaffold records and practitioner checkpoints.
+- [x] Live `apa-eval --matter <tmp>` appends cloud LLM sink hashes; `--mock` does not.
 - [x] Re-running a command appends a second record; it does not mutate the first record.
 - [x] JSONL validation catches malformed entries with useful line numbers.
 
 Verification:
 - [x] `node --test packages/apa-trace/test/*.test.mjs`
 - [x] `node --test packages/apa-search/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-rigor/test/*.test.mjs packages/apa-prosecute/test/*.test.mjs packages/apa-eval/test/*.test.mjs`
 
 ### 1.2 Source-Span Validation
 
@@ -834,7 +841,7 @@ Detailed tasks:
 - [x] Add prior-art staleness checks.
 - [x] Add human-verified closest-art cap.
 - [x] Add display aliases for verdict labels while retaining historical enum compatibility.
-- [ ] Add runlog entry when `apa-rigor scaffold` writes a report.
+- [x] Add runlog entry when `apa-rigor scaffold` writes a report.
 - [ ] Add a report freshness summary that states which prior-art dossier was used.
 
 Suggested targets:
@@ -845,13 +852,13 @@ Suggested targets:
 
 Acceptance criteria:
 - [x] Stale or unverified prior art prevents overconfident filing-quality verdicts.
-- [ ] Rigor report generation appends inputs, outputs, command record, and human checkpoint to
+- [x] Rigor report generation appends inputs, outputs, command record, and human checkpoint to
   `trace/runlog.jsonl` when attached to a matter.
 - [ ] Rigor output identifies prior-art search age and closest-art verification state.
 
 Verification:
 - [x] `node --test packages/apa-rigor/test/*.test.mjs`
-- [ ] Add runlog integration tests for `apa-rigor`.
+- [x] Add runlog integration tests for `apa-rigor`.
 
 ### 3.13 `/apa-examiner`
 
@@ -886,7 +893,7 @@ Detailed tasks:
 - [x] Keep pro-se mode summary-only.
 - [x] `apa-prosecute respond --write` refuses pro-se write mode.
 - [x] `apa-prosecute respond --write` emits `office_action_report.json`.
-- [ ] Add runlog entry for OA parse/scaffold actions in practitioner mode.
+- [x] Add runlog entry for OA parse/scaffold actions in practitioner mode.
 - [ ] Add deadline-support matrix that explicitly identifies which event types the estimator supports.
 
 Suggested targets:
@@ -899,12 +906,12 @@ Acceptance criteria:
 - [ ] Unsupported OA event types produce a clear unsupported-event finding instead of a misleading
   draft response.
 - [x] Pro-se mode cannot write amendment/argument scaffolds.
-- [ ] Practitioner-mode OA scaffold writes runlog inputs, outputs, command record, and required human
+- [x] Practitioner-mode OA scaffold writes runlog inputs, outputs, command record, and required human
   checkpoints.
 
 Verification:
 - [x] `node --test packages/apa-prosecute/test/*.test.mjs`
-- [ ] Add OA runlog integration test.
+- [x] Add OA runlog integration test.
 
 ## Recommended Execution Order
 
