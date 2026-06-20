@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { parseOfficeAction, parseOfficeActionFile } from "../parse.mjs";
 import { computeDeadlines } from "../deadlines.mjs";
 import { scaffoldResponse } from "../respond.mjs";
+import { validateReport } from "../../apa-reports/validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = join(HERE, "fixtures", "oa-01.md");
@@ -168,6 +169,27 @@ test("respond CLI refuses proposed response scaffolds for pro-se matters", () =>
     });
     assert.equal(res.status, 2);
     assert.match(res.stderr, /practitioner-mode only/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("respond CLI writes a valid office_action_report.json in practitioner mode", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-prosecute-report-"));
+  try {
+    cpSync(EXAMPLE_MATTER, d, { recursive: true });
+    const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", FIXTURE, "--write", "--json"], {
+      encoding: "utf8",
+    });
+    assert.equal(res.status, 0, res.stderr);
+    const parsed = JSON.parse(res.stdout);
+    assert.ok(parsed.report, "json output includes report path");
+    const report = JSON.parse(readFileSync(parsed.report, "utf8"));
+    const check = validateReport(report, { kind: "office_action" });
+    assert.equal(check.ok, true, JSON.stringify(check.errors));
+    assert.equal(report.response_mode, "practitioner_scaffold");
+    assert.equal(report.authoritative_deadline, false);
+    assert.equal(report.findings.length, 2);
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

@@ -249,7 +249,38 @@ bytes left the machine, which outputs were produced, and which human checks rema
 
 ---
 
-## 4. `manifest.json` (viewer build target)
+## 4. Semantic report JSON files
+
+Semantic skills that write or materially revise artifacts should emit a machine-readable report
+validated by `packages/apa-reports`. These reports are structural records of flags, questions,
+evidence spans, recommendations, and human checkpoints. They are not legal opinions and do not
+certify patentability, novelty, validity, FTO, filing readiness, search completeness, or USPTO
+compliance.
+
+Default report files:
+
+| Report type | Skill | Default path |
+|---|---|---|
+| `claims` | `/apa-claims` | `logic/claims_report.json` |
+| `patentability` | `/apa-analyze` | `logic/patentability_report.json` |
+| `examiner_adversary` | `/apa-examiner` | `trace/examiner_adversary_report.json` |
+| `office_action` | `/apa-office-action` | `prosecution/office_action_report.json` |
+
+Shared envelope fields: `schema`, `report_type`, `skill`, `matter`, `legal_posture:
+flags-not-conclusions`, `inputs`, `outputs`, `human_checkpoints`, `findings`,
+`questions_for_attorney`, `questions_for_inventor`, and `next_allowed_steps`. Every finding must
+include `finding_type`, `severity`, `rule_anchor`, `evidence_span`, and `recommendation`.
+
+Use:
+
+```sh
+node packages/apa-reports/cli.mjs scaffold claims --matter <matter>
+node packages/apa-reports/cli.mjs check <matter>/logic/claims_report.json --kind claims
+```
+
+---
+
+## 5. `manifest.json` (viewer build target)
 
 `packages/apa-viewer/build_manifest.mjs` walks the matter and emits:
 ```json
@@ -268,7 +299,7 @@ hold in **both** `build_manifest.mjs` and `viewer.js`.
 
 ---
 
-## 5. Validation (Level 1 — mechanical, deterministic)
+## 6. Validation (Level 1 — mechanical, deterministic)
 
 `node packages/apa-validate/validate.mjs <matter>/` parses all binding blocks and the manifest and checks
 **only what is mechanical**. It never decides §112 sufficiency or 101/102/103 merits — those are
@@ -303,7 +334,7 @@ The validator emits `validation_report.json` (machine) + a human summary, and st
 
 ---
 
-## 6. Application-type-aware mandatory core
+## 7. Application-type-aware mandatory core
 
 | `application_type` | Required | Notably NOT required | Special rule |
 |---|---|---|---|
@@ -318,7 +349,7 @@ missing-core error) is the more dangerous failure mode and is explicitly forbidd
 
 ---
 
-## 7. Naming
+## 8. Naming
 
 - Matter directory: kebab-case slug of the title.
 - Files: lowercase; entity IDs uppercase with zero-padded numbers (`CLM01`, `SPEC0002`, `FIG01`).
@@ -326,7 +357,7 @@ missing-core error) is the more dangerous failure mode and is explicitly forbidd
 
 ---
 
-## 8. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
+## 9. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
 
 The core protocol stops at filing (DESIGN §8). This **optional** extension models the post-filing
 examination round-trip. It is deeper UPL territory: everything here is a flag/question for a registered
@@ -341,6 +372,7 @@ A new optional area `prosecution/` holds the round-trip:
 <matter>/prosecution/
   oa-NN.md           # an Office Action: header (mailing date, examiner, app no) + REJ## rejections
   response-NN.md     # the response to oa-NN: per-rejection argument + amendment (flags, not opinions)
+  office_action_report.json # machine report: flags/checkpoints, not legal conclusions
 ```
 
 ### `prosecution/oa-NN.md` — Office Action

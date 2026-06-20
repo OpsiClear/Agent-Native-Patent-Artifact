@@ -1,7 +1,7 @@
 /**
  * apa-prosecute/respond - scaffold a `prosecution/response-NN.md` for an Office Action.
  *
- * Per docs/protocol.md §8: for each `REJ##`, emit the affected claims, a FLAGS-AND-QUESTIONS
+ * Per docs/protocol.md §9: for each `REJ##`, emit the affected claims, a FLAGS-AND-QUESTIONS
  * argument block (NOT legal conclusions), and a proposed-amendment block written under the
  * NEW-MATTER GUARD - it never invents specification support; where the spec as filed does not
  * support an amendment, it says so and routes to counsel.

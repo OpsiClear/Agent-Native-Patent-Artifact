@@ -13,7 +13,8 @@
     "apa-safe": "packages/apa-safe/cli.mjs",
     "apa-safe-send": "packages/apa-safe/cli.mjs",
     "apa-safe-fetch": "packages/apa-safe/cli.mjs",
-    "apa-safe-npx": "packages/apa-safe/cli.mjs"
+    "apa-safe-npx": "packages/apa-safe/cli.mjs",
+    "apa-reports": "packages/apa-reports/cli.mjs"
   },
   "scripts": {
     "gen:skill-docs": "node scripts/gen-skill-docs.mjs",

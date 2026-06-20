@@ -1,7 +1,7 @@
 /**
  * apa-prosecute/deadlines - 37 CFR 1.136(a) response-period ESTIMATES for an Office Action.
  *
- * Per docs/protocol.md §8: from the OA `mailing_date`, an examination response has a
+ * Per docs/protocol.md §9: from the OA `mailing_date`, an examination response has a
  * 3-month SHORTENED statutory period, extensible month-by-month (1.136(a)) to a 6-month
  * STATUTORY MAXIMUM, with escalating 37 CFR 1.17 extension fees.
  *

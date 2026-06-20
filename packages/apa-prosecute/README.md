@@ -1,7 +1,7 @@
 # apa-prosecute - post-filing office-action assistant (optional)
 
 `apa-prosecute` is the **optional post-filing extension** of the Agent-Native-Patent-Artifact (APA)
-protocol (see `docs/protocol.md` §8). The **core** APA protocol stops at filing; this package goes
+protocol (see `docs/protocol.md` §9). The **core** APA protocol stops at filing; this package goes
 **beyond that core scope** to model the examination round-trip: capturing an Office Action,
 estimating the response period, and scaffolding a response.
 
@@ -24,6 +24,7 @@ The extension adds an optional area inside a matter:
 <matter>/prosecution/
   oa-NN.md         # an Office Action: file-level ```oa header + ### REJ## rejection sections
   response-NN.md   # the scaffolded response to oa-NN (flags & questions, not opinions)
+  office_action_report.json # machine report: flags/checkpoints, not legal conclusions
 ```
 
 `PATENT.md` `status` gains post-filing values: `filed | under-examination | office-action | responded`.
@@ -86,7 +87,7 @@ node packages/apa-prosecute/cli.mjs deadlines --mailed 2026-03-02 [--json]
 # ...or read the mailing date from the OA header
 node packages/apa-prosecute/cli.mjs deadlines --oa <matter>/prosecution/oa-01.md [--json]
 
-# Scaffold a response (writes <matter>/prosecution/response-NN.md when --write is given)
+# Scaffold a response (writes response-NN.md plus office_action_report.json when --write is given)
 node packages/apa-prosecute/cli.mjs respond --matter <matter> --oa <matter>/prosecution/oa-01.md --write
 ```
 

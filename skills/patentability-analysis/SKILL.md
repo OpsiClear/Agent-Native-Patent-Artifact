@@ -75,6 +75,11 @@ patentability, novelty, non-obviousness, FTO, validity, or infringement conclusi
 6. **101:** Alice/Mayo abstract-idea screen - flag risk and whether the claim recites concrete structure.
 7. Write findings with `questions_for_attorney` / `questions_for_inventor` arrays. Surface contradictions
    (a reference that undermines a staged novelty claim) rather than resolving them.
+8. Emit `logic/patentability_report.json` using the shared report envelope
+   (`schema: apa-patentability-report-v1`, `legal_posture: flags-not-conclusions`). Include
+   quote-backed `claim_charts`, statutory flags, human checkpoints, and `search_completeness:
+   not_asserted`. Validate it with
+   `node packages/apa-reports/cli.mjs check <matter>/logic/patentability_report.json --kind patentability`.
 
 ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a

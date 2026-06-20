@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * apa-prosecute - the OPTIONAL post-filing office-action package (docs/protocol.md §8).
+ * apa-prosecute - the OPTIONAL post-filing office-action package (docs/protocol.md §9).
  *
  * It models the examination round-trip: parse an Office Action, ESTIMATE the 37 CFR 1.136(a)
  * response period, and scaffold a response. Everything it emits is a flag/question for a
@@ -16,11 +16,14 @@
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, basename } from "node:path";
+import { dirname, join, basename } from "node:path";
 import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
 import { computeDeadlines } from "./deadlines.mjs";
 import { scaffoldResponse, oaNumberFromFile } from "./respond.mjs";
+import { defaultReportFor, expectedReportPath } from "../apa-reports/schemas.mjs";
+import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
+import { existingFileRecords } from "../apa-trace/runlog.mjs";
 
 const DISCLAIMER =
   "Post-filing assistance: flags and estimates for a registered practitioner. " +
@@ -40,7 +43,7 @@ function usage(msg) {
       "Usage:",
       "  node cli.mjs parse     --oa <file> [--json]",
       "  node cli.mjs deadlines (--mailed <YYYY-MM-DD> | --oa <file>) [--json]",
-      "  node cli.mjs respond   --matter <dir> --oa <file> [--write] [--json]",
+      "  node cli.mjs respond   --matter <dir> --oa <file> [--write] [--report-out file] [--json]",
       "",
       DISCLAIMER,
       "",
@@ -59,6 +62,56 @@ function matterUserRole(matter) {
   } catch {
     return "unknown";
   }
+}
+
+function ruleAnchorForGround(ground) {
+  const g = String(ground || "").toLowerCase();
+  if (g === "101") return "35-usc-101";
+  if (g === "102") return "35-usc-102";
+  if (g === "103") return "35-usc-103";
+  if (g === "112a") return "35-usc-112a";
+  if (g === "112b") return "35-usc-112b";
+  if (g === "112f") return "35-usc-112f";
+  if (g === "double-patenting") return "double-patenting";
+  return "office-action";
+}
+
+function buildOfficeActionReport({ matter, oaFile, result, outPath }) {
+  const parsed = parseOfficeActionFile(oaFile);
+  const report = defaultReportFor("office_action", {
+    matter,
+    inputs: existingFileRecords(matter, [join(matter, "PATENT.md"), join(matter, "logic", "claims.md"), oaFile].filter(Boolean)),
+    outputs: existingFileRecords(matter, [outPath].filter(Boolean)),
+  });
+  report.office_action = {
+    source_file: oaFile,
+    oa_number: result.oaNumber,
+    action_type: parsed.header.action_type || "",
+    mailing_date: parsed.header.mailing_date || "",
+    rejection_count: result.rejectionCount,
+  };
+  report.response_mode = "practitioner_scaffold";
+  report.authoritative_deadline = false;
+  report.deadline_estimate = parsed.header.mailing_date
+    ? { mailing_date: parsed.header.mailing_date, verify_against: "PAIR/Patent Center" }
+    : null;
+  report.human_checkpoints = [
+    { id: "registered-practitioner-review", required: true, satisfied: false },
+    { id: "deadline-verification", required: true, satisfied: false },
+    { id: "new-matter-review", required: true, satisfied: false },
+  ];
+  report.findings = parsed.rejections.map((r) => ({
+    finding_type: "flag",
+    severity: "fix-before-filing",
+    rule_anchor: ruleAnchorForGround(r.ground),
+    evidence_span: r.examiner_reasoning || r.gist || r.id,
+    recommendation: `Practitioner must evaluate ${r.id} against the cited claims and references before any response is filed.`,
+    rejection_id: r.id,
+    claims: r.claims,
+    references: r.references,
+  }));
+  report.next_allowed_steps = ["practitioner-completes-response", "verify-deadlines", "human-files-if-approved"];
+  return report;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -153,6 +206,7 @@ function cmdRespond(argv) {
   const oaFile = flag(argv, "--oa");
   const doWrite = argv.includes("--write");
   const asJson = argv.includes("--json");
+  const reportOutArg = flag(argv, "--report-out");
 
   if (!matter) return usage("respond requires --matter <dir>");
   if (!oaFile) return usage("respond requires --oa <file>");
@@ -169,17 +223,26 @@ function cmdRespond(argv) {
 
   const nn = result.oaNumber || oaNumberFromFile(oaFile);
   let outPath = null;
+  let reportPath = null;
   if (doWrite) {
     const dir = join(matter, "prosecution");
     mkdirSync(dir, { recursive: true });
     outPath = join(dir, `response-${nn}.md`);
     writeFileSync(outPath, result.markdown, "utf8");
   }
+  reportPath = reportOutArg || (doWrite ? join(matter, expectedReportPath("office_action")) : null);
+  if (reportPath) {
+    const report = buildOfficeActionReport({ matter, oaFile, result, outPath });
+    const check = validateReport(report, { kind: "office_action" });
+    if (!check.ok) return usage(`office_action_report.json failed validation: ${formatErrors(check.errors).join("; ")}`);
+    mkdirSync(dirname(reportPath), { recursive: true });
+    writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+  }
 
   if (asJson) {
     process.stdout.write(
       JSON.stringify(
-        { rejectionCount: result.rejectionCount, oaNumber: nn, written: outPath },
+        { rejectionCount: result.rejectionCount, oaNumber: nn, written: outPath, report: reportPath },
         null,
         2,
       ) + "\n",
@@ -190,6 +253,7 @@ function cmdRespond(argv) {
   process.stdout.write(`Scaffolded response to OA ${nn}: ${result.rejectionCount} rejection(s).\n`);
   if (outPath) {
     process.stdout.write(`  Wrote draft scaffold -> ${outPath}\n`);
+    if (reportPath) process.stdout.write(`  Wrote machine report -> ${reportPath}\n`);
     process.stdout.write("  This is a DRAFT a registered practitioner completes, argues, and files.\n");
   } else {
     process.stdout.write("  (dry run - pass --write to save under <matter>/prosecution/response-NN.md)\n\n");

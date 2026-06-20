@@ -80,8 +80,14 @@ do not select scope or apply narrowing edits.
    `source`, `source_span`, `speaker`, `timestamp`, and `source_sha256`. Never name AI as an inventor.
 4. **Seed `concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
    objective bound.
-5. **Check.** Run `node packages/apa-draft/claim-lint.mjs <matter>` (legal form) and
+5. **Report + check.** Emit `logic/claims_report.json` using the shared report envelope
+   (`schema: apa-claims-report-v1`, `legal_posture: flags-not-conclusions`). If you changed claim text,
+   scope choices, provenance, or dependencies, update the report's `claim_changes`, `scope_decisions`,
+   `findings`, and `human_checkpoints`. Then run
+   `node packages/apa-draft/claim-lint.mjs <matter> --report-out <matter>/logic/claims_report.json`
+   (legal form + report scaffold/update) and
    `node packages/apa-validate/validate.mjs <matter>` (antecedent basis, dependency, edge resolution).
+   Finally run `node packages/apa-reports/cli.mjs check <matter>/logic/claims_report.json --kind claims`.
    Fix findings; an unresolved `supported_by` is a §112-support warning to resolve or flag, not hide.
 
 ### Claim format (37 CFR 1.75; MPEP 608.01) — drafting rules the agent enforces

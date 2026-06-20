@@ -27,11 +27,14 @@ function run(label, args) {
 
 const tmp = mkdtempSync(join(tmpdir(), "apa-smoke-"));
 const manifestOut = join(tmp, "minimal-manifest.json");
+const claimsReportOut = join(tmp, "claims_report.json");
 
 run("validate minimal as json", ["packages/apa-validate/validate.mjs", "examples/minimal-patent-artifact", "--json"]);
 run("validate full lifecycle", ["packages/apa-validate/validate.mjs", "examples/full-lifecycle-artifact"]);
 run("build viewer manifest", ["packages/apa-viewer/build_manifest.mjs", "examples/minimal-patent-artifact", "--out", manifestOut]);
 run("eval mock", ["packages/apa-eval/cli.mjs", "--matter", "examples/minimal-patent-artifact", "--mock", "--json"]);
+run("scaffold report schema", ["packages/apa-reports/cli.mjs", "scaffold", "claims", "--matter", "examples/minimal-patent-artifact", "--out", claimsReportOut]);
+run("check report schema", ["packages/apa-reports/cli.mjs", "check", claimsReportOut, "--kind", "claims"]);
 run("figure gallery quality", [
   "packages/apa-figure/cli.mjs",
   "review-dir",

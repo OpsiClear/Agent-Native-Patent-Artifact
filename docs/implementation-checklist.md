@@ -291,18 +291,20 @@ Verification:
 
 ### 1.5 JSON Report Schemas
 
-Current state: rigor, drawing QA, SVG upgrader, search dossier, and upload manifest are structured.
-Claims, patentability, examiner, and OA still need formal report schemas.
+Current state: `packages/apa-reports` defines the shared semantic report envelope and validates
+`claims`, `patentability`, `examiner_adversary`, and `office_action` report schemas. `claim-lint`
+can write `logic/claims_report.json`, `apa-prosecute respond --write` writes
+`prosecution/office_action_report.json`, and the four semantic skills require report validation.
 
 Tasks:
-- [ ] Define shared report envelope: skill, matter, inputs, outputs, human checkpoints, findings,
+- [x] Define shared report envelope: skill, matter, inputs, outputs, human checkpoints, findings,
   next allowed steps.
-- [ ] Add `claims_report.json` schema and validator.
-- [ ] Add `patentability_report.json` schema and validator.
-- [ ] Add `examiner_adversary_report.json` schema and validator.
-- [ ] Add `office_action_report.json` schema and validator.
-- [ ] Add schema validation to package CLIs where applicable.
-- [ ] Update skills to require the report files when they write or materially revise an artifact.
+- [x] Add `claims_report.json` schema and validator.
+- [x] Add `patentability_report.json` schema and validator.
+- [x] Add `examiner_adversary_report.json` schema and validator.
+- [x] Add `office_action_report.json` schema and validator.
+- [x] Add schema validation to package CLIs where applicable.
+- [x] Update skills to require the report files when they write or materially revise an artifact.
 
 Suggested targets:
 - `packages/apa-reports/schemas.mjs`
@@ -316,14 +318,14 @@ Suggested targets:
 - `skills/office-action/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] Each report has deterministic validation with useful errors.
-- [ ] Findings include severity, rule anchor, evidence span, and recommendation.
-- [ ] Reports do not contain legal conclusions; they contain flags/questions and human checkpoints.
-- [ ] Existing examples can produce or include minimal valid reports.
+- [x] Each report has deterministic validation with useful errors.
+- [x] Findings include severity, rule anchor, evidence span, and recommendation.
+- [x] Reports do not contain legal conclusions; they contain flags/questions and human checkpoints.
+- [x] Existing examples can produce or include minimal valid reports.
 
 Verification:
-- [ ] `node --test packages/apa-reports/test/*.test.mjs`
-- [ ] `npm run smoke`
+- [x] `node --test packages/apa-reports/test/*.test.mjs`
+- [x] `npm run smoke`
 
 ### 1.6 Prior-Art Dossier Expansion
 
@@ -622,7 +624,7 @@ Verification:
 1. [x] Implement runlog helper and integrate `apa-search` + `apa-assemble`.
 2. [x] Expand source-span validation in warning mode.
 3. [x] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
-4. [ ] Add report schema package and wire claims/patentability/examiner/OA reports.
+4. [x] Add report schema package and wire claims/patentability/examiner/OA reports.
 5. [ ] Expand prior-art dossier and upload manifest fields.
 6. [ ] Add rigor staleness caps.
 7. [ ] Decide and implement legal-preamble progressive disclosure.

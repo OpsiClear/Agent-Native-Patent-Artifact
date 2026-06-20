@@ -27,7 +27,7 @@ For the detailed implementation checklist derived from these items, see
 | Add prior-art search dossier | Covered. `apa-search --write` writes `evidence/prior_art/search-dossier-<timestamp>.json` with query hash, scan result, source summaries, ranked candidates, assigned PA IDs, and human closest-art verification state. |
 | Add upload manifest | Covered. `apa-assemble --write` writes `assembled/upload_manifest.json` with generated-file hashes, intended upload set, submit boundary, and human-verification flags. |
 | Create wrappers for external sinks | Covered for generic send/fetch/npx paths. `packages/apa-safe` provides `apa-safe-send`, `apa-safe-fetch`, and `apa-safe-npx` aliases with exact-byte `apa-redact` scanning, HIGH blocking, MEDIUM `--yes` approval, `trace/runlog.jsonl` sink hashes, untrusted fetch envelopes, and pinned package enforcement. `apa-search` and `apa-eval` retain their path-specific guards. |
-| Add JSON report schemas for skills | Partially covered. Drawing-quality, SVG-upgrader, search dossier, upload manifest, and rigor already emit/require structured outputs. Claims, patentability, examiner, and OA still need formal JSON schema modules. |
+| Add JSON report schemas for skills | Covered for the four remaining semantic report types. `packages/apa-reports` defines and validates the shared report envelope plus `claims`, `patentability`, `examiner_adversary`, and `office_action` schemas; `claim-lint --report-out` writes `claims_report.json`; `apa-prosecute respond --write` writes `office_action_report.json`; `/apa-claims`, `/apa-analyze`, `/apa-examiner`, and `/apa-office-action` now require report validation. |
 
 ## P2 Items
 

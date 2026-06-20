@@ -84,7 +84,12 @@ systems and record only the human-approved drafting decisions in the shareable a
    `Likely critique -> Why it matters -> Fix made -> Key distinction`. Log a corresponding `decision` or
    `dead_end` node in `trace/prosecution.yaml` (a refused-and-foreclosed position becomes a `dead_end`
    so it is never re-argued).
-5. **Re-check** only after human-approved edits: `node packages/apa-draft/claim-lint.mjs <matter>` and
+5. **Machine report.** Emit `trace/examiner_adversary_report.json` using the shared report envelope
+   (`schema: apa-examiner-adversary-report-v1`, `legal_posture: flags-not-conclusions`). Include each
+   critique as a report finding or `critiques` entry, `loop_count`, `max_examiner_loops`, `edit_mode`,
+   and any required practitioner-approval checkpoint. Validate it with
+   `node packages/apa-reports/cli.mjs check <matter>/trace/examiner_adversary_report.json --kind examiner_adversary`.
+6. **Re-check** only after human-approved edits: `node packages/apa-draft/claim-lint.mjs <matter>` and
    `node packages/apa-validate/validate.mjs <matter>`; then re-run `/apa-rigor`. Stop after the caller's
    `max_examiner_loops` cap (default 2) and surface residual risks rather than looping indefinitely.
 

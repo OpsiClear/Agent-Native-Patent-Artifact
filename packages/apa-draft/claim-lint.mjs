@@ -9,10 +9,13 @@
  * Exit:   0 = no findings · 1 = findings (advisory)
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { iterEntitySections, extractBindingBlocks, asArray } from "../../lib/apa-parse.mjs";
+import { defaultReportFor } from "../apa-reports/schemas.mjs";
+import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
+import { existingFileRecords } from "../apa-trace/runlog.mjs";
 
 const TRANSITIONS = /\b(comprising|consisting of|consisting essentially of|including|having)\b/i;
 const NONCE_112F = /\b(means|step|module|mechanism|unit|element|device|component|member|assembly|arrangement|configuration)s?\s+(for|configured to)\b/i;
@@ -54,17 +57,58 @@ export function lintClaims(matterDir) {
   return { findings, claims: claims.length };
 }
 
+function ruleAnchorFor(code) {
+  if (code === "LINT_112F") return "35-usc-112f";
+  if (code === "LINT_MULTI_DEP") return "37-cfr-1.75";
+  if (code === "LINT_PARSE_ERROR") return "apa-protocol";
+  return "37-cfr-1.75";
+}
+
+export function buildClaimsReport(matterDir, lintResult = lintClaims(matterDir)) {
+  const claimsPath = join(matterDir, "logic", "claims.md");
+  const report = defaultReportFor("claims", {
+    matter: matterDir,
+    inputs: existingFileRecords(matterDir, [claimsPath].filter(existsSync)),
+  });
+  report.claims_reviewed = Array.from({ length: lintResult.claims || 0 }, (_, i) => `CLM${String(i + 1).padStart(2, "0")}`);
+  report.findings = (lintResult.findings || []).map((f) => ({
+    finding_type: "flag",
+    severity: f.severity === "warning" ? "warning" : "info",
+    rule_anchor: ruleAnchorFor(f.code),
+    code: f.code,
+    evidence_span: f.msg,
+    recommendation: `Resolve or deliberately document ${f.code}: ${f.msg}`,
+  }));
+  report.next_allowed_steps = report.findings.length
+    ? ["revise-claims", "rerun-claim-lint", "run-apa-validate"]
+    : ["run-apa-validate", "draft-specification", "run-apa-rigor"];
+  return report;
+}
+
 function main(argv) {
   const args = argv.slice(2);
   const json = args.includes("--json");
+  const reportIdx = args.indexOf("--report-out");
+  const reportOut = reportIdx >= 0 ? args[reportIdx + 1] : null;
   const dir = args.find((a) => !a.startsWith("--"));
   if (!dir) { console.error("usage: node claim-lint.mjs <matter-dir> [--json]"); process.exit(1); }
   const r = lintClaims(dir);
+  if (reportOut) {
+    const report = buildClaimsReport(dir, r);
+    const check = validateReport(report, { kind: "claims" });
+    if (!check.ok) {
+      console.error(formatErrors(check.errors).join("\n"));
+      process.exit(2);
+    }
+    mkdirSync(dirname(reportOut), { recursive: true });
+    writeFileSync(reportOut, JSON.stringify(report, null, 2) + "\n", "utf8");
+  }
   if (json) { console.log(JSON.stringify(r, null, 2)); }
   else {
     console.log(`apa-claim-lint: ${dir} (${r.claims} claim(s)) - legal-FORM only, no patentability merit`);
     for (const f of r.findings) console.log(`  ${f.severity.toUpperCase()} [${f.code}] ${f.msg}`);
     console.log(`  => ${r.findings.length ? r.findings.length + " finding(s)" : "clean"}`);
+    if (reportOut) console.log(`  report -> ${reportOut}`);
   }
   process.exit(r.findings.length ? 1 : 0);
 }

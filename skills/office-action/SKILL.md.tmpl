@@ -12,7 +12,7 @@ triggers: "office action, respond to rejection, /apa-office-action, OA response,
 {{PATENT_PREAMBLE}}
 
 ## What this does
-This is the **optional post-filing extension** (`docs/protocol.md` §8), beyond the core pre-filing
+This is the **optional post-filing extension** (`docs/protocol.md` §9), beyond the core pre-filing
 scope. It models one examination round-trip: capture an Office Action, estimate the response period,
 and scaffold a response. It is **deeper UPL territory** - everything it emits is a **flag or question
 for a registered practitioner**, deadlines are **estimates to verify**, and **APA never signs or
@@ -42,13 +42,17 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
    computes no authoritative deadline.
 4. **Scaffold the response (registered-practitioner mode only):**
    `node packages/apa-prosecute/cli.mjs respond --matter <m> --oa <f> --write`
-   writes `<matter>/prosecution/response-NN.md` (NN matching the OA). Per `REJ##` it emits the
-   affected claims, a **flags-and-questions** argument block (NOT conclusions), and a proposed
-   amendment under the **new-matter guard** - where the spec as filed does not support an amendment it
-   says **"Not supported by the spec as filed - route to counsel"** rather than inventing support.
+   writes `<matter>/prosecution/response-NN.md` and `prosecution/office_action_report.json` (NN
+   matching the OA). Per `REJ##` it emits the affected claims, a **flags-and-questions** argument block
+   (NOT conclusions), and a proposed amendment under the **new-matter guard** - where the spec as filed
+   does not support an amendment it says **"Not supported by the spec as filed - route to counsel"**
+   rather than inventing support.
    If `user_role: pro_se`, do not run `respond --write`; instead write a neutral OA summary/checklist
-   and recommend consultation with a registered practitioner.
-5. **Hand off.** The scaffold is a **draft** a registered practitioner completes, argues, and files.
+   and recommend consultation with a registered practitioner. Any summary/checklist still gets an
+   `office_action_report.json` with `response_mode: summary_only`.
+5. **Validate the report.** Run
+   `node packages/apa-reports/cli.mjs check <matter>/prosecution/office_action_report.json --kind office_action`.
+6. **Hand off.** The scaffold is a **draft** a registered practitioner completes, argues, and files.
    Update `PATENT.md` `status` (`office-action` -> `responded`) to reflect the round-trip.
 
 ## Post-filing UPL guardrails (no override)

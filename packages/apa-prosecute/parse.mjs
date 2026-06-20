@@ -1,7 +1,7 @@
 /**
  * apa-prosecute/parse - parse a post-filing Office Action (`prosecution/oa-NN.md`).
  *
- * Per docs/protocol.md §8, an Office Action file carries:
+ * Per docs/protocol.md §9, an Office Action file carries:
  *   - a FILE-LEVEL ```oa fenced block: { mailing_date, examiner, application_no, action_type }
  *   - one `### REJ## - <gist>` section per rejection, each with a ```binding block:
  *       { ground, claims: [CLM##], references: [PA##], examiner_reasoning }
