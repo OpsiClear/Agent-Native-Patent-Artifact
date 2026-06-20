@@ -44,9 +44,10 @@ It produces, under `<matter>/assembled/`:
 - `upload_manifest.json` - SHA-256 hashes for generated source files; separate human-produced upload
   PDF placeholders; ADS/IDS/declaration/fee-schedule metadata; fee schedule source hash/effective
   date; machine-readable IDS no-admission/no-search-completeness notes; PDF export verification fields;
-  confidential-workflow mode and shareable-export exclusions for sensitive critique artifacts;
-  and `human_verified: false` flags for ADS completion, IDS verification, declaration signatures,
-  fee/entity checks, and Patent Center upload.
+  explicit `deferred_human_actions` linked to the upload-manifest fields they complete; confidential
+  workflow mode and shareable-export exclusions for sensitive critique artifacts; and
+  `human_verified: false` / `completed: false` flags for ADS completion, IDS verification,
+  declaration signatures, fee/entity checks, PDF export, and Patent Center upload.
 
 ### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
 - Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/
@@ -78,7 +79,8 @@ APA never signs or certifies a USPTO paper, never generates an executed/signed d
 asserts micro-entity status, and never files. Patent Center has no public submission API and requires
 an identity-verified human account; a human files. Rules as of 2026-06-15; verify currency.
 Do not treat `upload_manifest.json` as proof of filing readiness; it is an audit checklist for the
-human filing acts APA refuses to perform.
+human filing acts APA refuses to perform. Do not move any PDF into `generated_files`; upload PDFs
+belong in `intended_upload_set` until a human records the external PDF/export/signature/upload action.
 
 ## Do NOT
 - Mark the package "filed" or "ready to file" without human review, signature, and rigor sign-off.

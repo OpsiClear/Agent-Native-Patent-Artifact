@@ -24,6 +24,134 @@ const GENERATED_FILES = [
   "upload_set/MANIFEST.txt",
 ];
 
+const UPLOAD_DOCUMENTS = [
+  {
+    id: "specification-pdf",
+    document: "specification.pdf  (produce by Print-to-PDF from specification.html)",
+    source: "assembled/specification.html",
+    source_path: "assembled/specification.html",
+    status: "print-to-pdf required",
+    actions: ["export-specification-pdf", "pdf-render-review"],
+  },
+  {
+    id: "drawings-pdf",
+    document: "drawings.pdf  (from evidence/drawings/*.svg)",
+    source: "evidence/drawings/*.svg",
+    source_path: "evidence/drawings/*.svg",
+    status: "render/export to PDF required",
+    actions: ["export-drawings-pdf", "pdf-render-review"],
+  },
+  {
+    id: "ads-pdf",
+    document: "ADS.pdf  (from ADS.md, human-completed)",
+    source: "assembled/ADS.md",
+    source_path: "assembled/ADS.md",
+    status: "human completion and PDF conversion required",
+    actions: ["complete-ads", "export-ads-pdf", "pdf-render-review"],
+  },
+  {
+    id: "declaration-pdf",
+    document: "declaration.pdf  (executed/signed by the inventor - NOT generated signed)",
+    source: "assembled/declaration_UNSIGNED.md",
+    source_path: "assembled/declaration_UNSIGNED.md",
+    status: "inventor execution/signature required",
+    actions: ["execute-inventor-declaration", "export-declaration-pdf", "pdf-render-review"],
+  },
+  {
+    id: "ids-sb08-pdf",
+    document: "IDS_SB08.pdf  (human-verified references)",
+    source: "assembled/IDS_SB08.md",
+    source_path: "assembled/IDS_SB08.md",
+    status: "human IDS verification and PDF conversion required",
+    actions: ["verify-ids-references", "export-ids-pdf", "pdf-render-review"],
+  },
+];
+
+const UPLOAD_BY_PREFIX = new Map(UPLOAD_DOCUMENTS.map((entry) => [
+  entry.document.toLowerCase().split(/\s+/)[0],
+  entry,
+]));
+
+const ACTION_DEFS = [
+  {
+    id: "export-specification-pdf",
+    label: "Export specification HTML to filing-faithful PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["intended_upload_set.specification-pdf", "generated_files.assembled/specification.html"],
+    evidence_expected: "human-produced specification.pdf opened and visually checked",
+  },
+  {
+    id: "export-drawings-pdf",
+    label: "Export drawings to a single filing-faithful PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["intended_upload_set.drawings-pdf", "generated_files.evidence/drawings/*.svg"],
+    evidence_expected: "human-produced drawings.pdf opened and visually checked",
+  },
+  {
+    id: "complete-ads",
+    label: "Complete and verify ADS fields",
+    kind: "form-completion",
+    linked_manifest_fields: ["forms.ads", "intended_upload_set.ads-pdf"],
+    evidence_expected: "human-completed ADS PDF or current USPTO ADS form",
+  },
+  {
+    id: "export-ads-pdf",
+    label: "Export completed ADS to PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["intended_upload_set.ads-pdf", "forms.ads.local_source"],
+    evidence_expected: "human-produced ADS.pdf",
+  },
+  {
+    id: "execute-inventor-declaration",
+    label: "Obtain inventor-executed declaration signature",
+    kind: "signature",
+    linked_manifest_fields: ["forms.declaration_template.executed_by_inventor", "intended_upload_set.declaration-pdf"],
+    evidence_expected: "inventor-signed declaration retained by applicant/practitioner",
+  },
+  {
+    id: "export-declaration-pdf",
+    label: "Export executed declaration to PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["intended_upload_set.declaration-pdf", "forms.declaration_template.local_source"],
+    evidence_expected: "human-produced declaration.pdf with signature",
+  },
+  {
+    id: "verify-ids-references",
+    label: "Verify IDS references, dates, and forms",
+    kind: "ids-verification",
+    linked_manifest_fields: ["forms.ids", "intended_upload_set.ids-sb08-pdf"],
+    evidence_expected: "human-verified IDS reference list and current IDS form",
+  },
+  {
+    id: "export-ids-pdf",
+    label: "Export verified IDS to PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["intended_upload_set.ids-sb08-pdf", "forms.ids.local_source"],
+    evidence_expected: "human-produced IDS_SB08.pdf or current USPTO equivalent",
+  },
+  {
+    id: "pdf-render-review",
+    label: "Open every PDF after export and visually compare against source",
+    kind: "pdf-visual-qa",
+    linked_manifest_fields: ["intended_upload_set.*.pdf_export_verification"],
+    evidence_expected: "page size/count and visual QA recorded for each uploaded PDF",
+  },
+  {
+    id: "fee-entity-status-verification",
+    label: "Verify fees, entity status, and discount eligibility",
+    kind: "fee-verification",
+    linked_manifest_fields: ["forms.fee_schedule", "patent_center_upload_checklist.items.fee-entity-status"],
+    evidence_expected: "current USPTO fee schedule and entity-status review",
+  },
+  {
+    id: "patent-center-human-upload",
+    label: "Human uploads, certifies, and pays through Patent Center",
+    kind: "human-filing-act",
+    linked_manifest_fields: ["patent_center_upload_checklist", "intended_upload_set"],
+    evidence_expected: "Patent Center confirmation receipt saved by human",
+  },
+];
+
 const rel = (from, to) => relative(from, to).replace(/\\/g, "/");
 
 function sha256File(path) {
@@ -47,38 +175,23 @@ function fileRecord(matterDir, path, generatedAt) {
 }
 
 function intendedUploadEntry(name) {
-  const lower = name.toLowerCase();
-  let source = "human-provided";
-  let status = "human action required";
-  let sourcePath = "";
-  if (lower.startsWith("specification.pdf")) {
-    source = "assembled/specification.html";
-    sourcePath = "assembled/specification.html";
-    status = "print-to-pdf required";
-  } else if (lower.startsWith("drawings.pdf")) {
-    source = "evidence/drawings/*.svg";
-    sourcePath = "evidence/drawings/*.svg";
-    status = "render/export to PDF required";
-  } else if (lower.startsWith("ads.pdf")) {
-    source = "assembled/ADS.md";
-    sourcePath = "assembled/ADS.md";
-    status = "human completion and PDF conversion required";
-  } else if (lower.startsWith("declaration.pdf")) {
-    source = "assembled/declaration_UNSIGNED.md";
-    sourcePath = "assembled/declaration_UNSIGNED.md";
-    status = "inventor execution/signature required";
-  } else if (lower.startsWith("ids_sb08.pdf")) {
-    source = "assembled/IDS_SB08.md";
-    sourcePath = "assembled/IDS_SB08.md";
-    status = "human IDS verification and PDF conversion required";
-  }
+  const canonical = UPLOAD_BY_PREFIX.get(String(name || "").toLowerCase().split(/\s+/)[0]) || {};
+  const id = canonical.id || slugUploadId(name);
   return {
+    id,
     document: name,
     artifact_class: "human-produced-upload-pdf",
     generated_by_apa: false,
-    source,
-    source_path: sourcePath,
-    status,
+    source: canonical.source || "human-provided",
+    source_path: canonical.source_path || "",
+    source_artifact_class: canonical.source_path ? "apa-generated-local-source-or-disclosure-source" : "human-provided",
+    upload_artifact_class: "human-produced-upload-pdf",
+    status: canonical.status || "human action required",
+    deferred_human_actions: canonical.actions || [],
+    completed: false,
+    completed_at: null,
+    completed_by: "",
+    evidence_path: "",
     pdf_export_verification: {
       page_size: "",
       page_count: null,
@@ -88,6 +201,11 @@ function intendedUploadEntry(name) {
     },
     human_verified: false,
   };
+}
+
+function slugUploadId(name) {
+  const base = String(name || "upload-document").split(/\s+/)[0].replace(/\.[^.]+$/, "");
+  return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "upload-document";
 }
 
 function feeScheduleMetadata(generatedAt) {
@@ -174,6 +292,18 @@ function patentCenterChecklist() {
   };
 }
 
+function deferredHumanActions() {
+  return ACTION_DEFS.map((action) => ({
+    ...action,
+    required: true,
+    completed: false,
+    completed_at: null,
+    completed_by: "",
+    evidence_path: "",
+    notes: "",
+  }));
+}
+
 function frontmatterOf(matterDir) {
   try {
     return parseFrontmatter(readFileSync(join(matterDir, "PATENT.md"), "utf8"));
@@ -204,6 +334,7 @@ export function buildUploadManifest(matterDir, assembledDir, preflight, { genera
     forms: formMetadata(generatedAt),
     generated_files: generatedFiles,
     intended_upload_set: (preflight.uploadSet || []).map(intendedUploadEntry),
+    deferred_human_actions: deferredHumanActions(),
     patent_center_upload_checklist: patentCenterChecklist(),
     human_verification_required: [
       "Print or export generated HTML/SVG sources to filing-faithful PDF and inspect the rendered output.",

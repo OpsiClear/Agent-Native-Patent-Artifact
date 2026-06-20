@@ -378,8 +378,9 @@ Verification:
 
 Current state: `apa-assemble --write` writes `assembled/upload_manifest.json` with generated-source
 hashes, human-produced upload-PDF placeholders, form/version metadata, fee-schedule provenance,
-PDF-export verification fields, IDS caveats, Patent Center human-upload checklist fields, and human
-verification flags.
+PDF-export verification fields, IDS caveats, explicit `deferred_human_actions` linked to the
+manifest fields they complete, Patent Center human-upload checklist fields, and human verification /
+completion flags defaulting false.
 
 Tasks:
 - [x] Add form/version metadata for ADS, IDS, declaration template, fee schedule, and generated date.
@@ -836,9 +837,9 @@ Detailed tasks:
 - [x] Expand `upload_manifest.json` as described in Phase 1.7.
 - [x] Keep final package language as "assembly package draft."
 - [x] Add runlog integration.
-- [ ] Add explicit issue/link from any deferred human filing/signature act to the relevant upload
+- [x] Add explicit issue/link from any deferred human filing/signature act to the relevant upload
   manifest field.
-- [ ] Keep generated-source files separate from human-produced upload PDFs.
+- [x] Keep generated-source files separate from human-produced upload PDFs.
 
 Suggested targets:
 - `packages/apa-assemble/upload-manifest.mjs`
@@ -849,10 +850,11 @@ Suggested targets:
 Acceptance criteria:
 - [x] Upload manifest hashes generated local files and defaults human filing acts to incomplete.
 - [x] Assembly output never says APA signed, certified, uploaded, or filed.
-- [ ] Human-signature and Patent Center actions can be tracked without being auto-completed.
+- [x] Human-signature and Patent Center actions can be tracked without being auto-completed.
 
 Verification:
 - [x] `node --test packages/apa-assemble/test/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
 
 ### 3.12 `/apa-rigor`
 

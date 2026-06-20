@@ -235,13 +235,36 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
       f.artifact_class === "apa-generated-local-source" &&
       /^[0-9a-f]{64}$/.test(f.sha256)
     )));
+    assert.ok(manifest.generated_files.every((f) => !/\.pdf$/i.test(f.path)), "APA generated-file list must not pretend to contain upload PDFs");
+    assert.ok(manifest.intended_upload_set.every((x) => (
+      x.artifact_class === "human-produced-upload-pdf" &&
+      x.upload_artifact_class === "human-produced-upload-pdf" &&
+      x.generated_by_apa === false &&
+      x.completed === false
+    )));
     assert.ok(manifest.intended_upload_set.some((x) => (
+      x.id === "declaration-pdf" &&
       x.document.startsWith("declaration.pdf") &&
       x.artifact_class === "human-produced-upload-pdf" &&
       x.generated_by_apa === false &&
-      x.human_verified === false
+      x.human_verified === false &&
+      x.deferred_human_actions.includes("execute-inventor-declaration")
     )));
+    const declarationAction = manifest.deferred_human_actions.find((x) => x.id === "execute-inventor-declaration");
+    assert.ok(declarationAction);
+    assert.equal(declarationAction.kind, "signature");
+    assert.equal(declarationAction.completed, false);
+    assert.ok(declarationAction.linked_manifest_fields.includes("forms.declaration_template.executed_by_inventor"));
+    assert.ok(declarationAction.linked_manifest_fields.includes("intended_upload_set.declaration-pdf"));
+    const patentCenterAction = manifest.deferred_human_actions.find((x) => x.id === "patent-center-human-upload");
+    assert.ok(patentCenterAction);
+    assert.equal(patentCenterAction.completed, false);
+    assert.equal(patentCenterAction.kind, "human-filing-act");
+    assert.ok(patentCenterAction.linked_manifest_fields.includes("patent_center_upload_checklist"));
     const specPdf = manifest.intended_upload_set.find((x) => x.document.startsWith("specification.pdf"));
+    assert.equal(specPdf.id, "specification-pdf");
+    assert.equal(specPdf.source_path, "assembled/specification.html");
+    assert.ok(specPdf.deferred_human_actions.includes("export-specification-pdf"));
     assert.equal(specPdf.pdf_export_verification.visual_qa_completed, false);
     assert.equal(specPdf.pdf_export_verification.page_count, null);
     assert.equal(specPdf.pdf_export_verification.reviewer, "");
@@ -254,6 +277,7 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     assert.equal(manifest.patent_center_upload_checklist.apa_performs_filing, false);
     assert.equal(manifest.patent_center_upload_checklist.submitted_by_human, false);
     assert.ok(manifest.patent_center_upload_checklist.items.every((x) => x.human_verified === false));
+    assert.ok(manifest.deferred_human_actions.every((x) => x.required === true && x.completed === false));
     assert.match(manifest.human_verification_required.join("\n"), /IDS reference/);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
