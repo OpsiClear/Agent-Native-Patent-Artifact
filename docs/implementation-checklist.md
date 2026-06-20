@@ -860,7 +860,7 @@ Detailed tasks:
 - [x] Add human-verified closest-art cap.
 - [x] Add display aliases for verdict labels while retaining historical enum compatibility.
 - [x] Add runlog entry when `apa-rigor scaffold` writes a report.
-- [ ] Add a report freshness summary that states which prior-art dossier was used.
+- [x] Add a report freshness summary that states which prior-art dossier was used.
 
 Suggested targets:
 - `packages/apa-rigor/cli.mjs`
@@ -872,7 +872,7 @@ Acceptance criteria:
 - [x] Stale or unverified prior art prevents overconfident filing-quality verdicts.
 - [x] Rigor report generation appends inputs, outputs, command record, and human checkpoint to
   `trace/runlog.jsonl` when attached to a matter.
-- [ ] Rigor output identifies prior-art search age and closest-art verification state.
+- [x] Rigor output identifies prior-art search age and closest-art verification state.
 
 Verification:
 - [x] `node --test packages/apa-rigor/test/*.test.mjs`

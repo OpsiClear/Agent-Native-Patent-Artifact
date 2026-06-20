@@ -98,8 +98,10 @@ export function buildPriorArtState(matterDir, {
     },
   };
   const evaluated = evaluatePriorArtState(base);
+  const summary = priorArtFreshnessSummary(base, evaluated);
   return {
     ...base,
+    freshness_summary: summary,
     stale: evaluated.stale,
     cap_required: evaluated.cap_required,
     max_p5_score: evaluated.max_p5_score,
@@ -111,4 +113,29 @@ export function buildPriorArtState(matterDir, {
 function sortTime(dossier) {
   const t = Date.parse(dossier.generated_at || "");
   return Number.isNaN(t) ? dossier.mtime_ms : t;
+}
+
+function priorArtFreshnessSummary(base, evaluated) {
+  const closest = base.closest_art || {};
+  const selected = Array.isArray(closest.selected_pa_ids) ? closest.selected_pa_ids : [];
+  const dossierPath = base.newest_dossier?.path || "";
+  let status = "missing-dossier";
+  if (dossierPath && evaluated.stale) status = "stale";
+  else if (dossierPath && !evaluated.closest_art_human_verified) status = "needs-human-closest-art";
+  else if (dossierPath) status = "current-human-verified";
+  return {
+    status,
+    dossier_used: dossierPath,
+    generated_at: base.newest_dossier?.generated_at || "",
+    evaluated_at: evaluated.evaluated_at,
+    age_days: evaluated.newest_dossier_age_days,
+    staleness_max_days: evaluated.staleness_max_days,
+    stale: evaluated.stale,
+    closest_art_human_verified: evaluated.closest_art_human_verified,
+    selected_pa_ids: selected,
+    closest_art_verified_at: closest.verified_at || "",
+    ids_ready: Boolean(closest.ids_ready),
+    cap_required: evaluated.cap_required,
+    cap_reasons: evaluated.cap_reasons,
+  };
 }

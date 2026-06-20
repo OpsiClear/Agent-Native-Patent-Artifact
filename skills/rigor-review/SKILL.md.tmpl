@@ -21,7 +21,9 @@ anchors and emits `patent_rigor_report.json`; the **verdict is computed determin
 1. **Level-1 gate:** `node packages/apa-validate/validate.mjs <matter>` must have no errors. If it does,
    stop and report - Level 2 assumes Level 1 is clean.
 2. **Scaffold:** `node packages/apa-rigor/cli.mjs scaffold --matter <matter> --out <matter>/patent_rigor_report.json`.
-   This pre-fills the mechanical dimensions (P3 antecedent basis, P4 support/numeral) from the validator.
+   This pre-fills the mechanical dimensions (P3 antecedent basis, P4 support/numeral) from the
+   validator and writes `prior_art_state.freshness_summary` identifying the dossier used, search age,
+   and closest-art verification state.
 3. **Score the judgment dimensions** by reading the artifact and reasoning against the anchors:
    - **P1 101 Eligibility** - Alice/Mayo: abstract idea vs. concrete structure / practical application.
    - **P2 112 WD/Enablement/Definiteness** - is every limitation described and enabled? terms of degree bounded? 112(f) structure present?
@@ -35,7 +37,8 @@ anchors and emits `patent_rigor_report.json`; the **verdict is computed determin
    Major-Rework / Do-Not-File / Incomplete**, plus a safer display alias such as
    `Artifact-Quality: High For Human Final Review`. The LLM never sets the verdict; any dimension
    scoring 1 caps at Do-Not-File, a 2 caps at Major-Rework, and stale or unverified prior-art state caps
-   P5 to 2.
+   P5 to 2. The check output also prints the prior-art dossier date, search age, and whether closest
+   art is human verified.
    The filing gate (`/apa-assemble`) reads this verdict and blocks unless File-Ready/File-With-Revisions.
 
 {{ANALYSIS_101_102_103_112}}

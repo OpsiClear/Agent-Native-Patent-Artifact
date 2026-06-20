@@ -83,6 +83,9 @@ function main() {
       console.log(`  VERDICT: ${computed.verdict}${computed.missing.length ? ` (missing: ${computed.missing.join(",")})` : ""}`);
       console.log(`  DISPLAY: ${computed.display}`);
       if (computed.scoreCaps?.length) console.log(`  CAPS: ${computed.scoreCaps.map((c) => `${c.dimension} ${c.original_score}->${c.effective_score} (${c.reasons.join(",")})`).join("; ")}`);
+      const pa = computed.priorArt || {};
+      const age = pa.newest_dossier_age_days == null ? "unknown" : `${pa.newest_dossier_age_days}d`;
+      console.log(`  PRIOR ART: dossier date ${pa.newest_dossier_generated_at || "missing"}; age ${age}; closest-art human verified: ${pa.closest_art_human_verified ? "yes" : "no"}`);
       console.log("  NOTE: findings are flags for a registered practitioner, never a patentability conclusion.");
     }
     if (!ok) process.exit(2);
