@@ -159,6 +159,11 @@ export function defaultReportFor(type, opts = {}) {
       response_mode: "summary_only",
       authoritative_deadline: false,
       deadline_estimate: null,
+      deadline_support: {
+        action_type: "unknown",
+        supported: false,
+        basis: "not computed",
+      },
     };
   }
 

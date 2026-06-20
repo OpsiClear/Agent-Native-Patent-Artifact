@@ -167,6 +167,20 @@ function validateTypeSpecific(errors, report, type) {
     if (report.authoritative_deadline !== false) {
       push(errors, "authoritative_deadline", "must be false");
     }
+    validateDeadlineSupport(errors, "deadline_support", report.deadline_support);
+  }
+}
+
+function validateDeadlineSupport(errors, path, support) {
+  if (!isObject(support)) return push(errors, path, "must be an object");
+  if (!support.action_type || typeof support.action_type !== "string") {
+    push(errors, pathOf(path, "action_type"), "must be a non-empty string");
+  }
+  if (typeof support.supported !== "boolean") {
+    push(errors, pathOf(path, "supported"), "must be boolean");
+  }
+  if (!support.basis || typeof support.basis !== "string") {
+    push(errors, pathOf(path, "basis"), "must be a non-empty string");
   }
 }
 

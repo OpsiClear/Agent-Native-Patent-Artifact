@@ -18,7 +18,7 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **293 tests, all passing** (`bash
+generation, CI, and an end-to-end integration test. The suite is **297 tests, all passing** (`bash
 build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.

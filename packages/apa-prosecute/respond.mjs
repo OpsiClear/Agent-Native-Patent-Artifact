@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { iterEntitySections, extractBindingBlocks } from "../../lib/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
+import { classifyOfficeActionEvent } from "./taxonomy.mjs";
 
 const NEW_MATTER_GUARD =
   "Not supported by the spec as filed - route to counsel.";
@@ -79,6 +80,11 @@ function flagsForRejection(rej) {
 export function scaffoldResponse(matterDir, oaFile) {
   const oa = parseOfficeActionFile(oaFile);
   const nn = oaNumberFromFile(oaFile);
+  const event = classifyOfficeActionEvent(oa.header.action_type);
+  if (!event.response_scaffold_supported) {
+    const label = event.raw || event.id;
+    throw new Error(`unsupported Office Action event type '${label}' for response scaffolding; write an office_action_report.json unsupported-event finding instead.`);
+  }
 
   // Build a CLM## -> short title map from logic/claims.md (best effort; used for readable labels).
   const claimTitles = {};

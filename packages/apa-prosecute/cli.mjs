@@ -21,6 +21,7 @@ import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
 import { computeDeadlines } from "./deadlines.mjs";
 import { scaffoldResponse, oaNumberFromFile } from "./respond.mjs";
+import { classifyOfficeActionEvent } from "./taxonomy.mjs";
 import { defaultReportFor, expectedReportPath } from "../apa-reports/schemas.mjs";
 import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
 import {
@@ -90,8 +91,9 @@ function ruleAnchorForGround(ground) {
   return "office-action";
 }
 
-function buildOfficeActionReport({ matter, oaFile, result, outPath }) {
+function buildOfficeActionReport({ matter, oaFile, result = null, outPath = null, unsupportedEvent = null }) {
   const parsed = parseOfficeActionFile(oaFile);
+  const event = unsupportedEvent || classifyOfficeActionEvent(parsed.header.action_type);
   const report = defaultReportFor("office_action", {
     matter,
     inputs: existingFileRecords(matter, [join(matter, "PATENT.md"), join(matter, "logic", "claims.md"), oaFile].filter(Boolean)),
@@ -99,32 +101,54 @@ function buildOfficeActionReport({ matter, oaFile, result, outPath }) {
   });
   report.office_action = {
     source_file: oaFile,
-    oa_number: result.oaNumber,
+    oa_number: result?.oaNumber || oaNumberFromFile(oaFile),
     action_type: parsed.header.action_type || "",
+    action_type_normalized: event.id,
+    event_supported: event.response_scaffold_supported,
     mailing_date: parsed.header.mailing_date || "",
-    rejection_count: result.rejectionCount,
+    rejection_count: result?.rejectionCount ?? parsed.rejections.length,
   };
-  report.response_mode = "practitioner_scaffold";
+  report.response_mode = event.response_scaffold_supported ? "practitioner_scaffold" : "summary_only";
   report.authoritative_deadline = false;
-  report.deadline_estimate = parsed.header.mailing_date
+  report.deadline_estimate = parsed.header.mailing_date && event.deadline_estimator_supported
     ? { mailing_date: parsed.header.mailing_date, verify_against: "PAIR/Patent Center" }
     : null;
+  report.deadline_support = {
+    action_type: event.id,
+    supported: event.deadline_estimator_supported,
+    basis: event.deadline_basis,
+  };
   report.human_checkpoints = [
     { id: "registered-practitioner-review", required: true, satisfied: false },
     { id: "deadline-verification", required: true, satisfied: false },
     { id: "new-matter-review", required: true, satisfied: false },
   ];
-  report.findings = parsed.rejections.map((r) => ({
+  report.findings = [];
+  if (!event.response_scaffold_supported) {
+    report.findings.push({
+      finding_type: "flag",
+      severity: "blocking",
+      rule_anchor: "office-action",
+      code: "UNSUPPORTED_OA_EVENT",
+      evidence_span: `action_type: ${parsed.header.action_type || "(missing)"}`,
+      recommendation: `APA v0.1 does not scaffold responses for ${event.label}. Use parse/deadlines as a neutral summary only and route response strategy to a registered practitioner.`,
+      event_type: event.id,
+    });
+  }
+  report.findings.push(...parsed.rejections.map((r) => ({
     finding_type: "flag",
     severity: "fix-before-filing",
     rule_anchor: ruleAnchorForGround(r.ground),
+    ground_taxonomy: r.ground_taxonomy?.id || "",
     evidence_span: r.examiner_reasoning || r.gist || r.id,
     recommendation: `Practitioner must evaluate ${r.id} against the cited claims and references before any response is filed.`,
     rejection_id: r.id,
     claims: r.claims,
     references: r.references,
-  }));
-  report.next_allowed_steps = ["practitioner-completes-response", "verify-deadlines", "human-files-if-approved"];
+  })));
+  report.next_allowed_steps = event.response_scaffold_supported
+    ? ["practitioner-completes-response", "verify-deadlines", "human-files-if-approved"]
+    : ["verify-event-type", "consult-registered-practitioner", "do-not-use-apa-response-scaffold"];
   return report;
 }
 
@@ -155,10 +179,11 @@ function cmdParse(argv) {
   process.stdout.write(`  Examiner:        ${h.examiner || "(not stated)"}\n`);
   process.stdout.write(`  Mailing date:    ${h.mailing_date || "(not stated)"}\n`);
   process.stdout.write(`  Action type:     ${h.action_type || "(not stated)"}\n`);
+  process.stdout.write(`  Event support:   ${h.event.response_scaffold_supported ? "response scaffold supported" : "unsupported - practitioner review required"}\n`);
   process.stdout.write(`  Rejections:      ${parsed.rejections.length}\n\n`);
   for (const r of parsed.rejections) {
     process.stdout.write(`  ${r.id} - ${r.gist}\n`);
-    process.stdout.write(`    ground:     ${r.ground || "(unspecified)"}\n`);
+    process.stdout.write(`    ground:     ${r.ground || "(unspecified)"} (${r.ground_taxonomy?.id || "unknown"})\n`);
     process.stdout.write(`    claims:     ${r.claims.join(", ") || "(none)"}\n`);
     process.stdout.write(`    references: ${r.references.join(", ") || "(none)"}\n`);
   }
@@ -172,6 +197,7 @@ function cmdDeadlines(argv) {
   const asJson = argv.includes("--json");
 
   let mailingDate = mailedFlag;
+  let actionType = flag(argv, "--action-type") || "non-final";
   if (!mailingDate && oaFile) {
     let parsed;
     try {
@@ -180,13 +206,14 @@ function cmdDeadlines(argv) {
       return usage(`cannot read OA file: ${e.message}`);
     }
     mailingDate = parsed.header.mailing_date;
+    actionType = parsed.header.action_type || actionType;
     if (!mailingDate) return usage(`OA file ${basename(oaFile)} has no mailing_date in its \`\`\`oa header`);
   }
   if (!mailingDate) return usage("deadlines requires --mailed <YYYY-MM-DD> or --oa <file>");
 
   let result;
   try {
-    result = computeDeadlines(mailingDate);
+    result = computeDeadlines(mailingDate, { actionType });
   } catch (e) {
     return usage(e.message);
   }
@@ -197,6 +224,14 @@ function cmdDeadlines(argv) {
   }
 
   process.stdout.write(`Response-period ESTIMATE for OA mailed ${result.mailingDate}\n`);
+  process.stdout.write(`  Action type: ${result.actionType} (${result.deadline_support.supported ? "supported estimate" : "unsupported event"})\n`);
+  if (result._unsupported_event) {
+    process.stdout.write(`  [UNSUPPORTED] ${result.deadline_support.basis}\n\n`);
+    process.stdout.write("  No ordinary deadline rows were computed for this event type.\n");
+    process.stdout.write("  Verify the event type and all timing in PAIR/Patent Center with a registered practitioner.\n");
+    printDisclaimer();
+    return 0;
+  }
   process.stdout.write(`  3-month shortened statutory period (due): ${result.statutory3Month}\n`);
   process.stdout.write(`  6-month statutory MAXIMUM (cannot extend past): ${result.statutory6Month}\n\n`);
   process.stdout.write("  Extensions of time (37 CFR 1.136(a)):\n");
@@ -229,11 +264,59 @@ function cmdRespond(argv) {
     return usage("respond scaffolds proposed amendments/arguments and is practitioner-mode only; pro-se matters should use parse/deadlines plus a neutral summary/checklist");
   }
 
+  let parsed;
+  try {
+    parsed = parseOfficeActionFile(oaFile);
+  } catch (e) {
+    return usage(`cannot read OA file: ${e.message}`);
+  }
+  const event = classifyOfficeActionEvent(parsed.header.action_type);
+
   let result;
   try {
     result = scaffoldResponse(matter, oaFile);
   } catch (e) {
-    return usage(`cannot scaffold response: ${e.message}`);
+    if (event.response_scaffold_supported) return usage(`cannot scaffold response: ${e.message}`);
+    const reportPath = reportOutArg || (doWrite ? join(matter, expectedReportPath("office_action")) : null);
+    if (reportPath) {
+      const report = buildOfficeActionReport({ matter, oaFile, unsupportedEvent: event });
+      const check = validateReport(report, { kind: "office_action" });
+      if (!check.ok) return usage(`office_action_report.json failed validation: ${formatErrors(check.errors).join("; ")}`);
+      mkdirSync(dirname(reportPath), { recursive: true });
+      writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+      if (doWrite) {
+        appendRunlog(matter, buildRunlogEntry({
+          timestamp: new Date().toISOString(),
+          skill: "apa-office-action",
+          ruleVersion: ruleVersionOf(matter),
+          inputs: existingFileRecords(matter, [join(matter, "PATENT.md"), join(matter, "logic", "claims.md"), oaFile]),
+          outputs: existingFileRecords(matter, [reportPath]),
+          commands: [commandRecord({
+            argv: ["node", "packages/apa-prosecute/cli.mjs", "respond", ...argv],
+            cwd: process.cwd(),
+            exitCode: 2,
+            startedAt,
+            endedAt: new Date().toISOString(),
+          })],
+          humanCheckpoints: [
+            humanCheckpoint({ id: "registered-practitioner-review", required: true, satisfied: false }),
+            humanCheckpoint({ id: "deadline-verification", required: true, satisfied: false }),
+          ],
+        }));
+      }
+    }
+    if (asJson) {
+      process.stdout.write(JSON.stringify({
+        ok: false,
+        unsupported_event: event.id,
+        message: e.message,
+        report: reportPath,
+      }, null, 2) + "\n");
+    } else {
+      process.stderr.write(`unsupported Office Action event: ${e.message}\n`);
+      if (reportPath) process.stderr.write(`wrote machine report -> ${reportPath}\n`);
+    }
+    return 2;
   }
 
   const nn = result.oaNumber || oaNumberFromFile(oaFile);

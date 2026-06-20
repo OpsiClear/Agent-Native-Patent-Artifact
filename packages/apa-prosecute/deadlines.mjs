@@ -18,6 +18,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { classifyOfficeActionEvent, deadlineSupportMatrix } from "./taxonomy.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // packages/apa-prosecute -> repo root is two levels up.
@@ -160,6 +161,34 @@ function loadExtensionFees(repoRoot = REPO_ROOT_DEFAULT) {
 export function computeDeadlines(mailingDateStr, opts = {}) {
   const mailed = parseYmd(mailingDateStr);
   const mailingDate = fmtYmd(mailed);
+  const event = classifyOfficeActionEvent(opts.actionType || "non-final");
+  const deadlineSupport = {
+    action_type: event.id,
+    raw_action_type: event.raw,
+    supported: event.deadline_estimator_supported,
+    basis: event.deadline_basis,
+    matrix: deadlineSupportMatrix(),
+  };
+
+  if (!event.deadline_estimator_supported) {
+    return {
+      mailingDate,
+      actionType: event.id,
+      deadline_support: deadlineSupport,
+      statutory3Month: null,
+      statutory6Month: null,
+      extensions: [],
+      feeEffectiveDate: null,
+      feeSource: null,
+      _unverified: true,
+      _unsupported_event: true,
+      notes: [
+        ESTIMATE_NOTE,
+        `APA v0.1 does not estimate deadlines for ${event.label}.`,
+        "Do not treat the ordinary 3-month/6-month examination estimate as applicable to this event without practitioner verification.",
+      ],
+    };
+  }
 
   // 3-month shortened statutory period; 6-month statutory maximum (calendar-month math, clamped).
   const statutory3Month = fmtYmd(addMonths(mailed, 3));
@@ -224,6 +253,8 @@ export function computeDeadlines(mailingDateStr, opts = {}) {
 
   return {
     mailingDate,
+    actionType: event.id,
+    deadline_support: deadlineSupport,
     statutory3Month,
     statutory6Month,
     extensions,

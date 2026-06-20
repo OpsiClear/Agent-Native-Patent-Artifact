@@ -22,15 +22,16 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
 ## Workflow
 1. **Capture the OA** into `<matter>/prosecution/oa-NN.md` in the protocol format:
    - a **file-level** ` ```oa ` header block: `mailing_date` (YYYY-MM-DD), `examiner`,
-     `application_no`, `action_type` (non-final | final | restriction).
+     `application_no`, `action_type`. The response scaffold currently supports only `non-final`
+     and `final`; restriction/election, advisory actions, after-final papers, RCE/appeal events,
+     ODP/terminal-disclaimer issues, and drawing-objection papers are parsed only as neutral
+     summaries and unsupported-event findings.
    - one `### REJ## - <gist>` section per rejection, each with a ` ```binding ` block carrying
      `ground` (101 | 102 | 103 | 112a | 112b | 112f | double-patenting), `claims: [CLM##]`,
      `references: [PA##]`, and the `examiner_reasoning` (verbatim or summarized). Capture the
      reasoning faithfully; do not paraphrase it into a conclusion.
-   If the paper is an advisory action, after-final communication, notice of appeal, appeal brief,
-   RCE decision, ODP/terminal-disclaimer issue, drawing objection-only paper, or other unsupported
-   event type, fail loud and route to practitioner review rather than forcing it into the response
-   scaffold.
+   If the paper is an unsupported event type, fail loud and route to practitioner review rather than
+   forcing it into the response scaffold.
 2. **Parse it** to confirm the capture is well-formed:
    `node packages/apa-prosecute/cli.mjs parse --oa <matter>/prosecution/oa-NN.md`
    (add `--json` for the machine view). Verify the rejection count, grounds, claims, and references.
@@ -39,7 +40,8 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
    (or `--mailed <YYYY-MM-DD>`). This surfaces the 3-month shortened statutory period, the 6-month
    statutory maximum, and the per-month 37 CFR 1.136(a) extension rows + 1.17(a) fees. These are
    **ESTIMATES - verify against PAIR/Patent Center; APA is not a docketing system of record** and
-   computes no authoritative deadline.
+   computes no authoritative deadline. Unsupported event types return a `deadline_support` matrix
+   and no ordinary due-date rows.
 4. **Scaffold the response (registered-practitioner mode only):**
    `node packages/apa-prosecute/cli.mjs respond --matter <m> --oa <f> --write`
    writes `<matter>/prosecution/response-NN.md` and `prosecution/office_action_report.json` (NN
@@ -47,6 +49,9 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
    (NOT conclusions), and a proposed amendment under the **new-matter guard** - where the spec as filed
    does not support an amendment it says **"Not supported by the spec as filed - route to counsel"**
    rather than inventing support.
+   If the captured `action_type` is unsupported, `respond --write --json` exits nonzero and writes an
+   `office_action_report.json` with `response_mode: summary_only`, `deadline_support.supported:
+   false`, and a blocking `UNSUPPORTED_OA_EVENT` finding instead of a response scaffold.
    If `user_role: pro_se`, do not run `respond --write`; instead write a neutral OA summary/checklist
    and recommend consultation with a registered practitioner. Any summary/checklist still gets an
    `office_action_report.json` with `response_mode: summary_only`.

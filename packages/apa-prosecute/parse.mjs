@@ -17,6 +17,7 @@ import {
   iterEntitySections,
   extractBindingBlocks,
 } from "../../lib/apa-parse.mjs";
+import { classifyOfficeActionEvent, classifyRejectionGround } from "./taxonomy.mjs";
 
 // The file-level header block is fenced as ```oa ... ``` (distinct from the per-section ```binding).
 const OA_HEADER_RE = /```oa[ \t]*\r?\n([\s\S]*?)\r?\n```/;
@@ -53,16 +54,19 @@ export function parseOfficeAction(text) {
     application_no: headerRaw.application_no != null ? String(headerRaw.application_no) : null,
     action_type: headerRaw.action_type != null ? String(headerRaw.action_type).trim() : null,
   };
+  header.event = classifyOfficeActionEvent(header.action_type);
 
   // ---- Per-rejection `### REJ## - <gist>` sections --------------------------------------------
   const rejections = [];
   for (const section of iterEntitySections(src)) {
     if (!/^REJ\d+$/.test(section.id)) continue; // only rejection entities
     const binding = extractBindingBlocks(section.body)[0] || {};
+    const ground = binding.ground != null ? String(binding.ground).trim() : null;
     rejections.push({
       id: section.id,
       gist: (section.heading || "").replace(/^[-\s]+/, "").trim(),
-      ground: binding.ground != null ? String(binding.ground).trim() : null,
+      ground,
+      ground_taxonomy: classifyRejectionGround(ground),
       claims: toIdList(binding.claims),
       references: toIdList(binding.references),
       examiner_reasoning:

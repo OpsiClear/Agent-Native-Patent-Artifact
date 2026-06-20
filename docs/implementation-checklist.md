@@ -905,14 +905,14 @@ Verification:
 ### 3.14 `/apa-office-action`
 
 Detailed tasks:
-- [ ] Expand taxonomy for restriction/election, final/non-final, advisory actions, after-final, RCE,
+- [x] Expand taxonomy for restriction/election, final/non-final, advisory actions, after-final, RCE,
   appeal, ODP/terminal disclaimer, 101 examples, and drawing objections.
-- [ ] Fail loud on unsupported event types.
+- [x] Fail loud on unsupported event types.
 - [x] Keep pro-se mode summary-only.
 - [x] `apa-prosecute respond --write` refuses pro-se write mode.
 - [x] `apa-prosecute respond --write` emits `office_action_report.json`.
 - [x] Add runlog entry for OA parse/scaffold actions in practitioner mode.
-- [ ] Add deadline-support matrix that explicitly identifies which event types the estimator supports.
+- [x] Add deadline-support matrix that explicitly identifies which event types the estimator supports.
 
 Suggested targets:
 - `packages/apa-prosecute/cli.mjs`
@@ -921,7 +921,7 @@ Suggested targets:
 - `skills/office-action/SKILL.md.tmpl`
 
 Acceptance criteria:
-- [ ] Unsupported OA event types produce a clear unsupported-event finding instead of a misleading
+- [x] Unsupported OA event types produce a clear unsupported-event finding instead of a misleading
   draft response.
 - [x] Pro-se mode cannot write amendment/argument scaffolds.
 - [x] Practitioner-mode OA scaffold writes runlog inputs, outputs, command record, and required human
@@ -929,6 +929,7 @@ Acceptance criteria:
 
 Verification:
 - [x] `node --test packages/apa-prosecute/test/*.test.mjs`
+- [x] `node --test packages/apa-prosecute/test/*.test.mjs packages/apa-reports/test/*.test.mjs`
 - [x] Add OA runlog integration test.
 
 ## Recommended Execution Order
