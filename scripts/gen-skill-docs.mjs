@@ -20,6 +20,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { RESOLVERS } from "./resolvers/index.mjs";
+import { generatedReferences } from "./resolvers/references.mjs";
 import { getHost, ALL_HOSTS, NON_SUPPRESSIBLE } from "../hosts/index.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -86,6 +87,18 @@ export function renderSkill(tmplPath, hostId) {
   return header + resolvedBody.replace(/^\s+/, "") + "\n";
 }
 
+export function renderReferences(tmplPath, hostId) {
+  return generatedReferences().map((ref) => ({
+    path: ref.path,
+    content: [
+      `<!-- AUTO-GENERATED for host '${hostId}' from ${relName(tmplPath)} by scripts/gen-skill-docs.mjs - DO NOT EDIT. -->`,
+      "",
+      ref.content.trimEnd(),
+      "",
+    ].join("\n"),
+  }));
+}
+
 function relName(p) { return p.slice(ROOT.length + 1).replace(/\\/g, "/"); }
 
 function discoverTemplates() {
@@ -105,6 +118,13 @@ function outPath(name, hostId) {
     : join(ROOT, "dist", hostId, name, "SKILL.md");
 }
 
+function referenceOutPath(name, hostId, relPath) {
+  const base = hostId === "claude"
+    ? join(SKILLS_DIR, name)
+    : join(ROOT, "dist", hostId, name);
+  return join(base, ...relPath.split("/"));
+}
+
 function main(argv) {
   const check = argv.includes("--check");
   const allHosts = argv.includes("--all-hosts");
@@ -120,6 +140,7 @@ function main(argv) {
       try { rendered = renderSkill(t.tmpl, hostId); }
       catch (e) { console.error(`FAIL ${hostId}/${t.name}: ${e.message}`); process.exit(2); }
       const out = outPath(t.name, hostId);
+      const refs = renderReferences(t.tmpl, hostId);
       if (check) {
         // Freshness gate applies to the committed Claude outputs only; dist/ is a build artifact.
         if (hostId !== "claude") {
@@ -134,10 +155,21 @@ function main(argv) {
         // SKILL.md checks out as CRLF on Windows, which is not genuine drift.
         if (current.replace(/\r\n/g, "\n") !== rendered) { console.error(`STALE ${relName(out)} (re-run gen-skill-docs)`); drift++; }
         else console.log(`FRESH ${relName(out)}`);
+        for (const ref of refs) {
+          const refOut = referenceOutPath(t.name, hostId, ref.path);
+          const currentRef = existsSync(refOut) ? readFileSync(refOut, "utf8") : "";
+          if (currentRef.replace(/\r\n/g, "\n") !== ref.content) { console.error(`STALE ${relName(refOut)} (re-run gen-skill-docs)`); drift++; }
+          else console.log(`FRESH ${relName(refOut)}`);
+        }
       } else {
         mkdirSync(dirname(out), { recursive: true });
         writeFileSync(out, rendered);
         console.log(`wrote ${relName(out)} (${rendered.length} bytes)`);
+        for (const ref of refs) {
+          const refOut = referenceOutPath(t.name, hostId, ref.path);
+          mkdirSync(dirname(refOut), { recursive: true });
+          writeFileSync(refOut, ref.content);
+        }
       }
     }
   }

@@ -256,17 +256,19 @@ Verification:
 
 ### 1.4 Progressive Disclosure For Legal Preamble
 
-Current state: long generated legal preamble remains inline for safety and host compatibility.
+Current state: generated skills keep a concise inline hard-refusal block, then route detailed legal,
+USPTO, confidentiality, drawing, and source-registry content to generated one-level `references/`
+files beside each skill.
 
 Tasks:
-- [ ] Design a reference-loading scheme that keeps hard refusals inline but moves detailed legal text
+- [x] Design a reference-loading scheme that keeps hard refusals inline but moves detailed legal text
   to one-level `references/` files.
-- [ ] Add generated references, not hand-copied per-skill text.
-- [ ] Keep a 6-8 line inline hard-refusal block in every skill.
-- [ ] Add routing table entries for legal guardrails, USPTO rule pack, confidentiality sinks, and
+- [x] Add generated references, not hand-copied per-skill text.
+- [x] Keep a 6-8 line inline hard-refusal block in every skill.
+- [x] Add routing table entries for legal guardrails, USPTO rule pack, confidentiality sinks, and
   source registry.
-- [ ] Confirm host adapters cannot suppress safety-critical references.
-- [ ] Add trigger/skill-size tests to make sure generated skills stay concise without underloading
+- [x] Confirm host adapters cannot suppress safety-critical references.
+- [x] Add trigger/skill-size tests to make sure generated skills stay concise without underloading
   safety rules.
 
 Suggested targets:
@@ -278,16 +280,16 @@ Suggested targets:
 - `hosts/*/*.test.mjs`
 
 Acceptance criteria:
-- [ ] Every generated skill still contains hard refusals inline.
-- [ ] Detailed legal text appears in generated reference files.
-- [ ] No generated `SKILL.md` loses submit-boundary, no-legal-advice, no-AI-inventor, or scan-at-sink
+- [x] Every generated skill still contains hard refusals inline.
+- [x] Detailed legal text appears in generated reference files.
+- [x] No generated `SKILL.md` loses submit-boundary, no-legal-advice, no-AI-inventor, or scan-at-sink
   safety language.
-- [ ] Host suppression tests prove safety-critical material is retained.
+- [x] Host suppression tests prove safety-critical material is retained.
 
 Verification:
-- [ ] `node scripts/gen-skill-docs.mjs`
-- [ ] `node scripts/gen-skill-docs.mjs --check`
-- [ ] `node --test hosts/**/*.test.mjs scripts/**/*.test.mjs`
+- [x] `node scripts/gen-skill-docs.mjs`
+- [x] `node scripts/gen-skill-docs.mjs --check`
+- [x] `node --test hosts/**/*.test.mjs scripts/**/*.test.mjs`
 
 ### 1.5 JSON Report Schemas
 
@@ -635,7 +637,7 @@ Verification:
 4. [x] Add report schema package and wire claims/patentability/examiner/OA reports.
 5. [x] Expand upload manifest fields. Prior-art dossier expansion complete.
 6. [x] Add rigor staleness caps.
-7. [ ] Decide and implement legal-preamble progressive disclosure.
+7. [x] Decide and implement legal-preamble progressive disclosure.
 8. [ ] Add trigger tests.
 9. [ ] Add benchmarks.
 10. [ ] Add human review UI.
