@@ -52,6 +52,13 @@ disclose, sell, or offer the invention before filing (US one-year grace; absolut
 Transmitting US-origin invention data abroad may implicate export control / a foreign-filing license
 (35 USC 184); APA flags timing/clearance for counsel and cannot enforce it.
 
+Persist the workflow posture as `confidential_workflow_mode` in `PATENT.md`:
+`ordinary_local`, `counsel_controlled`, or `shareable_redacted`. This mode is not a privilege claim.
+It makes the risk posture visible to validators, reports, skills, and manifests. In
+`shareable_redacted` mode, sensitive critique artifacts such as patentability, examiner-adversary,
+rigor, prosecution-rationale, and Office Action reports are excluded from shareable exports by default
+and require redaction-guard review plus explicit human approval before external sharing.
+
 ## Duty of candor (37 CFR 1.56)
 Broader than the IDS: material information includes the inventor's own bar-date activities, known
 inconsistent statements, and litigation art. APA surfaces potentially-material information as flags for

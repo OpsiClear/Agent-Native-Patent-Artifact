@@ -46,6 +46,7 @@ title: "<invention title; also the application title, <=500 chars>"
 application_type: "utility"        # provisional | utility | design | plant | pct | cip
 jurisdiction: "USPTO"                 # only active jurisdiction in v0.1; other values fail loud
 user_role: "unknown"                 # registered_practitioner | pro_se | unknown
+confidential_workflow_mode: "ordinary_local" # ordinary_local | counsel_controlled | shareable_redacted
 source_span_policy: "warning"        # warning | relaxed  (relaxed = compiled/public imports)
 inventors:                         # >=1 natural person; AI MUST NOT appear here
   - id: "AINVENTOR"                # short stable ID referenced by provenance inventor:<id>
@@ -80,6 +81,21 @@ dated assumptions were applied.
 Non-USPTO jurisdictions such as PCT or EPO are extension points only. A matter that sets
 `jurisdiction` to anything other than `USPTO` must fail validation instead of silently applying USPTO
 rules. A missing or stale `rules_effective_date` produces a warning requiring currency verification.
+
+### Confidential Workflow Modes
+
+`confidential_workflow_mode` is an explicit matter-level policy knob. It does not create or preserve
+privilege; it tells deterministic tools how conservative to be around sensitive critique artifacts.
+
+| Mode | Meaning | Deterministic behavior |
+|---|---|---|
+| `ordinary_local` | Default local drafting workflow. | External sinks still require scan-at-sink; shareable exports exclude sensitive critique artifacts by default. |
+| `counsel_controlled` | Work is intended to be routed through counsel-controlled systems and review. | Examiner-adversary and patentability skills use stronger privilege/work-product caution; reports remain flags/questions, not legal advice. |
+| `shareable_redacted` | A copy may be prepared for sharing outside the trusted drafting circle. | Validator warns when sensitive critique reports exist; upload manifests list those artifacts under `excluded_from_shareable_exports`; sharing still requires redaction guard and human approval. |
+
+Sensitive critique artifacts include `logic/patentability_report.json`,
+`trace/examiner_adversary_report.json`, `trace/prosecution_rationale.md`,
+`patent_rigor_report.json`, and `prosecution/office_action_report.json`.
 
 ---
 

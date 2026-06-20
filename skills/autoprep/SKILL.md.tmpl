@@ -23,9 +23,11 @@ human checkpoint was satisfied.
 
 ## Pipeline (stop on any gate failure or checkpoint)
 1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person),
-   `jurisdiction`, and `user_role` (`registered_practitioner` | `pro_se` | `unknown`). If missing,
-   AskUserQuestion once and persist. **Checkpoint:** confirm the user is a registered practitioner vs.
-   pro-se before any claim-scope or amendment work.
+   `jurisdiction`, `user_role` (`registered_practitioner` | `pro_se` | `unknown`), and
+   `confidential_workflow_mode` (`ordinary_local` | `counsel_controlled` | `shareable_redacted`). If
+   missing, AskUserQuestion once and persist. **Checkpoint:** confirm the user is a registered
+   practitioner vs. pro-se before any claim-scope or amendment work, and confirm whether sensitive
+   critique work should be counsel-controlled or shareable-redacted.
 2. **Capture / compile** - `/apa-disclose` (new disclosure) or `/apa-compile <path>` (existing patent).
    Then `node packages/apa-validate/validate.mjs <matter>` must be error-free before continuing.
 3. **Prior-art search** - `/apa-priorart` (external sink: the query is scanned at the sink first).

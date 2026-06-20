@@ -14,12 +14,14 @@
     ".": "./redact-engine.mjs",
     "./engine": "./redact-engine.mjs",
     "./patterns": "./redact-patterns.mjs",
+    "./confidential-workflow": "./confidential-workflow.mjs",
     "./cli": "./cli.mjs"
   },
   "main": "redact-engine.mjs",
   "files": [
     "redact-patterns.mjs",
     "redact-engine.mjs",
+    "confidential-workflow.mjs",
     "cli.mjs",
     "bin/apa-redact",
     "README.md"

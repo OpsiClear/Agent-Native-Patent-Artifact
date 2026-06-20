@@ -9,7 +9,9 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, relative } from "node:path";
+import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { loadSchedule } from "./fees.mjs";
+import { confidentialWorkflowModeOf, shareableExportPolicy } from "../apa-redact/confidential-workflow.mjs";
 
 const GENERATED_FILES = [
   "specification.md",
@@ -172,17 +174,33 @@ function patentCenterChecklist() {
   };
 }
 
+function frontmatterOf(matterDir) {
+  try {
+    return parseFrontmatter(readFileSync(join(matterDir, "PATENT.md"), "utf8"));
+  } catch {
+    return {};
+  }
+}
+
 export function buildUploadManifest(matterDir, assembledDir, preflight, { generatedAt = new Date().toISOString() } = {}) {
   const generatedFiles = [];
   for (const p of GENERATED_FILES) {
     const abs = join(assembledDir, ...p.split("/"));
     if (existsSync(abs)) generatedFiles.push(fileRecord(matterDir, abs, generatedAt));
   }
+  const workflowMode = confidentialWorkflowModeOf(frontmatterOf(matterDir));
+  const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
   return {
     schema: "apa-upload-manifest-v1",
     generated_at: generatedAt,
     go_no_go: preflight.goNoGo,
     submit_boundary: preflight.submitBoundary,
+    confidential_workflow: {
+      mode: workflowMode.mode,
+      explicit_in_patent_manifest: workflowMode.explicit,
+      label: workflowMode.label,
+      shareable_export_policy: shareablePolicy,
+    },
     forms: formMetadata(generatedAt),
     generated_files: generatedFiles,
     intended_upload_set: (preflight.uploadSet || []).map(intendedUploadEntry),

@@ -4,6 +4,7 @@ title: "Self-Watering Planter Insert with a Float-Actuated Valve"
 application_type: "utility"
 jurisdiction: "USPTO"
 user_role: "unknown"
+confidential_workflow_mode: "ordinary_local"
 inventors:
   - id: "AINVENTOR"
     name: "Alex Example"

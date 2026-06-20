@@ -12,6 +12,7 @@ import { validateMatter } from "../apa-validate/validate.mjs";
 import { lintClaims } from "../apa-draft/claim-lint.mjs";
 import { buildLegend } from "../apa-figure/numerals.mjs";
 import { validateReport, isFileable } from "../apa-rigor/verdict.mjs";
+import { confidentialWorkflowModeOf, shareableExportPolicy } from "../apa-redact/confidential-workflow.mjs";
 
 // AI-inventor heuristic, mirroring the validator (../apa-validate/validate.mjs): case-SENSITIVE
 // acronyms (so legitimate human inventors 'Ai'/'Claude'/'Neural' are not hard-blocked) plus
@@ -36,6 +37,20 @@ export function preflight(matterDir, { assembledDir } = {}) {
   }
 
   const fm = parseFrontmatter((() => { try { return readFileSync(join(matterDir, "PATENT.md"), "utf8"); } catch { return ""; } })());
+  const workflowMode = confidentialWorkflowModeOf(fm);
+  const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
+
+  if (!workflowMode.valid) {
+    add("confidential-workflow", "block", `unknown confidential_workflow_mode '${workflowMode.mode}'.`);
+  } else if (workflowMode.mode === "shareable_redacted" && shareablePolicy.sensitive_critique_artifacts_present.length > 0) {
+    add(
+      "confidential-workflow",
+      "warn",
+      `${shareablePolicy.sensitive_critique_artifacts_present.length} sensitive critique artifact(s) excluded from shareable exports by default.`,
+    );
+  } else {
+    add("confidential-workflow", "pass", `${workflowMode.label}; shareable exports require redaction guard and human approval.`);
+  }
 
   // Inventorship-integrity gate: any claim limitation still ai-suggested blocks assembly.
   const claimsSecs = iterEntitySections((() => { try { return readFileSync(join(matterDir, "logic", "claims.md"), "utf8"); } catch { return ""; } })());

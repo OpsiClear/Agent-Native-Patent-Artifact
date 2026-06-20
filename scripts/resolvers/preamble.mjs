@@ -23,7 +23,9 @@ potentially material information as a flag for the human; never auto-assert, bur
 export const CONFIDENTIALITY = `**Confidentiality and export posture.** Before any external sink
 receives invention substance, scan the exact bytes to be sent. Prefer zero-retention/no-training
 backends. Treat sending US-origin technical invention substance to a foreign backend as potentially
-requiring 35 USC 184/export-control review.`;
+requiring 35 USC 184/export-control review. Persist \`confidential_workflow_mode\` as
+\`ordinary_local\`, \`counsel_controlled\`, or \`shareable_redacted\`; the mode guides export
+guardrails but does not create or preserve privilege.`;
 
 export const PROSE = `**User-role awareness.** Registered practitioners may receive drafts and
 flags for their verification. Pro-se or unknown-role users receive neutral education, options, and

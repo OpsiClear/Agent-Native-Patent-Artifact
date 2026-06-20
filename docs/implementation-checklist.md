@@ -500,13 +500,20 @@ Verification:
 
 ### 2.4 Counsel / Work-Product Mode
 
+Current state: `PATENT.md` supports explicit `confidential_workflow_mode` values
+(`ordinary_local`, `counsel_controlled`, `shareable_redacted`). Validators fail loud on unknown
+values, warn on missing mode, and warn when shareable-redacted matters contain sensitive critique
+reports. `packages/apa-redact/confidential-workflow.mjs` centralizes the sensitive-artifact exclusion
+policy; assembly preflight surfaces the mode and `assembled/upload_manifest.json` records
+shareable-export exclusions. APA still does not claim to create or preserve privilege.
+
 Tasks:
-- [ ] Add `confidential_workflow_mode` or equivalent matter config.
-- [ ] Define modes: ordinary local, counsel-controlled, shareable-redacted.
-- [ ] Make examiner-adversary and patentability-analysis default to stronger caution in
+- [x] Add `confidential_workflow_mode` or equivalent matter config.
+- [x] Define modes: ordinary local, counsel-controlled, shareable-redacted.
+- [x] Make examiner-adversary and patentability-analysis default to stronger caution in
   counsel-controlled mode.
-- [ ] Add export/redaction behavior for shareable artifacts.
-- [ ] Keep privilege disclaimers: APA cannot guarantee privilege.
+- [x] Add export/redaction behavior for shareable artifacts.
+- [x] Keep privilege disclaimers: APA cannot guarantee privilege.
 
 Suggested targets:
 - `docs/legal-guardrails.md`
@@ -517,12 +524,12 @@ Suggested targets:
 - `packages/apa-redact/*`
 
 Acceptance criteria:
-- [ ] Sensitive critique reports are not accidentally included in shareable/export packages.
-- [ ] Mode changes are explicit and visible in `PATENT.md`.
-- [ ] No text claims APA creates or preserves privilege.
+- [x] Sensitive critique reports are not accidentally included in shareable/export packages.
+- [x] Mode changes are explicit and visible in `PATENT.md`.
+- [x] No text claims APA creates or preserves privilege.
 
 Verification:
-- [ ] `node --test packages/apa-redact/test/*.test.mjs packages/apa-validate/test/*.test.mjs`
+- [x] `node --test packages/apa-redact/test/*.test.mjs packages/apa-validate/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 2.5 Human Review UI
 

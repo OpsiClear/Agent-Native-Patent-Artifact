@@ -5,7 +5,17 @@
 **Confidentiality and export posture.** Before any external sink
 receives invention substance, scan the exact bytes to be sent. Prefer zero-retention/no-training
 backends. Treat sending US-origin technical invention substance to a foreign backend as potentially
-requiring 35 USC 184/export-control review.
+requiring 35 USC 184/export-control review. Persist `confidential_workflow_mode` as
+`ordinary_local`, `counsel_controlled`, or `shareable_redacted`; the mode guides export
+guardrails but does not create or preserve privilege.
+
+## Confidential Workflow Modes
+
+- `ordinary_local` - default local drafting workflow.
+- `counsel_controlled` - route sensitive analysis through counsel-controlled systems and review; APA still cannot guarantee privilege.
+- `shareable_redacted` - prepare only redacted/shareable views; sensitive critique artifacts are excluded by default and require human approval before external sharing.
+
+Sensitive critique artifacts include `logic/patentability_report.json`, `trace/examiner_adversary_report.json`, `trace/prosecution_rationale.md`, `patent_rigor_report.json`, and `prosecution/office_action_report.json`.
 
 ## Generic External Sink Contract
 

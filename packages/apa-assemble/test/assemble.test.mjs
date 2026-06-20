@@ -124,6 +124,20 @@ test("preflight: blocking drawing-quality findings block assembly", () => {
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("preflight: shareable_redacted mode warns and excludes sensitive critique reports", () => {
+  const d = clone();
+  try {
+    const patent = join(d, "PATENT.md");
+    writeFileSync(patent, readFileSync(patent, "utf8")
+      .replace('confidential_workflow_mode: "ordinary_local"', 'confidential_workflow_mode: "shareable_redacted"'));
+    writeFileSync(join(d, "trace", "examiner_adversary_report.json"), "{}\n");
+    const pf = preflight(d, {});
+    const gate = pf.gates.find((g) => g.name === "confidential-workflow");
+    assert.equal(gate.status, "warn", JSON.stringify(pf.gates));
+    assert.match(gate.msg, /sensitive critique artifact/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("preflight: an ai-suggested claim limitation BLOCKS assembly (NO-GO)", () => {
   const d = clone();
   try {
@@ -197,6 +211,8 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     const pf = preflight(d, { assembledDir: assembled });
     const manifest = buildUploadManifest(d, assembled, pf, { generatedAt: "2026-06-20T00:00:00.000Z" });
     assert.equal(manifest.schema, "apa-upload-manifest-v1");
+    assert.equal(manifest.confidential_workflow.mode, "ordinary_local");
+    assert.equal(manifest.confidential_workflow.shareable_export_policy.include_sensitive_critique_artifacts_by_default, false);
     assert.ok(manifest.generated_files.some((f) => (
       f.path === "assembled/specification.html" &&
       f.artifact_class === "apa-generated-local-source" &&
@@ -222,5 +238,30 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     assert.equal(manifest.patent_center_upload_checklist.submitted_by_human, false);
     assert.ok(manifest.patent_center_upload_checklist.items.every((x) => x.human_verified === false));
     assert.match(manifest.human_verification_required.join("\n"), /IDS reference/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("buildUploadManifest records shareable export exclusions for critique artifacts", () => {
+  const d = clone();
+  try {
+    const patent = join(d, "PATENT.md");
+    writeFileSync(patent, readFileSync(patent, "utf8")
+      .replace('confidential_workflow_mode: "ordinary_local"', 'confidential_workflow_mode: "shareable_redacted"'));
+    writeFileSync(join(d, "logic", "patentability_report.json"), "{}\n");
+    writeFileSync(join(d, "trace", "examiner_adversary_report.json"), "{}\n");
+    const assembled = join(d, "assembled");
+    mkdirSync(join(assembled, "upload_set"), { recursive: true });
+    writeFileSync(join(assembled, "specification.html"), "<html>spec</html>");
+    writeFileSync(join(assembled, "upload_set", "MANIFEST.txt"), "specification.pdf\n");
+    const manifest = buildUploadManifest(d, assembled, preflight(d, { assembledDir: assembled }), {
+      generatedAt: "2026-06-20T00:00:00.000Z",
+    });
+    const policy = manifest.confidential_workflow.shareable_export_policy;
+    assert.equal(manifest.confidential_workflow.mode, "shareable_redacted");
+    assert.deepEqual(policy.excluded_from_shareable_exports.map((x) => x.path).sort(), [
+      "logic/patentability_report.json",
+      "trace/examiner_adversary_report.json",
+    ]);
+    assert.ok(policy.excluded_from_shareable_exports.every((x) => x.redaction_required_before_sharing));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

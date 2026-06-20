@@ -29,6 +29,9 @@ version: 0.1
 Maps each prior-art `PA##` to each `CLM##.LIM##` (element-by-element claim charts) and writes
 `logic/patentability.md` as **flags and questions for a registered practitioner**. It renders NO
 patentability, novelty, non-obviousness, FTO, validity, or infringement conclusion. File-I/O only.
+If `confidential_workflow_mode: counsel_controlled`, keep the analysis inside counsel-controlled
+systems. If `shareable_redacted`, do not treat `logic/patentability_report.json` as shareable until
+the redaction guard and a human reviewer approve it.
 
 ## Procedure
 1. **Claim chart.** For each independent claim, build a table: rows = limitations (`LIM##`), columns =
@@ -53,6 +56,7 @@ patentability, novelty, non-obviousness, FTO, validity, or infringement conclusi
    quote-backed `claim_charts`, statutory flags, human checkpoints, and `search_completeness:
    not_asserted`. Validate it with
    `node packages/apa-reports/cli.mjs check <matter>/logic/patentability_report.json --kind patentability`.
+   In `shareable_redacted` mode, the upload/shareable manifest excludes this report by default.
 
 ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a

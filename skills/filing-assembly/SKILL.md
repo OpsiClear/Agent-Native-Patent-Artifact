@@ -44,6 +44,7 @@ It produces, under `<matter>/assembled/`:
 - `upload_manifest.json` - SHA-256 hashes for generated source files; separate human-produced upload
   PDF placeholders; ADS/IDS/declaration/fee-schedule metadata; fee schedule source hash/effective
   date; machine-readable IDS no-admission/no-search-completeness notes; PDF export verification fields;
+  confidential-workflow mode and shareable-export exclusions for sensitive critique artifacts;
   and `human_verified: false` flags for ADS completion, IDS verification, declaration signatures,
   fee/entity checks, and Patent Center upload.
 

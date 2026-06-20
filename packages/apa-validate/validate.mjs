@@ -21,6 +21,11 @@ import {
   sourceSpanPolicyOf,
 } from "./source-spans.mjs";
 import { evaluateMatterRulePack } from "../apa-rules/rule-packs.mjs";
+import {
+  CONFIDENTIAL_WORKFLOW_MODES,
+  confidentialWorkflowModeOf,
+  shareableExportPolicy,
+} from "../apa-redact/confidential-workflow.mjs";
 
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
@@ -223,6 +228,19 @@ export function validateMatter(dir) {
   if (fm.user_role !== undefined && !SUPPORTED_USER_ROLES.has(fm.user_role)) {
     E("USER_ROLE_UNKNOWN", `user_role '${fm.user_role}' is unknown (supported: registered_practitioner, pro_se, unknown).`);
   }
+  const workflowMode = confidentialWorkflowModeOf(fm);
+  if (!workflowMode.explicit) {
+    W("CONFIDENTIAL_WORKFLOW_MODE_MISSING", `PATENT.md has no confidential_workflow_mode; defaulting to '${workflowMode.mode}'.`);
+  } else if (!workflowMode.valid) {
+    E("CONFIDENTIAL_WORKFLOW_MODE_UNKNOWN", `confidential_workflow_mode '${workflowMode.mode}' is unknown (supported: ${CONFIDENTIAL_WORKFLOW_MODES.join(", ")}).`);
+  }
+  const shareablePolicy = shareableExportPolicy(dir, { mode: workflowMode.mode });
+  if (workflowMode.mode === "shareable_redacted" && shareablePolicy.sensitive_critique_artifacts_present.length > 0) {
+    W(
+      "SHAREABLE_REDACTION_REQUIRED",
+      `shareable_redacted mode found sensitive critique artifact(s): ${shareablePolicy.sensitive_critique_artifacts_present.map((a) => a.path).join(", ")}; exclude by default and share only after redaction guard + human approval.`,
+    );
+  }
   const sourceSpanPolicy = sourceSpanPolicyOf(fm);
   if (fm.source_span_policy !== undefined && !isSourceSpanPolicy(fm.source_span_policy)) {
     E("SOURCE_SPAN_POLICY_UNKNOWN", `source_span_policy '${fm.source_span_policy}' is unknown (supported: warning, relaxed).`);
@@ -375,6 +393,7 @@ export function validateMatter(dir) {
 
   const meta = {
     title: fm.title, application_type: type, jurisdiction: rulePackState.jurisdiction, status: fm.status,
+    confidential_workflow_mode: workflowMode.mode,
     rules_effective_date: fm.rules_effective_date, claims: m.claims.length,
     rule_pack: rulePackState.rule_pack,
     inventors: inventors.length, figures: m.figures.length, prior_art: m.priorArt.length,

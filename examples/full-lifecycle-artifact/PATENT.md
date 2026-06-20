@@ -4,6 +4,7 @@ title: "Self-Closing Door Hinge with an Integrated Hydraulic Damper and a Hold-O
 application_type: "utility"
 jurisdiction: "USPTO"
 user_role: "unknown"
+confidential_workflow_mode: "ordinary_local"
 inventors:
   - id: "RMORALES"
     name: "Rosa Morales"

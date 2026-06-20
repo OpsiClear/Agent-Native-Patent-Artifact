@@ -19,7 +19,10 @@ Output is `trace/prosecution_rationale.md`. Findings are flags for a human, neve
 `pro_se` mode, output issues and optional discussion points only; do not edit claims or select a fix.
 Treat this critique as sensitive: it may contain admissions, claim-scope concessions, or damaging
 characterizations. When privilege/work-product matters, route the run through counsel-controlled
-systems and record only the human-approved drafting decisions in the shareable artifact.
+systems and record only the human-approved drafting decisions in the shareable artifact. If
+`confidential_workflow_mode: shareable_redacted`, `trace/examiner_adversary_report.json` and
+`trace/prosecution_rationale.md` are excluded from shareable exports by default until redaction guard
+and human approval.
 
 ## Procedure
 1. **Read** the claims, spec, prior-art landscape (`logic/prior_art.md` + `reference_matrix.md`), and
@@ -45,6 +48,7 @@ systems and record only the human-approved drafting decisions in the shareable a
    critique as a report finding or `critiques` entry, `loop_count`, `max_examiner_loops`, `edit_mode`,
    and any required practitioner-approval checkpoint. Validate it with
    `node packages/apa-reports/cli.mjs check <matter>/trace/examiner_adversary_report.json --kind examiner_adversary`.
+   In `shareable_redacted` mode, do not copy this report into any external share package.
 6. **Re-check** only after human-approved edits: `node packages/apa-draft/claim-lint.mjs <matter>` and
    `node packages/apa-validate/validate.mjs <matter>`; then re-run `/apa-rigor`. Stop after the caller's
    `max_examiner_loops` cap (default 2) and surface residual risks rather than looping indefinitely.

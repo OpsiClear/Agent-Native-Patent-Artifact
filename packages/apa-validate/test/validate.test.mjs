@@ -26,6 +26,7 @@ test("clean example: no errors, no warnings", () => {
   assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
   assert.equal(r.warnings.length, 0, JSON.stringify(r.warnings));
   assert.equal(r.meta.jurisdiction, "USPTO");
+  assert.equal(r.meta.confidential_workflow_mode, "ordinary_local");
   assert.equal(r.meta.rule_pack.id, "uspto-v1");
   assert.equal(r.meta.rule_pack.effective_date, "2026-06-15");
 });
@@ -112,6 +113,31 @@ test("unknown user_role fails loud", () => {
     edit(d, "PATENT.md", (t) => t.replace("user_role: \"unknown\"", "user_role: \"robot_patent_agent\""));
     const r = validateMatter(d);
     assert.ok(codes(r.errors).includes("USER_ROLE_UNKNOWN"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("confidential_workflow_mode is explicit, validated, and defaults with a warning when missing", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('confidential_workflow_mode: "ordinary_local"', 'confidential_workflow_mode: "public_release"'));
+    let r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("CONFIDENTIAL_WORKFLOW_MODE_UNKNOWN"), JSON.stringify(r.errors));
+
+    edit(d, "PATENT.md", (t) => t.replace('confidential_workflow_mode: "public_release"\n', ""));
+    r = validateMatter(d);
+    assert.equal(r.meta.confidential_workflow_mode, "ordinary_local");
+    assert.ok(codes(r.warnings).includes("CONFIDENTIAL_WORKFLOW_MODE_MISSING"), JSON.stringify(r.warnings));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("shareable_redacted mode warns when sensitive critique reports are present", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('confidential_workflow_mode: "ordinary_local"', 'confidential_workflow_mode: "shareable_redacted"'));
+    writeFileSync(join(d, "trace", "examiner_adversary_report.json"), "{}\n");
+    const r = validateMatter(d);
+    assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+    assert.ok(codes(r.warnings).includes("SHAREABLE_REDACTION_REQUIRED"), JSON.stringify(r.warnings));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
