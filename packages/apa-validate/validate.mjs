@@ -15,6 +15,11 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter, extractBindingBlocks, loadYaml, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
+import {
+  isSourceSpanPolicy,
+  sourceSpanFindings,
+  sourceSpanPolicyOf,
+} from "./source-spans.mjs";
 
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
@@ -211,6 +216,11 @@ export function validateMatter(dir) {
   if (fm.user_role !== undefined && !SUPPORTED_USER_ROLES.has(fm.user_role)) {
     E("USER_ROLE_UNKNOWN", `user_role '${fm.user_role}' is unknown (supported: registered_practitioner, pro_se, unknown).`);
   }
+  const sourceSpanPolicy = sourceSpanPolicyOf(fm);
+  if (fm.source_span_policy !== undefined && !isSourceSpanPolicy(fm.source_span_policy)) {
+    E("SOURCE_SPAN_POLICY_UNKNOWN", `source_span_policy '${fm.source_span_policy}' is unknown (supported: warning, relaxed).`);
+  }
+  const requireSourceSpan = sourceSpanPolicy !== "relaxed";
 
   // --- mandatory core (type-aware) ---
   const need = ["PATENT.md", "logic/problem.md", "src/embodiments.md"];
@@ -300,6 +310,7 @@ export function validateMatter(dir) {
       // provenance: an ai-suggested claim limitation is an assembly blocker. A MISSING provenance is
       // the protocol default 'ai-suggested' (protocol §2.4) - treat it as the blocker, not as clean.
       if ((lim.provenance || "ai-suggested") === "ai-suggested") W("AI_SUGGESTED_LIMITATION", `${c.id}.${lim.id} is provenance 'ai-suggested'${lim.provenance ? "" : " (missing -> protocol default)"} (assembly blocker; a human must adopt it).`);
+      else for (const finding of sourceSpanFindings(lim, `${c.id}.${lim.id}`, { requireComplete: requireSourceSpan })) W(finding.code, finding.msg);
     }
   }
 
@@ -322,6 +333,13 @@ export function validateMatter(dir) {
     if (c.binding.type === "claim-independent" && (!Array.isArray(matrix[c.id]) || matrix[c.id].length === 0)) {
       W("INVENTORSHIP_UNATTESTED", `${c.id} (independent) has no inventorship_matrix entry; conception not attested.`);
     }
+  }
+
+  // --- source-span provenance for adopted specification paragraphs ---
+  // Warning-only: this surfaces weak provenance without deciding written-description sufficiency.
+  for (const s of m.specs) {
+    if ((s.binding.provenance || "ai-suggested") === "ai-suggested") continue;
+    for (const finding of sourceSpanFindings(s.binding, s.id, { requireComplete: requireSourceSpan })) W(finding.code, finding.msg);
   }
 
   // --- figure numeral consistency ---

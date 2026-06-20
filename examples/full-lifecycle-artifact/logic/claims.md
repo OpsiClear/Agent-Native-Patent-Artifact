@@ -37,18 +37,27 @@ limitations:
     supported_by: [SPEC0002]
     illustrated_by: [FIG01#10]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM01"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM02
     text: "a first leaf configured to be fixed to a door"
     introduces: "first leaf"
     supported_by: [SPEC0003]
     illustrated_by: [FIG01#12]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM02"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM03
     text: "a second leaf configured to be fixed to a door frame"
     introduces: "second leaf"
     supported_by: [SPEC0003]
     illustrated_by: [FIG01#14]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM03"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM04
     text: "the first leaf pivotally joined to the second leaf for rotation about an axis"
     introduces: "axis"
@@ -57,6 +66,9 @@ limitations:
     supported_by: [SPEC0003]
     illustrated_by: [FIG01#16]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM04"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM05
     text: "the first leaf rotatable about the axis between an open position and a closed position"
     introduces: "closed position"
@@ -65,6 +77,9 @@ limitations:
     supported_by: [SPEC0003]
     illustrated_by: [FIG01#12]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM05"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM06
     text: "a pivot spindle extending along the axis within the hinge body and keyed to the first leaf"
     introduces: "pivot spindle"
@@ -73,6 +88,9 @@ limitations:
     supported_by: [SPEC0004]
     illustrated_by: [FIG01#16]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM06"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM07
     text: "a closing spring coupled between the hinge body and the pivot spindle and biasing the first leaf toward the closed position"
     introduces: "closing spring"
@@ -81,6 +99,9 @@ limitations:
     supported_by: [SPEC0005]
     illustrated_by: [FIG01#18]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM07"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM08
     text: "a hydraulic damper coupled to the pivot spindle"
     introduces: "hydraulic damper"
@@ -89,6 +110,9 @@ limitations:
     supported_by: [SPEC0006]
     illustrated_by: [FIG01#20]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM08"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM09
     text: "the hydraulic damper configured to limit a closing speed of the first leaf as the closing spring biases the first leaf toward the closed position"
     introduces: "closing speed"
@@ -97,6 +121,9 @@ limitations:
     supported_by: [SPEC0006]
     illustrated_by: [FIG01#20]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM09"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### CLM02 - Adjustable metering valve (dependent)
@@ -119,6 +146,9 @@ limitations:
     supported_by: [SPEC0007]
     illustrated_by: [FIG01#22]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM10"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM11
     text: "a fluid passage defined by the adjustable metering valve"
     introduces: "fluid passage"
@@ -127,6 +157,9 @@ limitations:
     supported_by: [SPEC0007]
     illustrated_by: [FIG01#22]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM11"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM12
     text: "an adjustment screw that sets a flow area of the fluid passage to set the closing speed"
     introduces: "adjustment screw"
@@ -135,6 +168,9 @@ limitations:
     supported_by: [SPEC0007]
     illustrated_by: [FIG01#28]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM12"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### CLM03 - Bounded closing speed (dependent)
@@ -156,6 +192,9 @@ limitations:
     supported_by: [SPEC0007]
     illustrated_by: [FIG01#28]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM13"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### CLM04 - Hold-open detent (dependent)
@@ -178,6 +217,9 @@ limitations:
     supported_by: [SPEC0008]
     illustrated_by: [FIG01#24]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM14"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM15
     text: "the cam defining a recess at a hold-open angle in which a spring-biased follower of the hold-open detent seats to retain the first leaf against the closing spring"
     introduces: "cam"
@@ -186,6 +228,9 @@ limitations:
     supported_by: [SPEC0008]
     illustrated_by: [FIG01#26]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM15"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### CLM05 - Method of damped door closing (independent, method)
@@ -211,6 +256,9 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#30]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM16"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM17
     text: "providing a door coupled to the closing spring"
     introduces: "door"
@@ -219,6 +267,9 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#30]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM17"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM18
     text: "moving the door toward an open position so as to store energy in the closing spring"
     introduces: "open position"
@@ -227,6 +278,9 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#30]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM18"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM19
     text: "releasing the door so that the closing spring drives the door from the open position toward a closed position"
     introduces: "closed position"
@@ -235,6 +289,9 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#32]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM19"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM20
     text: "displacing a working fluid through a hydraulic damper to limit a closing speed of the door as the door moves toward the closed position"
     introduces: "working fluid"
@@ -243,6 +300,9 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#34]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM20"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### CLM06 - Method with hold-open step (dependent)
@@ -265,6 +325,9 @@ limitations:
     supported_by: [SPEC0008]
     illustrated_by: [FIG02#36]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM21"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   - id: LIM22
     text: "resuming damped closing of the door when a user-applied torque exceeds a release torque"
     introduces: "release torque"
@@ -273,4 +336,7 @@ limitations:
     supported_by: [SPEC0009]
     illustrated_by: [FIG02#36]
     provenance: inventor:RMORALES
+    source: inventor-confirmation
+    source_span: "demo-full:claims:LIM22"
+    source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```

@@ -15,6 +15,9 @@ electrical power.
 ```binding
 grounding: transcribed
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0001"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0002 - Hinge body (10)
@@ -27,6 +30,9 @@ closed at one end by a removable cap to permit access to the metering valve.
 grounding: transcribed
 defines_numerals: ["FIG01#10"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0002"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0003 - First leaf (12) and second leaf (14)
@@ -39,6 +45,9 @@ relative to the second leaf 14 about a single axis between the open position and
 grounding: transcribed
 defines_numerals: ["FIG01#12", "FIG01#14"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0003"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0004 - Pivot spindle (16)
@@ -51,6 +60,9 @@ transmits torque between the closing spring, the hydraulic damper, and the first
 grounding: transcribed
 defines_numerals: ["FIG01#16"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0004"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0005 - Closing spring (18)
@@ -65,6 +77,9 @@ spring; Not specified in disclosure is whether a gas spring may be substituted.
 grounding: transcribed
 defines_numerals: ["FIG01#18"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0005"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0006 - Hydraulic damper chamber (20)
@@ -79,6 +94,9 @@ hydraulic damper 20 is a rotary vane damper sharing the pivot spindle 16.
 grounding: transcribed
 defines_numerals: ["FIG01#20"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0006"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0007 - Adjustable metering valve (22) and adjustment screw (28)
@@ -95,6 +113,9 @@ configured so that, at the most open flow setting, the full-close interval is no
 grounding: transcribed
 defines_numerals: ["FIG01#22", "FIG01#28"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0007"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0008 - Hold-open detent (24) and cam profile (26)
@@ -111,6 +132,9 @@ position of the recess in the cam profile 26.
 grounding: transcribed
 defines_numerals: ["FIG01#24", "FIG01#26"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0008"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
 ### SPEC0009 - Method of operation
@@ -126,4 +150,7 @@ method is performed by the apparatus of SPEC0002 through SPEC0008 and is power-f
 grounding: transcribed
 defines_numerals: ["FIG02#30", "FIG02#32", "FIG02#34", "FIG02#36"]
 provenance: inventor:RMORALES
+source: inventor-confirmation
+source_span: "demo-full:spec:SPEC0009"
+source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```

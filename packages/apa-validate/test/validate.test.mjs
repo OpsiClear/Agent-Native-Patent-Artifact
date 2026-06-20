@@ -121,3 +121,67 @@ test("ai-suggested claim limitation -> assembly-blocker warning", () => {
     assert.ok(codes(r.warnings).includes("AI_SUGGESTED_LIMITATION"), JSON.stringify(r.warnings));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
+
+test("adopted claim limitation missing source-span metadata -> warning", () => {
+  const d = clone();
+  try {
+    edit(d, "logic/claims.md", (t) => t.replace('    source_span: "demo-minimal:claims:LIM01"\n', ""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.warnings));
+    assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("adopted spec paragraph missing source-span metadata -> warning", () => {
+  const d = clone();
+  try {
+    edit(d, "src/embodiments.md", (t) => t.replace('source_span: "demo-minimal:spec:SPEC0002"\n', ""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.warnings));
+    assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("unknown source-span source -> warning", () => {
+  const d = clone();
+  try {
+    edit(d, "logic/claims.md", (t) => t.replace("    source: inventor-confirmation", "    source: hearsay"));
+    const r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("SOURCE_SPAN_INVALID"), JSON.stringify(r.warnings));
+    assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("source_span_policy relaxed suppresses missing source-span warnings but not invalid fields", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "relaxed"'));
+    edit(d, "logic/claims.md", (t) => t.replace('    source_span: "demo-minimal:claims:LIM01"\n', ""));
+    let r = validateMatter(d);
+    assert.ok(!codes(r.warnings).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.warnings));
+
+    edit(d, "logic/claims.md", (t) => t.replace("    source: inventor-confirmation", "    source: hearsay"));
+    r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("SOURCE_SPAN_INVALID"), JSON.stringify(r.warnings));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("not-recoverable source is allowed without source span or hash", () => {
+  const d = clone();
+  try {
+    edit(d, "logic/claims.md", (t) => t
+      .replace("    source: inventor-confirmation\n    source_span: \"demo-minimal:claims:LIM01\"\n    source_sha256: \"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"", "    source: not-recoverable"));
+    const r = validateMatter(d);
+    assert.ok(!codes(r.warnings).includes("SOURCE_SPAN_MISSING"), JSON.stringify(r.warnings));
+    assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("unknown source_span_policy fails loud", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"', 'user_role: "unknown"\nsource_span_policy: "strict"'));
+    const r = validateMatter(d);
+    assert.ok(codes(r.errors).includes("SOURCE_SPAN_POLICY_UNKNOWN"), JSON.stringify(r.errors));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});

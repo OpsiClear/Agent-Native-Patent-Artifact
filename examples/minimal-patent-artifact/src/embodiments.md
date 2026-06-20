@@ -13,6 +13,9 @@ power.
 ```binding
 grounding: transcribed
 provenance: inventor:AINVENTOR
+source: inventor-confirmation
+source_span: "demo-minimal:spec:SPEC0001"
+source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 ### SPEC0002 - Reservoir (10)
@@ -24,6 +27,9 @@ one embodiment the reservoir 10 is a molded basin sized to nest within a plant p
 grounding: transcribed
 defines_numerals: ["FIG01#10"]
 provenance: inventor:AINVENTOR
+source: inventor-confirmation
+source_span: "demo-minimal:spec:SPEC0002"
+source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 ### SPEC0003 - Float (12)
@@ -35,6 +41,9 @@ such that the float 12 rises and falls with the water level in the reservoir 10.
 grounding: transcribed
 defines_numerals: ["FIG01#12"]
 provenance: inventor:AINVENTOR
+source: inventor-confirmation
+source_span: "demo-minimal:spec:SPEC0003"
+source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 ### SPEC0004 - Valve (14) and the selected level
@@ -49,6 +58,9 @@ the geometry of the float 12 and the position of the valve seat.
 grounding: transcribed
 defines_numerals: ["FIG01#14"]
 provenance: attorney
+source: attorney-note
+source_span: "demo-minimal:spec:SPEC0004"
+source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 ### SPEC0005 - Wick (16)
@@ -60,4 +72,7 @@ insert, drawing water from the reservoir 10 into surrounding soil by capillary a
 grounding: transcribed
 defines_numerals: ["FIG01#16"]
 provenance: inventor:AINVENTOR
+source: inventor-confirmation
+source_span: "demo-minimal:spec:SPEC0005"
+source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```

@@ -184,15 +184,18 @@ Verification:
 
 ### 1.2 Source-Span Validation
 
-Current state: protocol and skills request source-span metadata, but the validator treats it as optional.
+Current state: protocol and skills request source-span metadata, and the validator now emits
+warning-mode findings for adopted claim limitations and adopted `SPEC####` paragraphs that lack
+source-span metadata. `source_span_policy: "relaxed"` supports compiled/public imports where source
+spans cannot honestly be reconstructed.
 
 Tasks:
-- [ ] Define source-span field names and allowed `source` enum centrally.
-- [ ] Add optional validator warnings for adopted claim limitations missing source metadata.
-- [ ] Add optional validator warnings for `SPEC####` paragraphs missing source metadata.
-- [ ] Avoid warning on `ai-suggested` content, because it already blocks assembly.
-- [ ] Add a config switch if strict source spans should not apply to compiled public patents.
-- [ ] Update examples with at least one valid source-span entry.
+- [x] Define source-span field names and allowed `source` enum centrally.
+- [x] Add optional validator warnings for adopted claim limitations missing source metadata.
+- [x] Add optional validator warnings for `SPEC####` paragraphs missing source metadata.
+- [x] Avoid warning on `ai-suggested` content, because it already blocks assembly.
+- [x] Add a config switch if strict source spans should not apply to compiled public patents.
+- [x] Update examples with at least one valid source-span entry.
 
 Suggested targets:
 - `docs/protocol.md`
@@ -202,12 +205,12 @@ Suggested targets:
 - `examples/minimal-patent-artifact/src/embodiments.md`
 
 Acceptance criteria:
-- [ ] Adopted limitation without source span produces a warning, not a hard error.
-- [ ] `ai-suggested` limitation remains an assembly blocker regardless of source span.
-- [ ] Public-patent compile mode can mark `not-recoverable` without pretending conception evidence.
+- [x] Adopted limitation without source span produces a warning, not a hard error.
+- [x] `ai-suggested` limitation remains an assembly blocker regardless of source span.
+- [x] Public-patent compile mode can mark `not-recoverable` without pretending conception evidence.
 
 Verification:
-- [ ] `node --test packages/apa-validate/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
+- [x] `node --test packages/apa-validate/test/*.test.mjs packages/apa-assemble/test/*.test.mjs`
 
 ### 1.3 External Sink Wrappers
 
@@ -614,7 +617,7 @@ Verification:
 ## Recommended Execution Order
 
 1. [ ] Implement runlog helper and integrate `apa-search` + `apa-assemble`.
-2. [ ] Expand source-span validation in warning mode.
+2. [x] Expand source-span validation in warning mode.
 3. [ ] Implement external sink wrappers, starting with `apa-safe-npx` and `apa-safe-fetch`.
 4. [ ] Add report schema package and wire claims/patentability/examiner/OA reports.
 5. [ ] Expand prior-art dossier and upload manifest fields.

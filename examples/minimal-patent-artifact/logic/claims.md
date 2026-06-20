@@ -23,6 +23,9 @@ limitations:
     supported_by: [SPEC0002]
     illustrated_by: [FIG01#10]
     provenance: inventor:AINVENTOR
+    source: inventor-confirmation
+    source_span: "demo-minimal:claims:LIM01"
+    source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   - id: LIM02
     text: "a float disposed in the reservoir"
     introduces: "float"
@@ -31,6 +34,9 @@ limitations:
     supported_by: [SPEC0003]
     illustrated_by: [FIG01#12]
     provenance: inventor:AINVENTOR
+    source: inventor-confirmation
+    source_span: "demo-minimal:claims:LIM02"
+    source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   - id: LIM03
     text: "a valve coupled to the float and configured to close when the float rises to a selected level"
     introduces: "valve"
@@ -39,6 +45,9 @@ limitations:
     supported_by: [SPEC0004]
     illustrated_by: [FIG01#14]
     provenance: inventor:AINVENTOR
+    source: inventor-confirmation
+    source_span: "demo-minimal:claims:LIM03"
+    source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 ### CLM02 - Wick variant (dependent)
@@ -60,4 +69,7 @@ limitations:
     supported_by: [SPEC0005]
     illustrated_by: [FIG01#16]
     provenance: inventor:AINVENTOR
+    source: inventor-confirmation
+    source_span: "demo-minimal:claims:LIM04"
+    source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
