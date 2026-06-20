@@ -2,6 +2,9 @@
 
 Source inputs:
 - Shared external review: `https://chatgpt.com/share/6a36ca79-9774-83ea-a6a1-28d16414e3d7`
+- Rendered shared-review contents checked through browser on 2026-06-20. No separate
+  `implementation_plan.md` file is present in this repository; this checklist treats the shared
+  review's P0/P1/P2 backlog plus the 14 skill-by-skill recommendations as the implementation plan.
 - Current coverage map: `docs/review-coverage.md`
 - Current protocol contract: `docs/protocol.md`
 - Current source registry: `docs/source-registry.md`
@@ -15,6 +18,47 @@ Status legend:
 - `[ ]` means open work.
 - "Covered by Phase N" means the detailed implementation is tracked in that earlier section; the
   skill-by-skill item is kept so future reviewers can see which skill concern it closes.
+
+## Source Coverage Index
+
+Use this index to confirm that every substantive recommendation from the external review is either
+implemented, preserved as a regression guard, or tracked as open work below.
+
+| Source-plan item | Checklist coverage |
+|---|---|
+| P0: update AI-inventorship language to current USPTO posture | `0.1`, `2.3`, Global DoD legal-rule update requirement |
+| P0: rename "filing-ready" outputs and preserve submit boundary | `0.2`, `1.7`, `3.11` |
+| P0: standardize PatentSearch / PatentsView / PPS naming | `0.3`, `1.6`, `3.4` |
+| P0: add drawing-quality as an autoprep / assembly gate | `0.4`, `3.1`, `3.8`, `3.10` |
+| P0: cap examiner loops | `3.1`, `3.13` |
+| P0: require practitioner-mode approval before claim/OA edits | `0.5`, `3.6`, `3.13`, `3.14` |
+| P1: move long legal preamble into references | `1.4` |
+| P1: add artifact-wide runlog | `1.1`, `3.1`, `3.11`, `3.12`, `3.14` |
+| P1: add source-span hashes and strict/relaxed provenance handling | `1.2`, `3.2`, `3.3`, `3.7`, `3.8` |
+| P1: create package-level wrappers for external sinks | `1.3`, `3.3`, `3.9`, Release Gate |
+| P1: add JSON report schemas for semantic skills | `1.5`, `3.5`, `3.6`, `3.13`, `3.14`, Release Gate |
+| P1: expand prior-art dossier and closest-art verification | `1.6`, `3.4`, `3.5`, `3.12` |
+| P1: expand upload manifest and deferred human actions | `1.7`, `3.11`, Release Gate |
+| P1: add rigor prior-art staleness caps and safer verdict display | `1.8`, `3.12` |
+| P2: add public/synthetic benchmark suite | `2.1` |
+| P2: add skill trigger tests | `2.2` |
+| P2: add jurisdiction/rule-pack scaffolding | `2.3`, `3.7` |
+| P2: add counsel/work-product workflow mode | `2.4`, `3.5`, `3.13` |
+| P2: add human review UI for provenance, IDS, support, drawings | `2.5`, Release Gate |
+| `/apa-autoprep` review recommendations | `3.1` |
+| `/apa-disclose` review recommendations | `3.2` |
+| `/apa-compile` review recommendations | `3.3` |
+| `/apa-priorart` review recommendations | `3.4` |
+| `/apa-analyze` review recommendations | `3.5` |
+| `/apa-claims` review recommendations | `3.6` |
+| `/apa-spec` review recommendations | `3.7` |
+| `/apa-figures` review recommendations | `3.8` |
+| `/apa-svg-upgrader` review recommendations | `3.9` |
+| `/apa-drawing-quality` review recommendations | `3.10` |
+| `/apa-assemble` review recommendations | `3.11` |
+| `/apa-rigor` review recommendations | `3.12` |
+| `/apa-examiner` review recommendations | `3.13` |
+| `/apa-office-action` review recommendations | `3.14` |
 
 ## Global Definition Of Done
 
