@@ -1,6 +1,6 @@
 # APA CI Benchmarking
 
-`scripts/benchmark.mjs --mock` is the deterministic CI benchmark gate. The skill graph layer adds the convention that every domain pack lists benchmark intentions in `domain.yaml` and future benchmark cases should include `targeted_skills` plus expected mechanical/semantic metrics.
+`scripts/benchmark.mjs --mock` is the deterministic CI benchmark gate. Use `--case <id>` for targeted simulation/tuning loops such as `software-patent-skill-sim`. The skill graph layer adds the convention that every domain pack lists benchmark intentions in `domain.yaml` and future benchmark cases should include `targeted_skills` plus expected mechanical/semantic metrics.
 
 Commit-gate benchmark cases must be public or synthetic, offline, and reproducible. Live LLM/domain-quality evaluation remains periodic or advisory unless a deterministic oracle is committed.
 

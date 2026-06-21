@@ -3,14 +3,15 @@
   "$id": "https://apa.local/schemas/benchmark.schema.json",
   "title": "APA Benchmark Case",
   "type": "object",
-  "required": ["id", "kind", "source_class", "expected"],
+  "required": ["id", "kind", "source_class"],
   "properties": {
     "id": { "type": "string" },
     "kind": { "type": "string" },
     "source_class": { "type": "string" },
     "targeted_skills": { "type": "array", "items": { "type": "string" } },
     "metrics": { "type": "object" },
-    "expected": { "type": "string" }
+    "expected": { "type": "string" },
+    "scenarios": { "type": "string" }
   },
   "additionalProperties": true
 }

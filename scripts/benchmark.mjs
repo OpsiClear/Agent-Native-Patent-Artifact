@@ -19,10 +19,11 @@ import { build as buildManifest } from "../packages/apa-viewer/build_manifest.mj
 import { preflight } from "../packages/apa-assemble/preflight.mjs";
 import { parseOfficeActionFile } from "../packages/apa-prosecute/parse.mjs";
 import { computeDeadlines } from "../packages/apa-prosecute/deadlines.mjs";
+import { runSoftwarePatentSimulation } from "../packages/apa-bench/software-patent-sim.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_INDEX = "benchmarks/index.json";
-const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure"]);
+const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure", "synthetic_software_patent"]);
 
 function parseArgs(argv) {
   const args = { index: DEFAULT_INDEX };
@@ -32,6 +33,7 @@ function parseArgs(argv) {
     else if (a === "--json") args.json = true;
     else if (a === "--index") args.index = argv[++i];
     else if (a === "--out") args.out = argv[++i];
+    else if (a === "--case") args.caseId = argv[++i];
     else if (a === "-h" || a === "--help") args.help = true;
     else throw new Error(`unknown argument: ${a}`);
   }
@@ -204,6 +206,13 @@ function runOfficeActionCase(testCase, expected) {
     : passCase(testCase.id, testCase.kind, testCase.source_class, metrics);
 }
 
+function runSoftwarePatentSimulationCase(testCase) {
+  const sim = runSoftwarePatentSimulation({ scenarios: testCase.scenarios });
+  return sim.findings.length
+    ? failCase(testCase.id, testCase.kind, testCase.source_class, sim.metrics, sim.findings)
+    : passCase(testCase.id, testCase.kind, testCase.source_class, sim.metrics);
+}
+
 function runCase(testCase, opts) {
   const findings = [];
   if (!ALLOWED_SOURCE_CLASSES.has(testCase.source_class)) {
@@ -213,6 +222,13 @@ function runCase(testCase, opts) {
       message: `unsupported benchmark source_class '${testCase.source_class}'`,
     });
   }
+  if (testCase.kind === "software-patent-skill-simulation") {
+    requirePath(findings, testCase.scenarios, "scenarios");
+    return findings.length
+      ? failCase(testCase.id, testCase.kind, testCase.source_class, {}, findings)
+      : runSoftwarePatentSimulationCase(testCase);
+  }
+
   requirePath(findings, testCase.expected, "expected");
   if (findings.length) return failCase(testCase.id, testCase.kind, testCase.source_class, {}, findings);
 
@@ -242,13 +258,16 @@ export function runBenchmarks(opts = {}) {
     throw new Error("benchmark commit gate is deterministic/offline; pass --mock");
   }
   const index = readJson(opts.index || DEFAULT_INDEX);
-  const cases = Array.isArray(index.cases) ? index.cases : [];
+  const allCases = Array.isArray(index.cases) ? index.cases : [];
+  const cases = opts.caseId ? allCases.filter((c) => c.id === opts.caseId) : allCases;
+  if (opts.caseId && cases.length === 0) throw new Error(`benchmark case not found: ${opts.caseId}`);
   const results = cases.map((testCase) => runCase(testCase, opts));
   const summary = {
     schema: "apa-benchmark-results-v1",
     generated_at: new Date().toISOString(),
     mode: "mock-offline",
     index: opts.index || DEFAULT_INDEX,
+    case: opts.caseId || null,
     policy: index.policy || {},
     totals: {
       cases: results.length,
@@ -273,7 +292,7 @@ function printText(summary) {
 export function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) {
-    console.log("usage: node scripts/benchmark.mjs --mock [--json] [--out <file>] [--index <file>]");
+    console.log("usage: node scripts/benchmark.mjs --mock [--json] [--out <file>] [--index <file>] [--case <id>]");
     return 0;
   }
   const summary = runBenchmarks(args);

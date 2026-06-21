@@ -18,7 +18,7 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **323 tests, all passing** (`bash
+generation, CI, and an end-to-end integration test. The suite is **332 tests, all passing** (`bash
 build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.
@@ -52,6 +52,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `packages/apa-trace/` | Runlog and autoprep-state helpers for audit logs, resumable stages, checkpoint records, and examiner-loop caps | ✅ tested |
 | `packages/apa-skillgraph/` | Machine-readable skill/domain registry checker + generated skill graph/domain-pack documentation | ✅ tested |
 | `packages/apa-run/` | Graph-derived pipeline planner/status CLI for core skills plus enabled domain hook insertions | ✅ tested |
+| `packages/apa-bench/software-patent-sim.mjs` | Offline scenario simulator for `/apa-software-patent`: thin SaaS, codec, AI/ML, UI, CRM, and math-only traps | ✅ tested |
 | `packages/apa-search/` | **(Phase 2)** API-first prior-art search (PatentsView PatentSearch API); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
 | `packages/apa-draft/` | **(Phase 3)** claim legal-form lint (single-sentence, transitional phrase, numbering, multi-dependent, 112(f) nonce) | ✅ tested |
 | `packages/apa-figure/` | **(Phase 3)** zero-dep SVG patent-figure generator (numbered parts, lead lines, arrows) + numeral reconciliation | ✅ tested |
@@ -95,6 +96,7 @@ npm run smoke                                                    # cross-package
 node packages/apa-skillgraph/cli.mjs check                       # validate skill.yaml/domain.yaml/registry.yaml
 node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --domain software
 node packages/apa-bench/cli.mjs --mock                           # deterministic benchmark suite
+node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim   # /apa-software-patent simulation
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
 node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@0.1.0 --dry-run -- --help   # guarded network-tool demo
 node packages/apa-reports/cli.mjs scaffold claims --matter examples/minimal-patent-artifact   # semantic report schema demo

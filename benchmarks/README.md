@@ -17,4 +17,5 @@ Run:
 ```bash
 node scripts/benchmark.mjs --mock
 node scripts/benchmark.mjs --mock --json --out benchmark-results.json
+node scripts/benchmark.mjs --mock --case software-patent-skill-sim
 ```

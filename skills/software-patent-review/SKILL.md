@@ -62,12 +62,14 @@ current USPTO/MPEP sources before relying on any eligibility position.
    non-transitory CRM claims when supported. Use implementation nouns, data-flow steps, structural
    cooperation, and technical-effect limitations. Keep pro-se output neutral; registered-practitioner
    mode may receive redline proposals for approval.
-6. **Update the APA artifact.** Add or propose source-backed `SPEC####`, claim limitations, figures,
-   flowcharts, and report findings. Do not introduce unsupported implementation details. Use
-   `source_span_policy: "strict"` when the user wants the software support review to block unsupported
-   adopted limitations.
-7. **Emit a review artifact.** Write or propose `logic/software_patent_report.json` and a concise
-   Markdown summary using the report shape in the guide. Include `legal_posture:
+6. **Propose artifact changes without writing canonical files.** Domain work writes under
+   `domain/software/`. Propose source-backed `SPEC####`, claim limitations, figures, flowcharts, and
+   report findings as patch candidates for `/apa-claims` or `/apa-spec`; do not directly rewrite
+   `logic/`, `src/`, `assembled/`, or filing outputs from this domain skill. Do not introduce
+   unsupported implementation details. Use `source_span_policy: "strict"` when the user wants the
+   software support review to block unsupported adopted limitations after human adoption.
+7. **Emit a review artifact.** Write or propose `domain/software/software_patent_report.json` and a
+   concise Markdown summary using the report shape in the guide. Include `legal_posture:
    flags-not-conclusions`, eligibility/support findings, human checkpoints, support-state tags
    (`supported-now`, `needs-inventor-confirmation`, `unsupported-new-matter-risk`), and exact open
    questions for the inventor or practitioner.

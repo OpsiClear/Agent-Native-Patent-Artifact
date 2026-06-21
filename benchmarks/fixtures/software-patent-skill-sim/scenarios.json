@@ -1,0 +1,91 @@
+{
+  "schema": "apa-software-patent-simulation-v1",
+  "source_class": "synthetic_software_patent",
+  "description": "Offline synthetic scenarios for hardening /apa-software-patent response contracts.",
+  "scenarios": [
+    {
+      "id": "thin-saas-business-rule",
+      "prompt": "Draft software patent claims for a SaaS tool that assigns sales leads based on a salesperson score.",
+      "traits": ["business_automation", "generic_computer", "missing_technical_mechanism", "result_only"],
+      "support": { "mechanism": false, "algorithm": false, "technical_effect": false, "non_transitory_storage": false },
+      "requested_claim_types": ["method", "system", "non_transitory_crm"],
+      "expected": {
+        "support_state": "needs-inventor-confirmation",
+        "eligibility_risks": ["abstract-idea", "generic-computer"],
+        "support_risks": ["missing-algorithm", "overbroad-function"],
+        "claim_family": { "method": "unsupported", "system": "unsupported", "non_transitory_crm": "unsupported" },
+        "required_guide_terms": ["Business/SaaS automation", "Do not draft a claim ladder", "missing technical mechanism", "needs-inventor-confirmation"]
+      }
+    },
+    {
+      "id": "supported-codec-transform",
+      "prompt": "Harden claims for a video codec that reorders residual blocks using a source-backed transform and reduces bandwidth.",
+      "traits": ["codec", "technical_mechanism", "measured_effect", "data_transform"],
+      "support": { "mechanism": true, "algorithm": true, "technical_effect": true, "non_transitory_storage": true },
+      "requested_claim_types": ["method", "system", "non_transitory_crm"],
+      "expected": {
+        "support_state": "supported-now",
+        "eligibility_risks": [],
+        "support_risks": [],
+        "claim_family": { "method": "proposed", "system": "proposed", "non_transitory_crm": "proposed" },
+        "required_guide_terms": ["Codec", "technical mechanism as the claim spine", "data transforms", "measurable technical effect"]
+      }
+    },
+    {
+      "id": "ai-ml-black-box",
+      "prompt": "Make a patent claim for using AI to approve insurance claims more accurately.",
+      "traits": ["ai_ml", "business_automation", "missing_model_details", "generic_computer", "result_only"],
+      "support": { "mechanism": false, "algorithm": false, "technical_effect": false, "non_transitory_storage": true },
+      "requested_claim_types": ["method", "system", "non_transitory_crm"],
+      "expected": {
+        "support_state": "needs-inventor-confirmation",
+        "eligibility_risks": ["abstract-idea", "generic-computer"],
+        "support_risks": ["missing-algorithm", "overbroad-function"],
+        "claim_family": { "method": "unsupported", "system": "unsupported", "non_transitory_crm": "unsupported" },
+        "required_guide_terms": ["AI/ML invention", "Do not claim \"using AI\"", "model architecture", "training data features", "technical effect"]
+      }
+    },
+    {
+      "id": "ui-state-sync",
+      "prompt": "Review a UI invention that reduces input errors by synchronizing widget state during drag gestures.",
+      "traits": ["ui", "technical_mechanism", "state_transition", "measured_effect"],
+      "support": { "mechanism": true, "algorithm": true, "technical_effect": true, "non_transitory_storage": true },
+      "requested_claim_types": ["method", "system"],
+      "expected": {
+        "support_state": "supported-now",
+        "eligibility_risks": [],
+        "support_risks": [],
+        "claim_family": { "method": "proposed", "system": "proposed", "non_transitory_crm": "unsupported" },
+        "required_guide_terms": ["UI or information-display invention", "event handling", "state synchronization", "reduced input burden", "error prevention"]
+      }
+    },
+    {
+      "id": "crm-transitory-risk",
+      "prompt": "Add non-transitory computer-readable medium claims, but the disclosure only says the instructions are transmitted over a carrier wave.",
+      "traits": ["crm", "transitory_signal"],
+      "support": { "mechanism": true, "algorithm": true, "technical_effect": true, "non_transitory_storage": false },
+      "requested_claim_types": ["non_transitory_crm"],
+      "expected": {
+        "support_state": "needs-inventor-confirmation",
+        "eligibility_risks": [],
+        "support_risks": ["crm-transitory-risk"],
+        "claim_family": { "method": "unsupported", "system": "unsupported", "non_transitory_crm": "unsupported" },
+        "required_guide_terms": ["Non-transitory CRM request", "stored instructions", "signals or carrier waves", "crm-transitory-risk"]
+      }
+    },
+    {
+      "id": "math-only-data-analysis",
+      "prompt": "Claim a formula that ranks documents by multiplying two scores and returning the highest result.",
+      "traits": ["math_only", "data_analysis", "missing_practical_application", "result_only"],
+      "support": { "mechanism": false, "algorithm": true, "technical_effect": false, "non_transitory_storage": false },
+      "requested_claim_types": ["method"],
+      "expected": {
+        "support_state": "needs-inventor-confirmation",
+        "eligibility_risks": ["math-only", "abstract-idea"],
+        "support_risks": ["overbroad-function"],
+        "claim_family": { "method": "unsupported", "system": "unsupported", "non_transitory_crm": "unsupported" },
+        "required_guide_terms": ["Pure algorithm/math/data-analysis request", "practical technical process", "concrete application", "technical effect"]
+      }
+    }
+  ]
+}

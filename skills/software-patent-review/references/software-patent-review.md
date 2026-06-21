@@ -110,7 +110,7 @@ Use only when supported:
 
 ## Report Shape
 
-Use this shape when emitting `logic/software_patent_report.json`:
+Use this shape when emitting `domain/software/software_patent_report.json`:
 
 ```json
 {
@@ -154,9 +154,22 @@ Use this shape when emitting `logic/software_patent_report.json`:
   },
   "human_checkpoints": [
     {"id": "practitioner-eligibility-review", "required": true, "satisfied": false}
+  ],
+  "proposed_canonical_changes": [
+    {
+      "target": "logic/claims.md|src/embodiments.md|evidence/drawings/",
+      "change_type": "claim-limitation|spec-paragraph|figure-plan|inventor-question",
+      "support_state": "supported-now|needs-inventor-confirmation|unsupported-new-matter-risk",
+      "source_span": "<path:line-or-source-span>",
+      "requires_human_adoption": true
+    }
   ]
 }
 ```
+
+Domain reports may propose canonical APA changes, but the software domain skill must not directly
+write `logic/`, `src/`, `assembled/`, or filing-output paths. Route proposed claim/spec changes
+through `/apa-claims`, `/apa-spec`, and the ordinary human-adoption gates.
 
 ## Output Order
 
