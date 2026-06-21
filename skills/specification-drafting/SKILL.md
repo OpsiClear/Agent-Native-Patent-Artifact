@@ -84,4 +84,3 @@ Log iterations if you autotune (iteration / min_score / avg_score / kept|discard
 - Invent subject matter (new matter is fatal). Disparage prior art. Claim the spec "enables" anything -
   the validator proves the support EDGE resolves; enablement sufficiency is a human/LLM-judge flag.
 - Rules as of 2026-06-15; verify currency.
-

@@ -69,4 +69,3 @@ human-verified, often by a professional draftsperson.
 - Invent a reference numeral or part not present in the disclosure/claims.
 - Claim 1.84 compliance is met - the tool does a pre-check; a human verifies formal compliance.
 - Use color/photographs without noting they require a petition. Rules as of 2026-06-15.
-

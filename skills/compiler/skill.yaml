@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-compile
+kind: core
+phase: capture
+command: /apa-compile
+version: "0.1"
+description: "Lift public patent or disclosure documents into an APA artifact."
+inputs: [PATENT.md, source-document]
+outputs: [logic/, src/, evidence/, trace/runlog.jsonl]
+upstream: []
+downstream: [apa-priorart, apa-analyze, apa-claims]
+gates_after: [validation-clean]
+human_checkpoints: [ocr-quality-review, inferred-fact-review]
+domain_hooks: [disclosure.enrich]
+external_sinks: [{ tool: apa-safe-fetch, required: true }]
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

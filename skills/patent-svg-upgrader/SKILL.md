@@ -146,4 +146,3 @@ Write `evidence/drawings/svg_upgrade_report.json` with
 - Add unsupported structures, advantages, or embodiments while making the drawing look better.
 - Shrink labels or numerals below the physical readability target.
 - Certify final USPTO/PCT compliance. Rules as of 2026-06-15; verify currency.
-

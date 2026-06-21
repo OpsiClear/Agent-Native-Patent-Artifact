@@ -113,4 +113,3 @@ and human approval.
   amendment in pro-se mode.
 - Over-narrow silently: when you narrow a claim, record the broader scope as continuation-reserved.
 - Invent prior art or claim limitations (new matter). Rules as of 2026-06-15.
-

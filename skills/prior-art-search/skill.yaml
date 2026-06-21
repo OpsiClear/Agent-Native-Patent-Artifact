@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-priorart
+kind: core
+phase: search
+command: /apa-priorart
+version: "0.1"
+description: "Search prior-art sources and write PA blocks plus a search dossier."
+inputs: [PATENT.md, logic/claims.md, docs/source-registry.md]
+outputs: [logic/prior_art.md, logic/reference_matrix.md, evidence/prior_art/, trace/runlog.jsonl]
+upstream: [apa-disclose, apa-compile]
+downstream: [apa-analyze, apa-rigor]
+gates_after: [scan-at-sink, closest-art-human-verification]
+human_checkpoints: [closest-art-selection, ids-verification]
+domain_hooks: []
+external_sinks: [{ tool: apa-search, scan_at_sink: true }, { tool: apa-safe-fetch, required: true }]
+safety: { legal_conclusion: false, search_complete_asserted: false, may_file: false }

@@ -1,0 +1,72 @@
+schema: apa-skill-registry-v1
+version: "0.1"
+layout: flat-core-with-domain-packs
+core_skill_root: skills
+domain_root: skills/domains
+global_gates:
+  - id: natural-person-inventor
+    description: "At least one natural person inventor must be named; AI systems are never inventors."
+    blocking: true
+  - id: no-unadopted-ai-limitations
+    description: "Unresolved ai-suggested claim limitations block assembly."
+    blocking: true
+  - id: validation-clean
+    description: "Mechanical validation must pass before assembly."
+    blocking: true
+  - id: drawing-quality
+    description: "Blocking drawing-quality findings block assembly."
+    blocking: true
+  - id: submit-boundary
+    description: "APA assembles drafts and manifests only; human signs, certifies, pays, and files."
+    blocking: true
+allowed_loops:
+  - from: apa-examiner
+    to: apa-claims
+    max_iterations: 2
+  - from: apa-examiner
+    to: apa-spec
+    max_iterations: 2
+hooks:
+  - id: disclosure.enrich
+    after: [apa-disclose, apa-compile]
+    blocking_default: false
+  - id: claims.seed
+    before: [apa-claims]
+    blocking_default: false
+  - id: analysis.domain
+    after: [apa-analyze]
+    blocking_default: false
+  - id: figures.plan
+    before: [apa-figures]
+    blocking_default: false
+  - id: figures.review
+    after: [apa-figures]
+    before: [apa-drawing-quality]
+    blocking_default: false
+  - id: spec.review
+    after: [apa-spec]
+    blocking_default: false
+  - id: rigor.domain
+    before: [apa-rigor]
+    blocking_default: false
+  - id: assembly.preflight
+    before: [apa-assemble]
+    blocking_default: true
+pipeline:
+  alternatives:
+    intake: [apa-disclose, apa-compile]
+  order:
+    - apa-disclose
+    - apa-priorart
+    - apa-analyze
+    - apa-claims
+    - apa-spec
+    - apa-figures
+    - apa-drawing-quality
+    - apa-examiner
+    - apa-rigor
+    - apa-assemble
+optional:
+  - apa-office-action
+  - apa-license
+  - apa-software-patent

@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-examiner
+kind: core
+phase: review
+command: /apa-examiner
+version: "0.1"
+description: "Run adversarial examiner-style 101/102/103/112 critique loops."
+inputs: [logic/claims.md, src/embodiments.md, logic/prior_art.md, logic/patentability.md]
+outputs: [trace/examiner_adversary_report.json, trace/prosecution_rationale.md]
+upstream: [apa-analyze, apa-claims, apa-spec]
+downstream: [apa-claims, apa-spec, apa-rigor]
+gates_after: [examiner-loop-cap, report-schema-valid]
+human_checkpoints: [practitioner-edit-approval]
+domain_hooks: []
+external_sinks: []
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

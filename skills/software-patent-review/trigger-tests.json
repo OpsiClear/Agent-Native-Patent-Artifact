@@ -1,0 +1,14 @@
+{
+  "command": "/apa-software-patent",
+  "keywords": ["software patent", "technical improvement", "non-transitory computer readable medium"],
+  "should_trigger": [
+    "/apa-software-patent review this SaaS invention for 101 eligibility and 112 support.",
+    "Harden this software patent around the technical improvement story and algorithm support.",
+    "Draft method, system, and non-transitory computer readable medium claim options for this codec invention."
+  ],
+  "should_not_trigger": [
+    "Use /apa-license to review open source license compatibility.",
+    "Use /apa-priorart to search patent references for the claims.",
+    "Fix the TypeScript build error in the UI."
+  ]
+}

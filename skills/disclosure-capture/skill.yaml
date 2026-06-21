@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-disclose
+kind: core
+phase: capture
+command: /apa-disclose
+version: "0.1"
+description: "Capture inventor disclosure facts into the APA artifact."
+inputs: [PATENT.md, staging/]
+outputs: [logic/problem.md, src/embodiments.md, staging/observations.yaml, trace/runlog.jsonl]
+upstream: []
+downstream: [apa-priorart, apa-claims, apa-spec]
+gates_after: [natural-person-inventor]
+human_checkpoints: [inventor-fact-confirmation, bar-date-candor-confirmation]
+domain_hooks: [disclosure.enrich]
+external_sinks: []
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

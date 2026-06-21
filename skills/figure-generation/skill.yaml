@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-figures
+kind: core
+phase: drafting
+command: /apa-figures
+version: "0.1"
+description: "Generate numbered figure definitions, SVGs, and numeral legends."
+inputs: [logic/claims.md, src/embodiments.md, evidence/drawings/]
+outputs: [evidence/drawings/, evidence/drawings/figure_generation_report.json]
+upstream: [apa-claims, apa-spec]
+downstream: [apa-drawing-quality, apa-assemble]
+gates_after: [figure-numeral-reconciliation, no-unsupported-visual-matter]
+human_checkpoints: [drawing-transcription-review]
+domain_hooks: [figures.plan, figures.review]
+external_sinks: []
+safety: { legal_conclusion: false, may_file: false }

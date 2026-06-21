@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-rigor
+kind: core
+phase: review
+command: /apa-rigor
+version: "0.1"
+description: "Run six-dimension rigor review and deterministic artifact-quality verdict."
+inputs: [PATENT.md, logic/, src/, evidence/, trace/]
+outputs: [patent_rigor_report.json, trace/runlog.jsonl]
+upstream: [apa-examiner, apa-drawing-quality]
+downstream: [apa-assemble]
+gates_after: [rigor-verdict, prior-art-staleness]
+human_checkpoints: [human-final-review]
+domain_hooks: [rigor.domain]
+external_sinks: []
+safety: { legal_conclusion: false, may_file: false }

@@ -1,0 +1,54 @@
+schema: apa-domain-pack-v1
+id: formulation
+version: "0.1"
+status: scaffold
+description: "Composition/formulation invention support for protocols, examples, ranges, enablement, and composition claim patterns."
+detection_signals:
+  - formulation
+  - composition
+  - dosage
+  - protocol
+  - experimental log
+  - working example
+constraints:
+  writes_only_under: domain/formulation/
+  canonical_artifact_writes: false
+  legal_conclusion: false
+hooks:
+  - id: disclosure.enrich
+    outputs: [domain/formulation/formulation_summary.json]
+    blocking: false
+  - id: claims.seed
+    outputs: [domain/formulation/formulation_claim_seeds.json]
+    blocking: false
+  - id: analysis.domain
+    outputs: [domain/formulation/composition_enablement_review.json]
+    blocking: false
+  - id: spec.review
+    outputs: [domain/formulation/ranges_and_examples_review.json]
+    blocking: false
+skills:
+  - id: apa-formulation-disclosure-extractor
+    status: planned
+    command: /apa-formulation-disclosure-extractor
+    hook: disclosure.enrich
+    outputs: [domain/formulation/formulation_summary.json]
+  - id: apa-formulation-claim-patterns
+    status: planned
+    command: /apa-formulation-claim-patterns
+    hook: claims.seed
+    outputs: [domain/formulation/formulation_claim_seeds.json]
+  - id: apa-composition-enablement-review
+    status: planned
+    command: /apa-composition-enablement-review
+    hook: analysis.domain
+    outputs: [domain/formulation/composition_enablement_review.json]
+  - id: apa-ranges-and-examples-review
+    status: planned
+    command: /apa-ranges-and-examples-review
+    hook: spec.review
+    outputs: [domain/formulation/ranges_and_examples_review.json]
+benchmarks:
+  - id: formulation-public-composition
+    status: planned
+    source_class: public_patent

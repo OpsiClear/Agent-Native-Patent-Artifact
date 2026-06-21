@@ -1,0 +1,53 @@
+schema: apa-domain-pack-v1
+id: device
+version: "0.1"
+status: scaffold
+description: "Mechanical/device invention support for components, drawings, reference numerals, and structural claim patterns."
+detection_signals:
+  - CAD
+  - mechanical drawing
+  - exploded view
+  - component table
+  - reference numeral
+constraints:
+  writes_only_under: domain/device/
+  canonical_artifact_writes: false
+  legal_conclusion: false
+hooks:
+  - id: disclosure.enrich
+    outputs: [domain/device/component_inventory.json]
+    blocking: false
+  - id: claims.seed
+    outputs: [domain/device/mechanical_claim_seeds.json]
+    blocking: false
+  - id: figures.plan
+    outputs: [domain/device/figure_plan.json]
+    blocking: false
+  - id: figures.review
+    outputs: [domain/device/reference_numeral_review.json]
+    blocking: false
+skills:
+  - id: apa-device-disclosure-extractor
+    status: planned
+    command: /apa-device-disclosure-extractor
+    hook: disclosure.enrich
+    outputs: [domain/device/component_inventory.json]
+  - id: apa-mechanical-claim-patterns
+    status: planned
+    command: /apa-mechanical-claim-patterns
+    hook: claims.seed
+    outputs: [domain/device/mechanical_claim_seeds.json]
+  - id: apa-device-figure-patterns
+    status: planned
+    command: /apa-device-figure-patterns
+    hook: figures.plan
+    outputs: [domain/device/figure_plan.json]
+  - id: apa-reference-numeral-review
+    status: planned
+    command: /apa-reference-numeral-review
+    hook: figures.review
+    outputs: [domain/device/reference_numeral_review.json]
+benchmarks:
+  - id: device-public-hinge
+    status: planned
+    source_class: public_patent

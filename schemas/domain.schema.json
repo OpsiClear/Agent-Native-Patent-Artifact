@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/domain.schema.json",
+  "title": "APA Domain Pack",
+  "type": "object",
+  "required": ["schema", "id", "version", "status", "constraints", "hooks", "skills"],
+  "properties": {
+    "schema": { "const": "apa-domain-pack-v1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "version": { "type": "string" },
+    "status": { "enum": ["active", "scaffold", "planned"] },
+    "description": { "type": "string" },
+    "detection_signals": { "type": "array", "items": { "type": "string" } },
+    "constraints": {
+      "type": "object",
+      "required": ["writes_only_under", "canonical_artifact_writes", "legal_conclusion"]
+    },
+    "hooks": { "type": "array" },
+    "skills": { "type": "array" },
+    "benchmarks": { "type": "array" }
+  },
+  "additionalProperties": true
+}

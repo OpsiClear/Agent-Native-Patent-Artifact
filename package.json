@@ -14,20 +14,26 @@
     "apa-safe-send": "packages/apa-safe/cli.mjs",
     "apa-safe-fetch": "packages/apa-safe/cli.mjs",
     "apa-safe-npx": "packages/apa-safe/cli.mjs",
-    "apa-reports": "packages/apa-reports/cli.mjs"
+    "apa-reports": "packages/apa-reports/cli.mjs",
+    "apa-skillgraph": "packages/apa-skillgraph/cli.mjs",
+    "apa-run": "packages/apa-run/cli.mjs",
+    "apa-bench": "packages/apa-bench/cli.mjs"
   },
   "scripts": {
     "gen:skill-docs": "node scripts/gen-skill-docs.mjs",
     "gen:skill-docs:check": "node scripts/gen-skill-docs.mjs --check",
+    "skillgraph": "node packages/apa-skillgraph/cli.mjs",
+    "skillgraph:docs": "node packages/apa-skillgraph/cli.mjs docs",
+    "skillgraph:check": "node packages/apa-skillgraph/cli.mjs check && node packages/apa-skillgraph/cli.mjs docs --check",
     "validate": "node packages/apa-validate/validate.mjs",
     "viewer:build": "node packages/apa-viewer/build_manifest.mjs",
     "syntax": "node scripts/check-syntax.mjs",
     "skills:check": "node scripts/check-skills.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "benchmark": "node scripts/benchmark.mjs --mock",
+    "benchmark": "node packages/apa-bench/cli.mjs --mock",
     "coverage": "node scripts/coverage-summary.mjs",
     "test": "node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\"",
-    "build": "node scripts/gen-skill-docs.mjs && node scripts/gen-skill-docs.mjs --check && node scripts/check-syntax.mjs && node scripts/check-skills.mjs && node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\" && node scripts/smoke.mjs",
+    "build": "node scripts/gen-skill-docs.mjs && node scripts/gen-skill-docs.mjs --check && node packages/apa-skillgraph/cli.mjs check && node packages/apa-skillgraph/cli.mjs docs --check && node scripts/check-syntax.mjs && node scripts/check-skills.mjs && node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\" && node scripts/smoke.mjs",
     "setup": "node scripts/setup.mjs"
   }
 }

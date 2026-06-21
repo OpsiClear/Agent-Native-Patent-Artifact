@@ -97,4 +97,3 @@ Claim scope/breadth is the human's decision; you recommend a ladder and flag the
 - Decide or assert claim scope/breadth as final, render a patentability conclusion, or apply strategic
   narrowing edits for a pro-se user. Practitioner-mode edits still require human approval.
 - Leave a formal claim limitation `ai-suggested` at assembly - it blocks. Rules as of 2026-06-15.
-

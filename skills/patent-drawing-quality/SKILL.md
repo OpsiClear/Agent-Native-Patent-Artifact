@@ -150,4 +150,3 @@ If text or numeral size is judged visually rather than measured on a rendered sh
 - Add visual detail not grounded in the disclosure.
 - Use color, photographs, gradients, shadows, or decorative styling without flagging petition/new-matter
   and publication risks. Rules as of 2026-06-15; verify currency.
-

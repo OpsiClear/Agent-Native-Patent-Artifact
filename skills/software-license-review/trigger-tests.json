@@ -1,0 +1,14 @@
+{
+  "command": "/apa-license",
+  "keywords": ["software license", "license compatibility", "THIRD_PARTY_NOTICES"],
+  "should_trigger": [
+    "/apa-license review this repo's software license and third-party notices.",
+    "Check open source license compatibility and patent grant posture before commercial release.",
+    "Audit LICENSE, package metadata, and THIRD_PARTY_NOTICES for this toolkit."
+  ],
+  "should_not_trigger": [
+    "Use /apa-priorart to search patent references for the claims.",
+    "Draft a patent claim set for the invention.",
+    "Fix a CSS layout bug in the viewer."
+  ]
+}

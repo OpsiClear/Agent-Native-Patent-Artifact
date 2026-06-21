@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-office-action
+kind: core
+phase: prosecution
+command: /apa-office-action
+version: "0.1"
+description: "Parse Office Actions, estimate response dates, and scaffold practitioner-reviewed responses."
+inputs: [prosecution/oa-NN.md, PATENT.md]
+outputs: [prosecution/office_action_report.json, prosecution/response-scaffold.md, trace/runlog.jsonl]
+upstream: []
+downstream: []
+gates_after: [practitioner-mode-required]
+human_checkpoints: [practitioner-response-review, docketing-verification]
+domain_hooks: []
+external_sinks: []
+safety: { legal_conclusion: false, requires_practitioner_mode_for_edits: true, may_file: false }

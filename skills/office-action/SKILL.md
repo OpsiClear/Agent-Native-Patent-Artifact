@@ -105,4 +105,3 @@ See ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never con
   definiteness — terms of degree need an objective bound; (f) means-plus-function structure.
 - Output is flags and `questions_for_attorney` / `questions_for_inventor`, never an opinion or FTO/
   validity/infringement conclusion. for the statutory-ground lens. Rules as of 2026-06-15.
-

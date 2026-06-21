@@ -85,4 +85,3 @@ the redaction guard and a human reviewer approve it.
 ## Do NOT
 - Render any conclusion (patentable / novel / non-obvious / clear / valid). Output is flags + questions.
 - Assert a search was complete or "no anticipating art found." Rules as of 2026-06-15.
-

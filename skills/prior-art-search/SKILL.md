@@ -111,4 +111,3 @@ airtight enforcement.
 - Rely on or list a reference on an IDS before it is human-verified.
 - Render a patentability / novelty / FTO conclusion. Output is flags and questions.
 - Send any query without scanning it at the sink first. Rules as of 2026-06-15; verify currency.
-

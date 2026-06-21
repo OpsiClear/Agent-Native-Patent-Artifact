@@ -1,0 +1,17 @@
+schema: apa-skill-v1
+id: apa-software-patent
+kind: domain
+domain: software
+phase: domain-review
+command: /apa-software-patent
+version: "0.1"
+description: "Review software patent matter for technical-improvement, 101, CRM, and software 112 risks."
+inputs: [logic/claims.md, src/embodiments.md, domain/software/]
+outputs: [domain/software/software_patent_report.json, logic/software_patent_report.json]
+upstream: [apa-analyze, apa-claims]
+downstream: [apa-rigor]
+gates_after: [software-101-review, software-112-review]
+human_checkpoints: [practitioner-eligibility-review]
+domain_hooks: [claims.seed, analysis.domain, spec.review, rigor.domain]
+external_sinks: []
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

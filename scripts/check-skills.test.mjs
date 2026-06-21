@@ -22,8 +22,8 @@ const SKILLS_DIR = join(ROOT, "skills");
 test("skill trigger fixtures and descriptions pass the offline checker", () => {
   const result = checkSkills();
   assert.equal(result.ok, true, result.errors.join("\n"));
-  assert.equal(result.skills.length, 14);
-  assert.equal(result.promptCount, 84);
+  assert.equal(result.skills.length, 16);
+  assert.equal(result.promptCount, 96);
 });
 
 test("every skill has committed trigger fixtures with at least three positive and negative prompts", () => {

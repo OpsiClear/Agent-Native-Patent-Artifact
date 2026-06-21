@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-analyze
+kind: core
+phase: analysis
+command: /apa-analyze
+version: "0.1"
+description: "Build claim charts and 101/102/103/112 flags as questions."
+inputs: [logic/claims.md, logic/prior_art.md, logic/reference_matrix.md, evidence/prior_art/]
+outputs: [logic/patentability.md, logic/patentability_report.json]
+upstream: [apa-priorart]
+downstream: [apa-claims, apa-examiner]
+gates_after: [report-schema-valid]
+human_checkpoints: [practitioner-analysis-review]
+domain_hooks: [analysis.domain]
+external_sinks: []
+safety: { legal_conclusion: false, search_complete_asserted: false, may_file: false }

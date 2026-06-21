@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/registry.schema.json",
+  "title": "APA Skill Registry",
+  "type": "object",
+  "required": ["schema", "version", "global_gates", "hooks", "pipeline"],
+  "properties": {
+    "schema": { "const": "apa-skill-registry-v1" },
+    "version": { "type": "string" },
+    "layout": { "type": "string" },
+    "global_gates": { "type": "array" },
+    "allowed_loops": { "type": "array" },
+    "hooks": { "type": "array" },
+    "pipeline": { "type": "object" },
+    "optional": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

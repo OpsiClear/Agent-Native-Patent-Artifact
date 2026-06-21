@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-drawing-quality
+kind: core
+phase: drafting
+command: /apa-drawing-quality
+version: "0.1"
+description: "Review patent drawings for professional quality and formal-risk flags."
+inputs: [evidence/drawings/]
+outputs: [evidence/drawings/quality-review.json]
+upstream: [apa-figures]
+downstream: [apa-assemble]
+gates_after: [drawing-quality]
+human_checkpoints: [draftsperson-or-practitioner-review]
+domain_hooks: []
+external_sinks: []
+safety: { legal_conclusion: false, may_file: false }

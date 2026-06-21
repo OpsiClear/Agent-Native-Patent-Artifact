@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/skill-run.schema.json",
+  "title": "APA Skill Run Record",
+  "type": "object",
+  "required": ["schema", "skill_id", "started_at", "ended_at", "inputs", "outputs", "gates"],
+  "properties": {
+    "schema": { "const": "apa-skill-run-v1" },
+    "skill_id": { "type": "string" },
+    "skill_version": { "type": "string" },
+    "started_at": { "type": "string" },
+    "ended_at": { "type": "string" },
+    "inputs": { "type": "array" },
+    "outputs": { "type": "array" },
+    "external_sinks": { "type": "array" },
+    "human_checkpoints": { "type": "array" },
+    "gates": { "type": "array" }
+  },
+  "additionalProperties": true
+}

@@ -131,4 +131,3 @@ surface the residual findings for the human.
 
 See `references/apa-schema.md` (the on-disk schema) and `references/validation-checklist.md`.
 Rules encoded as of 2026-06-15; verify currency.
-

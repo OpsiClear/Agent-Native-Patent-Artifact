@@ -79,4 +79,3 @@ human checkpoint was satisfied. Use the deterministic helper in
 ## Do NOT
 - Sign, certify, or file - APA stops at the submit boundary; a human files via Patent Center.
 - Skip a checkpoint or assert any patentability/novelty/FTO conclusion. Rules as of 2026-06-15.
-

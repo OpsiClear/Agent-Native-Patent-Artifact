@@ -84,7 +84,7 @@ export function renderSkill(tmplPath, hostId) {
     `<!-- AUTO-GENERATED for host '${hostId}' from ${relName(tmplPath)} by scripts/gen-skill-docs.mjs - DO NOT EDIT. -->`,
     "",
   ].filter((x) => x !== null).join("\n");
-  return header + resolvedBody.replace(/^\s+/, "") + "\n";
+  return header + resolvedBody.replace(/^\s+/, "").trimEnd() + "\n";
 }
 
 export function renderReferences(tmplPath, hostId) {

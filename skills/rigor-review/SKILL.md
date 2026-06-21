@@ -83,4 +83,3 @@ anchors and emits `patent_rigor_report.json`; the **verdict is computed determin
   sink scanning, untrusted-content wrapping, and runlog hashing are preserved.
 - Rules as of 2026-06-15; verify currency. For a fresh external 102/103 sweep against the
   current claims, run `/apa-priorart` (fetch-enabled) separately - this internal audit does not fetch.
-

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/skill.schema.json",
+  "title": "APA Skill Metadata",
+  "type": "object",
+  "required": ["schema", "id", "kind", "phase", "command", "version", "description", "inputs", "outputs", "safety"],
+  "properties": {
+    "schema": { "const": "apa-skill-v1" },
+    "id": { "type": "string", "pattern": "^apa-[a-z0-9-]+$" },
+    "kind": { "enum": ["core", "domain", "support"] },
+    "domain": { "type": "string" },
+    "phase": { "type": "string" },
+    "command": { "type": "string", "pattern": "^/apa-[a-z0-9-]+$" },
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "inputs": { "type": "array", "items": { "type": "string" } },
+    "outputs": { "type": "array", "items": { "type": "string" } },
+    "upstream": { "type": "array", "items": { "type": "string" } },
+    "downstream": { "type": "array", "items": { "type": "string" } },
+    "gates_after": { "type": "array", "items": { "type": "string" } },
+    "human_checkpoints": { "type": "array", "items": { "type": "string" } },
+    "domain_hooks": { "type": "array", "items": { "type": "string" } },
+    "external_sinks": { "type": "array" },
+    "safety": { "type": "object" }
+  },
+  "additionalProperties": true
+}

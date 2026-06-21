@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-autoprep
+kind: core
+phase: orchestration
+command: /apa-autoprep
+version: "0.1"
+description: "Plan and run the full APA lifecycle with gates and checkpoints."
+inputs: [PATENT.md, logic/, src/, evidence/, trace/]
+outputs: [trace/autoprep_state.json, trace/runlog.jsonl]
+upstream: []
+downstream: [apa-disclose, apa-compile, apa-priorart, apa-analyze, apa-claims, apa-spec, apa-figures, apa-drawing-quality, apa-examiner, apa-rigor, apa-assemble]
+gates_after: [natural-person-inventor, no-unadopted-ai-limitations, validation-clean]
+human_checkpoints: [claim-scope-adoption, filing-submit-boundary]
+domain_hooks: [disclosure.enrich, claims.seed, analysis.domain, figures.plan, figures.review, spec.review, rigor.domain, assembly.preflight]
+external_sinks: []
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

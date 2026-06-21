@@ -270,8 +270,8 @@ function printText(summary) {
   console.log(`benchmarks ${summary.ok ? "passed" : "failed"} (${summary.totals.passed}/${summary.totals.cases})`);
 }
 
-function main() {
-  const args = parseArgs(process.argv.slice(2));
+export function main(argv = process.argv.slice(2)) {
+  const args = parseArgs(argv);
   if (args.help) {
     console.log("usage: node scripts/benchmark.mjs --mock [--json] [--out <file>] [--index <file>]");
     return 0;

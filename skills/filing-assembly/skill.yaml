@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-assemble
+kind: core
+phase: assembly
+command: /apa-assemble
+version: "0.1"
+description: "Assemble package drafts and upload manifests while stopping at the submit boundary."
+inputs: [PATENT.md, logic/claims.md, src/embodiments.md, evidence/, patent_rigor_report.json]
+outputs: [assembled/, trace/runlog.jsonl]
+upstream: [apa-rigor, apa-drawing-quality]
+downstream: []
+gates_after: [submit-boundary]
+human_checkpoints: [signature-review, entity-status-review, patent-center-upload]
+domain_hooks: [assembly.preflight]
+external_sinks: []
+safety: { legal_conclusion: false, may_file: false, stops_at_submit_boundary: true }

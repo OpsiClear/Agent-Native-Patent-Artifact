@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-claims
+kind: core
+phase: drafting
+command: /apa-claims
+version: "0.1"
+description: "Draft and lint source-backed claims and limitations."
+inputs: [PATENT.md, logic/problem.md, src/embodiments.md, logic/patentability.md]
+outputs: [logic/claims.md, logic/claims_report.json]
+upstream: [apa-analyze]
+downstream: [apa-spec, apa-figures, apa-examiner]
+gates_after: [no-unadopted-ai-limitations, claim-lint, source-span-proof]
+human_checkpoints: [claim-scope-adoption]
+domain_hooks: [claims.seed]
+external_sinks: []
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

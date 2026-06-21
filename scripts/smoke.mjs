@@ -35,6 +35,9 @@ run("build viewer manifest", ["packages/apa-viewer/build_manifest.mjs", "example
 run("eval mock", ["packages/apa-eval/cli.mjs", "--matter", "examples/minimal-patent-artifact", "--mock", "--json"]);
 run("scaffold report schema", ["packages/apa-reports/cli.mjs", "scaffold", "claims", "--matter", "examples/minimal-patent-artifact", "--out", claimsReportOut]);
 run("check report schema", ["packages/apa-reports/cli.mjs", "check", claimsReportOut, "--kind", "claims"]);
+run("skillgraph check", ["packages/apa-skillgraph/cli.mjs", "check"]);
+run("apa-run plan", ["packages/apa-run/cli.mjs", "plan", "--matter", "examples/minimal-patent-artifact", "--domain", "software", "--json"]);
+run("apa-bench mock", ["packages/apa-bench/cli.mjs", "--mock", "--json"]);
 run("figure gallery quality", [
   "packages/apa-figure/cli.mjs",
   "review-dir",

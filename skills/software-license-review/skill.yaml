@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-license
+kind: support
+phase: governance
+command: /apa-license
+version: "0.1"
+description: "Review software license posture, third-party notices, provenance, and patent-license clauses."
+inputs: [LICENSE, package-manifests, source-tree]
+outputs: [license_review.md, license_review.json]
+upstream: []
+downstream: []
+gates_after: [counsel-review]
+human_checkpoints: [release-owner-review, counsel-review]
+domain_hooks: []
+external_sinks: [{ tool: apa-safe-fetch, required: true }]
+safety: { legal_conclusion: false, may_file: false }

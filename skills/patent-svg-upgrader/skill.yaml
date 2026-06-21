@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-svg-upgrader
+kind: support
+phase: drafting
+command: /apa-svg-upgrader
+version: "0.1"
+description: "Normalize rough SVG figures into patent drawing candidates without adding visual new matter."
+inputs: [evidence/drawings/]
+outputs: [evidence/drawings/svg_upgrade_report.json]
+upstream: [apa-figures]
+downstream: [apa-drawing-quality]
+gates_after: [numeral-parity, no-unsupported-visual-matter]
+human_checkpoints: [drawing-change-review]
+domain_hooks: [figures.review]
+external_sinks: [{ tool: apa-safe-npx, required: true }]
+safety: { legal_conclusion: false, may_file: false }

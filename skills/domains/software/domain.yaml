@@ -1,0 +1,68 @@
+schema: apa-domain-pack-v1
+id: software
+version: "0.1"
+status: active
+description: "Software, SaaS, AI/ML, data-processing, networking, UI, codec, database, security, and computer-implemented invention support."
+detection_signals:
+  - source code repository
+  - API endpoint
+  - algorithm
+  - data structure
+  - trained model
+  - non-transitory computer readable medium
+constraints:
+  writes_only_under: domain/software/
+  canonical_artifact_writes: false
+  legal_conclusion: false
+hooks:
+  - id: disclosure.enrich
+    outputs: [domain/software/codebase_inventory.json, domain/software/software_disclosure_summary.md]
+    blocking: false
+  - id: claims.seed
+    outputs: [domain/software/software_claim_seeds.json]
+    blocking: false
+  - id: analysis.domain
+    outputs: [domain/software/software_101_review.json]
+    blocking: false
+  - id: figures.plan
+    outputs: [domain/software/software_architecture_figures.json]
+    blocking: false
+  - id: rigor.domain
+    outputs: [domain/software/software_patent_report.json]
+    blocking: false
+skills:
+  - id: apa-codebase-to-patent
+    status: scaffold
+    command: /apa-codebase-to-patent
+    hook: disclosure.enrich
+    outputs: [domain/software/codebase_inventory.json]
+  - id: apa-software-disclosure-extractor
+    status: scaffold
+    command: /apa-software-disclosure-extractor
+    hook: disclosure.enrich
+    outputs: [domain/software/software_disclosure_summary.md]
+  - id: apa-software-claim-patterns
+    status: scaffold
+    command: /apa-software-claim-patterns
+    hook: claims.seed
+    outputs: [domain/software/software_claim_seeds.json]
+  - id: apa-software-101-review
+    status: scaffold
+    command: /apa-software-101-review
+    hook: analysis.domain
+    outputs: [domain/software/software_101_review.json]
+  - id: apa-software-architecture-figures
+    status: scaffold
+    command: /apa-software-architecture-figures
+    hook: figures.plan
+    outputs: [domain/software/software_architecture_figures.json]
+  - id: apa-software-patent
+    status: active
+    command: /apa-software-patent
+    hook: rigor.domain
+    skill_path: skills/software-patent-review
+    outputs: [domain/software/software_patent_report.json]
+benchmarks:
+  - id: software-public-codebase-to-patent
+    status: planned
+    source_class: public_repository

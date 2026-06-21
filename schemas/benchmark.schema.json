@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/benchmark.schema.json",
+  "title": "APA Benchmark Case",
+  "type": "object",
+  "required": ["id", "kind", "source_class", "expected"],
+  "properties": {
+    "id": { "type": "string" },
+    "kind": { "type": "string" },
+    "source_class": { "type": "string" },
+    "targeted_skills": { "type": "array", "items": { "type": "string" } },
+    "metrics": { "type": "object" },
+    "expected": { "type": "string" }
+  },
+  "additionalProperties": true
+}
