@@ -1,0 +1,20 @@
+{
+  "command": "/apa-real-patent-skill-tune",
+  "keywords": [
+    "real patent skill tune",
+    "fresh generated report tuning",
+    "oracle isolated skill tuning",
+    "software patent skill auto-tune",
+    "APA skill benchmark tuning"
+  ],
+  "should_trigger": [
+    "/apa-real-patent-skill-tune tune the target APA skill against real public software patent fixtures with fresh generated reports.",
+    "Set up oracle isolated skill tuning so public patent expected.json files are hidden from the report generator.",
+    "Run a software patent skill auto-tune loop using real patent skill tune guardrails, scorer floors, generated SKILL.md freshness, and holdout fixtures."
+  ],
+  "should_not_trigger": [
+    "Use /apa-public-patent-benchmark to create a new public patent fixture, expected oracle, and gap report from Google Patents.",
+    "Review this source tree for open source license compatibility and third-party notices.",
+    "Draft software patent claims from this disclosure and flag 101 issues."
+  ]
+}

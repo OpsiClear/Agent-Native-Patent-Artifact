@@ -1,6 +1,6 @@
 ---
 name: public-patent-benchmark
-description: "Create and run real public patent reproduction benchmarks for APA skills, including public software-patent skill tuning. Use when converting a public patent or publication into a plain-text fixture, building an expected oracle, comparing a target skill against the public record, or hardening skills with real-patent benchmark gaps. Invoke as /apa-public-patent-benchmark."
+description: "Create and run real public patent reproduction benchmarks for APA skills. Use when converting a public patent or publication into a plain-text fixture, building an expected oracle, comparing a target skill against the public record, or producing a benchmark gap report. Do not use for sustained skill auto-tune, drafting patent matter, reviewing a patent matter, or giving patentability advice. Invoke as /apa-public-patent-benchmark."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
@@ -28,9 +28,10 @@ version: 0.1
 ## What this does
 
 Turns a real, already-public patent or patent publication into a reproducible benchmark fixture for
-APA skills. The default high-value use is hardening `/apa-software-patent` against a public software
+APA skills. The default high-value use is measuring `/apa-software-patent` against a public software
 patent: convert the public record to plain text, create a source-span oracle, run the target skill,
-compare outputs against the oracle, and record gaps that can drive an auto-tune loop.
+compare outputs against the oracle, and record gaps. Sustained skill tuning from those gaps belongs
+in `/apa-real-patent-skill-tune`.
 
 Load [public patent benchmark guide](references/public-patent-benchmark.md) before creating or
 scoring a fixture. Load [confidentiality sinks](references/confidentiality-sinks.md) before any
@@ -67,9 +68,9 @@ network fetch, cloud LLM call, package-manager command, or external OCR/conversi
    Blocking findings include non-public source material, missing source hash, missing representative
    claim text, invented conception/prosecution facts, direct external sink usage, or any target output
    that states patentability/eligibility/validity as a conclusion.
-8. **Use gaps to tune narrowly.** If the user asks to improve a skill, change one target-skill behavior
-   at a time, rerun the benchmark, keep the edit only if the report improves without creating a new
-   blocker, and preserve the public fixture as a regression case.
+8. **Hand off sustained tuning.** If the user asks to improve a skill from benchmark gaps, route to
+   `/apa-real-patent-skill-tune`. This skill may record the gap report and narrow hypotheses, but it
+   does not own auto-tune keep/discard loops.
 
 ## Output Contract
 

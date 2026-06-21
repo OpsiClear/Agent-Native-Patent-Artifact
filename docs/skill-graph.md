@@ -28,6 +28,7 @@ The current repository keeps the original flat core skill layout for installer c
 | `apa-software-patent` | `/apa-software-patent` | domain-review | Review software patent matter for technical-improvement, 101, CRM, and software 112 risks. |
 | `apa-svg-upgrader` | `/apa-svg-upgrader` | drafting | Normalize rough SVG figures into patent drawing candidates without adding visual new matter. |
 | `apa-public-patent-benchmark` | `/apa-public-patent-benchmark` | benchmarking | Create and score real public patent reproduction benchmarks for APA skills. |
+| `apa-real-patent-skill-tune` | `/apa-real-patent-skill-tune` | benchmarking | Tune APA skills against real public patent fixtures using fresh generated reports, oracle isolation, scorer floors, and auto-tune guardrails. |
 | `apa-license` | `/apa-license` | governance | Review software license posture, third-party notices, provenance, and patent-license clauses. |
 
 ## Hook Points
@@ -60,6 +61,7 @@ flowchart TD
   apa_analyze["/apa-analyze<br/>analysis"]
   apa_priorart["/apa-priorart<br/>search"]
   apa_public_patent_benchmark["/apa-public-patent-benchmark<br/>benchmarking"]
+  apa_real_patent_skill_tune["/apa-real-patent-skill-tune<br/>benchmarking"]
   apa_rigor["/apa-rigor<br/>review"]
   apa_license["/apa-license<br/>governance"]
   apa_software_patent["/apa-software-patent<br/>domain-review"]

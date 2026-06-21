@@ -1,7 +1,8 @@
 # Public Patent Benchmark Guide
 
-Use this guide when `/apa-public-patent-benchmark` creates, scores, or tunes against a real public
-patent/publication fixture.
+Use this guide when `/apa-public-patent-benchmark` creates, scores, or reports gaps against a real
+public patent/publication fixture. Use `/apa-real-patent-skill-tune` for sustained skill tuning from
+those gaps.
 
 ## Contents
 
@@ -9,7 +10,7 @@ patent/publication fixture.
 - [Plain-Text Fixture Shape](#plain-text-fixture-shape)
 - [Expected Oracle Shape](#expected-oracle-shape)
 - [Reproduction Report Shape](#reproduction-report-shape)
-- [Tuning Loop](#tuning-loop)
+- [Tuning Handoff](#tuning-handoff)
 
 ## Selection Criteria
 
@@ -112,13 +113,13 @@ Do not include legal conclusions. Use `risk_flags` such as `abstract-idea-risk`,
 }
 ```
 
-## Tuning Loop
+## Tuning Handoff
 
 1. Freeze the fixture source and expected oracle before editing a target skill.
 2. Run the target skill and generate a report.
-3. Convert one gap into one small target-skill change.
-4. Rerun the same fixture plus existing simulations.
-5. Keep the change only if it improves the report and introduces no blockers.
+3. Convert each gap into a narrow hypothesis and record it in the benchmark report.
+4. If the user wants skill changes, hand off to `/apa-real-patent-skill-tune`.
+5. Do not run an auto-tune keep/discard loop from this skill.
 
 Store failed hypotheses in the run notes when useful; do not rewrite the public source or expected
 oracle to make the target skill look better.

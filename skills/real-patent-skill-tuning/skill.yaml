@@ -1,0 +1,19 @@
+schema: apa-skill-v1
+id: apa-real-patent-skill-tune
+kind: support
+phase: benchmarking
+command: /apa-real-patent-skill-tune
+version: "0.1"
+description: "Tune APA skills against real public patent fixtures using fresh generated reports, oracle isolation, scorer floors, and auto-tune guardrails."
+inputs: [skills/, benchmarks/fixtures/, packages/apa-bench/, .apa/tune/]
+outputs: [.apa/tune/<run-id>/, .autotune/software-patent-results.tsv, skill-change-summary.md]
+upstream: [apa-public-patent-benchmark]
+downstream: []
+gates_after: [fresh-generated-reports, oracle-isolation, no-legal-conclusions, legal-safety-floors, generated-skill-freshness]
+human_checkpoints: [holdout-review, legal-posture-review]
+domain_hooks: []
+external_sinks:
+  - { tool: apa-safe-fetch, required: true, condition: "network source acquisition" }
+  - { tool: apa-safe-send, required: true, condition: "cloud LLM or external API egress" }
+  - { tool: apa-safe-npx, required: true, condition: "package-manager execution" }
+safety: { legal_conclusion: false, may_file: false, scan_at_sink: true }

@@ -8,7 +8,7 @@
   ],
   "should_not_trigger": [
     "Use /apa-compile to lift this patent into a matter artifact.",
-    "Run the synthetic software patent simulation suite.",
+    "Run a sustained software patent skill auto-tune loop after the public patent fixture already exists.",
     "Review this repository for open source license compatibility."
   ]
 }
