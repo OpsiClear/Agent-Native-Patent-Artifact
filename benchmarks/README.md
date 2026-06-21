@@ -19,3 +19,7 @@ node scripts/benchmark.mjs --mock
 node scripts/benchmark.mjs --mock --json --out benchmark-results.json
 node scripts/benchmark.mjs --mock --case software-patent-skill-sim
 ```
+
+Use `/apa-public-patent-benchmark` when creating a new real public patent fixture. It converts the
+public record into `source.md`, builds a source-span expected oracle, runs a target skill such as
+`/apa-software-patent`, and emits a reproduction report before a case is adopted into CI.

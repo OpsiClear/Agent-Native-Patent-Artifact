@@ -74,6 +74,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/patent-drawing-quality/` | **(Phase 3)** `/apa-drawing-quality` — review drawings for professional draftsperson quality, formal-risk precheck, and HTML/SVG/PDF export choices | ✅ |
 | `skills/patentability-analysis/` | **(Phase 3)** `/apa-analyze` — claim charts + 101/102/103/112 flags (never conclusions) | ✅ |
 | `skills/software-patent-review/` | **(Phase 3)** `/apa-software-patent` — review software/computer-implemented inventions for technical-improvement framing, 101 eligibility flags, algorithm support, and CRM/data-structure claim risks | ✅ |
+| `skills/public-patent-benchmark/` | `/apa-public-patent-benchmark` — turn real public patents/publications into plain-text benchmark fixtures, source-span oracles, and reproduction reports for skill hardening | ✅ |
 | `skills/filing-assembly/` | **(Phase 4)** `/apa-assemble` — assemble the filing package + pre-filing gate; stops at submit boundary | ✅ |
 | `skills/rigor-review/` | **(Phase 5)** `/apa-rigor` — read-only six-dimension audit → `patent_rigor_report.json` verdict | ✅ |
 | `skills/examiner-adversary/` | **(Phase 5)** `/apa-examiner` — role-play the examiner; critique→fix loop into the prosecution rationale | ✅ |
@@ -97,6 +98,7 @@ node packages/apa-skillgraph/cli.mjs check                       # validate skil
 node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --domain software
 node packages/apa-bench/cli.mjs --mock                           # deterministic benchmark suite
 node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim   # /apa-software-patent simulation
+node scripts/gen-skill-docs.mjs && node packages/apa-skillgraph/cli.mjs check   # includes /apa-public-patent-benchmark metadata
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
 node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@0.1.0 --dry-run -- --help   # guarded network-tool demo
 node packages/apa-reports/cli.mjs scaffold claims --matter examples/minimal-patent-artifact   # semantic report schema demo

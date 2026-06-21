@@ -1,0 +1,14 @@
+{
+  "command": "/apa-public-patent-benchmark",
+  "keywords": ["public patent benchmark", "real patent reproduction", "plain text patent fixture", "patent fixture oracle"],
+  "should_trigger": [
+    "/apa-public-patent-benchmark create a real public software patent fixture and benchmark the software review skill.",
+    "Convert this public patent into a plain text patent fixture with an expected oracle and reproduction report.",
+    "Run a real patent reproduction benchmark using a public patent, source spans, and gap scoring."
+  ],
+  "should_not_trigger": [
+    "Use /apa-compile to lift this patent into a matter artifact.",
+    "Run the synthetic software patent simulation suite.",
+    "Review this repository for open source license compatibility."
+  ]
+}

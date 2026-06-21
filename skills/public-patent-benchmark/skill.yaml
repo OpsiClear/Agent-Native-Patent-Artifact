@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-public-patent-benchmark
+kind: support
+phase: benchmarking
+command: /apa-public-patent-benchmark
+version: "0.1"
+description: "Create and score real public patent reproduction benchmarks for APA skills."
+inputs: [public-patent-url-or-text, benchmarks/fixtures/, skills/]
+outputs: [benchmarks/fixtures/<case-id>/source.md, benchmarks/fixtures/<case-id>/expected.json, benchmarks/fixtures/<case-id>/benchmark_report.json]
+upstream: []
+downstream: []
+gates_after: [public-source-only, source-span-oracle, no-legal-conclusions]
+human_checkpoints: [oracle-review, benchmark-adoption]
+domain_hooks: []
+external_sinks: [{ tool: apa-safe-fetch, required: true }]
+safety: { legal_conclusion: false, may_file: false }
