@@ -35,5 +35,48 @@
     ],
     "risk_flags": ["crm-transitory-signal-risk"],
     "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  },
+  "checks": {
+    "required_terms": [
+      {
+        "id": "PG-MECH",
+        "field": "technical_improvement.mechanism",
+        "all": ["linked-document", "linking", "extrinsic", "iterative", "recursive", "rank"]
+      },
+      {
+        "id": "PG-PROBLEM",
+        "field": "technical_improvement.baseline_problem",
+        "all": ["low-quality", "irrelevant"]
+      },
+      {
+        "id": "PG-EFFECT",
+        "field": "technical_improvement.technical_effect",
+        "all": ["ranking", "hypermedia"]
+      }
+    ],
+    "required_eligibility_risks": ["math-only"],
+    "required_support_risks": ["crm-transitory-risk"],
+    "required_claim_family": {
+      "method": ["present", "proposed"],
+      "system": ["unsupported"],
+      "non_transitory_crm": ["unsupported"]
+    },
+    "required_evidence_spans": [
+      "technical_improvement.evidence_span",
+      "eligibility_flags[].evidence_span",
+      "support_flags[].evidence_span"
+    ],
+    "forbidden_legal_conclusion_terms": [
+      "is patent eligible",
+      "are patent eligible",
+      "is eligible under 101",
+      "is valid",
+      "are valid",
+      "is patentable",
+      "are patentable",
+      "infringes",
+      "freedom to operate",
+      "cleared to file"
+    ]
   }
 }

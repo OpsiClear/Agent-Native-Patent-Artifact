@@ -30,5 +30,46 @@
     ],
     "risk_flags": [],
     "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  },
+  "checks": {
+    "required_terms": [
+      {
+        "id": "MR-MECH",
+        "field": "technical_improvement.mechanism",
+        "all": ["key/value", "schemas", "intermediate", "common key", "group-specific", "iterators", "metadata"]
+      },
+      {
+        "id": "MR-PROBLEM",
+        "field": "technical_improvement.baseline_problem",
+        "all": ["heterogeneous", "different schemas"]
+      },
+      {
+        "id": "MR-EFFECT",
+        "field": "technical_improvement.technical_effect",
+        "all": ["distributed", "joins", "heterogeneous schemas"]
+      }
+    ],
+    "required_eligibility_risks": [],
+    "required_support_risks": [],
+    "required_claim_family": {
+      "method": ["present", "proposed"],
+      "system": ["present", "proposed"],
+      "non_transitory_crm": ["unsupported"]
+    },
+    "required_evidence_spans": [
+      "technical_improvement.evidence_span"
+    ],
+    "forbidden_legal_conclusion_terms": [
+      "is patent eligible",
+      "are patent eligible",
+      "is eligible under 101",
+      "is valid",
+      "are valid",
+      "is patentable",
+      "are patentable",
+      "infringes",
+      "freedom to operate",
+      "cleared to file"
+    ]
   }
 }

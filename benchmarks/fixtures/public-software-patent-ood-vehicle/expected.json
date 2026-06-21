@@ -35,5 +35,48 @@
     ],
     "risk_flags": ["unclear-bound-review"],
     "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  },
+  "checks": {
+    "required_terms": [
+      {
+        "id": "OOD-MECH",
+        "field": "technical_improvement.mechanism",
+        "all": ["neural-network", "feature vectors", "cluster", "euclidean-distance", "second supervised filter", "vehicle-control"]
+      },
+      {
+        "id": "OOD-PROBLEM",
+        "field": "technical_improvement.baseline_problem",
+        "all": ["distributional shift", "over-confident", "vehicle"]
+      },
+      {
+        "id": "OOD-EFFECT",
+        "field": "technical_improvement.technical_effect",
+        "all": ["sensor images", "steering", "braking", "acceleration"]
+      }
+    ],
+    "required_eligibility_risks": ["field-of-use"],
+    "required_support_risks": ["unclear-bound"],
+    "required_claim_family": {
+      "method": ["present", "proposed"],
+      "system": ["unsupported"],
+      "non_transitory_crm": ["unsupported"]
+    },
+    "required_evidence_spans": [
+      "technical_improvement.evidence_span",
+      "eligibility_flags[].evidence_span",
+      "support_flags[].evidence_span"
+    ],
+    "forbidden_legal_conclusion_terms": [
+      "is patent eligible",
+      "are patent eligible",
+      "is eligible under 101",
+      "is valid",
+      "are valid",
+      "is patentable",
+      "are patentable",
+      "infringes",
+      "freedom to operate",
+      "cleared to file"
+    ]
   }
 }

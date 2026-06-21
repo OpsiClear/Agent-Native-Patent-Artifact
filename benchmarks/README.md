@@ -18,6 +18,7 @@ Run:
 node scripts/benchmark.mjs --mock
 node scripts/benchmark.mjs --mock --json --out benchmark-results.json
 node scripts/benchmark.mjs --mock --case software-patent-skill-sim
+npm run score:real-software-patents
 ```
 
 Use `/apa-public-patent-benchmark` when creating a new real public patent fixture. It converts the
@@ -34,3 +35,15 @@ These are browser-extracted advisory fixtures. Direct CLI/Playwright access to t
 pages returned Cloudflare verification pages during extraction, while Google Patents pages were
 accessible through Playwright Chromium without challenge. Keep them out of `benchmarks/index.json`
 until a deterministic public source fetch path is added.
+
+`npm run score:real-software-patents` scores these committed fixtures offline. It does not fetch
+patent pages, call an LLM, or assert eligibility, validity, infringement, patentability, or freedom
+to operate. The scorer reads each fixture's `source.md`, `expected.json`, and latest
+`runs/*/software_patent_report.json`, verifies source hashes, checks source-span discipline, rewards
+recovery of source-backed technical mechanisms, and blocks forbidden legal-conclusion phrases.
+
+Use the synthetic `software-patent-skill-sim` case as the fast regression guard for common traps
+such as thin SaaS claims, AI black boxes, math-only claims, and CRM transitory risk. Use the real
+public software-patent scorer as the fixed metric for skill tuning. Auto-tune runs should improve
+the real-patent average score while keeping `npm run simulate:software-patent` and
+`npm run skills:check` passing.
