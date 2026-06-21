@@ -1,0 +1,34 @@
+{
+  "schema": "apa-public-patent-benchmark-expected-v1",
+  "case_id": "public-software-patent-mapreduce",
+  "targeted_skills": ["apa-software-patent"],
+  "source_class": "public_patent",
+  "oracle_status": "advisory-browser-extracted",
+  "source_hash": "7f8ebc6f0315169bd98cd24cf48e6cef419050f060e09616a0d3b000ecf50a5f",
+  "expected": {
+    "technical_improvements": [
+      {
+        "id": "TI01",
+        "summary": "Conventional MapReduce lacks efficient heterogeneous-source processing support.",
+        "source_span": {"file": "source.md", "lines": [31, 31], "sha256": "7f8ebc6f0315169bd98cd24cf48e6cef419050f060e09616a0d3b000ecf50a5f"},
+        "confidence": "medium"
+      },
+      {
+        "id": "TI02",
+        "summary": "Group-specific mapping, identifiable intermediate data, common keys, and iterators enable distributed joins across different schemas.",
+        "source_span": {"file": "source.md", "lines": [33, 37], "sha256": "7f8ebc6f0315169bd98cd24cf48e6cef419050f060e09616a0d3b000ecf50a5f"},
+        "confidence": "medium"
+      }
+    ],
+    "claim_families": ["method", "system"],
+    "support_expectations": [
+      {
+        "id": "SUP01",
+        "summary": "The review should recover heterogeneous schemas, common-key intermediate data, group-specific iterators, and metadata as the technical mechanism.",
+        "source_span": {"file": "source.md", "lines": [33, 43], "sha256": "7f8ebc6f0315169bd98cd24cf48e6cef419050f060e09616a0d3b000ecf50a5f"}
+      }
+    ],
+    "risk_flags": [],
+    "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  }
+}

@@ -23,3 +23,14 @@ node scripts/benchmark.mjs --mock --case software-patent-skill-sim
 Use `/apa-public-patent-benchmark` when creating a new real public patent fixture. It converts the
 public record into `source.md`, builds a source-span expected oracle, runs a target skill such as
 `/apa-software-patent`, and emits a reproduction report before a case is adopted into CI.
+
+Advisory public software-patent runs:
+
+- `fixtures/public-software-patent-pagerank/` - PageRank linked-database ranking (`US6285999`).
+- `fixtures/public-software-patent-mapreduce/` - heterogeneous-schema distributed MapReduce (`US8190610`).
+- `fixtures/public-software-patent-ood-vehicle/` - autonomous-driving out-of-distribution detection (`US11603119`).
+
+These are browser-extracted advisory fixtures. Direct CLI/Playwright access to the public Justia
+pages returned Cloudflare verification pages during extraction, while Google Patents pages were
+accessible through Playwright Chromium without challenge. Keep them out of `benchmarks/index.json`
+until a deterministic public source fetch path is added.

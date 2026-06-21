@@ -1,0 +1,39 @@
+{
+  "schema": "apa-public-patent-benchmark-expected-v1",
+  "case_id": "public-software-patent-ood-vehicle",
+  "targeted_skills": ["apa-software-patent"],
+  "source_class": "public_patent",
+  "oracle_status": "advisory-browser-extracted",
+  "source_hash": "0d4dd2181f5546bfdc1e6cb20c8dd92b7461a093be07bba707ba3337d3839bb8",
+  "expected": {
+    "technical_improvements": [
+      {
+        "id": "TI01",
+        "summary": "Safety-critical autonomous systems need handling for distributional shift and over-confident misclassification.",
+        "source_span": {"file": "source.md", "lines": [31, 31], "sha256": "0d4dd2181f5546bfdc1e6cb20c8dd92b7461a093be07bba707ba3337d3839bb8"},
+        "confidence": "medium"
+      },
+      {
+        "id": "TI02",
+        "summary": "The disclosed ML pipeline uses feature vectors, clustering, distance thresholds, second-filter classification, vehicle-control storage, sensor classification, and vehicle action.",
+        "source_span": {"file": "source.md", "lines": [33, 37], "sha256": "0d4dd2181f5546bfdc1e6cb20c8dd92b7461a093be07bba707ba3337d3839bb8"},
+        "confidence": "medium"
+      }
+    ],
+    "claim_families": ["method"],
+    "support_expectations": [
+      {
+        "id": "SUP01",
+        "summary": "The review should recover concrete AI/ML details rather than merely saying 'using AI'.",
+        "source_span": {"file": "source.md", "lines": [37, 37], "sha256": "0d4dd2181f5546bfdc1e6cb20c8dd92b7461a093be07bba707ba3337d3839bb8"}
+      },
+      {
+        "id": "SUP02",
+        "summary": "The review should recover vehicle-control deployment as the practical technical application.",
+        "source_span": {"file": "source.md", "lines": [35, 43], "sha256": "0d4dd2181f5546bfdc1e6cb20c8dd92b7461a093be07bba707ba3337d3839bb8"}
+      }
+    ],
+    "risk_flags": ["unclear-bound-review"],
+    "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  }
+}

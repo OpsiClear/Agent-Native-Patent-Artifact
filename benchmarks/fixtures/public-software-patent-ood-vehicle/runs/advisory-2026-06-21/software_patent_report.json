@@ -1,0 +1,47 @@
+{
+  "schema": "apa-software-patent-report-v1",
+  "legal_posture": "flags-not-conclusions",
+  "review_scope": {
+    "matter": "benchmarks/fixtures/public-software-patent-ood-vehicle",
+    "reviewed_at": "2026-06-21T00:00:00Z",
+    "claim_types_reviewed": ["method"]
+  },
+  "technical_improvement": {
+    "baseline_problem": "Neural networks can fail under distributional shift and produce over-confident classifications in safety-critical vehicle systems.",
+    "mechanism": "Use neural-network feature vectors, cluster filtering, Euclidean-distance thresholding, a second supervised filter, and vehicle-control deployment.",
+    "technical_effect": "Reject or classify sensor images more safely before vehicle steering, braking, or acceleration actions.",
+    "evidence_span": "source.md:31-37"
+  },
+  "eligibility_flags": [
+    {
+      "claim": "public-claim-1",
+      "risk": "field-of-use",
+      "evidence_span": "source.md:35-43",
+      "recommended_next_step": "Keep the review anchored in the concrete vehicle-control loop and source-backed ML pipeline rather than merely limiting generic image classification to vehicles."
+    }
+  ],
+  "support_flags": [
+    {
+      "limitation": "public-claim-1",
+      "risk": "unclear-bound",
+      "evidence_span": "source.md:33-37",
+      "recommended_next_step": "Practitioner should review threshold and model-boundary language, including Euclidean-distance and softmax-threshold support."
+    }
+  ],
+  "claim_family": {
+    "method": "present",
+    "system": "unsupported",
+    "non_transitory_crm": "unsupported"
+  },
+  "support_state": {
+    "overall": "supported-now",
+    "notes": [
+      "The public excerpts include concrete AI/ML pipeline details and vehicle-control deployment support.",
+      "Threshold and model-boundary language still merits practitioner review."
+    ]
+  },
+  "human_checkpoints": [
+    {"id": "practitioner-eligibility-review", "required": true, "satisfied": false}
+  ],
+  "proposed_canonical_changes": []
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "apa-software-patent-report-v1",
+  "legal_posture": "flags-not-conclusions",
+  "review_scope": {
+    "matter": "benchmarks/fixtures/public-software-patent-mapreduce",
+    "reviewed_at": "2026-06-21T00:00:00Z",
+    "claim_types_reviewed": ["method", "system"]
+  },
+  "technical_improvement": {
+    "baseline_problem": "Conventional MapReduce does not efficiently process heterogeneous data sources with different schemas.",
+    "mechanism": "Map grouped key/value data from different schemas into identifiable intermediate data sharing a common key, then reduce with group-specific iterators and metadata.",
+    "technical_effect": "Distributed relational-style joins and related operations across heterogeneous schemas.",
+    "evidence_span": "source.md:31-37"
+  },
+  "eligibility_flags": [],
+  "support_flags": [],
+  "claim_family": {
+    "method": "present",
+    "system": "present",
+    "non_transitory_crm": "unsupported"
+  },
+  "support_state": {
+    "overall": "supported-now",
+    "notes": [
+      "The public excerpts include mechanism, data structures, distributed architecture, and pseudocode-style support."
+    ]
+  },
+  "human_checkpoints": [
+    {"id": "practitioner-eligibility-review", "required": true, "satisfied": false}
+  ],
+  "proposed_canonical_changes": []
+}

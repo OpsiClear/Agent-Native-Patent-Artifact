@@ -1,0 +1,32 @@
+{
+  "schema": "apa-public-patent-benchmark-report-v1",
+  "case_id": "public-software-patent-pagerank",
+  "target_skill": "apa-software-patent",
+  "run_id": "advisory-2026-06-21",
+  "mode": "advisory-browser-extraction",
+  "source_hash": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e",
+  "scores": {
+    "technical_improvement_coverage": 1.0,
+    "claim_family_coverage": 0.67,
+    "support_span_coverage": 1.0,
+    "unsupported_addition_count": 0,
+    "legal_overclaim_count": 0
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "path": "source.md",
+      "message": "Justia blocked direct CLI/Playwright extraction with Cloudflare verification; Google Patents was accessible through Playwright Chromium. Fixture remains advisory and is not added to the deterministic CI index.",
+      "source_span": {"file": "source.md", "lines": [21, 21], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"}
+    },
+    {
+      "severity": "warning",
+      "path": "runs/advisory-2026-06-21/software_patent_report.json",
+      "message": "The skill correctly flags the old computer-readable-medium claim as not automatically equivalent to modern non-transitory CRM support.",
+      "source_span": {"file": "source.md", "lines": [41, 41], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"}
+    }
+  ],
+  "proposed_skill_changes": [
+    "Keep a regression example requiring the software-patent skill to distinguish old computer-readable-medium language from modern non-transitory CRM support."
+  ]
+}

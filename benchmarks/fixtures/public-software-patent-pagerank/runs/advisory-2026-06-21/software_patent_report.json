@@ -1,0 +1,47 @@
+{
+  "schema": "apa-software-patent-report-v1",
+  "legal_posture": "flags-not-conclusions",
+  "review_scope": {
+    "matter": "benchmarks/fixtures/public-software-patent-pagerank",
+    "reviewed_at": "2026-06-21T00:00:00Z",
+    "claim_types_reviewed": ["method", "computer-readable-medium"]
+  },
+  "technical_improvement": {
+    "baseline_problem": "Large document search can return low-quality or irrelevant results.",
+    "mechanism": "Assign linked-document scores from scores of linking documents using extrinsic link relationships and iterative recursive rank computation.",
+    "technical_effect": "Improved ranking/selectivity of hypermedia search results.",
+    "evidence_span": "source.md:31-35"
+  },
+  "eligibility_flags": [
+    {
+      "claim": "public-claim-1",
+      "risk": "math-only",
+      "evidence_span": "source.md:33-35",
+      "recommended_next_step": "Keep the claim tied to linked-document processing and search-result ranking rather than a standalone mathematical score."
+    }
+  ],
+  "support_flags": [
+    {
+      "limitation": "public-claim-18",
+      "risk": "crm-transitory-risk",
+      "evidence_span": "source.md:41",
+      "recommended_next_step": "Do not treat the old computer-readable-medium wording as modern non-transitory CRM support without practitioner review."
+    }
+  ],
+  "claim_family": {
+    "method": "present",
+    "system": "unsupported",
+    "non_transitory_crm": "unsupported"
+  },
+  "support_state": {
+    "overall": "supported-now",
+    "notes": [
+      "The public excerpts support the link-analysis mechanism and technical-search ranking story.",
+      "The CRM family is old-style computer-readable-medium wording and should remain a risk flag for modern drafting."
+    ]
+  },
+  "human_checkpoints": [
+    {"id": "practitioner-eligibility-review", "required": true, "satisfied": false}
+  ],
+  "proposed_canonical_changes": []
+}

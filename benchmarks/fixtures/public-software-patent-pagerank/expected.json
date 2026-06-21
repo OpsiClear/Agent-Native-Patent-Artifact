@@ -1,0 +1,39 @@
+{
+  "schema": "apa-public-patent-benchmark-expected-v1",
+  "case_id": "public-software-patent-pagerank",
+  "targeted_skills": ["apa-software-patent"],
+  "source_class": "public_patent",
+  "oracle_status": "advisory-browser-extracted",
+  "source_hash": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e",
+  "expected": {
+    "technical_improvements": [
+      {
+        "id": "TI01",
+        "summary": "Search results in large heterogeneous document databases contain low-quality or irrelevant results.",
+        "source_span": {"file": "source.md", "lines": [31, 31], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"},
+        "confidence": "medium"
+      },
+      {
+        "id": "TI02",
+        "summary": "Linked-database rank is computed from extrinsic link relationships instead of intrinsic document text alone.",
+        "source_span": {"file": "source.md", "lines": [33, 35], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"},
+        "confidence": "medium"
+      }
+    ],
+    "claim_families": ["method", "computer-readable-medium"],
+    "support_expectations": [
+      {
+        "id": "SUP01",
+        "summary": "The review should recover a graph/link-analysis mechanism with iterative recursive ranking support.",
+        "source_span": {"file": "source.md", "lines": [33, 35], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"}
+      },
+      {
+        "id": "SUP02",
+        "summary": "The review should identify old computer-readable-medium wording without treating it as modern non-transitory CRM support.",
+        "source_span": {"file": "source.md", "lines": [41, 41], "sha256": "4a0176ff720dc1466e064c160619d06c9243023a7a13356c920e2159ad0fd08e"}
+      }
+    ],
+    "risk_flags": ["crm-transitory-signal-risk"],
+    "must_not": ["infer-conception-history", "state-eligibility-conclusion", "state-validity-conclusion"]
+  }
+}
