@@ -10,7 +10,7 @@ npm run benchmark
 npm run score:prior-art-search
 ```
 
-The skill graph layer adds the convention that every domain pack lists benchmark intentions in `domain.yaml` and future benchmark cases should include `targeted_skills` plus expected mechanical/semantic metrics.
+`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, and every active domain skill is covered by at least one declared benchmark through `targeted_skills`.
 
 Commit-gate benchmark cases must be public or synthetic, offline, and reproducible. Live LLM/domain-quality evaluation remains periodic or advisory unless a deterministic oracle is committed.
 

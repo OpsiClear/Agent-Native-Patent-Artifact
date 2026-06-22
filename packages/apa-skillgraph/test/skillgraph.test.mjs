@@ -28,6 +28,19 @@ test("skill graph metadata validates", () => {
   assert.ok(formulationRunners.every((s) => s.runner.startsWith("node packages/apa-domain-formulation/cli.mjs")));
 });
 
+test("active domain skills are covered by declared benchmark cases", () => {
+  const graph = loadSkillGraph();
+  const benchmarkCases = new Map(graph.benchmarkIndex.cases.map((c) => [c.id, c]));
+  for (const domain of graph.domains.filter((d) => d.status === "active")) {
+    const declared = domain.benchmarks.map((b) => benchmarkCases.get(b.id)).filter(Boolean);
+    assert.ok(declared.length >= 1, `${domain.id} should declare at least one benchmark`);
+    const covered = new Set(declared.flatMap((c) => c.targeted_skills || []));
+    for (const skill of domain.skills.filter((s) => s.status === "active")) {
+      assert.ok(covered.has(skill.id), `${domain.id}:${skill.id} should be covered by a declared benchmark`);
+    }
+  }
+});
+
 test("skill graph docs mention hooks and domain packs", () => {
   const graph = loadSkillGraph();
   assert.match(renderSkillGraphDoc(graph), /disclosure\.enrich/);

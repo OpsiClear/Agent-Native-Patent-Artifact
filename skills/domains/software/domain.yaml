@@ -71,3 +71,6 @@ benchmarks:
   - id: synthetic-codebase-domain
     status: active
     source_class: synthetic_codebase
+  - id: software-patent-skill-sim
+    status: active
+    source_class: synthetic_software_patent

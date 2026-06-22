@@ -7,9 +7,14 @@ import { asArray, loadYaml } from "../../lib/apa-parse.mjs";
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const SKILLS_DIR = join(ROOT, "skills");
 export const REGISTRY_PATH = join(SKILLS_DIR, "registry.yaml");
+export const BENCHMARK_INDEX_PATH = join(ROOT, "benchmarks", "index.json");
 
 function readYaml(path) {
   return loadYaml(readFileSync(path, "utf8"));
+}
+
+function readJson(path) {
+  return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function rel(path) {
@@ -29,12 +34,14 @@ function walk(dir, fileName, out = []) {
 export function loadSkillGraph({ root = ROOT } = {}) {
   const skillsDir = join(root, "skills");
   const registryPath = join(skillsDir, "registry.yaml");
+  const benchmarkIndexPath = join(root, "benchmarks", "index.json");
   const registry = existsSync(registryPath) ? readYaml(registryPath) : null;
+  const benchmarkIndex = existsSync(benchmarkIndexPath) ? readJson(benchmarkIndexPath) : null;
   const skillPaths = walk(skillsDir, "skill.yaml");
   const domainPaths = walk(join(skillsDir, "domains"), "domain.yaml");
   const skills = skillPaths.map((path) => ({ path, relPath: rel(path), dir: dirname(path), ...readYaml(path) }));
   const domains = domainPaths.map((path) => ({ path, relPath: rel(path), dir: dirname(path), ...readYaml(path) }));
-  return { root, registryPath, registry, skills, domains };
+  return { root, registryPath, registry, benchmarkIndexPath, benchmarkIndex, skills, domains };
 }
 
 function add(errors, path, message) {
@@ -98,7 +105,7 @@ function validateCycles(errors, skillsById, registry) {
 
 export function checkSkillGraph(graph = loadSkillGraph()) {
   const errors = [];
-  const { registry, registryPath, skills, domains } = graph;
+  const { registry, registryPath, benchmarkIndex, benchmarkIndexPath, skills, domains } = graph;
 
   validateRequiredObject(errors, registry, rel(registryPath), "apa-skill-registry-v1", [
     "version",
@@ -156,6 +163,7 @@ export function checkSkillGraph(graph = loadSkillGraph()) {
   }
 
   validateCycles(errors, skillsById, registry);
+  const benchmarkCasesById = validateBenchmarkIndex(errors, graph.root, benchmarkIndex, benchmarkIndexPath);
 
   for (const domain of domains) {
     validateRequiredObject(errors, domain, domain.relPath, "apa-domain-pack-v1", [
@@ -202,9 +210,79 @@ export function checkSkillGraph(graph = loadSkillGraph()) {
         }
       }
     }
+    validateDomainBenchmarks(errors, domain, benchmarkCasesById);
   }
 
   return { ok: errors.length === 0, errors, skills, domains, registry };
+}
+
+function validateBenchmarkIndex(errors, root, benchmarkIndex, benchmarkIndexPath) {
+  const casesById = new Map();
+  if (!benchmarkIndex) {
+    add(errors, rel(benchmarkIndexPath), "missing benchmarks/index.json");
+    return casesById;
+  }
+  validateRequiredObject(errors, benchmarkIndex, rel(benchmarkIndexPath), "apa-benchmark-index-v1", [
+    "policy",
+    "cases",
+  ]);
+  const allowedSourceClasses = new Set(asArray(benchmarkIndex.policy?.allowed_source_classes));
+  for (const testCase of asArray(benchmarkIndex.cases)) {
+    if (!testCase?.id) {
+      add(errors, rel(benchmarkIndexPath), "benchmark case missing id");
+      continue;
+    }
+    if (casesById.has(testCase.id)) add(errors, rel(benchmarkIndexPath), `duplicate benchmark id '${testCase.id}'`);
+    casesById.set(testCase.id, testCase);
+    if (!testCase.kind) add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' missing kind`);
+    if (!testCase.source_class) add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' missing source_class`);
+    if (testCase.source_class && allowedSourceClasses.size && !allowedSourceClasses.has(testCase.source_class)) {
+      add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' source_class '${testCase.source_class}' is not in policy.allowed_source_classes`);
+    }
+    if (!asArray(testCase.targeted_skills).length) {
+      add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' must declare targeted_skills`);
+    }
+  }
+  return casesById;
+}
+
+function validateDomainBenchmarks(errors, domain, benchmarkCasesById) {
+  const declared = asArray(domain.benchmarks);
+  if (domain.status === "active" && !declared.length) {
+    add(errors, domain.relPath, `active domain pack '${domain.id}' must declare at least one benchmark`);
+  }
+  const declaredIds = new Set();
+  const coveredSkills = new Set();
+  for (const benchmark of declared) {
+    if (!benchmark?.id) {
+      add(errors, domain.relPath, "domain benchmark missing id");
+      continue;
+    }
+    declaredIds.add(benchmark.id);
+    const testCase = benchmarkCasesById.get(benchmark.id);
+    if (!testCase) {
+      add(errors, domain.relPath, `domain benchmark '${benchmark.id}' is not present in benchmarks/index.json`);
+      continue;
+    }
+    if (benchmark.source_class && testCase.source_class !== benchmark.source_class) {
+      add(errors, domain.relPath, `domain benchmark '${benchmark.id}' source_class '${benchmark.source_class}' does not match index source_class '${testCase.source_class}'`);
+    }
+    for (const skillId of asArray(testCase.targeted_skills)) coveredSkills.add(skillId);
+  }
+  for (const skill of asArray(domain.skills)) {
+    if (skill.status !== "active") continue;
+    if (!coveredSkills.has(skill.id)) {
+      add(errors, domain.relPath, `active domain skill '${skill.id}' is not covered by a declared domain benchmark`);
+    }
+  }
+  for (const [id, testCase] of benchmarkCasesById) {
+    const targetsDomainSkill = asArray(testCase.targeted_skills).some((skillId) =>
+      asArray(domain.skills).some((skill) => skill.id === skillId)
+    );
+    if (targetsDomainSkill && !declaredIds.has(id)) {
+      add(errors, domain.relPath, `benchmark '${id}' targets domain '${domain.id}' skills but is not declared in domain.yaml`);
+    }
+  }
 }
 
 export function renderMermaid(graph = loadSkillGraph()) {
@@ -314,7 +392,7 @@ export function renderCiBenchmarkingDoc() {
     "npm run score:prior-art-search",
     "```",
     "",
-    "The skill graph layer adds the convention that every domain pack lists benchmark intentions in `domain.yaml` and future benchmark cases should include `targeted_skills` plus expected mechanical/semantic metrics.",
+    "`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, and every active domain skill is covered by at least one declared benchmark through `targeted_skills`.",
     "",
     "Commit-gate benchmark cases must be public or synthetic, offline, and reproducible. Live LLM/domain-quality evaluation remains periodic or advisory unless a deterministic oracle is committed.",
     "",
