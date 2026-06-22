@@ -17,6 +17,7 @@ completion, patentability, validity, infringement, or freedom to operate.
 | Bibliographic accuracy | 100% for human-verified references | IDS and claim charts require correct title, date, venue, and canonical link. |
 | Quote-handoff coverage | every ranked candidate has a quote/snippet or explicit `not located` | Patentability analysis needs passage-level evidence, not title-only matches. |
 | Rank explanation coverage | every ranked candidate includes field hits and score breakdown | Humans need to see why a candidate surfaced before spending review time. |
+| Variant/negation discipline | controlled variants may help ranking, but negated passages must not count as positive evidence | Synonyms should recover real references, while "without X" distractors should not outrank actual disclosures of X. |
 | Dossier reproducibility | query bytes hash, source params, counts, dedupe, exclusions, and runlog present | Search runs must be auditable and resumable. |
 | Source-call hardening | API calls use timeout and response-size caps | Slow or unexpectedly large source responses should fail visibly, not hang or exhaust memory. |
 
@@ -45,12 +46,23 @@ npm run score:prior-art-search
 ```
 
 The scorer uses `benchmarks/fixtures/public-software-prior-art-recall/expected.json` and the
-`fixture` source to replay public-software-patent scenarios with a fixed corpus. It reports
+`fixture` source to replay public-software-patent scenarios with a fixed corpus. The current fixture
+set covers link ranking, distributed data processing, out-of-distribution ML, citation-neighborhood
+expansion, dictionary compression, public-key cryptography, and collaborative-filtering
+recommendations. It reports
 `known_reference_recall@20`, `known_reference_recall@5`, mean known reciprocal rank, top expected-slot
 precision against distractors, citation-expansion gain where declared, candidate-type diversity,
 dossier completeness, quote-handoff coverage, and rank-explanation coverage. These metrics are
 retrieval and audit metrics only. They are not novelty, obviousness, patentability, validity,
 infringement, freedom-to-operate, IDS, or search completeness conclusions.
+
+Ranking must stay evidence-auditable:
+
+- exact claim-derived terms carry more weight than controlled variants
+- the first claim-derived/core query term anchors ranking more strongly than later context terms
+- controlled variants are lower-weight retrieval aids, not assertions that a limitation is taught
+- terms appearing in local negation contexts such as "without", "not", or "does not" must not score
+  as positive field hits
 
 ## Benchmark Classes
 
