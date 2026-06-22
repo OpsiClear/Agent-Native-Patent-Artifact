@@ -26,6 +26,9 @@ Only the scorer may read oracle files.
 - For auto-tune, run generated-report creation in a staged path that contains only public source input
   and target skill instructions.
 - Write generated candidate reports under `.apa/tune/`, never under committed fixture `runs/`.
+- Require scorer-enforced provenance: `candidate_generation: fresh-source-only`, staged source hash
+  matching the fixture source, current target-skill source hashes, and no oracle/scorer path
+  references in `review_scope`.
 - Do not paste expected terms into prompts.
 - Do not add full public patent fixture text to `SKILL.md`.
 - Keep benchmark fixtures in `benchmarks/`, not in skill prompt context.

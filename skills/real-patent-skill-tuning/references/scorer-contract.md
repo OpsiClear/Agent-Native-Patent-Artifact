@@ -28,11 +28,23 @@ Expose stable JSON fields:
 ## Dimension Floors
 
 - `source_integrity = 1.0`
+- `candidate_provenance = 1.0`
 - `legal_overclaim_avoidance = 1.0`
 - `source_span_discipline >= 0.9`
 - `technical_mechanism_coverage >= 0.85`
 - `blocking_failures = 0`
 - `candidate_source` must point outside `benchmarks/fixtures/**/runs`
+
+`candidate_provenance = 1.0` requires all of the following in fresh-candidate mode:
+
+- `review_scope.candidate_generation: "fresh-source-only"`;
+- candidate reports live outside `benchmarks/fixtures/**`;
+- staged public source text under `.apa/tune/.../_staged/<case-id>/source.md` hashes to the fixture
+  `source.md`;
+- `review_scope.skill_sources[]` records the current hashes for the target skill template and
+  software-patent reference guide;
+- `review_scope` does not reference `expected.json`, committed advisory runs, benchmark reports, or
+  scorer/generator source files.
 
 If implementation cannot emit these fields or enforce these floors, the real-public-patent score is
 advisory and must not drive auto-tune keep/discard decisions.

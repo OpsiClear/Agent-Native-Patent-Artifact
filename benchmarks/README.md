@@ -45,8 +45,10 @@ recovery of source-backed technical mechanisms, and blocks forbidden legal-concl
 
 `npm run tune:software-patent -- --json` creates fresh candidate reports under
 `.apa/tune/software-patent/<run-id>/` from public `source.md` and the current
-`/apa-software-patent` skill instructions, then scores those candidates with tuning floors. Use this
-for skill-tuning loops so committed advisory reports are not mistaken for fresh outputs.
+`/apa-software-patent` skill instructions, then scores those candidates with tuning floors. The fresh
+score enforces candidate provenance: staged source hashes, current skill-source hashes,
+`candidate_generation: fresh-source-only`, and no oracle/scorer references in `review_scope`. Use
+this for skill-tuning loops so committed advisory reports are not mistaken for fresh outputs.
 
 Use `npm run score:prior-art-search` as the fixed prior-art retrieval harness. It gates top-20 and
 top-5 known-reference recall, mean known reciprocal rank, top expected-slot precision against

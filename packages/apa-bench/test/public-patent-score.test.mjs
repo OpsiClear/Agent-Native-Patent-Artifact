@@ -157,6 +157,60 @@ test("fresh software patent tuning reports are scored from a candidate root, not
   assert.ok(summary.cases[0].report.replace(/\\/g, "/").endsWith("public-software-patent-pagerank/software_patent_report.json"));
 });
 
+test("fresh software patent tuning blocks stale skill-source provenance", () => {
+  const tuneRoot = mkdtempSync(join(tmpdir(), "apa-software-patent-stale-skill-"));
+  const run = generateSoftwarePatentCandidateReports({
+    root: ROOT,
+    cases: [PAGERANK],
+    runId: "unit-test-stale-skill",
+    tuneRoot,
+    reviewedAt: "2026-06-21T00:00:00.000Z",
+  });
+  const reportPath = join(run.candidateRoot, PAGERANK, "software_patent_report.json");
+  const report = readJson(reportPath);
+  report.review_scope.skill_sources[0].sha256 = "0".repeat(64);
+  writeJson(reportPath, report);
+
+  const summary = scorePublicSoftwarePatentFixtures({
+    root: ROOT,
+    cases: [PAGERANK],
+    candidateRoot: run.candidateRoot,
+    enforceFloors: true,
+  });
+  assert.equal(summary.status, "fail");
+  assert.equal(summary.cases[0].dimensions.candidate_provenance < 1, true);
+  assert.ok(summary.cases[0].findings.some((f) => f.dimension === "candidate_provenance" && f.message.includes("current skill source hash")));
+});
+
+test("fresh software patent tuning blocks oracle or scorer references in candidate provenance", () => {
+  const tuneRoot = mkdtempSync(join(tmpdir(), "apa-software-patent-oracle-ref-"));
+  const run = generateSoftwarePatentCandidateReports({
+    root: ROOT,
+    cases: [PAGERANK],
+    runId: "unit-test-oracle-ref",
+    tuneRoot,
+    reviewedAt: "2026-06-21T00:00:00.000Z",
+  });
+  const reportPath = join(run.candidateRoot, PAGERANK, "software_patent_report.json");
+  const report = readJson(reportPath);
+  report.review_scope.skill_sources.push({
+    path: "benchmarks/fixtures/public-software-patent-pagerank/expected.json",
+    sha256: "0".repeat(64),
+  });
+  report.review_scope.oracle_note = "read expected.json during generation";
+  writeJson(reportPath, report);
+
+  const summary = scorePublicSoftwarePatentFixtures({
+    root: ROOT,
+    cases: [PAGERANK],
+    candidateRoot: run.candidateRoot,
+    enforceFloors: true,
+  });
+  assert.equal(summary.status, "fail");
+  assert.ok(summary.cases[0].findings.some((f) => f.dimension === "candidate_provenance" && f.message.includes("expected.json")));
+  assert.ok(summary.cases[0].findings.some((f) => f.dimension === "candidate_provenance" && f.message.includes("unexpected skill/input source")));
+});
+
 test("apa-bench CLI can run the fresh software patent tuning metric", () => {
   const tuneRoot = mkdtempSync(join(tmpdir(), "apa-software-patent-cli-"));
   const stdout = execFileSync(process.execPath, [

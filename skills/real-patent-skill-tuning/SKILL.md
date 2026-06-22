@@ -55,7 +55,9 @@ Before editing any skill, state the startup contract:
 1. **Target skill.** Default to `/apa-software-patent` only when the request concerns software patent
    review or public software-patent simulations.
 2. **Metric command.** Auto-tune needs a stable JSON command that generates fresh candidate reports
-   under `.apa/tune/` and proves it is not scoring committed fixture `runs/advisory-*` reports.
+   under `.apa/tune/`, proves it is not scoring committed fixture `runs/advisory-*` reports, and
+   passes the `candidate_provenance` floor for staged source hashes, current skill-source hashes, and
+   no oracle/scorer references.
 3. **Regression guards.** Use the relevant synthetic simulation, `npm run skills:check`, generated
    skill freshness, and final `npm run build` / `npm run coverage`.
 4. **Mutable surface.** Freeze scorer and fixture oracle files before tuning. For `/apa-software-patent`,
@@ -74,8 +76,8 @@ Before editing any skill, state the startup contract:
    or prior expected answers. For auto-tune, stage generation from a sanitized directory containing
    only public source input plus target skill instructions. Only the scorer reads oracle files.
 3. **Score with floors, not only an average.** Require source integrity and legal-overclaim avoidance
-   to be perfect, and require minimum source-span and mechanism coverage before considering a skill
-   change successful.
+   to be perfect, require candidate provenance to be perfect, and require minimum source-span and
+   mechanism coverage before considering a skill change successful.
 4. **Avoid prompt bloat.** Keep `SKILL.md.tmpl` concise. Put subtype detail in references. Do not copy
    full public patents or fixture oracles into skill instructions.
 5. **Run small experiments.** Make one skill-source edit at a time, regenerate skills, run the tuning

@@ -19,6 +19,10 @@ Use this checklist when tuning an APA skill against public patent fixtures.
 - Score generated reports, not only committed `runs/advisory-*` reports.
 - Keep candidate reports outside `benchmarks/fixtures/**/runs` so committed advisory reports cannot
   be mistaken for fresh outputs.
+- Require candidate provenance to score `1.0`: staged source hash matches `source.md`,
+  `review_scope.candidate_generation` is `fresh-source-only`, target skill source hashes are current,
+  and `review_scope` does not reference `expected.json`, advisory runs, benchmark reports, or scorer
+  source files.
 - Compare generated score to committed baseline.
 - Keep `legal_posture: flags-not-conclusions` in every report.
 
@@ -45,6 +49,7 @@ Do not edit generated `skills/software-patent-review/SKILL.md` directly. Regener
 
 - Average score improves, or warning count drops with no score loss.
 - Source integrity is `1.0`.
+- Candidate provenance is `1.0`.
 - Legal-overclaim avoidance is `1.0`.
 - Source-span discipline is at least `0.9`.
 - Technical mechanism coverage is at least `0.85`.

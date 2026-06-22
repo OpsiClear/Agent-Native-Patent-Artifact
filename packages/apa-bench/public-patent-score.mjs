@@ -12,6 +12,7 @@ const DEFAULT_CASES = [
 const DEFAULT_THRESHOLD = 0.85;
 const TUNING_FLOORS = {
   source_integrity: 1,
+  candidate_provenance: 1,
   technical_mechanism_coverage: 0.85,
   source_span_discipline: 0.9,
   legal_overclaim_avoidance: 1,
@@ -19,6 +20,7 @@ const TUNING_FLOORS = {
 
 const WEIGHTS = {
   source_integrity: 20,
+  candidate_provenance: 10,
   report_shape: 10,
   technical_mechanism_coverage: 20,
   claim_family_accuracy: 15,
@@ -26,6 +28,11 @@ const WEIGHTS = {
   source_span_discipline: 10,
   legal_overclaim_avoidance: 10,
 };
+
+const REQUIRED_SKILL_SOURCES = [
+  "skills/software-patent-review/SKILL.md.tmpl",
+  "skills/software-patent-review/references/software-patent-review.md",
+];
 
 function relFixture(caseId) {
   return `benchmarks/fixtures/${caseId}`;
@@ -149,6 +156,103 @@ function sourceIntegrityScore({ sourceText, expected, report, expectedText, repo
     report !== null,
     sourceHashOk,
   ];
+  return ratio(checks.filter(Boolean).length, checks.length);
+}
+
+function currentSkillSourceRecords(root, findings) {
+  const records = [];
+  for (const rel of REQUIRED_SKILL_SOURCES) {
+    const text = readText(root, rel, findings, "target skill source");
+    if (text === null) continue;
+    records.push({ path: rel, sha256: sha256(text) });
+  }
+  return records;
+}
+
+function scoreCandidateProvenance({ root, caseId, candidateRoot, report, sourceText, findings }) {
+  if (!candidateRoot) return 1;
+  const checks = [];
+  const candidateRootDisplay = displayPath(root, candidateRoot);
+  const reportScope = report?.review_scope || {};
+
+  const candidateRootOutsideFixtures = !candidateRootDisplay.startsWith("benchmarks/fixtures/");
+  checks.push(candidateRootOutsideFixtures);
+  if (!candidateRootOutsideFixtures) {
+    findings.push({
+      severity: "blocking",
+      path: candidateRootDisplay,
+      dimension: "candidate_provenance",
+      message: "fresh candidate root must be outside benchmarks/fixtures",
+    });
+  }
+
+  const generationOk = reportScope.candidate_generation === "fresh-source-only";
+  checks.push(generationOk);
+  if (!generationOk) {
+    findings.push({
+      severity: "blocking",
+      path: "review_scope.candidate_generation",
+      dimension: "candidate_provenance",
+      message: "fresh candidate report must declare candidate_generation: fresh-source-only",
+    });
+  }
+
+  const forbiddenText = normalizeText(JSON.stringify(reportScope));
+  const forbiddenInputs = ["expected.json", "benchmark_report", "runs/advisory", "public-patent-score", "software-patent-tune"];
+  const forbiddenHits = forbiddenInputs.filter((term) => forbiddenText.includes(normalizeText(term)));
+  checks.push(forbiddenHits.length === 0);
+  for (const term of forbiddenHits) {
+    findings.push({
+      severity: "blocking",
+      path: "review_scope",
+      dimension: "candidate_provenance",
+      message: `fresh candidate report references forbidden oracle/scorer input '${term}'`,
+    });
+  }
+
+  const stagedSourceRel = displayPath(root, resolve(root, candidateRoot, "_staged", caseId, "source.md"));
+  const stagedText = readText(root, stagedSourceRel, findings, "staged public source");
+  const stagedHashOk = stagedText !== null && sourceText !== null && sha256(stagedText) === sha256(sourceText);
+  checks.push(stagedHashOk);
+  if (!stagedHashOk) {
+    findings.push({
+      severity: "blocking",
+      path: stagedSourceRel,
+      dimension: "candidate_provenance",
+      message: "fresh candidate staged source must match the public fixture source.md hash",
+    });
+  }
+
+  const expectedSkillSources = currentSkillSourceRecords(root, findings);
+  const actualSkillSources = Array.isArray(reportScope.skill_sources) ? reportScope.skill_sources : [];
+  const actualByPath = new Map(actualSkillSources.map((record) => [String(record?.path || ""), record]));
+  for (const expected of expectedSkillSources) {
+    const actual = actualByPath.get(expected.path);
+    const ok = actual?.sha256 === expected.sha256;
+    checks.push(ok);
+    if (!ok) {
+      findings.push({
+        severity: "blocking",
+        path: "review_scope.skill_sources",
+        dimension: "candidate_provenance",
+        message: `fresh candidate report must record current skill source hash for ${expected.path}`,
+      });
+    }
+  }
+
+  const unexpectedSkillSources = actualSkillSources
+    .map((record) => String(record?.path || ""))
+    .filter((path) => path && !REQUIRED_SKILL_SOURCES.includes(path));
+  checks.push(unexpectedSkillSources.length === 0);
+  for (const path of unexpectedSkillSources) {
+    findings.push({
+      severity: "blocking",
+      path: "review_scope.skill_sources",
+      dimension: "candidate_provenance",
+      message: `fresh candidate report lists unexpected skill/input source '${path}'`,
+    });
+  }
+
   return ratio(checks.filter(Boolean).length, checks.length);
 }
 
@@ -413,6 +517,7 @@ export function scorePublicPatentFixture({
   const checks = expected?.checks || {};
   const dimensions = {
     source_integrity: sourceIntegrityScore({ sourceText, expected, report, expectedText, reportText, sourceHashOk }),
+    candidate_provenance: scoreCandidateProvenance({ root, caseId: id, candidateRoot, report, sourceText, findings }),
     report_shape: scoreReportShape(report, findings),
     technical_mechanism_coverage: scoreRequiredTerms(report, checks.required_terms || [], findings),
     claim_family_accuracy: scoreClaimFamily(report, checks.required_claim_family || {}, findings),
