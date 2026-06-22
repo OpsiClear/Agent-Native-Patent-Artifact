@@ -56,16 +56,27 @@ function parseArgs(argv) {
   return out;
 }
 
-/** Locate the bundled skills directory: prefer sibling skills/, else repo root. */
+/** Locate skills: prefer the repo-root source in monorepo dev, else the bundled package copy. */
 function resolveSkillsDir() {
+  const repoRoot = path.resolve(PKG_ROOT, "..", "..");
+  const repoSkills = path.join(repoRoot, "skills");
+  if (isApaRepoRoot(repoRoot) && hasSkills(repoSkills)) return repoSkills;
+
   const bundled = path.join(PKG_ROOT, "skills");
   if (hasSkills(bundled)) return bundled;
-  const repoRoot = path.resolve(PKG_ROOT, "..", "..", "skills");
-  if (hasSkills(repoRoot)) return repoRoot;
   throw new Error(
-    `Could not locate a skills directory. Looked in:\n  ${bundled}\n  ${repoRoot}\n` +
+    `Could not locate a skills directory. Looked in:\n  ${repoSkills}\n  ${bundled}\n` +
       `Run scripts/bundle-skills.mjs to populate the bundled copy.`
   );
+}
+
+function isApaRepoRoot(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    return pkg.name === "agent-native-patent-artifact";
+  } catch {
+    return false;
+  }
 }
 
 function hasSkills(dir) {

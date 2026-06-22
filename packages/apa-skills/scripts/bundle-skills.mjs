@@ -8,16 +8,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const pkgRoot = path.resolve(here, "..");
-const src = path.resolve(pkgRoot, "..", "..", "skills");
-const dst = path.join(pkgRoot, "skills");
-
-if (!fs.existsSync(src)) {
-  console.error(`[apa-skills:bundle] source not found: ${src}`);
-  process.exit(1);
-}
-
 function copyDir(s, d) {
   fs.mkdirSync(d, { recursive: true });
   for (const e of fs.readdirSync(s, { withFileTypes: true })) {
@@ -28,17 +18,39 @@ function copyDir(s, d) {
   }
 }
 
-// Refresh the bundle for determinism.
-fs.rmSync(dst, { recursive: true, force: true });
+export function bundleSkills({ src, dst } = {}) {
+  if (!src || !dst) throw new Error("bundleSkills requires src and dst");
+  if (!fs.existsSync(src)) throw new Error(`source not found: ${src}`);
 
-let count = 0;
-fs.mkdirSync(dst, { recursive: true });
-for (const e of fs.readdirSync(src, { withFileTypes: true })) {
-  if (!e.isDirectory()) continue;
-  const skillMd = path.join(src, e.name, "SKILL.md");
-  if (!fs.existsSync(skillMd)) continue;
-  copyDir(path.join(src, e.name), path.join(dst, e.name));
-  count++;
+  // Refresh the bundle for determinism.
+  fs.rmSync(dst, { recursive: true, force: true });
+
+  let count = 0;
+  fs.mkdirSync(dst, { recursive: true });
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    const skillMd = path.join(src, e.name, "SKILL.md");
+    if (!fs.existsSync(skillMd)) continue;
+    copyDir(path.join(src, e.name), path.join(dst, e.name));
+    count++;
+  }
+  return { count, src, dst };
 }
 
-console.log(`[apa-skills:bundle] bundled ${count} skill(s) from ${src} -> ${dst}`);
+function main() {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const pkgRoot = path.resolve(here, "..");
+  const src = path.resolve(pkgRoot, "..", "..", "skills");
+  const dst = path.join(pkgRoot, "skills");
+  try {
+    const result = bundleSkills({ src, dst });
+    console.log(`[apa-skills:bundle] bundled ${result.count} skill(s) from ${result.src} -> ${result.dst}`);
+  } catch (err) {
+    console.error(`[apa-skills:bundle] ${err?.message || err}`);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main();
+}

@@ -11,11 +11,23 @@ import { install, uninstall } from "../src/installer.mjs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = path.resolve(HERE, "..");
 
-// Use the bundled copy if present, else the repo-root skills/.
+// In repo dev, use canonical root skills so an ignored stale bundle cannot shadow them.
 function skillsDir() {
+  const repoRoot = path.resolve(PKG_ROOT, "..", "..");
+  const rootSkills = path.join(repoRoot, "skills");
+  if (isApaRepoRoot(repoRoot) && fs.existsSync(path.join(rootSkills, "compiler", "SKILL.md"))) return rootSkills;
   const bundled = path.join(PKG_ROOT, "skills");
   if (fs.existsSync(path.join(bundled, "compiler", "SKILL.md"))) return bundled;
-  return path.resolve(PKG_ROOT, "..", "..", "skills");
+  return rootSkills;
+}
+
+function isApaRepoRoot(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    return pkg.name === "agent-native-patent-artifact";
+  } catch {
+    return false;
+  }
 }
 
 test("install then uninstall APA skills into a fake home", () => {
