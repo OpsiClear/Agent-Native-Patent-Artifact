@@ -88,3 +88,44 @@ test("runSearch can expand citation-neighborhood candidates with audit metadata"
   assert.ok(res.ranked.some((r) => r.docNumber === "NPL-LINK-1" && r.citation_expansion.relation === "backward"));
   assert.ok(res.ranked.some((r) => r.docNumber === "US-2-B" && r.citation_expansion.relation === "forward"));
 });
+
+test("controlled term variants help rank synonym references without beating exact primary matches", async () => {
+  const res = await runSearch({
+    query: {
+      keywords: ["dictionary compression", "string table", "variable length code"],
+      cpc: [],
+      limit: 10,
+    },
+    sources: ["fixture"],
+    opts: {
+      broadSearch: true,
+      fixtureRecords: [
+        {
+          source: "fixture",
+          docNumber: "NPL-PRIMARY",
+          title: "Dictionary compression using string tables",
+          abstract: "Dictionary compression with a string table and variable length code output.",
+          snippet: "dictionary compression with a string table",
+        },
+        {
+          source: "fixture",
+          docNumber: "NPL-SYNONYM",
+          title: "Compression of Individual Sequences via Variable-Rate Coding",
+          abstract: "Adaptive dictionary coding uses a string dictionary of stored strings and emits variable-rate codes.",
+          snippet: "adaptive dictionary coding with a string dictionary and variable-rate codes",
+        },
+        {
+          source: "fixture",
+          docNumber: "NPL-DISTRACTOR",
+          title: "Minimum-redundancy codes",
+          abstract: "Variable length code words are assigned from symbol frequencies without adaptive dictionary coding.",
+          snippet: "variable length code words from symbol frequencies",
+        },
+      ],
+    },
+    confirmMedium: true,
+  });
+  assert.equal(res.ranked[0].docNumber, "NPL-PRIMARY");
+  assert.equal(res.ranked[1].docNumber, "NPL-SYNONYM");
+  assert.ok(res.ranked[1].rank_explanation.matched_variants.length >= 1);
+});

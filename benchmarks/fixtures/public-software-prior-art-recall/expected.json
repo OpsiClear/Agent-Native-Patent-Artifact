@@ -250,6 +250,179 @@
           "snippet": "relational database chooses join plans for tables"
         }
       ]
+    },
+    {
+      "id": "lzw-dictionary-compression",
+      "public_source_url": "https://patents.google.com/patent/US4558302A/en",
+      "query": {
+        "keywords": [
+          "dictionary compression",
+          "string table",
+          "prefix string",
+          "extension character",
+          "variable length code",
+          "lossless data"
+        ],
+        "cpc": ["H03M7/30"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "NPL-WELCH-1984",
+        "NPL-LZ78-1978"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "NPL-WELCH-1984",
+          "title": "A Technique for High-Performance Data Compression",
+          "abstract": "A public benchmark record describing LZW dictionary compression, string table growth, prefix strings, extension characters, and variable length codes for lossless data compression.",
+          "date": "1984-06-01",
+          "url": "https://ieeexplore.ieee.org/document/1659158",
+          "snippet": "dictionary compression with a string table, prefix strings, extension characters, and variable length codes"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-LZ78-1978",
+          "title": "Compression of Individual Sequences via Variable-Rate Coding",
+          "abstract": "A public benchmark record describing adaptive dictionary coding for lossless data, storing previously encountered strings and emitting variable-rate codes for matched strings.",
+          "date": "1978-09-01",
+          "url": "https://doi.org/10.1109/TIT.1978.1055934",
+          "snippet": "adaptive dictionary coding for lossless data using stored strings and variable-rate codes"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-4631603-A",
+          "title": "Image run length encoding for raster graphics",
+          "abstract": "A raster image system compresses runs of repeated pixels without using a string table or prefix and extension character dictionary.",
+          "date": "1986-12-23",
+          "url": "https://patents.google.com/patent/US4631603A/en",
+          "snippet": "run length encoding for repeated pixels without dictionary strings"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-HUFFMAN-1952",
+          "title": "A Method for the Construction of Minimum-Redundancy Codes",
+          "abstract": "A coding method assigns variable length code words from symbol frequencies but does not build adaptive string-table dictionary entries.",
+          "date": "1952-09-01",
+          "url": "https://doi.org/10.1109/JRPROC.1952.273898",
+          "snippet": "variable length code words from symbol frequencies"
+        }
+      ]
+    },
+    {
+      "id": "rsa-public-key-cryptography",
+      "public_source_url": "https://patents.google.com/patent/US4405829A/en",
+      "query": {
+        "keywords": [
+          "public key cryptography",
+          "modular exponentiation",
+          "encryption key",
+          "decryption key",
+          "digital signature"
+        ],
+        "cpc": ["H04L9/30"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "NPL-RSA-1978",
+        "NPL-DIFFIE-HELLMAN-1976"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "NPL-RSA-1978",
+          "title": "A Method for Obtaining Digital Signatures and Public-Key Cryptosystems",
+          "abstract": "A public benchmark record describing public key cryptography using modular exponentiation, a public encryption key, a private decryption key, and digital signatures.",
+          "date": "1978-02-01",
+          "url": "https://doi.org/10.1145/359340.359342",
+          "snippet": "public key cryptography with modular exponentiation, encryption key, decryption key, and digital signature"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-DIFFIE-HELLMAN-1976",
+          "title": "New Directions in Cryptography",
+          "abstract": "A public benchmark record describing public key cryptography, public distribution of encryption keys, authentication, and digital signature concepts.",
+          "date": "1976-11-01",
+          "url": "https://doi.org/10.1109/TIT.1976.1055638",
+          "snippet": "public key cryptography with public encryption keys and digital signature concepts"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-4218582-A",
+          "title": "Block cipher apparatus using substitution tables",
+          "abstract": "A symmetric-key block cipher uses shared secret keys and substitution tables rather than public key cryptography with separate encryption and decryption keys.",
+          "date": "1980-08-19",
+          "url": "https://patents.google.com/patent/US4218582A/en",
+          "snippet": "symmetric-key block cipher with shared secret keys"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-MERKLE-1978",
+          "title": "Secure Communications Over Insecure Channels",
+          "abstract": "A public benchmark distractor on public-key distribution concepts and secure channels that does not disclose RSA modular exponentiation.",
+          "date": "1978-04-01",
+          "url": "https://doi.org/10.1145/359460.359473",
+          "snippet": "public-key distribution concepts for secure communications over insecure channels"
+        }
+      ]
+    },
+    {
+      "id": "collaborative-filtering-recommendations",
+      "public_source_url": "https://patents.google.com/patent/US6266649B1/en",
+      "query": {
+        "keywords": [
+          "collaborative filtering",
+          "recommend items",
+          "user profiles",
+          "item profiles",
+          "ratings",
+          "similar items"
+        ],
+        "cpc": ["G06Q30/0631"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "US-6041311-A",
+        "NPL-GROUPLENS-1994"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "US-6041311-A",
+          "title": "Method and apparatus for item recommendation using automated collaborative filtering",
+          "abstract": "A public benchmark patent record describing collaborative filtering that stores user profiles, item profiles, ratings, and recommends items to users.",
+          "date": "2000-03-21",
+          "url": "https://patents.google.com/patent/US6041311A/en",
+          "snippet": "collaborative filtering stores user profiles, item profiles, ratings, and recommends items"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-GROUPLENS-1994",
+          "title": "GroupLens: An Open Architecture for Collaborative Filtering of Netnews",
+          "abstract": "A public benchmark record describing collaborative filtering from user ratings to recommend items and articles to users.",
+          "date": "1994-10-01",
+          "url": "https://doi.org/10.1145/192844.192905",
+          "snippet": "collaborative filtering from user ratings to recommend items"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-5802502-A",
+          "title": "Content-based product search using text matching",
+          "abstract": "A merchant site returns products using keyword text matching and categories without collaborative filtering from user ratings.",
+          "date": "1998-09-01",
+          "url": "https://patents.google.com/patent/US5802502A/en",
+          "snippet": "keyword text matching without collaborative filtering user ratings"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-MATRIX-FACTORIZATION-2009",
+          "title": "Matrix Factorization Techniques for Recommender Systems",
+          "abstract": "A later recommender-system survey about latent factors, ratings, and similar items; useful as a distractor because it postdates the public patent anchor.",
+          "date": "2009-08-01",
+          "url": "https://doi.org/10.1109/MC.2009.263",
+          "snippet": "ratings and similar items in recommender systems"
+        }
+      ]
     }
   ]
 }

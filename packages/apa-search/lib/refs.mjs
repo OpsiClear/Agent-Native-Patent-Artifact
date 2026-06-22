@@ -1,3 +1,5 @@
+import { expandTermVariants } from "./terms.mjs";
+
 /**
  * Shared prior-art record contract + helpers for apa-search. Node >=21, zero deps, ESM.
  *
@@ -185,7 +187,7 @@ export function refSummary(ref, extra = {}) {
 
 /** Rank refs by field-aware keyword overlap and CPC overlap with the query. Adds `.score` and `.rank_explanation`. */
 export function rankRefs(refs, query) {
-  const kw = (query.keywords || []).map((k) => String(k).toLowerCase().trim()).filter(Boolean);
+  const kw = expandRankTerms(query.keywords || []);
   const qcpc = new Set((query.cpc || []).map((c) => c.toUpperCase()));
   const scored = refs.map((r) => {
     const title = String(r.title || "").toLowerCase();
@@ -193,38 +195,45 @@ export function rankRefs(refs, query) {
     const snippet = String(r.snippet || "").toLowerCase();
     let score = 0;
     const matchedKeywords = [];
+    const matchedVariants = [];
     const fieldHits = {};
     const scoreBreakdown = [];
-    for (const [keywordIndex, k] of kw.entries()) {
+    for (const entry of kw) {
+      const k = entry.term;
+      const variant = Boolean(entry.variantOf);
+      const weights = variant
+        ? { title: 2, snippet: 1, abstract: 1, exact: 1 }
+        : { title: 5, snippet: 4, abstract: 3, exact: 2 };
       const fields = [];
-      if (title.includes(k)) {
-        score += 5;
+      if (hasPositiveTerm(title, k)) {
+        score += weights.title;
         fields.push("title");
-        scoreBreakdown.push({ reason: "keyword-title", term: k, points: 5 });
+        scoreBreakdown.push({ reason: variant ? "keyword-variant-title" : "keyword-title", term: k, points: weights.title, ...(variant ? { variant_of: entry.variantOf } : {}) });
       }
-      if (snippet.includes(k)) {
-        score += 4;
+      if (hasPositiveTerm(snippet, k)) {
+        score += weights.snippet;
         fields.push("snippet");
-        scoreBreakdown.push({ reason: "keyword-snippet", term: k, points: 4 });
+        scoreBreakdown.push({ reason: variant ? "keyword-variant-snippet" : "keyword-snippet", term: k, points: weights.snippet, ...(variant ? { variant_of: entry.variantOf } : {}) });
       }
-      if (abstract.includes(k)) {
-        score += 3;
+      if (hasPositiveTerm(abstract, k)) {
+        score += weights.abstract;
         fields.push("abstract");
-        scoreBreakdown.push({ reason: "keyword-abstract", term: k, points: 3 });
+        scoreBreakdown.push({ reason: variant ? "keyword-variant-abstract" : "keyword-abstract", term: k, points: weights.abstract, ...(variant ? { variant_of: entry.variantOf } : {}) });
       }
-      if (/\s/.test(k) && (title.includes(k) || abstract.includes(k) || snippet.includes(k))) {
-        score += 2;
-        scoreBreakdown.push({ reason: "exact-phrase", term: k, points: 2 });
+      if (/\s/.test(k) && (hasPositiveTerm(title, k) || hasPositiveTerm(abstract, k) || hasPositiveTerm(snippet, k))) {
+        score += weights.exact;
+        scoreBreakdown.push({ reason: variant ? "variant-exact-phrase" : "exact-phrase", term: k, points: weights.exact, ...(variant ? { variant_of: entry.variantOf } : {}) });
       }
       if (fields.length) {
-        if (keywordIndex === 0) {
-          score += 8;
-          scoreBreakdown.push({ reason: "primary-keyword", term: k, points: 8 });
-        } else if (keywordIndex === 1) {
+        if (!variant && entry.index === 0) {
+          score += 12;
+          scoreBreakdown.push({ reason: "primary-keyword", term: k, points: 12 });
+        } else if (!variant && entry.index === 1) {
           score += 3;
           scoreBreakdown.push({ reason: "secondary-keyword", term: k, points: 3 });
         }
-        matchedKeywords.push(k);
+        if (variant) matchedVariants.push({ term: k, variant_of: entry.variantOf });
+        else matchedKeywords.push(k);
         fieldHits[k] = [...new Set(fields)];
       }
     }
@@ -246,17 +255,67 @@ export function rankRefs(refs, query) {
       score,
       rank_explanation: {
         matched_keywords: [...new Set(matchedKeywords)],
+        matched_variants: uniqueVariantMatches(matchedVariants),
         matched_cpc: [...new Set(matchedCpc)],
         field_hits: fieldHits,
         score_breakdown: scoreBreakdown,
         rationale: scoreBreakdown.length
-          ? "ranked by field-weighted keyword/CPC overlap; title and relied-on snippets carry the strongest weight"
+          ? "ranked by field-weighted keyword/CPC overlap; controlled variants carry lower weight than exact claim terms"
           : "no keyword/CPC overlap found; date tie-break may affect order",
       },
     };
   });
   scored.sort((a, b) => b.score - a.score || (b.date || "").localeCompare(a.date || ""));
   return scored;
+}
+
+function expandRankTerms(keywords = []) {
+  const original = (keywords || []).map((k, index) => ({
+    term: String(k).toLowerCase().trim(),
+    index,
+    variantOf: "",
+  })).filter((k) => k.term);
+  const seen = new Set(original.map((k) => k.term));
+  const variants = [];
+  for (const entry of original) {
+    for (const variant of expandTermVariants([entry.term])) {
+      if (seen.has(variant)) continue;
+      seen.add(variant);
+      variants.push({ term: variant, index: entry.index, variantOf: entry.term });
+    }
+  }
+  return [...original, ...variants];
+}
+
+function uniqueVariantMatches(matches = []) {
+  const seen = new Set();
+  const out = [];
+  for (const match of matches) {
+    const key = `${match.term}\0${match.variant_of}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(match);
+  }
+  return out;
+}
+
+function hasPositiveTerm(text, term) {
+  const hay = String(text || "");
+  const needle = String(term || "");
+  if (!needle) return false;
+  let start = 0;
+  while (start <= hay.length) {
+    const index = hay.indexOf(needle, start);
+    if (index < 0) return false;
+    if (!isNegatedNear(hay, index)) return true;
+    start = index + needle.length;
+  }
+  return false;
+}
+
+function isNegatedNear(text, index) {
+  const before = text.slice(Math.max(0, index - 80), index);
+  return /\b(?:without|not|no|does not|do not|did not|doesn't|don't|instead of|rather than)\b(?:\W+\w+){0,6}\W*$/i.test(before);
 }
 
 // --- Sanitizers for UNTRUSTED fetched content (title/abstract) ---------------------------------

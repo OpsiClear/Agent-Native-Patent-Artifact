@@ -11,23 +11,9 @@ import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } f
 import { scan } from "../apa-redact/redact-engine.mjs";
 import { loadSource, descriptor, listSources } from "./sources/index.mjs";
 import { dedupeRefsDetailed, expandCitationNeighborhood, rankRefs } from "./lib/refs.mjs";
+import { expandTermVariants } from "./lib/terms.mjs";
 
 const STOP = new Set("a,an,the,of,for,and,or,to,with,in,on,by,is,configured,comprising,said,wherein,further,least,one,each,such".split(","));
-const TERM_VARIANTS = new Map([
-  ["linked document", ["web page", "hyperlink", "node", "link graph"]],
-  ["linking document", ["backlink", "inbound link", "citing page"]],
-  ["rank", ["score", "importance", "authority"]],
-  ["ranking", ["scoring", "importance ordering", "authority ranking"]],
-  ["key/value", ["key value", "key-value", "tuple"]],
-  ["key value", ["key/value", "key-value", "tuple"]],
-  ["mapreduce", ["map reduce", "mapper reducer", "distributed data processing"]],
-  ["reduce", ["aggregation", "grouped intermediate values"]],
-  ["out-of-distribution", ["ood", "distribution shift", "anomaly detection"]],
-  ["feature vector", ["embedding", "latent representation"]],
-  ["cluster", ["k-means", "centroid", "nearest cluster"]],
-  ["threshold", ["distance threshold", "confidence threshold"]],
-  ["classification model", ["classifier", "neural network model"]],
-]);
 
 /** Derive search keywords from a matter's claim limitations + title. */
 export function buildQueryFromClaims(matterDir, { limit = 25 } = {}) {
@@ -205,24 +191,6 @@ function normalizeQuery(query = {}) {
     cpc: [...new Set((query.cpc || []).map((c) => String(c).trim().toUpperCase()).filter(Boolean))],
     limit: query.limit || 25,
   };
-}
-
-function expandTermVariants(keywords = []) {
-  const out = [];
-  const seen = new Set(keywords.map((k) => String(k).toLowerCase()));
-  for (const raw of keywords) {
-    const term = String(raw || "").toLowerCase().trim();
-    for (const [key, variants] of TERM_VARIANTS) {
-      if (!term || !(term === key || term.includes(key) || key.includes(term))) continue;
-      for (const variant of variants) {
-        const normalized = String(variant).toLowerCase().trim();
-        if (!normalized || seen.has(normalized)) continue;
-        seen.add(normalized);
-        out.push(normalized);
-      }
-    }
-  }
-  return out;
 }
 
 function planSummary(plan) {
