@@ -28,6 +28,7 @@ const REQUIRED_DOC_COLUMNS = [
   "Query payload class",
   "Returns full text?",
   "Human verification required",
+  "Rate-limit / quota notes",
   "Notes",
 ];
 
@@ -71,8 +72,18 @@ export function validateSourceRegistryShape({ root = ROOT, registry = SOURCE_REG
     if (!["api", "dataset", "ui-restricted"].includes(source.accessMode)) {
       errors.push(`${source.id}: invalid accessMode '${source.accessMode}'`);
     }
+    if (typeof source.official !== "boolean") errors.push(`${source.id}: official must be boolean`);
+    if (typeof source.requiresKey !== "boolean") errors.push(`${source.id}: requiresKey must be boolean`);
+    if (typeof source.enabledByDefault !== "boolean") errors.push(`${source.id}: enabledByDefault must be boolean`);
+    if (typeof source.humanVerificationRequired !== "boolean") errors.push(`${source.id}: humanVerificationRequired must be boolean`);
+    if (typeof source.returnsFullText !== "boolean") errors.push(`${source.id}: returnsFullText must be boolean`);
+    if (!String(source.queryPayloadClass || "").trim()) errors.push(`${source.id}: missing queryPayloadClass`);
+    if (source.requiresKey && !String(source.keyEnv || "").trim()) errors.push(`${source.id}: requiresKey sources must declare keyEnv`);
     if (source.enabledByDefault && source.accessMode === "ui-restricted") {
       errors.push(`${source.id}: ui-restricted source cannot be enabled by default`);
+    }
+    if (source.enabledByDefault && !["mock", "fixture"].includes(source.id) && !source.module) {
+      errors.push(`${source.id}: default-enabled real source must be implemented`);
     }
     if (source.module) {
       const abs = join(root, "packages", "apa-search", "sources", source.module.replace(/^\.\//, ""));

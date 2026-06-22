@@ -20,6 +20,7 @@ completion, patentability, validity, infringement, or freedom to operate.
 | Variant/negation discipline | controlled variants may help ranking, but negated passages must not count as positive evidence | Synonyms should recover real references, while "without X" distractors should not outrank actual disclosures of X. |
 | Dossier reproducibility | query bytes hash, source params, counts, dedupe, exclusions, and runlog present | Search runs must be auditable and resumable. |
 | Source-call hardening | API calls use timeout and response-size caps | Slow or unexpectedly large source responses should fail visibly, not hang or exhaust memory. |
+| Source-health capture | every source row records implementation/config/rate-policy state without secret values | Live-source failures and registry changes should be auditable after the run. |
 
 ## Required Dossier Statements
 
@@ -28,6 +29,8 @@ Every search dossier must record:
 - `coverage_limits.search_complete_asserted: false`
 - source IDs searched
 - source IDs skipped or unsearched, with reasons
+- source-health snapshots for every queried/skipped source, including credential-present booleans,
+  implementation status, current notices, and rate/quota policy
 - query plan / query variants used
 - top-N before dedupe, after dedupe, and after ranking
 - dedupe clusters and excluded results

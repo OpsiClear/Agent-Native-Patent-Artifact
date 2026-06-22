@@ -89,6 +89,9 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
   assert.match(dossier.query.serialized_sha256, /^[0-9a-f]{64}$/);
   assert.deepEqual(dossier.sources.map((s) => s.source_id), ["mock"]);
   assert.ok("query_parameters" in dossier.sources[0]);
+  assert.equal(dossier.sources[0].source_health.source_id, "mock");
+  assert.equal(dossier.sources[0].source_health.automation_ready, true);
+  assert.equal(dossier.sources[0].source_health.credential.required, false);
   assert.equal(dossier.top_n.before_dedupe.length, 2);
   assert.equal(dossier.top_n.after_dedupe_before_ranking.length, 2);
   assert.equal(dossier.top_n.after_ranking.length, 2);

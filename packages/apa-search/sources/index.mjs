@@ -5,18 +5,84 @@
  * a not-yet-implemented source never breaks importing this registry.
  */
 
+import { effectiveRatePolicy } from "./policies.mjs";
+
 export const SOURCE_REGISTRY = [
-  { id: "patentsview", module: "./patentsview.mjs", accessMode: "api", jurisdiction: "US", requiresKey: true, enabledByDefault: true, status: "implemented", note: "PatentsView PatentSearch API (search.patentsview.org); see docs/source-registry.md." },
-  { id: "crossref", module: "./crossref.mjs", accessMode: "api", jurisdiction: "NPL", requiresKey: false, enabledByDefault: true, status: "implemented", note: "Crossref Works API for NPL metadata candidate discovery; full text still requires human verification." },
-  { id: "arxiv", module: "./arxiv.mjs", accessMode: "api", jurisdiction: "NPL", requiresKey: false, enabledByDefault: true, status: "implemented", note: "arXiv API for preprint/NPL candidate discovery; versions/dates require human verification." },
-  { id: "openalex", module: "./openalex.mjs", accessMode: "api", jurisdiction: "NPL", requiresKey: false, enabledByDefault: true, status: "implemented", note: "OpenAlex Works API for scholarly metadata candidate discovery; full text and bibliographic details still require human verification." },
-  { id: "mock", module: "./mock.mjs", accessMode: "api", jurisdiction: "US", requiresKey: false, enabledByDefault: false, status: "implemented", note: "offline deterministic source for tests/demos." },
-  { id: "fixture", module: "./fixture.mjs", accessMode: "api", jurisdiction: "benchmark", requiresKey: false, enabledByDefault: false, status: "implemented", note: "offline benchmark fixture source; not prior art evidence." },
-  { id: "pqai", module: null, accessMode: "api", jurisdiction: "US/NPL", requiresKey: false, enabledByDefault: false, status: "planned", note: "PQAI semantic search (free); Phase-2 follow-on." },
-  { id: "epo-ops", module: null, accessMode: "api", jurisdiction: "EP/WO", requiresKey: true, enabledByDefault: false, status: "planned", note: "EPO Open Patent Services (OAuth); not in USPTO-only v1." },
-  { id: "google-bigquery", module: null, accessMode: "dataset", jurisdiction: "global", requiresKey: true, enabledByDefault: false, status: "planned", note: "patents-public-data (sanctioned, free to query); the legitimate Google path." },
-  { id: "uspto-pps", module: null, accessMode: "ui-restricted", jurisdiction: "US", requiresKey: false, enabledByDefault: false, status: "human-handoff", note: "USPTO Patent Public Search is examiner-grade but UI-only (no API) - human-driven, never auto-trusted." },
-  { id: "google-patents-ui", module: null, accessMode: "ui-restricted", jurisdiction: "global", requiresKey: false, enabledByDefault: false, status: "disabled", note: "automated access to the Google Patents UI violates Google ToS - use google-bigquery instead." },
+  {
+    id: "patentsview", module: "./patentsview.mjs", accessMode: "api", jurisdiction: "US",
+    official: true, requiresKey: true, keyEnv: "PATENTSVIEW_API_KEY", enabledByDefault: true,
+    status: "implemented", queryPayloadClass: "claim-derived keyword/CPC query",
+    returnsFullText: false, humanVerificationRequired: true,
+    currentNotice: "USPTO announced PatentsView migration to the Open Data Portal on 2026-03-20; record endpoint/auth/schema health in each live run.",
+    note: "PatentsView PatentSearch API (search.patentsview.org); see docs/source-registry.md.",
+  },
+  {
+    id: "crossref", module: "./crossref.mjs", accessMode: "api", jurisdiction: "NPL",
+    official: false, requiresKey: false, keyEnv: "CROSSREF_MAILTO", enabledByDefault: true,
+    status: "implemented", queryPayloadClass: "claim-derived NPL metadata query",
+    returnsFullText: false, humanVerificationRequired: true,
+    currentNotice: "Use Crossref polite pool identification when possible; full text and relied-on passages remain human verification.",
+    note: "Crossref Works API for NPL metadata candidate discovery; full text still requires human verification.",
+  },
+  {
+    id: "arxiv", module: "./arxiv.mjs", accessMode: "api", jurisdiction: "NPL",
+    official: false, requiresKey: false, enabledByDefault: true,
+    status: "implemented", queryPayloadClass: "claim-derived NPL/preprint query",
+    returnsFullText: false, humanVerificationRequired: true,
+    currentNotice: "Legacy arXiv APIs are limited to one request every three seconds and one connection.",
+    note: "arXiv API for preprint/NPL candidate discovery; versions/dates require human verification.",
+  },
+  {
+    id: "openalex", module: "./openalex.mjs", accessMode: "api", jurisdiction: "NPL",
+    official: false, requiresKey: false, keyEnv: "OPENALEX_API_KEY", enabledByDefault: true,
+    status: "implemented", queryPayloadClass: "claim-derived scholarly metadata query",
+    returnsFullText: false, humanVerificationRequired: true,
+    currentNotice: "OpenAlex keyed access has a larger daily budget; monitor API-key budget and usage.",
+    note: "OpenAlex Works API for scholarly metadata candidate discovery; full text and bibliographic details still require human verification.",
+  },
+  {
+    id: "mock", module: "./mock.mjs", accessMode: "api", jurisdiction: "US",
+    official: false, requiresKey: false, enabledByDefault: false, status: "implemented",
+    queryPayloadClass: "synthetic demo query", returnsFullText: false, humanVerificationRequired: false,
+    note: "offline deterministic source for tests/demos.",
+  },
+  {
+    id: "fixture", module: "./fixture.mjs", accessMode: "api", jurisdiction: "benchmark",
+    official: false, requiresKey: false, enabledByDefault: false, status: "implemented",
+    queryPayloadClass: "public benchmark query", returnsFullText: false, humanVerificationRequired: false,
+    note: "offline benchmark fixture source; not prior art evidence.",
+  },
+  {
+    id: "pqai", module: null, accessMode: "api", jurisdiction: "US/NPL",
+    official: false, requiresKey: false, enabledByDefault: false, status: "planned",
+    queryPayloadClass: "claim-derived semantic query", returnsFullText: false, humanVerificationRequired: true,
+    note: "PQAI semantic search (free); Phase-2 follow-on.",
+  },
+  {
+    id: "epo-ops", module: null, accessMode: "api", jurisdiction: "EP/WO",
+    official: true, requiresKey: true, keyEnv: "EPO_OPS_KEY", enabledByDefault: false, status: "planned",
+    queryPayloadClass: "patent bibliographic/family/full-text query", returnsFullText: true, humanVerificationRequired: true,
+    currentNotice: "EPO OPS is a RESTful XML service with OAuth and fair-use limits; not enabled until adapter/auth are implemented.",
+    note: "EPO Open Patent Services (OAuth); not in USPTO-only v1.",
+  },
+  {
+    id: "google-bigquery", module: null, accessMode: "dataset", jurisdiction: "global",
+    official: false, requiresKey: true, keyEnv: "GOOGLE_APPLICATION_CREDENTIALS", enabledByDefault: false, status: "planned",
+    queryPayloadClass: "SQL/dataset query", returnsFullText: false, humanVerificationRequired: true,
+    note: "patents-public-data (sanctioned, free to query); the legitimate Google path.",
+  },
+  {
+    id: "uspto-pps", module: null, accessMode: "ui-restricted", jurisdiction: "US",
+    official: true, requiresKey: false, enabledByDefault: false, status: "human-handoff",
+    queryPayloadClass: "human-entered search", returnsFullText: false, humanVerificationRequired: true,
+    note: "USPTO Patent Public Search is examiner-grade but UI-only (no API) - human-driven, never auto-trusted.",
+  },
+  {
+    id: "google-patents-ui", module: null, accessMode: "ui-restricted", jurisdiction: "global",
+    official: false, requiresKey: false, enabledByDefault: false, status: "disabled",
+    queryPayloadClass: "UI interaction", returnsFullText: false, humanVerificationRequired: true,
+    note: "automated access to the Google Patents UI violates Google ToS - use google-bigquery instead.",
+  },
 ];
 
 export function listSources() {
@@ -25,6 +91,38 @@ export function listSources() {
 
 export function descriptor(id) {
   return SOURCE_REGISTRY.find((s) => s.id === id) || null;
+}
+
+export function sourceHealth(id, { env = process.env, opts = {} } = {}) {
+  const d = descriptor(id);
+  if (!d) throw new Error(`unknown source '${id}'`);
+  const keyEnv = d.keyEnv || null;
+  const keyPresent = keyEnv ? Boolean(env[keyEnv]) : false;
+  const configured = !d.requiresKey || keyPresent;
+  const implemented = Boolean(d.module) && d.status === "implemented";
+  const automated = implemented && d.accessMode !== "ui-restricted" && configured;
+  return {
+    source_id: d.id,
+    status: d.status,
+    access_mode: d.accessMode,
+    jurisdiction: d.jurisdiction,
+    official: Boolean(d.official),
+    enabled_by_default: Boolean(d.enabledByDefault),
+    implemented,
+    configured,
+    automation_ready: automated,
+    credential: {
+      required: Boolean(d.requiresKey),
+      key_env: keyEnv,
+      key_present: keyPresent,
+    },
+    query_payload_class: d.queryPayloadClass || "",
+    returns_full_text: Boolean(d.returnsFullText),
+    human_verification_required: Boolean(d.humanVerificationRequired),
+    rate_policy: effectiveRatePolicy(d.id, opts),
+    current_notice: d.currentNotice || "",
+    note: d.note || "",
+  };
 }
 
 /** Dynamically load an implemented source -> { meta, search }. Throws for unknown/unimplemented ids. */

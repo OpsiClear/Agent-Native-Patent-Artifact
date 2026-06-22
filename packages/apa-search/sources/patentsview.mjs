@@ -35,6 +35,7 @@
 
 import { formatUsDocNumber } from "../lib/refs.mjs";
 import { guardedFetch, readJsonCapped } from "./http.mjs";
+import { effectiveRatePolicy, rateFetchOptions } from "./policies.mjs";
 
 const ENDPOINT = "https://search.patentsview.org/api/v1/patent/";
 
@@ -195,6 +196,7 @@ export async function search(query, opts = {}) {
     method: "POST",
     body,
     auth: apiKey ? "X-Api-Key present (value omitted)" : "X-Api-Key missing",
+    rate_policy: effectiveRatePolicy(meta.id, opts),
   };
 
   if (!apiKey) {
@@ -214,7 +216,7 @@ export async function search(query, opts = {}) {
         "X-Api-Key": apiKey,
       },
       body: JSON.stringify(body),
-    }, opts);
+    }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`patentsview: network error - ${err && err.message ? err.message : err}`] };
   }

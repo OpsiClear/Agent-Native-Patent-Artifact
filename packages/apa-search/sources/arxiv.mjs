@@ -6,6 +6,7 @@
  */
 
 import { guardedFetch, readTextCapped } from "./http.mjs";
+import { effectiveRatePolicy, rateFetchOptions } from "./policies.mjs";
 
 export const meta = {
   id: "arxiv",
@@ -31,10 +32,16 @@ export async function search(query, opts = {}) {
   params.set("sortBy", "submittedDate");
   params.set("sortOrder", "descending");
   const url = `${ENDPOINT}?${params.toString()}`;
-  const parameters = { source_id: meta.id, endpoint: ENDPOINT, method: "GET", query: Object.fromEntries(params.entries()) };
+  const parameters = {
+    source_id: meta.id,
+    endpoint: ENDPOINT,
+    method: "GET",
+    query: Object.fromEntries(params.entries()),
+    rate_policy: effectiveRatePolicy(meta.id, opts),
+  };
   let res;
   try {
-    res = await guardedFetch(url, { headers: { Accept: "application/atom+xml" } }, opts);
+    res = await guardedFetch(url, { headers: { Accept: "application/atom+xml" } }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`arxiv: network error - ${messageOf(err)}`] };
   }

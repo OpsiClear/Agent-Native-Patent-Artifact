@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { guardedFetch, readJsonCapped, readTextCapped } from "../sources/http.mjs";
+import { guardedFetch, readJsonCapped, readTextCapped, resetRateLimitState } from "../sources/http.mjs";
 
 test("readTextCapped rejects oversized response text before parsing", async () => {
   await assert.rejects(
@@ -23,4 +23,22 @@ test("guardedFetch aborts long-running fetches", async () => {
     () => guardedFetch("https://example.invalid", {}, { fetch, timeoutMs: 1 }),
     /aborted-by-test/
   );
+});
+
+test("guardedFetch applies per-source minimum intervals after the first request", async () => {
+  resetRateLimitState();
+  const fetch = async () => ({ ok: true, text: async () => "ok" });
+  await guardedFetch("https://example.invalid/1", {}, {
+    fetch,
+    rateLimitKey: "unit-test-source",
+    minIntervalMs: 20,
+  });
+  const started = Date.now();
+  await guardedFetch("https://example.invalid/2", {}, {
+    fetch,
+    rateLimitKey: "unit-test-source",
+    minIntervalMs: 20,
+  });
+  assert.ok(Date.now() - started >= 15);
+  resetRateLimitState();
 });

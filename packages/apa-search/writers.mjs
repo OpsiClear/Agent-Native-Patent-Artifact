@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { iterEntitySections } from "../../lib/apa-parse.mjs";
 import { refSummary, refToPaBlock, refToEvidence } from "./lib/refs.mjs";
 import { queryToString } from "./search.mjs";
+import { sourceHealth } from "./sources/index.mjs";
 
 function nextPaNumber(priorArtPath) {
   let max = 0;
@@ -86,6 +87,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
       error: s.error || null,
       skipped: Boolean(s.skipped),
       query_parameters: s.parameters || null,
+      source_health: s.source_health || s.sourceHealth || safeSourceHealth(s.id),
       notes: s.notes || [],
     })),
     top_n: {
@@ -317,6 +319,22 @@ function sourceLevelExclusions(perSource) {
     }
   }
   return excluded;
+}
+
+function safeSourceHealth(id) {
+  try {
+    return sourceHealth(id);
+  } catch (err) {
+    return {
+      source_id: id || "",
+      status: "unknown",
+      access_mode: "unknown",
+      implemented: false,
+      configured: false,
+      automation_ready: false,
+      error: err && err.message ? err.message : String(err),
+    };
+  }
 }
 
 function asList(v) {

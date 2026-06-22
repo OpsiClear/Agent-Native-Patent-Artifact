@@ -6,6 +6,7 @@ import { search as searchArxiv, meta as arxivMeta } from "../sources/arxiv.mjs";
 import { search as searchOpenAlex, meta as openAlexMeta } from "../sources/openalex.mjs";
 import { search as searchFixture, meta as fixtureMeta } from "../sources/fixture.mjs";
 import { buildSearchPlan, runSearch } from "../search.mjs";
+import { sourceHealth } from "../sources/index.mjs";
 
 test("crossref source maps Works API metadata to NormalizedRefs", async () => {
   assert.equal(crossrefMeta.id, "crossref");
@@ -33,7 +34,7 @@ test("crossref source maps Works API metadata to NormalizedRefs", async () => {
     }),
     });
   };
-  const res = await searchCrossref({ keywords: ["point", "attribute", "codec"], limit: 5 }, { fetch });
+  const res = await searchCrossref({ keywords: ["point", "attribute", "codec"], limit: 5 }, { fetch, disableRateLimit: true });
   assert.equal(res.rawCount, 1);
   assert.equal(res.records[0].source, "crossref");
   assert.equal(res.records[0].docNumber, "DOI:10.1145/1234567.8901234");
@@ -41,6 +42,27 @@ test("crossref source maps Works API metadata to NormalizedRefs", async () => {
   assert.match(res.records[0].snippet, /atlas video/);
   assert.match(res.notes.join(" "), /metadata candidate/);
   assert.match(seenUrl, /query=point\+attribute\+codec/);
+});
+
+test("sourceHealth exposes config and rate policy without secret values", () => {
+  const health = sourceHealth("patentsview", {
+    env: { PATENTSVIEW_API_KEY: "secret-value" },
+  });
+  assert.equal(health.source_id, "patentsview");
+  assert.equal(health.configured, true);
+  assert.equal(health.automation_ready, true);
+  assert.equal(health.credential.key_env, "PATENTSVIEW_API_KEY");
+  assert.equal(health.credential.key_present, true);
+  assert.equal(JSON.stringify(health).includes("secret-value"), false);
+  assert.match(health.rate_policy.policy_id, /patentsview/);
+  assert.match(health.current_notice, /Open Data Portal/);
+});
+
+test("sourceHealth reports missing required credentials as not automation-ready", () => {
+  const health = sourceHealth("patentsview", { env: {} });
+  assert.equal(health.configured, false);
+  assert.equal(health.automation_ready, false);
+  assert.equal(health.credential.key_present, false);
 });
 
 test("arxiv source maps Atom entries to NormalizedRefs", async () => {
@@ -59,7 +81,7 @@ test("arxiv source maps Atom entries to NormalizedRefs", async () => {
     </entry>
   </feed>`;
   const fetch = async () => ({ ok: true, status: 200, text: async () => xml });
-  const res = await searchArxiv({ keywords: ["gaussian", "video", "coding"], limit: 5 }, { fetch });
+  const res = await searchArxiv({ keywords: ["gaussian", "video", "coding"], limit: 5 }, { fetch, disableRateLimit: true });
   assert.equal(res.rawCount, 1);
   assert.equal(res.records[0].source, "arxiv");
   assert.equal(res.records[0].docNumber, "arXiv:2601.01234v2");
@@ -106,7 +128,7 @@ test("openalex source maps Works API metadata to NormalizedRefs", async () => {
       }),
     });
   };
-  const res = await searchOpenAlex({ keywords: ["gaussian", "splat", "codec"], limit: 5 }, { fetch });
+  const res = await searchOpenAlex({ keywords: ["gaussian", "splat", "codec"], limit: 5 }, { fetch, disableRateLimit: true });
   assert.equal(res.rawCount, 1);
   assert.equal(res.records[0].source, "openalex");
   assert.equal(res.records[0].docNumber, "DOI:10.1145/9876543.2109876");

@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
 import { scan } from "../apa-redact/redact-engine.mjs";
-import { loadSource, descriptor, listSources } from "./sources/index.mjs";
+import { loadSource, descriptor, listSources, sourceHealth } from "./sources/index.mjs";
 import { dedupeRefsDetailed, expandCitationNeighborhood, rankRefs } from "./lib/refs.mjs";
 import { expandTermVariants } from "./lib/terms.mjs";
 
@@ -108,6 +108,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
   for (const step of plan) {
     for (const id of ids) {
       const d = descriptor(id);
+      const health = safeSourceHealth(id, opts);
       if (d && d.accessMode === "ui-restricted") {
         perSource.push({
           id,
@@ -117,6 +118,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
           skipped: true,
           accessMode: d.accessMode,
           status: d.status,
+          source_health: health,
           parameters: { source_id: id, strategy_id: step.id, not_queried: true, reason: "ui-restricted-human-handoff" },
           notes: [`${id}: UI-only/ToS-restricted - human handoff, not queried`],
         });
@@ -133,6 +135,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
           rawCount,
           accessMode: d?.accessMode || mod.meta?.accessMode || "unknown",
           status: d?.status || "implemented",
+          source_health: health,
           parameters: { ...(parameters || { source_id: id, query: compactQueryForAudit(step.query) }), strategy_id: step.id, strategy_label: step.label },
           notes: notes || [],
         });
@@ -144,6 +147,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
           rawCount: 0,
           accessMode: d?.accessMode || "unknown",
           status: d?.status || "error",
+          source_health: health,
           parameters: { source_id: id, strategy_id: step.id, query: compactQueryForAudit(step.query) },
           error: e.message,
         });
@@ -172,6 +176,22 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
 }
 
 function safeRead(p) { try { return readFileSync(p, "utf8"); } catch { return ""; } }
+
+function safeSourceHealth(id, opts = {}) {
+  try {
+    return sourceHealth(id, { opts });
+  } catch (err) {
+    return {
+      source_id: id,
+      status: "unknown",
+      access_mode: "unknown",
+      implemented: false,
+      configured: false,
+      automation_ready: false,
+      error: err && err.message ? err.message : String(err),
+    };
+  }
+}
 
 function compactQueryForAudit(query) {
   return {

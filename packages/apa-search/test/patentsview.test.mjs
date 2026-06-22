@@ -59,7 +59,7 @@ test("search() maps fixture patents to NormalizedRefs", async () => {
   };
 
   const out = await withFetch(fakeFetch, () =>
-    search({ keywords: ["self-watering", "float", "valve"], limit: 5 }, { apiKey: "test" })
+    search({ keywords: ["self-watering", "float", "valve"], limit: 5 }, { apiKey: "test", disableRateLimit: true })
   );
 
   // Request was made to the new PatentSearch endpoint with the X-Api-Key header.
@@ -124,7 +124,7 @@ test("search() throws a clear error when no API key is available", async () => {
 test("search() returns empty result (no throw) on HTTP error", async () => {
   const fakeFetch = async () => fakeResponse({}, { ok: false, status: 429, statusText: "Too Many Requests" });
   const out = await withFetch(fakeFetch, () =>
-    search({ keywords: ["valve"] }, { apiKey: "test" })
+    search({ keywords: ["valve"] }, { apiKey: "test", disableRateLimit: true })
   );
   assert.deepEqual(out.records, []);
   assert.equal(out.rawCount, 0);
@@ -140,7 +140,7 @@ test("opts.apiKey falls back to PATENTSVIEW_API_KEY env var", async () => {
       seenKey = init.headers["X-Api-Key"];
       return fakeResponse(FIXTURE);
     };
-    const out = await withFetch(fakeFetch, () => search({ keywords: ["valve"] }, {}));
+    const out = await withFetch(fakeFetch, () => search({ keywords: ["valve"] }, { disableRateLimit: true }));
     assert.equal(seenKey, "env-key");
     assert.ok(out.records.length > 0);
   } finally {

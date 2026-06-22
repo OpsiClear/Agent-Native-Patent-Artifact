@@ -6,6 +6,7 @@
  */
 
 import { guardedFetch, readJsonCapped } from "./http.mjs";
+import { effectiveRatePolicy, rateFetchOptions } from "./policies.mjs";
 
 export const meta = {
   id: "crossref",
@@ -27,10 +28,16 @@ export async function search(query, opts = {}) {
   params.set("select", "DOI,title,abstract,published-print,published-online,issued,container-title,publisher,URL,author,subject");
   if (opts.mailto || process.env.CROSSREF_MAILTO) params.set("mailto", opts.mailto || process.env.CROSSREF_MAILTO);
   const url = `${ENDPOINT}?${params.toString()}`;
-  const parameters = { source_id: meta.id, endpoint: ENDPOINT, method: "GET", query: Object.fromEntries(params.entries()) };
+  const parameters = {
+    source_id: meta.id,
+    endpoint: ENDPOINT,
+    method: "GET",
+    query: Object.fromEntries(params.entries()),
+    rate_policy: effectiveRatePolicy(meta.id, opts),
+  };
   let res;
   try {
-    res = await guardedFetch(url, { headers: { Accept: "application/json" } }, opts);
+    res = await guardedFetch(url, { headers: { Accept: "application/json" } }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`crossref: network error - ${messageOf(err)}`] };
   }

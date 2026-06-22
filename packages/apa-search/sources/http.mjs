@@ -1,9 +1,12 @@
 export const DEFAULT_TIMEOUT_MS = 30000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 
+const LAST_REQUEST_AT = new Map();
+
 export async function guardedFetch(url, init = {}, opts = {}) {
   const doFetch = opts.fetch || globalThis.fetch;
   if (typeof doFetch !== "function") throw new Error("global fetch unavailable");
+  await applyRateLimit(opts);
   const timeoutMs = Math.max(1, Number(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS) | 0);
   const controller = new AbortController();
   const abortFromCaller = () => controller.abort();
@@ -18,6 +21,24 @@ export async function guardedFetch(url, init = {}, opts = {}) {
     clearTimeout(timer);
     if (opts.signal) opts.signal.removeEventListener("abort", abortFromCaller);
   }
+}
+
+export async function applyRateLimit(opts = {}) {
+  if (opts.disableRateLimit) return { waited_ms: 0 };
+  const key = opts.rateLimitKey;
+  const minIntervalMs = Math.max(0, Number(opts.minIntervalMs ?? 0) | 0);
+  if (!key || !minIntervalMs) return { waited_ms: 0 };
+
+  const now = Date.now();
+  const last = LAST_REQUEST_AT.get(key) || 0;
+  const waitMs = Math.max(0, last + minIntervalMs - now);
+  if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+  LAST_REQUEST_AT.set(key, Date.now());
+  return { waited_ms: waitMs };
+}
+
+export function resetRateLimitState() {
+  LAST_REQUEST_AT.clear();
 }
 
 export async function readTextCapped(res, opts = {}) {

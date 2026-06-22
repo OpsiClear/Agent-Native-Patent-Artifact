@@ -14,7 +14,7 @@
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
 import { updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "./writers.mjs";
-import { listSources } from "./sources/index.mjs";
+import { listSources, sourceHealth } from "./sources/index.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseFrontmatter } from "../../lib/apa-parse.mjs";
@@ -41,6 +41,7 @@ function parseArgs(argv) {
     else if (t === "--broad") a.broad = true;
     else if (t === "--citation-expand") a.citationExpand = true;
     else if (t === "--list-sources") a.listSources = true;
+    else if (t === "--source-health") a.sourceHealth = true;
   }
   return a;
 }
@@ -71,7 +72,21 @@ async function main() {
   }
   const a = parseArgs(rawArgs);
   if (a.listSources) {
-    for (const s of listSources()) console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${s.note}`);
+    for (const s of listSources()) {
+      const policy = sourceHealth(s.id).rate_policy?.policy_id || "no-rate-policy";
+      console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${policy.padEnd(34)} ${s.note}`);
+    }
+    return;
+  }
+  if (a.sourceHealth) {
+    const rows = listSources().map((s) => sourceHealth(s.id));
+    if (a.json) console.log(JSON.stringify(rows, null, 2));
+    else {
+      for (const h of rows) {
+        const key = h.credential?.required ? `${h.credential.key_env}:${h.credential.key_present ? "present" : "missing"}` : "no-key-required";
+        console.log(`  ${h.source_id.padEnd(18)} ready=${String(h.automation_ready).padEnd(5)} configured=${String(h.configured).padEnd(5)} ${key.padEnd(38)} ${h.rate_policy?.policy_id || "no-rate-policy"}`);
+      }
+    }
     return;
   }
   const query = a.query ? { keywords: a.query.split(/\s+/).filter(Boolean), cpc: [], limit: a.limit }

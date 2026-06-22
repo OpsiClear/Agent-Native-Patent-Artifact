@@ -62,7 +62,8 @@ airtight enforcement.
 2. **Access modes.** Only sanctioned API/dataset sources from `docs/source-registry.md` are queried.
    USPTO Patent Public Search (`uspto-pps`) is examiner-grade but **UI-only** and the Google Patents UI
    (`google-patents-ui`) is **ToS-restricted** - these are **human-handoff**, never auto-scraped. Run
-   `--list-sources` to see each source's access mode/status.
+   `--list-sources` to see each source's access mode/status and `--source-health` to see configured
+   credentials, automation readiness, source notices, and rate/quota policy before a live run.
    If a specific URL must be fetched for verification, use
    `node packages/apa-safe/cli.mjs fetch <url> --matter <matter> --out <matter>/evidence/prior_art/<id>-fetched.md`;
    do not use raw `WebFetch` or ad hoc network `Bash`.
@@ -89,7 +90,9 @@ airtight enforcement.
 7. **Update audit and analysis-handoff state.** The search dossier must record the serialized-query
    SHA-256, source IDs, search-plan IDs, exact source parameters, source counts/errors, top-N candidates before
    dedupe, after dedupe, and after ranking, dedupe clusters, excluded results/reasons, assigned
-   `PA##` IDs, `coverage_limits.search_complete_asserted: false`, known unsearched source classes,
+   `PA##` IDs, per-source `source_health` snapshots (credential-present booleans, implementation
+   status, rate/quota policy, current notices), `coverage_limits.search_complete_asserted: false`,
+   known unsearched source classes,
    candidate `quote_handoff` fields, candidate `rank_explanation` fields, `citation_expansion`,
    `analysis_handoff.candidate_cells`, and
    `closest_art_selection.human_verified: false` until a human fills it. Add a
