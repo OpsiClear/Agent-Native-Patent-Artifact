@@ -228,6 +228,7 @@ function runSyntheticCodebaseDomainCase(testCase, expected) {
   const tmp = mkdtempSync(join(tmpdir(), "apa-bench-codebase-domain-"));
   try {
     cpSync(resolve(ROOT, testCase.matter_template), tmp, { recursive: true });
+    const startingRunlogEntries = validateRunlog(tmp).entries.length;
     const { outputs, result } = runSoftwareDomain({
       command: "run-all",
       source: resolve(ROOT, testCase.source),
@@ -240,7 +241,7 @@ function runSyntheticCodebaseDomainCase(testCase, expected) {
       files_scanned: result.inventory.files_scanned,
       output_count: outputs.length,
       canonical_writes: relOutputs.some((p) => !p.startsWith("domain/software/")),
-      runlog_entries: runlog.entries.length,
+      runlog_entries: runlog.entries.length - startingRunlogEntries,
       mechanism_terms: result.seeds.method_seed.candidate_limitations.length,
       outputs: relOutputs,
       source_sha256: hashTree(resolve(ROOT, testCase.source)),
@@ -286,6 +287,7 @@ function runSyntheticDeviceDomainCase(testCase, expected) {
   const tmp = mkdtempSync(join(tmpdir(), "apa-bench-device-domain-"));
   try {
     cpSync(resolve(ROOT, testCase.matter_template), tmp, { recursive: true });
+    const startingRunlogEntries = validateRunlog(tmp).entries.length;
     const { outputs, result } = runDeviceDomain({
       command: "run-all",
       source: resolve(ROOT, testCase.source),
@@ -299,7 +301,7 @@ function runSyntheticDeviceDomainCase(testCase, expected) {
       relationships: result.inventory.relationships.length,
       output_count: outputs.length,
       canonical_writes: relOutputs.some((p) => !p.startsWith("domain/device/")),
-      runlog_entries: runlog.entries.length,
+      runlog_entries: runlog.entries.length - startingRunlogEntries,
       numeral_review_verdict: result.numeralReview.verdict,
       outputs: relOutputs,
       source_sha256: hashTree(resolve(ROOT, testCase.source)),
@@ -345,6 +347,7 @@ function runSyntheticFormulationDomainCase(testCase, expected) {
   const tmp = mkdtempSync(join(tmpdir(), "apa-bench-formulation-domain-"));
   try {
     cpSync(resolve(ROOT, testCase.matter_template), tmp, { recursive: true });
+    const startingRunlogEntries = validateRunlog(tmp).entries.length;
     const { outputs, result } = runFormulationDomain({
       command: "run-all",
       source: resolve(ROOT, testCase.source),
@@ -359,7 +362,7 @@ function runSyntheticFormulationDomainCase(testCase, expected) {
       working_examples: result.summary.examples.filter((e) => e.kind === "working").length,
       output_count: outputs.length,
       canonical_writes: relOutputs.some((p) => !p.startsWith("domain/formulation/")),
-      runlog_entries: runlog.entries.length,
+      runlog_entries: runlog.entries.length - startingRunlogEntries,
       enablement_verdict: result.enablement.verdict,
       ranges_verdict: result.ranges.verdict,
       outputs: relOutputs,

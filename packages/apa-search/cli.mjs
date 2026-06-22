@@ -16,7 +16,7 @@ import { runSearch, buildQueryFromClaims } from "./search.mjs";
 import { updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { listSources, sourceHealth } from "./sources/index.mjs";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import {
   appendRunlog,
@@ -25,6 +25,7 @@ import {
   existingFileRecords,
   externalSinkRecord,
   humanCheckpoint,
+  sha256,
 } from "../apa-trace/runlog.mjs";
 
 function parseArgs(argv) {
@@ -65,10 +66,10 @@ async function main() {
   const startedAt = new Date().toISOString();
   const rawArgs = process.argv.slice(2);
   if (rawArgs[0] === "verify-closest-art") {
-    process.exit(cmdVerifyClosestArt(rawArgs.slice(1)));
+    process.exit(cmdVerifyClosestArt(rawArgs.slice(1), { startedAt, rawArgs }));
   }
   if (rawArgs[0] === "verify-reference") {
-    process.exit(cmdVerifyReference(rawArgs.slice(1)));
+    process.exit(cmdVerifyReference(rawArgs.slice(1), { startedAt, rawArgs }));
   }
   const a = parseArgs(rawArgs);
   if (a.listSources) {
@@ -168,7 +169,7 @@ async function main() {
   console.log("and never asserts \"no anticipating art found.\"");
 }
 
-function cmdVerifyClosestArt(argv) {
+function cmdVerifyClosestArt(argv, { startedAt = new Date().toISOString(), rawArgs = [] } = {}) {
   const dossier = value(argv, "--dossier");
   const selected = values(argv, "--pa").flatMap((v) => v.split(",")).map((s) => s.trim()).filter(Boolean);
   const rationale = value(argv, "--rationale") || "";
@@ -178,6 +179,7 @@ function cmdVerifyClosestArt(argv) {
     return 2;
   }
   try {
+    const before = readFileSync(dossier, "utf8");
     const updated = updateClosestArtSelection(dossier, {
       selectedPaIds: selected,
       rationale,
@@ -188,6 +190,21 @@ function cmdVerifyClosestArt(argv) {
         canonical_link_verified: argv.includes("--canonical-link-verified"),
         relied_on_passage_verified: argv.includes("--relied-on-passage-verified"),
       },
+    });
+    appendVerificationRunlog({
+      argv: rawArgs,
+      dossier,
+      before,
+      startedAt,
+      skill: "apa-priorart",
+      checkpoints: [
+        humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: true, reviewer, timestamp: updated.closest_art_selection.verified_at }),
+        humanCheckpoint({ id: "ids-verification", required: true, satisfied: updated.closest_art_selection.verification.ids_ready, reviewer, timestamp: updated.closest_art_selection.verified_at }),
+      ],
+      notes: [
+        `closest-art verification updated for ${selected.join(", ")}`,
+        "verification update only; not a patentability, IDS, or search-completeness conclusion",
+      ],
     });
     if (argv.includes("--json")) {
       console.log(JSON.stringify(updated.closest_art_selection, null, 2));
@@ -203,7 +220,7 @@ function cmdVerifyClosestArt(argv) {
   }
 }
 
-function cmdVerifyReference(argv) {
+function cmdVerifyReference(argv, { startedAt = new Date().toISOString(), rawArgs = [] } = {}) {
   const dossier = value(argv, "--dossier");
   const selected = values(argv, "--pa").flatMap((v) => v.split(",")).map((s) => s.trim()).filter(Boolean);
   const notes = value(argv, "--notes") || value(argv, "--rationale") || "";
@@ -213,6 +230,7 @@ function cmdVerifyReference(argv) {
     return 2;
   }
   try {
+    const before = readFileSync(dossier, "utf8");
     const updated = updateReferenceVerification(dossier, {
       paIds: selected,
       notes,
@@ -225,6 +243,26 @@ function cmdVerifyReference(argv) {
       },
     });
     const refs = (updated.assigned_references || []).filter((r) => selected.includes(r.pa_id));
+    appendVerificationRunlog({
+      argv: rawArgs,
+      dossier,
+      before,
+      startedAt,
+      skill: "apa-priorart",
+      checkpoints: [
+        humanCheckpoint({
+          id: "ids-verification",
+          required: true,
+          satisfied: refs.length > 0 && refs.every((ref) => ref.verification?.ids_ready),
+          reviewer,
+          timestamp: updated.reference_verification_history?.at(-1)?.verified_at || "",
+        }),
+      ],
+      notes: [
+        `reference verification updated for ${selected.join(", ")}`,
+        "verification update only; not a patentability, IDS, or search-completeness conclusion",
+      ],
+    });
     if (argv.includes("--json")) {
       console.log(JSON.stringify(refs, null, 2));
     } else {
@@ -246,6 +284,44 @@ function ruleVersionOf(matterDir) {
   } catch {
     return "";
   }
+}
+
+function appendVerificationRunlog({ argv, dossier, before, startedAt, skill, checkpoints, notes }) {
+  const matterDir = value(argv || [], "--matter") || inferMatterDirFromDossier(dossier);
+  if (!matterDir) return;
+  appendRunlog(matterDir, buildRunlogEntry({
+    timestamp: new Date().toISOString(),
+    skill,
+    ruleVersion: ruleVersionOf(matterDir),
+    inputs: [snapshotRecord(matterDir, dossier, before)],
+    outputs: existingFileRecords(matterDir, [dossier]),
+    commands: [commandRecord({
+      argv: ["node", "packages/apa-search/cli.mjs", ...(argv || [])],
+      cwd: process.cwd(),
+      exitCode: 0,
+      startedAt,
+      endedAt: new Date().toISOString(),
+    })],
+    humanCheckpoints: checkpoints,
+    notes,
+  }));
+}
+
+function inferMatterDirFromDossier(dossier) {
+  const abs = resolve(dossier || "");
+  const priorArtDir = dirname(abs);
+  const evidenceDir = dirname(priorArtDir);
+  if (basename(priorArtDir) !== "prior_art" || basename(evidenceDir) !== "evidence") return "";
+  return dirname(evidenceDir);
+}
+
+function snapshotRecord(matterDir, path, text) {
+  const bytes = Buffer.byteLength(String(text || ""), "utf8");
+  return {
+    path: relative(resolve(matterDir), resolve(path)).replace(/\\/g, "/"),
+    sha256: sha256(String(text || "")),
+    bytes,
+  };
 }
 
 main().catch((e) => { console.error("error:", e.message); process.exit(1); });

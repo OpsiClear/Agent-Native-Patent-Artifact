@@ -203,10 +203,13 @@ Verification:
 
 ### 1.1 Runlog Automation
 
-Current state: `docs/protocol.md` specifies optional `trace/runlog.jsonl`; `packages/apa-trace`
-implements append/validation/hash helpers; `apa-search --write`, `apa-assemble --write`,
-`apa-rigor scaffold --out`, `apa-prosecute respond --write`, and live `apa-eval --matter` runs append
-runlog entries. `apa-eval --mock` remains offline and does not create a cloud-sink ledger.
+Current state: `docs/protocol.md` keeps `trace/runlog.jsonl` optional for static imported/public
+matters, but APA write/sink commands append it. `packages/apa-trace` implements
+append/validation/hash helpers; `apa-search --write`, `apa-assemble --write`,
+`apa-reports scaffold`, `apa-rigor scaffold --out`, `apa-prosecute respond --write`, and live
+`apa-eval --matter` runs append runlog entries. `apa-search verify-reference` and
+`apa-search verify-closest-art` append verification-mutation entries when the dossier lives under a
+matter. `apa-eval --mock` remains offline and does not create a cloud-sink ledger.
 
 Tasks:
 - [x] Add a zero-dependency runlog helper module.
@@ -226,7 +229,9 @@ Suggested targets:
 
 Integration tasks:
 - [x] `apa-search --write` logs query sink hash, dossier output, PA outputs, and closest-art checkpoint.
+- [x] `apa-search verify-reference` and `verify-closest-art` log dossier verification mutations.
 - [x] `apa-assemble --write` logs generated package outputs and human filing checkpoints.
+- [x] `apa-reports scaffold` logs semantic report outputs and unsatisfied human-review checkpoints.
 - [x] `apa-rigor` logs report generation.
 - [x] `apa-prosecute respond` logs OA parse/scaffold actions in practitioner mode.
 - [x] `apa-eval` logs cloud LLM sink only when attached to a matter and not in `--mock`.
@@ -234,7 +239,10 @@ Integration tasks:
 Acceptance criteria:
 - [x] Running `apa-search --matter <tmp> --source mock --write` creates or appends
   `trace/runlog.jsonl`.
+- [x] Running `apa-search verify-reference` / `verify-closest-art` against a matter dossier appends a
+  runlog entry with pre-update dossier input hash, post-update output hash, and checkpoint status.
 - [x] Running `apa-assemble --matter <tmp> --write` appends generated-file output records.
+- [x] Running `apa-reports scaffold <kind> --matter <tmp>` appends semantic-report output records.
 - [x] Running `apa-rigor scaffold --matter <tmp> --out <tmp>/patent_rigor_report.json`
   appends report-generation records and review checkpoints.
 - [x] Running `apa-prosecute respond --matter <tmp> --oa <file> --write` in practitioner mode

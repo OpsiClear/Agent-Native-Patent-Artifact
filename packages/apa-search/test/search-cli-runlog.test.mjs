@@ -55,6 +55,14 @@ test("apa-search verify-closest-art updates dossier and gates IDS readiness on a
     let parsed = JSON.parse(readFileSync(dossier, "utf8"));
     assert.equal(parsed.closest_art_selection.human_verified, true);
     assert.equal(parsed.closest_art_selection.verification.ids_ready, false);
+    let runlog = validateRunlog(d);
+    assert.equal(runlog.ok, true, JSON.stringify(runlog.errors));
+    assert.equal(runlog.entries.length, 2);
+    assert.equal(runlog.entries[1].skill, "apa-priorart");
+    assert.ok(runlog.entries[1].inputs.some((input) => /search-dossier-/.test(input.path)));
+    assert.ok(runlog.entries[1].outputs.some((output) => /search-dossier-/.test(output.path)));
+    assert.equal(runlog.entries[1].human_checkpoints.find((cp) => cp.id === "closest-art-selection").satisfied, true);
+    assert.equal(runlog.entries[1].human_checkpoints.find((cp) => cp.id === "ids-verification").satisfied, false);
 
     execFileSync(process.execPath, [
       CLI,
@@ -71,6 +79,9 @@ test("apa-search verify-closest-art updates dossier and gates IDS readiness on a
     parsed = JSON.parse(readFileSync(dossier, "utf8"));
     assert.equal(parsed.closest_art_selection.verification.ids_ready, true);
     assert.equal(parsed.assigned_references[0].verification.ids_ready, true);
+    runlog = validateRunlog(d);
+    assert.equal(runlog.entries.length, 3);
+    assert.equal(runlog.entries[2].human_checkpoints.find((cp) => cp.id === "ids-verification").satisfied, true);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
@@ -100,5 +111,11 @@ test("apa-search verify-reference updates assigned reference IDS state without c
     assert.equal(parsed.assigned_references[0].verification_notes, "Human checked bibliographic fields and relied-on passage.");
     assert.equal(parsed.closest_art_selection.human_verified, false);
     assert.equal(parsed.reference_verification_history.length, 1);
+    const runlog = validateRunlog(d);
+    assert.equal(runlog.ok, true, JSON.stringify(runlog.errors));
+    assert.equal(runlog.entries.length, 2);
+    assert.equal(runlog.entries[1].skill, "apa-priorart");
+    assert.equal(runlog.entries[1].human_checkpoints.find((cp) => cp.id === "ids-verification").satisfied, true);
+    assert.ok(runlog.entries[1].notes.some((note) => /reference verification updated/.test(note)));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

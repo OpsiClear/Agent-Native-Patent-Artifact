@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { defaultReportFor, expectedReportPath, REPORT_TYPES } from "../schemas.mjs";
 import { validateReport } from "../validate.mjs";
+import { validateRunlog } from "../../apa-trace/runlog.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "cli.mjs");
@@ -407,6 +408,7 @@ test("CLI scaffolds and checks minimal reports for an example matter", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-reports-"));
   try {
     cpSync(EXAMPLE, d, { recursive: true });
+    const startingEntries = validateRunlog(d).entries.length;
     for (const kind of Object.keys(REPORT_TYPES)) {
       const scaffold = run(["scaffold", kind, "--matter", d]);
       assert.equal(scaffold.status, 0, scaffold.stderr);
@@ -416,6 +418,16 @@ test("CLI scaffolds and checks minimal reports for an example matter", () => {
       assert.equal(JSON.parse(check.stdout).ok, true);
       assert.equal(JSON.parse(readFileSync(file, "utf8")).legal_posture, "flags-not-conclusions");
     }
+    const runlog = validateRunlog(d);
+    assert.equal(runlog.ok, true, JSON.stringify(runlog.errors));
+    const appended = runlog.entries.slice(startingEntries);
+    assert.equal(appended.length, Object.keys(REPORT_TYPES).length);
+    assert.deepEqual(
+      appended.map((entry) => entry.skill),
+      Object.values(REPORT_TYPES).map((cfg) => cfg.skill)
+    );
+    assert.ok(appended.every((entry) => entry.outputs.length === 1));
+    assert.ok(appended.every((entry) => entry.human_checkpoints.some((cp) => cp.required && cp.satisfied === false)));
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

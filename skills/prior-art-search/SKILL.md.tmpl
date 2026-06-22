@@ -52,7 +52,9 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    confidence in its `verification` block. Use
    `node packages/apa-search/cli.mjs verify-reference --dossier <matter>/evidence/prior_art/<dossier>.json --pa PA## --notes "<what was checked>"`
    and add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`
-   only after each check is actually complete. Catch mis-citations; surface closer missing art.
+   only after each check is actually complete. The command appends a runlog entry when the dossier is
+   under `<matter>/evidence/prior_art/`, hashing the pre-update dossier as input and the updated
+   dossier as output. Catch mis-citations; surface closer missing art.
 
 {{IDS_REQUIREMENTS}}
 6. **Build the reference matrix** (the g2tree "Blocks / Does-NOT-block" pattern): per reference, the
@@ -73,6 +75,7 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    `node packages/apa-search/cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/<dossier>.json --pa PA## --rationale "<why selected>" --reviewer "<name>"`.
    Add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`
    only after each check is actually complete; `ids_ready` must remain false until all four are true.
+   The verification command also appends a runlog entry with closest-art and IDS checkpoint status.
 9. **Regression scoring.** When improving this skill, run the fixed retrieval harness:
    `npm run score:prior-art-search`. It scores known-reference recall@20 and recall@5, mean known
    reciprocal rank, top expected-slot precision against distractors, citation-expansion gain where

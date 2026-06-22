@@ -8,7 +8,13 @@ import { dirname, join } from "node:path";
 import process from "node:process";
 import { defaultReportFor, expectedReportPath, normalizeReportType, REPORT_TYPES } from "./schemas.mjs";
 import { formatErrors, validateReport } from "./validate.mjs";
-import { existingFileRecords } from "../apa-trace/runlog.mjs";
+import {
+  appendRunlog,
+  buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
+  humanCheckpoint,
+} from "../apa-trace/runlog.mjs";
 
 function value(args, name) {
   const i = args.indexOf(name);
@@ -63,6 +69,7 @@ function cmdList() {
 }
 
 function cmdScaffold(args) {
+  const startedAt = new Date().toISOString();
   const type = normalizeReportType(args.find((a) => !a.startsWith("--")));
   if (!type) return usage("scaffold requires a known report type");
   const matter = value(args, "--matter");
@@ -77,6 +84,22 @@ function cmdScaffold(args) {
   }
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, JSON.stringify(report, null, 2) + "\n", "utf8");
+  appendRunlog(matter, buildRunlogEntry({
+    timestamp: new Date().toISOString(),
+    skill: report.skill,
+    ruleVersion: report.rule_pack?.effective_date || "",
+    inputs,
+    outputs: existingFileRecords(matter, [out]),
+    commands: [commandRecord({
+      argv: ["node", "packages/apa-reports/cli.mjs", ...process.argv.slice(2)],
+      cwd: process.cwd(),
+      exitCode: 0,
+      startedAt,
+      endedAt: new Date().toISOString(),
+    })],
+    humanCheckpoints: (report.human_checkpoints || []).map((cp) => humanCheckpoint(cp)),
+    notes: ["semantic report scaffold written; flags/questions only, not a legal conclusion"],
+  }));
   process.stdout.write(`wrote ${out} (${type}; human checkpoints unsatisfied)\n`);
   return 0;
 }

@@ -21,7 +21,7 @@ by **epistemic role**, not by document section, so an agent loads only what a qu
     embodiments.md     # * SPEC#### paragraphs (the specification support text)
   trace/
     prosecution.yaml   # * decision DAG: PH## nodes (decision / dead_end / pivot / question / experiment)
-    runlog.jsonl       #   append-only skill/tool execution ledger (optional but recommended)
+    runlog.jsonl       #   append-only skill/tool execution ledger for APA writes and sink calls
   evidence/
     README.md          # * index: every reference & drawing -> the claims it bears on
     prior_art/<paN>.md #   raw bibliographic record + the relied-on passage of one reference
@@ -253,9 +253,9 @@ nodes:
 `trace/` and `staging/` are **append-only / immutable**; `logic/` is the mutable clean current draft.
 
 ### `trace/runlog.jsonl`
-Append-only execution ledger for agent/tool runs. It is optional in the MVP validator but recommended
-for every skill that writes files, calls an external sink, or requires a human checkpoint. One JSON
-object per line:
+Append-only execution ledger for agent/tool runs. It is optional in the MVP validator so static
+imported/public matters can still validate, but APA commands that write files, call an external sink,
+or create a human checkpoint should append it. One JSON object per line:
 
 ```json
 {

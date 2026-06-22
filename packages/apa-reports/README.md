@@ -25,6 +25,9 @@ node packages/apa-reports/cli.mjs scaffold claims --matter examples/minimal-pate
 node packages/apa-reports/cli.mjs check examples/minimal-patent-artifact/logic/claims_report.json
 ```
 
+`scaffold` writes the report file and appends a `trace/runlog.jsonl` entry with input hashes, the
+report output hash, the command record, and the unsatisfied human-review checkpoint.
+
 Validation is structural. A valid report must use the shared envelope:
 
 - `schema`, `report_type`, `skill`, `matter`, `legal_posture`

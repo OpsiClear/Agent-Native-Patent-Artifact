@@ -69,8 +69,10 @@ patentability-analysis steps (and a human) fill in `discloses`/`lacks` and the m
 
 `verify-reference` updates assigned-reference verification and IDS-readiness state without selecting
 closest art. `verify-closest-art` marks the human-selected closest-art `PA##` IDs and rationale.
-`verification.ids_ready` remains false until title, venue, canonical link, and relied-on passage have
-all been independently verified.
+Both commands append a `trace/runlog.jsonl` entry when the dossier path is under
+`<matter>/evidence/prior_art/`, hashing the pre-update dossier as an input and the updated dossier as
+an output. `verification.ids_ready` remains false until title, venue, canonical link, and relied-on
+passage have all been independently verified.
 
 Quality targets and benchmark expectations live in `../../docs/prior-art-search-quality.md`.
 
