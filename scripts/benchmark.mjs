@@ -24,11 +24,12 @@ import { runSoftwarePatentSimulation } from "../packages/apa-bench/software-pate
 import { scorePriorArtRecallFixture } from "../packages/apa-bench/prior-art-recall.mjs";
 import { runSoftwareDomain } from "../packages/apa-domain-software/software-domain.mjs";
 import { runDeviceDomain } from "../packages/apa-domain-device/device-domain.mjs";
+import { runFormulationDomain } from "../packages/apa-domain-formulation/formulation-domain.mjs";
 import { validateRunlog } from "../packages/apa-trace/runlog.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_INDEX = "benchmarks/index.json";
-const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure", "synthetic_software_patent", "synthetic_codebase", "synthetic_device"]);
+const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure", "synthetic_software_patent", "synthetic_codebase", "synthetic_device", "synthetic_formulation"]);
 
 function parseArgs(argv) {
   const args = { index: DEFAULT_INDEX };
@@ -335,6 +336,69 @@ function runSyntheticDeviceDomainCase(testCase, expected) {
   }
 }
 
+function runSyntheticFormulationDomainCase(testCase, expected) {
+  const findings = [];
+  requirePath(findings, testCase.source, "source");
+  requirePath(findings, testCase.matter_template, "matter_template");
+  if (findings.length) return failCase(testCase.id, testCase.kind, testCase.source_class, {}, findings);
+
+  const tmp = mkdtempSync(join(tmpdir(), "apa-bench-formulation-domain-"));
+  try {
+    cpSync(resolve(ROOT, testCase.matter_template), tmp, { recursive: true });
+    const { outputs, result } = runFormulationDomain({
+      command: "run-all",
+      source: resolve(ROOT, testCase.source),
+      matter: tmp,
+      argv: ["node", "packages/apa-domain-formulation/cli.mjs", "run-all", "--matter", tmp, "--source", testCase.source],
+    });
+    const relOutputs = outputs.map((p) => relative(tmp, p).replace(/\\/g, "/")).sort();
+    const runlog = validateRunlog(tmp);
+    const metrics = {
+      ingredients: result.summary.ingredients.length,
+      ranges: result.summary.ranges.length,
+      working_examples: result.summary.examples.filter((e) => e.kind === "working").length,
+      output_count: outputs.length,
+      canonical_writes: relOutputs.some((p) => !p.startsWith("domain/formulation/")),
+      runlog_entries: runlog.entries.length,
+      enablement_verdict: result.enablement.verdict,
+      ranges_verdict: result.ranges.verdict,
+      outputs: relOutputs,
+      source_sha256: hashTree(resolve(ROOT, testCase.source)),
+    };
+
+    const mech = expected.mechanical || {};
+    for (const key of ["output_count", "canonical_writes", "runlog_entries", "enablement_verdict", "ranges_verdict"]) {
+      if (Object.hasOwn(mech, key)) checkEqual(findings, metrics[key], mech[key], `mechanical.${key}`);
+    }
+    for (const [metricKey, expectedKey] of [["ingredients", "ingredients_min"], ["ranges", "ranges_min"], ["working_examples", "working_examples_min"]]) {
+      if (Number.isFinite(mech[expectedKey]) && metrics[metricKey] < mech[expectedKey]) {
+        findings.push({
+          severity: "blocking",
+          path: `mechanical.${expectedKey}`,
+          expected: mech[expectedKey],
+          actual: metrics[metricKey],
+          message: `mechanical.${expectedKey}: expected at least ${mech[expectedKey]}, got ${metrics[metricKey]}`,
+        });
+      }
+    }
+    const semantic = expected.semantic_snapshot || {};
+    if (semantic.source_class) checkEqual(findings, testCase.source_class, semantic.source_class, "semantic_snapshot.source_class");
+    for (const out of semantic.required_outputs || []) {
+      if (!relOutputs.includes(out)) {
+        findings.push({ severity: "blocking", path: out, message: `required output missing: ${out}` });
+      }
+    }
+    if (!runlog.ok) {
+      findings.push({ severity: "blocking", path: "trace/runlog.jsonl", message: `runlog invalid: ${JSON.stringify(runlog.errors)}` });
+    }
+    return findings.length
+      ? failCase(testCase.id, testCase.kind, testCase.source_class, metrics, findings)
+      : passCase(testCase.id, testCase.kind, testCase.source_class, metrics);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 async function runPriorArtRecallCase(testCase) {
   const summary = await scorePriorArtRecallFixture({
     caseId: testCase.id,
@@ -388,6 +452,7 @@ async function runCase(testCase, opts) {
   }
   if (testCase.kind === "synthetic-codebase-domain") return runSyntheticCodebaseDomainCase(testCase, expected);
   if (testCase.kind === "synthetic-device-domain") return runSyntheticDeviceDomainCase(testCase, expected);
+  if (testCase.kind === "synthetic-formulation-domain") return runSyntheticFormulationDomainCase(testCase, expected);
   if (testCase.kind === "prior-art-search-recall") return runPriorArtRecallCase(testCase);
   return failCase(testCase.id, testCase.kind, testCase.source_class, {}, [{
     severity: "blocking",

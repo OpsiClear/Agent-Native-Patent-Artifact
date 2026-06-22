@@ -26,6 +26,14 @@ test("apa-run inserts enabled device domain hook steps", () => {
   assert.equal(figureReview.runner, "node packages/apa-domain-device/cli.mjs numeral-review");
 });
 
+test("apa-run inserts enabled formulation domain hook steps", () => {
+  const plan = planPipeline({ matter: "examples/minimal-patent-artifact", domains: ["formulation"] });
+  const review = plan.steps.find((s) => s.id === "apa-composition-enablement-review");
+  assert.ok(review);
+  assert.equal(review.hook, "analysis.domain");
+  assert.equal(review.runner, "node packages/apa-domain-formulation/cli.mjs enablement-review");
+});
+
 test("apa-run status reads missing/present inputs without failing", () => {
   const status = statusForMatter({ matter: "examples/minimal-patent-artifact", domains: ["software"] });
   assert.equal(status.schema, "apa-run-status-v1");

@@ -1,0 +1,23 @@
+{
+  "schema": "apa-benchmark-expected-v1",
+  "case_id": "synthetic-formulation-domain",
+  "mechanical": {
+    "ingredients_min": 4,
+    "ranges_min": 4,
+    "working_examples_min": 1,
+    "output_count": 4,
+    "canonical_writes": false,
+    "runlog_entries": 1,
+    "enablement_verdict": "needs-human-enablement-review",
+    "ranges_verdict": "ready-for-human-range-review"
+  },
+  "semantic_snapshot": {
+    "source_class": "synthetic_formulation",
+    "required_outputs": [
+      "domain/formulation/composition_enablement_review.json",
+      "domain/formulation/formulation_claim_seeds.json",
+      "domain/formulation/formulation_summary.json",
+      "domain/formulation/ranges_and_examples_review.json"
+    ]
+  }
+}

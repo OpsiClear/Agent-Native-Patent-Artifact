@@ -1,0 +1,2 @@
+Protocol P1: heat buffer to 40 C, dissolve lidocaine, cool to room temperature, and mix with polymer.
+Adjust pH to 7.2 and filter through a sterile membrane.

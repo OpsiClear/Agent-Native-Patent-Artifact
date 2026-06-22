@@ -106,7 +106,7 @@ flowchart TD
   domain_device -. claims.seed .-> claims_seed
   domain_device -. figures.plan .-> figures_plan
   domain_device -. figures.review .-> figures_review
-  domain_formulation["domain:formulation<br/>scaffold"]
+  domain_formulation["domain:formulation<br/>active"]
   domain_formulation -. disclosure.enrich .-> disclosure_enrich
   domain_formulation -. claims.seed .-> claims_seed
   domain_formulation -. analysis.domain .-> analysis_domain

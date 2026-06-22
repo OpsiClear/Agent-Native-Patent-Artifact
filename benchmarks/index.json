@@ -7,7 +7,8 @@
       "synthetic_disclosure",
       "synthetic_software_patent",
       "synthetic_codebase",
-      "synthetic_device"
+      "synthetic_device",
+      "synthetic_formulation"
     ],
     "offline_commit_gate": true,
     "live_llm_eval": "periodic-advisory-only"
@@ -92,6 +93,21 @@
         "dossier_completeness": "mechanical",
         "quote_handoff_coverage": "mechanical"
       }
+    },
+    {
+      "id": "synthetic-formulation-domain",
+      "kind": "synthetic-formulation-domain",
+      "source_class": "synthetic_formulation",
+      "source": "benchmarks/fixtures/synthetic-formulation-domain/source",
+      "matter_template": "examples/minimal-patent-artifact",
+      "expected": "benchmarks/fixtures/synthetic-formulation-domain/expected.json",
+      "targeted_skills": [
+        "apa-formulation-disclosure-extractor",
+        "apa-formulation-claim-patterns",
+        "apa-composition-enablement-review",
+        "apa-ranges-and-examples-review"
+      ],
+      "metrics": { "domain_outputs": "mechanical", "enablement_review": "synthetic" }
     }
   ]
 }

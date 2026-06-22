@@ -26,7 +26,7 @@ Writes only under: `domain/device/`
 
 ## formulation
 
-Status: `scaffold`
+Status: `active`
 
 Composition/formulation invention support for protocols, examples, ranges, enablement, and composition claim patterns.
 
@@ -41,10 +41,10 @@ Writes only under: `domain/formulation/`
 
 | Skill | Command | Status | Hook | Runner |
 |---|---|---|---|---|
-| `apa-formulation-disclosure-extractor` | `/apa-formulation-disclosure-extractor` | planned | `disclosure.enrich` | - |
-| `apa-formulation-claim-patterns` | `/apa-formulation-claim-patterns` | planned | `claims.seed` | - |
-| `apa-composition-enablement-review` | `/apa-composition-enablement-review` | planned | `analysis.domain` | - |
-| `apa-ranges-and-examples-review` | `/apa-ranges-and-examples-review` | planned | `spec.review` | - |
+| `apa-formulation-disclosure-extractor` | `/apa-formulation-disclosure-extractor` | active | `disclosure.enrich` | `node packages/apa-domain-formulation/cli.mjs summary` |
+| `apa-formulation-claim-patterns` | `/apa-formulation-claim-patterns` | active | `claims.seed` | `node packages/apa-domain-formulation/cli.mjs claim-seeds` |
+| `apa-composition-enablement-review` | `/apa-composition-enablement-review` | active | `analysis.domain` | `node packages/apa-domain-formulation/cli.mjs enablement-review` |
+| `apa-ranges-and-examples-review` | `/apa-ranges-and-examples-review` | active | `spec.review` | `node packages/apa-domain-formulation/cli.mjs ranges-review` |
 
 ## software
 

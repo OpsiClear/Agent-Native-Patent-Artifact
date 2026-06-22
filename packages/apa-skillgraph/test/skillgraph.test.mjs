@@ -22,6 +22,10 @@ test("skill graph metadata validates", () => {
   const deviceRunners = device.skills.filter((s) => s.status === "active" && s.runner);
   assert.equal(deviceRunners.length, 4);
   assert.ok(deviceRunners.every((s) => s.runner.startsWith("node packages/apa-domain-device/cli.mjs")));
+  const formulation = result.domains.find((d) => d.id === "formulation");
+  const formulationRunners = formulation.skills.filter((s) => s.status === "active" && s.runner);
+  assert.equal(formulationRunners.length, 4);
+  assert.ok(formulationRunners.every((s) => s.runner.startsWith("node packages/apa-domain-formulation/cli.mjs")));
 });
 
 test("skill graph docs mention hooks and domain packs", () => {

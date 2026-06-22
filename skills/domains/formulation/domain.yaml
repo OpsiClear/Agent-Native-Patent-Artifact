@@ -1,7 +1,7 @@
 schema: apa-domain-pack-v1
 id: formulation
 version: "0.1"
-status: scaffold
+status: active
 description: "Composition/formulation invention support for protocols, examples, ranges, enablement, and composition claim patterns."
 detection_signals:
   - formulation
@@ -29,26 +29,30 @@ hooks:
     blocking: false
 skills:
   - id: apa-formulation-disclosure-extractor
-    status: planned
+    status: active
     command: /apa-formulation-disclosure-extractor
     hook: disclosure.enrich
+    runner: node packages/apa-domain-formulation/cli.mjs summary
     outputs: [domain/formulation/formulation_summary.json]
   - id: apa-formulation-claim-patterns
-    status: planned
+    status: active
     command: /apa-formulation-claim-patterns
     hook: claims.seed
+    runner: node packages/apa-domain-formulation/cli.mjs claim-seeds
     outputs: [domain/formulation/formulation_claim_seeds.json]
   - id: apa-composition-enablement-review
-    status: planned
+    status: active
     command: /apa-composition-enablement-review
     hook: analysis.domain
+    runner: node packages/apa-domain-formulation/cli.mjs enablement-review
     outputs: [domain/formulation/composition_enablement_review.json]
   - id: apa-ranges-and-examples-review
-    status: planned
+    status: active
     command: /apa-ranges-and-examples-review
     hook: spec.review
+    runner: node packages/apa-domain-formulation/cli.mjs ranges-review
     outputs: [domain/formulation/ranges_and_examples_review.json]
 benchmarks:
-  - id: formulation-public-composition
-    status: planned
-    source_class: public_patent
+  - id: synthetic-formulation-domain
+    status: active
+    source_class: synthetic_formulation
