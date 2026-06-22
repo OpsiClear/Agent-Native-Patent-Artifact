@@ -41,6 +41,39 @@ test("active domain skills are covered by declared benchmark cases", () => {
   }
 });
 
+test("benchmark index path fields must resolve to committed repo paths", () => {
+  const graph = loadSkillGraph();
+  graph.benchmarkIndex = JSON.parse(JSON.stringify(graph.benchmarkIndex));
+  graph.benchmarkIndex.cases[0] = {
+    ...graph.benchmarkIndex.cases[0],
+    expected: "benchmarks/fixtures/does-not-exist/expected.json",
+  };
+  const result = checkSkillGraph(graph);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) =>
+      e.path.endsWith("benchmarks/index.json") &&
+      /public-utility-patent-compile.*expected.*does not exist/.test(e.message)
+    ),
+    result.errors.map((e) => `${e.path}: ${e.message}`).join("\n")
+  );
+});
+
+test("benchmark index path fields cannot escape the repository", () => {
+  const graph = loadSkillGraph();
+  graph.benchmarkIndex = JSON.parse(JSON.stringify(graph.benchmarkIndex));
+  graph.benchmarkIndex.cases[0] = {
+    ...graph.benchmarkIndex.cases[0],
+    source: "../outside-repo.md",
+  };
+  const result = checkSkillGraph(graph);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => /field 'source' escapes repository root/.test(e.message)),
+    result.errors.map((e) => `${e.path}: ${e.message}`).join("\n")
+  );
+});
+
 test("skill graph docs mention hooks and domain packs", () => {
   const graph = loadSkillGraph();
   assert.match(renderSkillGraphDoc(graph), /disclosure\.enrich/);

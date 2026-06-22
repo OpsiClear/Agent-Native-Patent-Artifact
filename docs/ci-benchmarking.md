@@ -10,7 +10,7 @@ npm run benchmark
 npm run score:prior-art-search
 ```
 
-`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, and every active domain skill is covered by at least one declared benchmark through `targeted_skills`.
+`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, every active domain skill is covered by at least one declared benchmark through `targeted_skills`, and every indexed benchmark path field (`source`, `matter`, `expected`, `office_action`, `scenarios`, `matter_template`) is repo-relative and present on disk.
 
 Commit-gate benchmark cases must be public or synthetic, offline, and reproducible. Live LLM/domain-quality evaluation remains periodic or advisory unless a deterministic oracle is committed.
 

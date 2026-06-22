@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { asArray, loadYaml } from "../../lib/apa-parse.mjs";
@@ -8,6 +8,14 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..")
 export const SKILLS_DIR = join(ROOT, "skills");
 export const REGISTRY_PATH = join(SKILLS_DIR, "registry.yaml");
 export const BENCHMARK_INDEX_PATH = join(ROOT, "benchmarks", "index.json");
+const BENCHMARK_PATH_FIELDS = [
+  "source",
+  "matter",
+  "expected",
+  "office_action",
+  "scenarios",
+  "matter_template",
+];
 
 function readYaml(path) {
   return loadYaml(readFileSync(path, "utf8"));
@@ -242,8 +250,42 @@ function validateBenchmarkIndex(errors, root, benchmarkIndex, benchmarkIndexPath
     if (!asArray(testCase.targeted_skills).length) {
       add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' must declare targeted_skills`);
     }
+    validateBenchmarkCasePaths(errors, root, benchmarkIndexPath, testCase);
   }
   return casesById;
+}
+
+function validateBenchmarkCasePaths(errors, root, benchmarkIndexPath, testCase) {
+  for (const field of BENCHMARK_PATH_FIELDS) {
+    if (testCase[field] === undefined) continue;
+    for (const value of pathValues(testCase[field])) {
+      if (typeof value !== "string" || !value.trim()) {
+        add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' field '${field}' must be a non-empty repo-relative path`);
+        continue;
+      }
+      if (isAbsolute(value)) {
+        add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' field '${field}' must not be absolute: ${value}`);
+        continue;
+      }
+      const abs = resolve(root, value);
+      if (!isInsideRoot(root, abs)) {
+        add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' field '${field}' escapes repository root: ${value}`);
+        continue;
+      }
+      if (!existsSync(abs)) {
+        add(errors, rel(benchmarkIndexPath), `benchmark '${testCase.id}' field '${field}' path does not exist: ${value}`);
+      }
+    }
+  }
+}
+
+function pathValues(value) {
+  return Array.isArray(value) ? value : [value];
+}
+
+function isInsideRoot(root, absPath) {
+  const relPath = relative(resolve(root), absPath);
+  return relPath === "" || (!relPath.startsWith("..") && !isAbsolute(relPath));
 }
 
 function validateDomainBenchmarks(errors, domain, benchmarkCasesById) {
@@ -392,7 +434,7 @@ export function renderCiBenchmarkingDoc() {
     "npm run score:prior-art-search",
     "```",
     "",
-    "`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, and every active domain skill is covered by at least one declared benchmark through `targeted_skills`.",
+    "`apa-skillgraph check` verifies that every active domain pack declares benchmark IDs in `domain.yaml`, each declared benchmark exists in `benchmarks/index.json`, every active domain skill is covered by at least one declared benchmark through `targeted_skills`, and every indexed benchmark path field (`source`, `matter`, `expected`, `office_action`, `scenarios`, `matter_template`) is repo-relative and present on disk.",
     "",
     "Commit-gate benchmark cases must be public or synthetic, offline, and reproducible. Live LLM/domain-quality evaluation remains periodic or advisory unless a deterministic oracle is committed.",
     "",
