@@ -33,6 +33,7 @@
     "skills:check": "node scripts/check-skills.mjs",
     "smoke": "node scripts/smoke.mjs",
     "benchmark": "node packages/apa-bench/cli.mjs --mock",
+    "score:prior-art-search": "node packages/apa-bench/cli.mjs --mock --prior-art-recall",
     "score:real-software-patents": "node packages/apa-bench/cli.mjs --mock --real-software-patents",
     "tune:software-patent": "node packages/apa-bench/cli.mjs --mock --real-software-patents --fresh",
     "simulate:software-patent": "node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim",

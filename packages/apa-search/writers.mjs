@@ -224,6 +224,7 @@ function candidateRecord(ref, extra = {}) {
     ...extra,
     ...refSummary(ref),
     score: ref?.score ?? null,
+    rank_explanation: ref?.rank_explanation || ref?.rankExplanation || null,
     quote_handoff: quoteHandoff(ref),
     verification: idsVerificationStatus(),
   };

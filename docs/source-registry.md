@@ -9,6 +9,7 @@ This registry standardizes source names and access modes used by `/apa-priorart`
 | `mock` | Offline deterministic fixture source | no | API-like fixture | no | synthetic demo query | fixture only | no | Tests and demos only; not prior art evidence. |
 | `crossref` | Crossref Works API | no | API | yes | claim-derived NPL metadata query | abstracts rarely; metadata/snippets | yes | Non-patent literature metadata. Use for candidate discovery only; full-text passages remain human/publisher verification. |
 | `arxiv` | arXiv API | no | API | yes | claim-derived NPL/preprint query | abstracts | yes | Preprint/NPL discovery for software, ML, compression, and related fields. Verify versions, dates, and publication status. |
+| `fixture` | Offline benchmark fixture corpus | no | API-like fixture | no | public benchmark query | fixture snippets only | no | Tests fixed recall/rank behavior with public benchmark records; not prior-art evidence. |
 | `pqai` | PQAI semantic patent/NPL search | no | API | no | claim-derived semantic query | source-dependent | yes | Planned follow-on semantic source; not enabled in v1. |
 | `epo-ops` | EPO Open Patent Services | yes | API | no | patent bibliographic/query payload | source-dependent | yes | Planned international source; requires credentials. |
 | `google-bigquery` | Google patents-public-data BigQuery dataset | no | dataset | no | SQL/dataset query | dataset fields | yes | Sanctioned Google path; do not use Google Patents UI scraping as a substitute. |

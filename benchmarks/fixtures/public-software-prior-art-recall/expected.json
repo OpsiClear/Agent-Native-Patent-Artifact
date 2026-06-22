@@ -1,0 +1,188 @@
+{
+  "schema": "apa-prior-art-recall-fixture-v1",
+  "case_id": "public-software-prior-art-recall",
+  "source_class": "public_patent",
+  "legal_posture": "retrieval-quality-only-not-patentability",
+  "threshold": 0.8,
+  "floors": {
+    "recall_at_20": 0.7,
+    "closest_known_reference_rank_max": 10,
+    "dossier_completeness": 1,
+    "quote_handoff_coverage": 1,
+    "rank_explanation_coverage": 1
+  },
+  "scenarios": [
+    {
+      "id": "pagerank-linked-database",
+      "public_source_url": "https://patents.google.com/patent/US6285999B1/en",
+      "query": {
+        "keywords": [
+          "linked document",
+          "linking document",
+          "rank",
+          "score",
+          "hypermedia database"
+        ],
+        "cpc": ["G06F16/9535"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "NPL-PAGERANK-1998",
+        "NPL-HYPERLINK-AUTHORITY-1999"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "NPL-PAGERANK-1998",
+          "title": "The Anatomy of a Large-Scale Hypertextual Web Search Engine",
+          "abstract": "A public benchmark record describing a search engine that uses PageRank, linked documents, hyperlink structure, and scores computed from linking pages to rank web search results.",
+          "date": "1998-04-01",
+          "url": "https://doi.org/10.1016/S0169-7552(98)00110-X",
+          "snippet": "uses PageRank, linked documents, hyperlink structure, and scores computed from linking pages"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-HYPERLINK-AUTHORITY-1999",
+          "title": "Authoritative Sources in a Hyperlinked Environment",
+          "abstract": "A public benchmark record for finding authority and hub scores in a link graph, using hyperlink relationships between web pages and recursively reinforced ranking signals.",
+          "date": "1999-09-01",
+          "url": "https://doi.org/10.1145/324133.324140",
+          "snippet": "authority and hub scores in a link graph using hyperlink relationships between web pages"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-6105017-A",
+          "title": "Database query optimizer using cost estimates",
+          "abstract": "A relational database optimizer estimates execution cost for query plans and storage access paths.",
+          "date": "2000-08-15",
+          "url": "https://patents.google.com/patent/US6105017A/en",
+          "snippet": "relational database optimizer estimates execution cost"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-5806076-A",
+          "title": "Method for indexing documents by text content",
+          "abstract": "A text index is generated from terms contained in documents and used for keyword retrieval without using link graph scores.",
+          "date": "1998-09-08",
+          "url": "https://patents.google.com/patent/US5806076A/en",
+          "snippet": "keyword retrieval without using link graph scores"
+        }
+      ]
+    },
+    {
+      "id": "mapreduce-grouped-data",
+      "public_source_url": "https://patents.google.com/patent/US8190610B2/en",
+      "query": {
+        "keywords": [
+          "mapreduce",
+          "key/value",
+          "heterogeneous schemas",
+          "reduce function",
+          "distributed system"
+        ],
+        "cpc": ["G06F16/2455"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "NPL-MAPREDUCE-2004",
+        "NPL-DRYAD-2007"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "NPL-MAPREDUCE-2004",
+          "title": "MapReduce: Simplified Data Processing on Large Clusters",
+          "abstract": "A public benchmark record describing map and reduce functions over key/value pairs on a distributed system, producing intermediate values grouped by key before reduce processing.",
+          "date": "2004-12-01",
+          "url": "https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/",
+          "snippet": "map and reduce functions over key/value pairs on a distributed system"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-DRYAD-2007",
+          "title": "Dryad: Distributed Data-Parallel Programs from Sequential Building Blocks",
+          "abstract": "A public benchmark record for distributed data-parallel execution graphs that process data records across clusters; it is a close NPL distractor for MapReduce-style distributed processing.",
+          "date": "2007-03-01",
+          "url": "https://www.microsoft.com/en-us/research/publication/dryad-distributed-data-parallel-programs-from-sequential-building-blocks/",
+          "snippet": "distributed data-parallel execution graphs that process data records across clusters"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-7058954-B2",
+          "title": "Distributed file system with replicated chunk servers",
+          "abstract": "A distributed storage system stores chunks on multiple servers and manages replication; it is infrastructure rather than grouped key/value reduce processing.",
+          "date": "2006-06-06",
+          "url": "https://patents.google.com/patent/US7058954B2/en",
+          "snippet": "distributed storage system stores chunks on multiple servers"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-7506018-B2",
+          "title": "Relational database join planning",
+          "abstract": "A relational database chooses join plans for tables based on cardinality estimates and available indexes.",
+          "date": "2009-03-17",
+          "url": "https://patents.google.com/patent/US7506018B2/en",
+          "snippet": "relational database chooses join plans for tables"
+        }
+      ]
+    },
+    {
+      "id": "ood-vehicle-classification",
+      "public_source_url": "https://patents.google.com/patent/US11603119B2/en",
+      "query": {
+        "keywords": [
+          "out-of-distribution",
+          "feature vector",
+          "cluster",
+          "threshold",
+          "classification model",
+          "vehicle"
+        ],
+        "cpc": ["G06V20/58"],
+        "limit": 20
+      },
+      "expected_known_refs": [
+        "ARXIV-1610.02136",
+        "ARXIV-1706.02690"
+      ],
+      "records": [
+        {
+          "source": "fixture",
+          "docNumber": "ARXIV-1610.02136",
+          "title": "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+          "abstract": "A public benchmark record describing out-of-distribution and misclassified examples, softmax thresholding, and neural network confidence for detecting distribution shift.",
+          "date": "2016-10-07",
+          "url": "https://arxiv.org/abs/1610.02136",
+          "snippet": "out-of-distribution examples, softmax thresholding, and neural network confidence"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "ARXIV-1706.02690",
+          "title": "Enhancing The Reliability of Out-of-distribution Image Detection in Neural Networks",
+          "abstract": "A public benchmark record for ODIN-style out-of-distribution image detection using temperature scaling and input perturbations to improve threshold-based detection.",
+          "date": "2017-06-08",
+          "url": "https://arxiv.org/abs/1706.02690",
+          "snippet": "out-of-distribution image detection using threshold-based detection"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "NPL-KMEANS-CLUSTERING",
+          "title": "K-means clustering for feature-vector grouping",
+          "abstract": "A benchmark distractor about assigning feature vectors to clusters and centroids for generic data grouping tasks.",
+          "date": "2010-01-01",
+          "url": "",
+          "snippet": "assigning feature vectors to clusters and centroids"
+        },
+        {
+          "source": "fixture",
+          "docNumber": "US-10388012-B2",
+          "title": "Vehicle lane detection using camera images",
+          "abstract": "A vehicle camera system classifies lane markings and controls steering using camera images and road geometry.",
+          "date": "2019-08-20",
+          "url": "https://patents.google.com/patent/US10388012B2/en",
+          "snippet": "vehicle camera system classifies lane markings and controls steering"
+        }
+      ]
+    }
+  ]
+}

@@ -117,16 +117,77 @@ export function refSummary(ref, extra = {}) {
   };
 }
 
-/** Rank refs by keyword overlap in title+abstract and CPC overlap with the query. Adds `.score`. */
+/** Rank refs by field-aware keyword overlap and CPC overlap with the query. Adds `.score` and `.rank_explanation`. */
 export function rankRefs(refs, query) {
-  const kw = (query.keywords || []).map((k) => k.toLowerCase()).filter(Boolean);
+  const kw = (query.keywords || []).map((k) => String(k).toLowerCase().trim()).filter(Boolean);
   const qcpc = new Set((query.cpc || []).map((c) => c.toUpperCase()));
   const scored = refs.map((r) => {
-    const hay = `${r.title || ""} ${r.abstract || ""}`.toLowerCase();
+    const title = String(r.title || "").toLowerCase();
+    const abstract = String(r.abstract || "").toLowerCase();
+    const snippet = String(r.snippet || "").toLowerCase();
     let score = 0;
-    for (const k of kw) if (hay.includes(k)) score += 2;
-    for (const c of r.cpc || []) if (qcpc.has(String(c).toUpperCase())) score += 1;
-    return { ...r, score };
+    const matchedKeywords = [];
+    const fieldHits = {};
+    const scoreBreakdown = [];
+    for (const [keywordIndex, k] of kw.entries()) {
+      const fields = [];
+      if (title.includes(k)) {
+        score += 5;
+        fields.push("title");
+        scoreBreakdown.push({ reason: "keyword-title", term: k, points: 5 });
+      }
+      if (snippet.includes(k)) {
+        score += 4;
+        fields.push("snippet");
+        scoreBreakdown.push({ reason: "keyword-snippet", term: k, points: 4 });
+      }
+      if (abstract.includes(k)) {
+        score += 3;
+        fields.push("abstract");
+        scoreBreakdown.push({ reason: "keyword-abstract", term: k, points: 3 });
+      }
+      if (/\s/.test(k) && (title.includes(k) || abstract.includes(k) || snippet.includes(k))) {
+        score += 2;
+        scoreBreakdown.push({ reason: "exact-phrase", term: k, points: 2 });
+      }
+      if (fields.length) {
+        if (keywordIndex === 0) {
+          score += 8;
+          scoreBreakdown.push({ reason: "primary-keyword", term: k, points: 8 });
+        } else if (keywordIndex === 1) {
+          score += 3;
+          scoreBreakdown.push({ reason: "secondary-keyword", term: k, points: 3 });
+        }
+        matchedKeywords.push(k);
+        fieldHits[k] = [...new Set(fields)];
+      }
+    }
+    const matchedCpc = [];
+    for (const c of r.cpc || []) {
+      const normalized = String(c).toUpperCase();
+      if (qcpc.has(normalized)) {
+        score += 2;
+        matchedCpc.push(normalized);
+        scoreBreakdown.push({ reason: "cpc-exact", term: normalized, points: 2 });
+      } else if ([...qcpc].some((q) => normalized.startsWith(q) || q.startsWith(normalized))) {
+        score += 1;
+        matchedCpc.push(normalized);
+        scoreBreakdown.push({ reason: "cpc-prefix", term: normalized, points: 1 });
+      }
+    }
+    return {
+      ...r,
+      score,
+      rank_explanation: {
+        matched_keywords: [...new Set(matchedKeywords)],
+        matched_cpc: [...new Set(matchedCpc)],
+        field_hits: fieldHits,
+        score_breakdown: scoreBreakdown,
+        rationale: scoreBreakdown.length
+          ? "ranked by field-weighted keyword/CPC overlap; title and relied-on snippets carry the strongest weight"
+          : "no keyword/CPC overlap found; date tie-break may affect order",
+      },
+    };
   });
   scored.sort((a, b) => b.score - a.score || (b.date || "").localeCompare(a.date || ""));
   return scored;

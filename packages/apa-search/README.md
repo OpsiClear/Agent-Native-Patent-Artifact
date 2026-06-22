@@ -20,7 +20,7 @@ preferred and UI scraping is off by default**. This phase implements the API pat
 ## Sources & access modes
 
 `node cli.mjs --list-sources`. Each source declares an access mode:
-- **api** - `patentsview` (PatentsView PatentSearch API; free key), `crossref` (NPL metadata), `arxiv` (preprint metadata), `mock` (offline, tests); `pqai`, `epo-ops` (planned).
+- **api** - `patentsview` (PatentsView PatentSearch API; free key), `crossref` (NPL metadata), `arxiv` (preprint metadata), `mock` (offline demos/tests), `fixture` (offline benchmark corpus); `pqai`, `epo-ops` (planned).
 - **dataset** — `google-bigquery` (the sanctioned, free Google path; planned).
 - **ui-restricted** — `uspto-pps` (examiner-grade, UI-only → human-handoff), `google-patents-ui` (disabled; UI scraping violates Google ToS). Never auto-scraped.
 
@@ -57,8 +57,8 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 - Writes a raw record per reference under `evidence/prior_art/<paN>.md`.
 - Writes `evidence/prior_art/search-dossier-*.json` with query hash, exact source parameters,
   search plan/query variants, top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
-  assigned `PA##` IDs, coverage limits, quote handoff fields, analysis handoff candidate cells, and
-  the closest-art human-verification state.
+  assigned `PA##` IDs, coverage limits, quote handoff fields, rank explanations, analysis handoff
+  candidate cells, and the closest-art human-verification state.
 - Writes `logic/reference_matrix.md` — the "Blocks / Does-NOT-block" scaffold for analysis + a human.
 
 The written matter still passes `apa-validate` (Level-1 mechanical). The hardened-verification and
@@ -73,6 +73,6 @@ Quality targets and benchmark expectations live in `../../docs/prior-art-search-
 
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
-(untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`) ·
+(untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`, `fixture.mjs`) ·
 `lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in
 `../../docs/source-registry.md`.

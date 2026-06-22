@@ -14,6 +14,10 @@ import {
   formatPublicPatentScore,
   scorePublicSoftwarePatentFixtures,
 } from "./public-patent-score.mjs";
+import {
+  formatPriorArtRecallScore,
+  scorePriorArtRecallFixtures,
+} from "./prior-art-recall.mjs";
 import { generateSoftwarePatentCandidateReports } from "./software-patent-tune.mjs";
 
 function parseRealPatentArgs(argv) {
@@ -72,10 +76,43 @@ function runRealPatentCli(argv) {
   return summary.ok ? 0 : 1;
 }
 
+function parsePriorArtRecallArgs(argv) {
+  const args = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--prior-art-recall") args.priorArtRecall = true;
+    else if (a === "--mock") args.mock = true;
+    else if (a === "--json") args.json = true;
+    else if (a === "--out") args.out = argv[++i];
+    else if (a === "--case") args.caseId = argv[++i];
+    else if (a === "-h" || a === "--help") args.help = true;
+    else throw new Error(`unknown argument for --prior-art-recall: ${a}`);
+  }
+  return args;
+}
+
+async function runPriorArtRecallCli(argv) {
+  const args = parsePriorArtRecallArgs(argv);
+  if (args.help) {
+    console.log("usage: node packages/apa-bench/cli.mjs --mock --prior-art-recall [--json] [--out <file>] [--case <id>]");
+    return 0;
+  }
+  const summary = await scorePriorArtRecallFixtures({ caseId: args.caseId || undefined });
+  if (args.out) {
+    const out = resolve(args.out);
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, JSON.stringify(summary, null, 2) + "\n", "utf8");
+  }
+  if (args.json) console.log(JSON.stringify(summary, null, 2));
+  else console.log(formatPriorArtRecallScore(summary));
+  return summary.ok ? 0 : 1;
+}
+
 try {
   const argv = process.argv.slice(2);
   if (argv.includes("--real-software-patents")) process.exit(runRealPatentCli(argv));
-  process.exit(runBenchmarkCli(argv));
+  if (argv.includes("--prior-art-recall")) process.exit(await runPriorArtRecallCli(argv));
+  process.exit(await runBenchmarkCli(argv));
 } catch (e) {
   console.error(`error: ${e.message}`);
   process.exit(2);

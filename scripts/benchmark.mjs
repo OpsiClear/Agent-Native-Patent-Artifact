@@ -21,6 +21,7 @@ import { preflight } from "../packages/apa-assemble/preflight.mjs";
 import { parseOfficeActionFile } from "../packages/apa-prosecute/parse.mjs";
 import { computeDeadlines } from "../packages/apa-prosecute/deadlines.mjs";
 import { runSoftwarePatentSimulation } from "../packages/apa-bench/software-patent-sim.mjs";
+import { scorePriorArtRecallFixture } from "../packages/apa-bench/prior-art-recall.mjs";
 import { runSoftwareDomain } from "../packages/apa-domain-software/software-domain.mjs";
 import { runDeviceDomain } from "../packages/apa-domain-device/device-domain.mjs";
 import { validateRunlog } from "../packages/apa-trace/runlog.mjs";
@@ -334,7 +335,25 @@ function runSyntheticDeviceDomainCase(testCase, expected) {
   }
 }
 
-function runCase(testCase, opts) {
+async function runPriorArtRecallCase(testCase) {
+  const summary = await scorePriorArtRecallFixture({
+    caseId: testCase.id,
+    fixture: dirname(testCase.expected).replace(/\\/g, "/"),
+  });
+  const metrics = {
+    scenarios: summary.metrics.scenarios,
+    average_recall_at_20: summary.metrics.average_recall_at_20,
+    average_dossier_completeness: summary.metrics.average_dossier_completeness,
+    blocking_failures: summary.metrics.blocking_failures,
+    warning_count: summary.metrics.warning_count,
+  };
+  const findings = summary.scenarios.flatMap((scenario) => scenario.findings);
+  return summary.ok
+    ? passCase(testCase.id, testCase.kind, testCase.source_class, metrics)
+    : failCase(testCase.id, testCase.kind, testCase.source_class, metrics, findings);
+}
+
+async function runCase(testCase, opts) {
   const findings = [];
   if (!ALLOWED_SOURCE_CLASSES.has(testCase.source_class)) {
     findings.push({
@@ -369,6 +388,7 @@ function runCase(testCase, opts) {
   }
   if (testCase.kind === "synthetic-codebase-domain") return runSyntheticCodebaseDomainCase(testCase, expected);
   if (testCase.kind === "synthetic-device-domain") return runSyntheticDeviceDomainCase(testCase, expected);
+  if (testCase.kind === "prior-art-search-recall") return runPriorArtRecallCase(testCase);
   return failCase(testCase.id, testCase.kind, testCase.source_class, {}, [{
     severity: "blocking",
     path: "kind",
@@ -399,7 +419,7 @@ function collectFiles(dir, out) {
   return out;
 }
 
-export function runBenchmarks(opts = {}) {
+export async function runBenchmarks(opts = {}) {
   if (!opts.mock) {
     throw new Error("benchmark commit gate is deterministic/offline; pass --mock");
   }
@@ -407,7 +427,7 @@ export function runBenchmarks(opts = {}) {
   const allCases = Array.isArray(index.cases) ? index.cases : [];
   const cases = opts.caseId ? allCases.filter((c) => c.id === opts.caseId) : allCases;
   if (opts.caseId && cases.length === 0) throw new Error(`benchmark case not found: ${opts.caseId}`);
-  const results = cases.map((testCase) => runCase(testCase, opts));
+  const results = await Promise.all(cases.map((testCase) => runCase(testCase, opts)));
   const summary = {
     schema: "apa-benchmark-results-v1",
     generated_at: new Date().toISOString(),
@@ -435,13 +455,13 @@ function printText(summary) {
   console.log(`benchmarks ${summary.ok ? "passed" : "failed"} (${summary.totals.passed}/${summary.totals.cases})`);
 }
 
-export function main(argv = process.argv.slice(2)) {
+export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) {
     console.log("usage: node scripts/benchmark.mjs --mock [--json] [--out <file>] [--index <file>] [--case <id>]");
     return 0;
   }
-  const summary = runBenchmarks(args);
+  const summary = await runBenchmarks(args);
   if (args.out) {
     const out = resolve(ROOT, args.out);
     mkdirSync(dirname(out), { recursive: true });
@@ -456,7 +476,7 @@ const invokedDirectly =
   process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   try {
-    process.exit(main());
+    process.exit(await main());
   } catch (e) {
     console.error(`error: ${e.message}`);
     process.exit(2);

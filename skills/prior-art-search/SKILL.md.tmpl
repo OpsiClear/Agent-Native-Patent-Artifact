@@ -24,7 +24,9 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
 
 1. **Build the query from the claims** (not free text you invent): derive keywords from the claim
    limitations' introduced elements + the title + any CPC hints. For a serious search, run the broad
-   query plan across patent + NPL metadata sources:
+   query plan across patent + NPL metadata sources. Broad mode emits separate query families for
+   claim terms, core technical terms, phrases, controlled term variants, CPC hints, and assignee
+   filters where available:
    `node packages/apa-search/cli.mjs --matter <matter> --source patentsview,crossref,arxiv --broad`
    (set `PATENTSVIEW_API_KEY`; use `--source mock` for an offline dry run). The tool **scans the query
    plan at the sink first** - a HIGH finding blocks it (exit 3); a MEDIUM finding holds it for your
@@ -56,7 +58,8 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    SHA-256, source IDs, search-plan IDs, exact source parameters, source counts/errors, top-N candidates before
    dedupe, after dedupe, and after ranking, dedupe clusters, excluded results/reasons, assigned
    `PA##` IDs, `coverage_limits.search_complete_asserted: false`, known unsearched source classes,
-   candidate `quote_handoff` fields, `analysis_handoff.candidate_cells`, and
+   candidate `quote_handoff` fields, candidate `rank_explanation` fields,
+   `analysis_handoff.candidate_cells`, and
    `closest_art_selection.human_verified: false` until a human fills it. Add a
    `trace/runlog.jsonl` entry for the command and external-sink bytes hash when the run is part of an
    APA matter.
@@ -64,6 +67,11 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    `node packages/apa-search/cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/<dossier>.json --pa PA## --rationale "<why selected>" --reviewer "<name>"`.
    Add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`
    only after each check is actually complete; `ids_ready` must remain false until all four are true.
+9. **Regression scoring.** When improving this skill, run the fixed retrieval harness:
+   `npm run score:prior-art-search`. It scores known-reference recall@20, closest known-reference
+   rank, dossier completeness, quote-handoff coverage, and rank-explanation coverage on public
+   software-patent fixtures. It is a retrieval-quality metric only, not a legal conclusion or search
+   completeness claim.
 
 {{ANALYSIS_101_102_103_112}}
 

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { search as searchCrossref, meta as crossrefMeta } from "../sources/crossref.mjs";
 import { search as searchArxiv, meta as arxivMeta } from "../sources/arxiv.mjs";
+import { search as searchFixture, meta as fixtureMeta } from "../sources/fixture.mjs";
 import { buildSearchPlan, runSearch } from "../search.mjs";
 
 test("crossref source maps Works API metadata to NormalizedRefs", async () => {
@@ -85,4 +86,43 @@ test("broad search plan fans out distinct query strategies", async () => {
   const res = await runSearch({ query, sources: ["mock"], opts: { broadSearch: true } });
   assert.ok(res.searchPlan.length >= 3);
   assert.ok(res.perSource.every((s) => s.strategy_id));
+});
+
+test("fixture source supports deterministic prior-art recall benchmarks", async () => {
+  assert.equal(fixtureMeta.id, "fixture");
+  const res = await searchFixture({
+    keywords: ["out-of-distribution", "threshold"],
+    limit: 5,
+  }, {
+    fixtureRecords: [{
+      docNumber: "ARXIV-1610.02136",
+      title: "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+      abstract: "Uses thresholding for out-of-distribution detection.",
+      snippet: "thresholding for out-of-distribution detection",
+    }],
+  });
+  assert.equal(res.rawCount, 1);
+  assert.equal(res.records[0].docNumber, "ARXIV-1610.02136");
+  assert.equal(res.parameters.mode, "offline-benchmark-fixture");
+});
+
+test("ranked search candidates include audit explanations", async () => {
+  const res = await runSearch({
+    query: { keywords: ["out-of-distribution", "threshold"], cpc: [], limit: 5 },
+    sources: ["fixture"],
+    opts: {
+      broadSearch: true,
+      fixtureRecords: [{
+        source: "fixture",
+        docNumber: "ARXIV-1610.02136",
+        title: "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+        abstract: "Uses thresholding for out-of-distribution detection.",
+        snippet: "thresholding for out-of-distribution detection",
+      }],
+    },
+  });
+  assert.equal(res.ranked.length, 1);
+  assert.ok(res.ranked[0].rank_explanation);
+  assert.ok(res.ranked[0].rank_explanation.score_breakdown.length > 0);
+  assert.ok(res.searchPlan.some((p) => p.id === "term-variants"));
 });

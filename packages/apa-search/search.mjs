@@ -13,6 +13,21 @@ import { loadSource, descriptor, listSources } from "./sources/index.mjs";
 import { dedupeRefsDetailed, rankRefs } from "./lib/refs.mjs";
 
 const STOP = new Set("a,an,the,of,for,and,or,to,with,in,on,by,is,configured,comprising,said,wherein,further,least,one,each,such".split(","));
+const TERM_VARIANTS = new Map([
+  ["linked document", ["web page", "hyperlink", "node", "link graph"]],
+  ["linking document", ["backlink", "inbound link", "citing page"]],
+  ["rank", ["score", "importance", "authority"]],
+  ["ranking", ["scoring", "importance ordering", "authority ranking"]],
+  ["key/value", ["key value", "key-value", "tuple"]],
+  ["key value", ["key/value", "key-value", "tuple"]],
+  ["mapreduce", ["map reduce", "mapper reducer", "distributed data processing"]],
+  ["reduce", ["aggregation", "grouped intermediate values"]],
+  ["out-of-distribution", ["ood", "distribution shift", "anomaly detection"]],
+  ["feature vector", ["embedding", "latent representation"]],
+  ["cluster", ["k-means", "centroid", "nearest cluster"]],
+  ["threshold", ["distance threshold", "confidence threshold"]],
+  ["classification model", ["classifier", "neural network model"]],
+]);
 
 /** Derive search keywords from a matter's claim limitations + title. */
 export function buildQueryFromClaims(matterDir, { limit = 25 } = {}) {
@@ -54,6 +69,14 @@ export function buildSearchPlan(query, { broad = false } = {}) {
     { id: "phrase-elements", label: "Multi-word claim elements", query: { ...base, keywords: (phrases.length ? phrases : shortCore).slice(-3), cpc: [] } },
     { id: "focused-pair", label: "Focused leading claim pair", query: { ...base, keywords: shortCore.slice(0, 2), cpc: [] } },
   ];
+  const variants = expandTermVariants(keywords);
+  if (variants.length) {
+    plan.push({
+      id: "term-variants",
+      label: "Controlled technical term variants",
+      query: { ...base, keywords: variants.slice(0, 10), cpc: [] },
+    });
+  }
   if ((base.cpc || []).length) plan.push({ id: "cpc-focused", label: "CPC-focused query", query: { ...base, keywords: shortCore.slice(0, 6), cpc: base.cpc } });
   if (base.assignee) plan.push({ id: "assignee-focused", label: "Assignee-focused query", query: { ...base, keywords: shortCore.slice(0, 6), assignee: base.assignee } });
 
@@ -176,6 +199,24 @@ function normalizeQuery(query = {}) {
     cpc: [...new Set((query.cpc || []).map((c) => String(c).trim().toUpperCase()).filter(Boolean))],
     limit: query.limit || 25,
   };
+}
+
+function expandTermVariants(keywords = []) {
+  const out = [];
+  const seen = new Set(keywords.map((k) => String(k).toLowerCase()));
+  for (const raw of keywords) {
+    const term = String(raw || "").toLowerCase().trim();
+    for (const [key, variants] of TERM_VARIANTS) {
+      if (!term || !(term === key || term.includes(key) || key.includes(term))) continue;
+      for (const variant of variants) {
+        const normalized = String(variant).toLowerCase().trim();
+        if (!normalized || seen.has(normalized)) continue;
+        seen.add(normalized);
+        out.push(normalized);
+      }
+    }
+  }
+  return out;
 }
 
 function planSummary(plan) {

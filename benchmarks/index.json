@@ -79,6 +79,19 @@
         "apa-reference-numeral-review"
       ],
       "metrics": { "domain_outputs": "mechanical", "reference_numeral_review": "synthetic" }
+    },
+    {
+      "id": "public-software-prior-art-recall",
+      "kind": "prior-art-search-recall",
+      "source_class": "public_patent",
+      "expected": "benchmarks/fixtures/public-software-prior-art-recall/expected.json",
+      "targeted_skills": ["apa-priorart", "apa-search"],
+      "metrics": {
+        "known_reference_recall_at_20": "retrieval-only",
+        "closest_known_reference_rank": "retrieval-only",
+        "dossier_completeness": "mechanical",
+        "quote_handoff_coverage": "mechanical"
+      }
     }
   ]
 }
