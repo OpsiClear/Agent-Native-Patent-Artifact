@@ -35,8 +35,17 @@ jobs:
       - name: Syntax sweep
         run: npm run syntax
 
+      - name: Source registry drift check
+        run: npm run sources:check
+
       - name: Full test suite (offline; no API key required)
         run: npm test
+
+      - name: Offline benchmark suite
+        run: npm run benchmark
+
+      - name: Prior-art recall score gate
+        run: npm run score:prior-art-search
 
       - name: Coverage summary (offline, advisory)
         run: npm run coverage
