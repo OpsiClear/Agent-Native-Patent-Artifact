@@ -55,3 +55,36 @@ test("runSearch (mock): dedupes and ranks; blocked query returns no results", as
 test("queryToString joins the egressing terms", () => {
   assert.equal(queryToString({ keywords: ["a", "b"], cpc: ["C1"], assignee: "X" }), "a b C1 X");
 });
+
+test("runSearch can expand citation-neighborhood candidates with audit metadata", async () => {
+  const res = await runSearch({
+    query: { keywords: ["linked", "ranking"], cpc: [], limit: 10 },
+    sources: ["fixture"],
+    opts: {
+      citationExpand: true,
+      fixtureRecords: [{
+        source: "fixture",
+        docNumber: "US-1-A",
+        title: "Linked database ranking",
+        abstract: "Ranks linked documents.",
+        snippet: "Ranks linked documents.",
+        backwardCitations: [{
+          docNumber: "NPL-LINK-1",
+          title: "Link graph ranking",
+          abstract: "Ranks nodes in a link graph.",
+          snippet: "Ranks nodes in a link graph.",
+        }],
+        forwardCitations: [{
+          docNumber: "US-2-B",
+          title: "Improved linked ranking",
+          abstract: "Improves ranking in linked databases.",
+          snippet: "Improves ranking in linked databases.",
+        }],
+      }],
+    },
+  });
+  assert.equal(res.citationExpansion.enabled, true);
+  assert.equal(res.citationExpansion.added_count, 2);
+  assert.ok(res.ranked.some((r) => r.docNumber === "NPL-LINK-1" && r.citation_expansion.relation === "backward"));
+  assert.ok(res.ranked.some((r) => r.docNumber === "US-2-B" && r.citation_expansion.relation === "forward"));
+});

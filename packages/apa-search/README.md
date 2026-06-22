@@ -14,8 +14,8 @@ wrapped in an untrusted-content envelope before any LLM sees it.
 
 `DESIGN.md` §4.1 calls for an `apa-browse` Playwright daemon, but it also says **API-backed sources are
 preferred and UI scraping is off by default**. This phase implements the API path (zero-deps Node
-`fetch`); the Playwright daemon is deferred — it is only needed for UI-only sources, which are
-**human-handoff** anyway.
+`fetch`); source calls use timeout and response-size guards. The Playwright daemon is deferred — it is
+only needed for UI-only sources, which are **human-handoff** anyway.
 
 ## Sources & access modes
 
@@ -38,6 +38,9 @@ node cli.mjs --matter <matter> --source patentsview --write    # also file PA## 
 # broad serious-search mode: fan out claim-derived query variants across patent + NPL metadata sources
 node cli.mjs --matter <matter> --source patentsview,crossref,arxiv --broad --write
 
+# include citation/family candidates when a source or imported fixture provides them
+node cli.mjs --matter <matter> --source patentsview --broad --citation-expand --write
+
 # mark the human closest-art selection after review
 node cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/search-dossier-....json \
   --pa PA02 --rationale "closest art after human review" --reviewer "<name>" \
@@ -57,8 +60,8 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 - Writes a raw record per reference under `evidence/prior_art/<paN>.md`.
 - Writes `evidence/prior_art/search-dossier-*.json` with query hash, exact source parameters,
   search plan/query variants, top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
-  assigned `PA##` IDs, coverage limits, quote handoff fields, rank explanations, analysis handoff
-  candidate cells, and the closest-art human-verification state.
+  assigned `PA##` IDs, coverage limits, citation expansion, quote handoff fields, rank explanations,
+  analysis handoff candidate cells, and the closest-art human-verification state.
 - Writes `logic/reference_matrix.md` — the "Blocks / Does-NOT-block" scaffold for analysis + a human.
 
 The written matter still passes `apa-validate` (Level-1 mechanical). The hardened-verification and
@@ -73,6 +76,6 @@ Quality targets and benchmark expectations live in `../../docs/prior-art-search-
 
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
-(untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`, `fixture.mjs`) ·
+(untrusted-content + canary) · `sources/` (`http.mjs` guards, `index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`, `fixture.mjs`) ·
 `lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in
 `../../docs/source-registry.md`.

@@ -66,6 +66,16 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
         doc_number: "US 9,000,002 B1",
       }],
     },
+    citationExpansion: {
+      enabled: true,
+      added_count: 1,
+      seeds: [{
+        seed_doc_number: "US-9000002-B1",
+        seed_source_id: "mock",
+        added: [{ relation: "backward", doc_number: "US-7000001-A", title: "Earlier wick" }],
+      }],
+      relations: [{ relation: "backward", seed_doc_number: "US-9000002-B1", candidate_doc_number: "US-7000001-A" }],
+    },
     ranked: REFS.map((r, i) => ({ ...r, score: 10 - i })),
   };
   const dossier = buildSearchDossier({
@@ -84,6 +94,8 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
   assert.equal(dossier.top_n.after_ranking.length, 2);
   assert.equal(dossier.dedupe_clusters.length, 1);
   assert.equal(dossier.excluded_results[0].reason, "duplicate-doc-number");
+  assert.equal(dossier.citation_expansion.enabled, true);
+  assert.equal(dossier.citation_expansion.added_count, 1);
   assert.equal(dossier.coverage_limits.search_complete_asserted, false);
   assert.equal(Array.isArray(dossier.search_plan), true);
   assert.equal(dossier.search_plan[0].id, "claim-keywords");

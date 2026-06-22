@@ -7,6 +7,7 @@
  *   node cli.mjs --query "self-watering planter float valve" --source mock
  *   node cli.mjs --matter <dir> --source patentsview --write        # PATENTSVIEW_API_KEY required
  *   node cli.mjs --matter <dir> --source patentsview,crossref,arxiv --broad --write
+ *   node cli.mjs --matter <dir> --source patentsview --broad --citation-expand --write
  *
  * Exit: 0 ok · 2 MEDIUM scan findings (re-run with --yes to proceed) · 3 HIGH scan findings (blocked).
  */
@@ -38,6 +39,7 @@ function parseArgs(argv) {
     else if (t === "--write") a.write = true;
     else if (t === "--yes") a.yes = true;
     else if (t === "--broad") a.broad = true;
+    else if (t === "--citation-expand") a.citationExpand = true;
     else if (t === "--list-sources") a.listSources = true;
   }
   return a;
@@ -77,7 +79,7 @@ async function main() {
     : null;
   if (!query) { console.error("provide --query \"...\" or --matter <dir>"); process.exit(2); }
 
-  const opts = { apiKey: process.env.PATENTSVIEW_API_KEY, broadSearch: a.broad };
+  const opts = { apiKey: process.env.PATENTSVIEW_API_KEY, broadSearch: a.broad, citationExpand: a.citationExpand };
   const res = await runSearch({ query, sources: a.sources, opts, confirmMedium: a.yes });
 
   if (res.blocked) {

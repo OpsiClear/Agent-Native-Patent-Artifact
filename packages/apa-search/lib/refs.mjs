@@ -20,6 +20,9 @@
  * @property {string[]} [cpc]
  * @property {string} [url]         canonical link
  * @property {string} [snippet]     relied-on passage candidate (usually the abstract)
+ * @property {NormalizedRef[]} [backwardCitations] cited-by-this-reference candidates, if a source supplies them
+ * @property {NormalizedRef[]} [forwardCitations] citing-this-reference candidates, if a source supplies them
+ * @property {NormalizedRef[]} [familyMembers] patent-family candidates, if a source supplies them
  *
  * A Source module exports `meta` and async `search(query, opts) -> { records, rawCount, notes }`:
  * @typedef {Object} SourceMeta
@@ -52,6 +55,69 @@ export function formatUsDocNumber(id) {
 /** Dedupe refs by normalized doc number, keeping the first (or the one with the most fields). */
 export function dedupeRefs(refs) {
   return dedupeRefsDetailed(refs).deduped;
+}
+
+export function expandCitationNeighborhood(refs = []) {
+  const records = [...(refs || [])];
+  const expansion = {
+    enabled: true,
+    seeds: [],
+    added_count: 0,
+    relations: [],
+  };
+  const relations = [
+    ["backward", ["backwardCitations", "backward_citations", "citations"]],
+    ["forward", ["forwardCitations", "forward_citations", "cited_by"]],
+    ["family", ["familyMembers", "family_members"]],
+  ];
+  for (const seed of refs || []) {
+    const seedSummary = {
+      seed_doc_number: seed?.docNumber || "",
+      seed_source_id: seed?.source || "",
+      added: [],
+    };
+    for (const [relation, keys] of relations) {
+      const children = keys.flatMap((key) => Array.isArray(seed?.[key]) ? seed[key] : []);
+      for (const child of children) {
+        const normalized = normalizeCitationChild(child, seed, relation);
+        if (!normalized.docNumber && !normalized.title) continue;
+        records.push(normalized);
+        seedSummary.added.push({
+          relation,
+          doc_number: normalized.docNumber || "",
+          title: normalized.title || "",
+        });
+        expansion.relations.push({
+          relation,
+          seed_doc_number: seed?.docNumber || "",
+          candidate_doc_number: normalized.docNumber || "",
+        });
+      }
+    }
+    if (seedSummary.added.length) expansion.seeds.push(seedSummary);
+  }
+  expansion.added_count = records.length - (refs || []).length;
+  return { records, expansion };
+}
+
+function normalizeCitationChild(child = {}, seed = {}, relation = "") {
+  return {
+    source: child.source || `${seed?.source || "unknown"}-citation`,
+    docNumber: child.docNumber || child.doc_number || "",
+    title: child.title || "",
+    abstract: child.abstract || child.snippet || "",
+    assignee: child.assignee || undefined,
+    inventors: child.inventors || undefined,
+    date: child.date || undefined,
+    cpc: child.cpc || undefined,
+    url: child.url || "",
+    snippet: child.snippet || child.abstract || child.title || "",
+    citation_expansion: {
+      relation,
+      seed_doc_number: seed?.docNumber || "",
+      seed_source_id: seed?.source || "",
+    },
+  };
 }
 
 /**

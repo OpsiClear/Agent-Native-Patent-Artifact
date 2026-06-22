@@ -95,6 +95,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
     },
     dedupe_clusters: dedupeClusters,
     excluded_results: [...dedupeExclusions, ...sourceExclusions],
+    citation_expansion: result?.citationExpansion || { enabled: false, added_count: 0, seeds: [], relations: [] },
     coverage_limits: coverageLimits(result?.perSource || []),
     ranked_candidates: ranked.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1 })),
     assigned_references: assigned.map((a) => ({

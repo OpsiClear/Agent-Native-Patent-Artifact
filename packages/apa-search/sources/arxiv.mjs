@@ -5,6 +5,8 @@
  * exact relied-on passages remain human-verification tasks.
  */
 
+import { guardedFetch, readTextCapped } from "./http.mjs";
+
 export const meta = {
   id: "arxiv",
   label: "arXiv API",
@@ -30,12 +32,9 @@ export async function search(query, opts = {}) {
   params.set("sortOrder", "descending");
   const url = `${ENDPOINT}?${params.toString()}`;
   const parameters = { source_id: meta.id, endpoint: ENDPOINT, method: "GET", query: Object.fromEntries(params.entries()) };
-  const doFetch = opts.fetch || globalThis.fetch;
-  if (typeof doFetch !== "function") return { records: [], rawCount: 0, parameters, notes: ["arxiv: global fetch unavailable"] };
-
   let res;
   try {
-    res = await doFetch(url, { headers: { Accept: "application/atom+xml" }, signal: opts.signal });
+    res = await guardedFetch(url, { headers: { Accept: "application/atom+xml" } }, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`arxiv: network error - ${messageOf(err)}`] };
   }
@@ -43,7 +42,7 @@ export async function search(query, opts = {}) {
 
   let xml;
   try {
-    xml = await res.text();
+    xml = await readTextCapped(res, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`arxiv: failed to read XML - ${messageOf(err)}`] };
   }

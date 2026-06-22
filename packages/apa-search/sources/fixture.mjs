@@ -68,6 +68,9 @@ function normalizeRecord(record = {}) {
     cpc: record.cpc || undefined,
     url: record.url || "",
     snippet: record.snippet || record.abstract || "",
+    backwardCitations: record.backwardCitations || record.backward_citations || record.citations || undefined,
+    forwardCitations: record.forwardCitations || record.forward_citations || record.cited_by || undefined,
+    familyMembers: record.familyMembers || record.family_members || undefined,
   };
 }
 

@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
 import { scan } from "../apa-redact/redact-engine.mjs";
 import { loadSource, descriptor, listSources } from "./sources/index.mjs";
-import { dedupeRefsDetailed, rankRefs } from "./lib/refs.mjs";
+import { dedupeRefsDetailed, expandCitationNeighborhood, rankRefs } from "./lib/refs.mjs";
 
 const STOP = new Set("a,an,the,of,for,and,or,to,with,in,on,by,is,configured,comprising,said,wherein,further,least,one,each,such".split(","));
 const TERM_VARIANTS = new Map([
@@ -164,12 +164,18 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
       }
     }
   }
-  const dedupe = dedupeRefsDetailed(all);
+  const citationExpanded = opts.citationExpand ? expandCitationNeighborhood(all) : {
+    records: all,
+    expansion: { enabled: false, added_count: 0, seeds: [], relations: [] },
+  };
+  const dedupe = dedupeRefsDetailed(citationExpanded.records);
   const ranked = rankRefs(dedupe.deduped, query);
   return {
     blocked: false,
     verdict,
-    rawRecords: all,
+    rawRecords: citationExpanded.records,
+    sourceRecords: all,
+    citationExpansion: citationExpanded.expansion,
     deduped: dedupe.deduped,
     dedupe: { clusters: dedupe.clusters, excludedResults: dedupe.excludedResults },
     ranked,

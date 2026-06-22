@@ -31,6 +31,9 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    (set `PATENTSVIEW_API_KEY`; use `--source mock` for an offline dry run). The tool **scans the query
    plan at the sink first** - a HIGH finding blocks it (exit 3); a MEDIUM finding holds it for your
    confirmation (exit 2, `--yes` to proceed).
+   If a source or human import provides citation/family members, add `--citation-expand` to include
+   backward citations, forward citations, and family-member candidates with `citation_expansion`
+   metadata. This is a neighborhood expansion, not a complete citation graph.
 2. **Access modes.** Only sanctioned API/dataset sources from `docs/source-registry.md` are queried.
    USPTO Patent Public Search (`uspto-pps`) is examiner-grade but **UI-only** and the Google Patents UI
    (`google-patents-ui`) is **ToS-restricted** - these are **human-handoff**, never auto-scraped. Run
@@ -58,7 +61,7 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    SHA-256, source IDs, search-plan IDs, exact source parameters, source counts/errors, top-N candidates before
    dedupe, after dedupe, and after ranking, dedupe clusters, excluded results/reasons, assigned
    `PA##` IDs, `coverage_limits.search_complete_asserted: false`, known unsearched source classes,
-   candidate `quote_handoff` fields, candidate `rank_explanation` fields,
+   candidate `quote_handoff` fields, candidate `rank_explanation` fields, `citation_expansion`,
    `analysis_handoff.candidate_cells`, and
    `closest_art_selection.human_verified: false` until a human fills it. Add a
    `trace/runlog.jsonl` entry for the command and external-sink bytes hash when the run is part of an

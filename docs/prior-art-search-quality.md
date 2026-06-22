@@ -14,6 +14,7 @@ completion, patentability, validity, infringement, or freedom to operate.
 | Quote-handoff coverage | every ranked candidate has a quote/snippet or explicit `not located` | Patentability analysis needs passage-level evidence, not title-only matches. |
 | Rank explanation coverage | every ranked candidate includes field hits and score breakdown | Humans need to see why a candidate surfaced before spending review time. |
 | Dossier reproducibility | query bytes hash, source params, counts, dedupe, exclusions, and runlog present | Search runs must be auditable and resumable. |
+| Source-call hardening | API calls use timeout and response-size caps | Slow or unexpectedly large source responses should fail visibly, not hang or exhaust memory. |
 
 ## Required Dossier Statements
 
@@ -25,6 +26,7 @@ Every search dossier must record:
 - query plan / query variants used
 - top-N before dedupe, after dedupe, and after ranking
 - dedupe clusters and excluded results
+- citation/family-neighborhood expansion summary when enabled
 - candidate quote handoff fields
 - candidate rank explanations (`matched_keywords`, `matched_cpc`, `score_breakdown`)
 - closest-art human-verification state

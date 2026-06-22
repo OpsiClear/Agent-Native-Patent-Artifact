@@ -5,6 +5,8 @@
  * verification, page/paragraph citation, or IDS materiality review.
  */
 
+import { guardedFetch, readJsonCapped } from "./http.mjs";
+
 export const meta = {
   id: "crossref",
   label: "Crossref Works API",
@@ -26,12 +28,9 @@ export async function search(query, opts = {}) {
   if (opts.mailto || process.env.CROSSREF_MAILTO) params.set("mailto", opts.mailto || process.env.CROSSREF_MAILTO);
   const url = `${ENDPOINT}?${params.toString()}`;
   const parameters = { source_id: meta.id, endpoint: ENDPOINT, method: "GET", query: Object.fromEntries(params.entries()) };
-  const doFetch = opts.fetch || globalThis.fetch;
-  if (typeof doFetch !== "function") return { records: [], rawCount: 0, parameters, notes: ["crossref: global fetch unavailable"] };
-
   let res;
   try {
-    res = await doFetch(url, { headers: { Accept: "application/json" }, signal: opts.signal });
+    res = await guardedFetch(url, { headers: { Accept: "application/json" } }, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`crossref: network error - ${messageOf(err)}`] };
   }
@@ -39,7 +38,7 @@ export async function search(query, opts = {}) {
 
   let json;
   try {
-    json = await res.json();
+    json = await readJsonCapped(res, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`crossref: failed to parse JSON - ${messageOf(err)}`] };
   }

@@ -34,6 +34,7 @@
  */
 
 import { formatUsDocNumber } from "../lib/refs.mjs";
+import { guardedFetch, readJsonCapped } from "./http.mjs";
 
 const ENDPOINT = "https://search.patentsview.org/api/v1/patent/";
 
@@ -203,14 +204,9 @@ export async function search(query, opts = {}) {
     );
   }
 
-  const doFetch = opts.fetch || globalThis.fetch;
-  if (typeof doFetch !== "function") {
-    return { records: [], rawCount: 0, parameters, notes: ["patentsview: global fetch unavailable (need Node >=21)"] };
-  }
-
   let res;
   try {
-    res = await doFetch(ENDPOINT, {
+    res = await guardedFetch(ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -218,8 +214,7 @@ export async function search(query, opts = {}) {
         "X-Api-Key": apiKey,
       },
       body: JSON.stringify(body),
-      signal: opts.signal,
-    });
+    }, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`patentsview: network error - ${err && err.message ? err.message : err}`] };
   }
@@ -238,7 +233,7 @@ export async function search(query, opts = {}) {
 
   let json;
   try {
-    json = await res.json();
+    json = await readJsonCapped(res, opts);
   } catch (err) {
     return { records: [], rawCount: 0, parameters, notes: [`patentsview: failed to parse JSON - ${err && err.message ? err.message : err}`] };
   }
