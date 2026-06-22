@@ -34,6 +34,21 @@ test("apa-search --write appends a runlog entry with query sink hash and closest
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("apa-search check-dossier validates a generated search dossier", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-search-check-dossier-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" });
+    const priorArtDir = join(d, "evidence", "prior_art");
+    const dossier = join(priorArtDir, readdirSync(priorArtDir).find((n) => /^search-dossier-.*\.json$/.test(n)));
+    const stdout = execFileSync(process.execPath, [CLI, "check-dossier", dossier, "--json"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    assert.equal(JSON.parse(stdout).ok, true);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
 test("apa-search verify-closest-art updates dossier and gates IDS readiness on all checks", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-search-verify-"));
   try {

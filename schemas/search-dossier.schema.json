@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/search-dossier.schema.json",
+  "title": "APA Prior-Art Search Dossier",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated_at",
+    "query",
+    "search_plan",
+    "sources",
+    "top_n",
+    "dedupe_clusters",
+    "excluded_results",
+    "citation_expansion",
+    "coverage_limits",
+    "ranked_candidates",
+    "assigned_references",
+    "analysis_handoff",
+    "closest_art_selection",
+    "caveats"
+  ],
+  "properties": {
+    "schema": { "const": "apa-search-dossier-v1" },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "query": {
+      "type": "object",
+      "required": ["keywords", "cpc", "limit", "serialized_sha256", "scan_verdict"],
+      "properties": {
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "cpc": { "type": "array", "items": { "type": "string" } },
+        "limit": { "type": "number" },
+        "serialized_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "scan_verdict": {
+          "type": "object",
+          "required": ["blocked", "needs_confirm", "high_count", "medium_count"],
+          "properties": {
+            "blocked": { "type": "boolean" },
+            "needs_confirm": { "type": "boolean" },
+            "high_count": { "type": "number" },
+            "medium_count": { "type": "number" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "search_plan": { "type": "array", "minItems": 1 },
+    "sources": { "type": "array" },
+    "top_n": {
+      "type": "object",
+      "required": ["before_dedupe", "after_dedupe_before_ranking", "after_ranking"],
+      "properties": {
+        "before_dedupe": { "type": "array" },
+        "after_dedupe_before_ranking": { "type": "array" },
+        "after_ranking": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "dedupe_clusters": { "type": "array" },
+    "excluded_results": { "type": "array" },
+    "citation_expansion": { "type": "object" },
+    "coverage_limits": {
+      "type": "object",
+      "required": ["search_complete_asserted", "searched_source_ids", "known_unsearched_sources"],
+      "properties": {
+        "search_complete_asserted": { "const": false },
+        "searched_source_ids": { "type": "array", "items": { "type": "string" } },
+        "known_unsearched_sources": { "type": "array" },
+        "source_errors_or_skips": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "ranked_candidates": { "type": "array" },
+    "assigned_references": { "type": "array" },
+    "analysis_handoff": {
+      "type": "object",
+      "required": ["schema", "candidate_cells"],
+      "properties": {
+        "schema": { "const": "apa-search-to-patentability-handoff-v1" },
+        "candidate_cells": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "closest_art_selection": {
+      "type": "object",
+      "required": ["human_verified", "selected_pa_ids", "verification"],
+      "properties": {
+        "human_verified": { "type": "boolean" },
+        "selected_pa_ids": { "type": "array", "items": { "type": "string" } },
+        "verification": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "caveats": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

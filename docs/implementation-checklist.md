@@ -412,7 +412,8 @@ Current state: `apa-search --write` writes a dossier with query hash, source par
 summaries, top-N before/after dedupe/ranking, dedupe clusters, excluded results/reasons, assigned
 references, and human closest-art state. `apa-search verify-closest-art` updates the human closest-art
 selection and keeps IDS readiness false until title, venue, canonical link, and relied-on passage are
-verified.
+verified. `schemas/search-dossier.schema.json` documents the dossier contract; `apa-search
+check-dossier` and the writer's built-in validator enforce it.
 
 Tasks:
 - [x] Record API parameters per source, not only source counts.
@@ -422,6 +423,7 @@ Tasks:
 - [x] Add human-verified closest-art selection update helper.
 - [x] Add IDS-ready verification status only after title, venue, canonical link, and relied-on passage
   are verified.
+- [x] Add a committed search-dossier schema and CLI validator.
 
 Suggested targets:
 - `packages/apa-search/writers.mjs`
@@ -434,6 +436,7 @@ Acceptance criteria:
   why the closest-art candidate was selected.
 - [x] Dossier still states the search is incomplete and not a clearance.
 - [x] Dedupe decisions are auditable.
+- [x] Generated dossiers pass `apa-search check-dossier`.
 
 Verification:
 - [x] `node --test packages/apa-search/test/*.test.mjs`

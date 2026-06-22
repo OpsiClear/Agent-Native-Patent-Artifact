@@ -14,6 +14,7 @@
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
 import { updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "./writers.mjs";
+import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
 import { listSources, sourceHealth } from "./sources/index.mjs";
 import { readFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
@@ -70,6 +71,9 @@ async function main() {
   }
   if (rawArgs[0] === "verify-reference") {
     process.exit(cmdVerifyReference(rawArgs.slice(1), { startedAt, rawArgs }));
+  }
+  if (rawArgs[0] === "check-dossier") {
+    process.exit(cmdCheckDossier(rawArgs.slice(1)));
   }
   const a = parseArgs(rawArgs);
   if (a.listSources) {
@@ -274,6 +278,33 @@ function cmdVerifyReference(argv, { startedAt = new Date().toISOString(), rawArg
     return 0;
   } catch (e) {
     console.error(`error: ${e.message}`);
+    return 2;
+  }
+}
+
+function cmdCheckDossier(argv) {
+  const path = value(argv, "--dossier") || argv.find((a) => !a.startsWith("--"));
+  if (!path) {
+    console.error("usage: check-dossier <search-dossier.json> [--json]");
+    return 2;
+  }
+  try {
+    const dossier = JSON.parse(readFileSync(path, "utf8"));
+    const result = validateSearchDossier(dossier);
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify(result, null, 2));
+    } else if (result.ok) {
+      console.log(`search dossier ok: ${path}`);
+    } else {
+      console.error(formatDossierErrors(result.errors));
+    }
+    return result.ok ? 0 : 2;
+  } catch (e) {
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify({ ok: false, errors: [{ path: "$", message: e.message }] }, null, 2));
+    } else {
+      console.error(`error: ${e.message}`);
+    }
     return 2;
   }
 }

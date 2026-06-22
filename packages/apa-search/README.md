@@ -50,6 +50,9 @@ node cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/search-dos
 node cli.mjs verify-reference --dossier <matter>/evidence/prior_art/search-dossier-....json \
   --pa PA02 --notes "title, venue, canonical link, and relied-on passage checked" --reviewer "<name>" \
   --title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified
+
+# validate a dossier contract directly
+node cli.mjs check-dossier <matter>/evidence/prior_art/search-dossier-....json --json
 ```
 
 Exit codes: `0` ok · `2` the query hit MEDIUM-tier sensitive content (re-run with `--yes`) · `3` the
@@ -74,9 +77,13 @@ Both commands append a `trace/runlog.jsonl` entry when the dossier path is under
 an output. `verification.ids_ready` remains false until title, venue, canonical link, and relied-on
 passage have all been independently verified.
 
-Quality targets and benchmark expectations live in `../../docs/prior-art-search-quality.md`.
+Quality targets and benchmark expectations live in `../../docs/prior-art-search-quality.md`. The
+dossier contract is documented in `../../schemas/search-dossier.schema.json` and enforced by
+`check-dossier` plus the writer's built-in validator.
 
 ## Files
+`dossier-schema.mjs` contains the zero-dependency validator for `schemas/search-dossier.schema.json`.
+
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
 (untrusted-content + canary) · `sources/` (`http.mjs` guards, `index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `openalex.mjs`, `mock.mjs`, `fixture.mjs`) ·
 `lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in

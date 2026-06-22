@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { iterEntitySections } from "../../lib/apa-parse.mjs";
+import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
 import { refSummary, refToPaBlock, refToEvidence } from "./lib/refs.mjs";
 import { queryToString } from "./search.mjs";
 import { sourceHealth } from "./sources/index.mjs";
@@ -350,6 +351,8 @@ export function writeSearchDossier(matterDir, opts) {
   const evidenceDir = join(matterDir, "evidence", "prior_art");
   mkdirSync(evidenceDir, { recursive: true });
   const dossier = buildSearchDossier(opts);
+  const validation = validateSearchDossier(dossier);
+  if (!validation.ok) throw new Error(`invalid search dossier:\n${formatDossierErrors(validation.errors)}`);
   const stamp = dossier.generated_at.replace(/[^0-9A-Za-z]+/g, "-").replace(/^-|-$/g, "");
   const path = join(evidenceDir, `search-dossier-${stamp}.json`);
   writeFileSync(path, JSON.stringify(dossier, null, 2) + "\n");

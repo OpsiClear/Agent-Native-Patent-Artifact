@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSearchDossier, idsVerificationStatus, updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "../writers.mjs";
+import { validateSearchDossier } from "../dossier-schema.mjs";
 import { validateMatter } from "../../apa-validate/validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -86,6 +87,7 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
     generatedAt: "2026-06-20T00:00:00.000Z",
   });
   assert.equal(dossier.schema, "apa-search-dossier-v1");
+  assert.equal(validateSearchDossier(dossier).ok, true);
   assert.match(dossier.query.serialized_sha256, /^[0-9a-f]{64}$/);
   assert.deepEqual(dossier.sources.map((s) => s.source_id), ["mock"]);
   assert.ok("query_parameters" in dossier.sources[0]);
@@ -115,6 +117,20 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
   assert.equal(dossier.closest_art_selection.human_verified, false);
   assert.equal(dossier.assigned_references[0].verification.ids_ready, false);
   assert.match(dossier.caveats.join("\n"), /not a complete search/);
+});
+
+test("validateSearchDossier rejects overbroad search-completeness assertions", () => {
+  const dossier = buildSearchDossier({
+    query: { keywords: ["reservoir"], cpc: [], limit: 1 },
+    result: { verdict: { text: "reservoir\n{}", high: [], medium: [] }, perSource: [], ranked: REFS.slice(0, 1) },
+    assigned: [],
+    limit: 1,
+    generatedAt: "2026-06-20T00:00:00.000Z",
+  });
+  dossier.coverage_limits.search_complete_asserted = true;
+  const validation = validateSearchDossier(dossier);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((e) => e.path === "coverage_limits.search_complete_asserted"));
 });
 
 test("idsVerificationStatus only becomes IDS-ready after all required checks", () => {

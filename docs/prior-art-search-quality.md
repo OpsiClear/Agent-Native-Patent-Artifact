@@ -40,6 +40,12 @@ Every search dossier must record:
 - closest-art human-verification state
 - IDS readiness state separated from closest-art selection
 
+Generated dossiers must validate with:
+
+```bash
+node packages/apa-search/cli.mjs check-dossier <matter>/evidence/prior_art/search-dossier-....json
+```
+
 ## Fixed Scoring Harness
 
 Run the offline retrieval-quality scorer with:
