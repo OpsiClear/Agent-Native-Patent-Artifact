@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { search as searchCrossref, meta as crossrefMeta } from "../sources/crossref.mjs";
 import { search as searchArxiv, meta as arxivMeta } from "../sources/arxiv.mjs";
+import { search as searchOpenAlex, meta as openAlexMeta } from "../sources/openalex.mjs";
 import { search as searchFixture, meta as fixtureMeta } from "../sources/fixture.mjs";
 import { buildSearchPlan, runSearch } from "../search.mjs";
 
@@ -65,6 +66,58 @@ test("arxiv source maps Atom entries to NormalizedRefs", async () => {
   assert.equal(res.records[0].date, "2026-01-02");
   assert.deepEqual(res.records[0].inventors, ["Grace Hopper"]);
   assert.match(res.notes.join(" "), /preprint metadata/);
+});
+
+test("openalex source maps Works API metadata to NormalizedRefs", async () => {
+  assert.equal(openAlexMeta.id, "openalex");
+  let seenUrl = "";
+  const fetch = async (url) => {
+    seenUrl = String(url);
+    return ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        meta: { count: 1, page: 1, per_page: 5 },
+        results: [{
+          id: "https://openalex.org/W123456789",
+          doi: "https://doi.org/10.1145/9876543.2109876",
+          display_name: "A dynamic gaussian splat codec",
+          abstract_inverted_index: {
+            Dynamic: [0],
+            Gaussian: [1],
+            splats: [2],
+            are: [3],
+            coded: [4],
+            into: [5],
+            video: [6],
+            frames: [7],
+          },
+          publication_date: "2025-04-03",
+          authorships: [{ author: { display_name: "Katherine Johnson" } }],
+          primary_location: {
+            landing_page_url: "https://doi.org/10.1145/9876543.2109876",
+            source: { display_name: "Example Graphics Conference" },
+          },
+          type: "article",
+          cited_by_count: 12,
+          concepts: [{ display_name: "Computer graphics" }],
+          topics: [{ display_name: "Video compression" }],
+        }],
+      }),
+    });
+  };
+  const res = await searchOpenAlex({ keywords: ["gaussian", "splat", "codec"], limit: 5 }, { fetch });
+  assert.equal(res.rawCount, 1);
+  assert.equal(res.records[0].source, "openalex");
+  assert.equal(res.records[0].docNumber, "DOI:10.1145/9876543.2109876");
+  assert.equal(res.records[0].date, "2025-04-03");
+  assert.deepEqual(res.records[0].inventors, ["Katherine Johnson"]);
+  assert.match(res.records[0].snippet, /Dynamic Gaussian splats/);
+  assert.match(res.records[0].assignee, /Example Graphics Conference/);
+  assert.ok(res.records[0].cpc.includes("Video compression"));
+  assert.match(res.notes.join(" "), /metadata candidate/);
+  assert.match(seenUrl, /search=gaussian\+splat\+codec/);
+  assert.match(seenUrl, /per-page=5/);
 });
 
 test("broad search plan fans out distinct query strategies", async () => {

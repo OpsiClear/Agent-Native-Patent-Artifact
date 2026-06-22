@@ -6,7 +6,7 @@
  *
  *   node cli.mjs --query "self-watering planter float valve" --source mock
  *   node cli.mjs --matter <dir> --source patentsview --write        # PATENTSVIEW_API_KEY required
- *   node cli.mjs --matter <dir> --source patentsview,crossref,arxiv --broad --write
+ *   node cli.mjs --matter <dir> --source patentsview,crossref,arxiv,openalex --broad --write
  *   node cli.mjs --matter <dir> --source patentsview --broad --citation-expand --write
  *
  * Exit: 0 ok · 2 MEDIUM scan findings (re-run with --yes to proceed) · 3 HIGH scan findings (blocked).

@@ -52,7 +52,7 @@ airtight enforcement.
    query plan across patent + NPL metadata sources. Broad mode emits separate query families for
    claim terms, core technical terms, phrases, controlled term variants, CPC hints, and assignee
    filters where available:
-   `node packages/apa-search/cli.mjs --matter <matter> --source patentsview,crossref,arxiv --broad`
+   `node packages/apa-search/cli.mjs --matter <matter> --source patentsview,crossref,arxiv,openalex --broad`
    (set `PATENTSVIEW_API_KEY`; use `--source mock` for an offline dry run). The tool **scans the query
    plan at the sink first** - a HIGH finding blocks it (exit 3); a MEDIUM finding holds it for your
    confirmation (exit 2, `--yes` to proceed).

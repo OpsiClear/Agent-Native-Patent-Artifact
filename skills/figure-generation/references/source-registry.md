@@ -7,6 +7,9 @@ Generated routing reference. The canonical registry is `docs/source-registry.md`
 | source_id | Access mode | Enabled by default | Human verification required | Notes |
 |---|---|---:|---:|---|
 | `patentsview` | API | yes | yes | PatentsView PatentSearch API; requires `PATENTSVIEW_API_KEY`. |
+| `crossref` | API | yes | yes | Crossref Works API for NPL metadata; full text and relied-on passages require human verification. |
+| `arxiv` | API | yes | yes | arXiv API for preprint metadata; versions, dates, and publication status require human verification. |
+| `openalex` | API | yes | yes | OpenAlex Works API for broad scholarly metadata; venue, version, dates, links, and relied-on passages require human verification. |
 | `mock` | API-like fixture | no | no | Offline deterministic tests and demos only. |
 | `pqai` | API | no | yes | Planned follow-on source. |
 | `epo-ops` | API | no | yes | Planned international source; requires credentials. |

@@ -20,7 +20,7 @@ only needed for UI-only sources, which are **human-handoff** anyway.
 ## Sources & access modes
 
 `node cli.mjs --list-sources`. Each source declares an access mode:
-- **api** - `patentsview` (PatentsView PatentSearch API; free key), `crossref` (NPL metadata), `arxiv` (preprint metadata), `mock` (offline demos/tests), `fixture` (offline benchmark corpus); `pqai`, `epo-ops` (planned).
+- **api** - `patentsview` (PatentsView PatentSearch API; free key), `crossref` (NPL metadata), `arxiv` (preprint metadata), `openalex` (broad scholarly/NPL metadata), `mock` (offline demos/tests), `fixture` (offline benchmark corpus); `pqai`, `epo-ops` (planned).
 - **dataset** — `google-bigquery` (the sanctioned, free Google path; planned).
 - **ui-restricted** — `uspto-pps` (examiner-grade, UI-only → human-handoff), `google-patents-ui` (disabled; UI scraping violates Google ToS). Never auto-scraped.
 
@@ -36,7 +36,7 @@ node cli.mjs --matter <matter> --source patentsview            # preview ranked 
 node cli.mjs --matter <matter> --source patentsview --write    # also file PA## + evidence + reference_matrix
 
 # broad serious-search mode: fan out claim-derived query variants across patent + NPL metadata sources
-node cli.mjs --matter <matter> --source patentsview,crossref,arxiv --broad --write
+node cli.mjs --matter <matter> --source patentsview,crossref,arxiv,openalex --broad --write
 
 # include citation/family candidates when a source or imported fixture provides them
 node cli.mjs --matter <matter> --source patentsview --broad --citation-expand --write
@@ -76,6 +76,6 @@ Quality targets and benchmark expectations live in `../../docs/prior-art-search-
 
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
-(untrusted-content + canary) · `sources/` (`http.mjs` guards, `index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`, `fixture.mjs`) ·
+(untrusted-content + canary) · `sources/` (`http.mjs` guards, `index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `openalex.mjs`, `mock.mjs`, `fixture.mjs`) ·
 `lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in
 `../../docs/source-registry.md`.
