@@ -4,7 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildSearchDossier, idsVerificationStatus, updateClosestArtSelection, writeLandscape, writeSearchDossier } from "../writers.mjs";
+import { buildSearchDossier, idsVerificationStatus, updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "../writers.mjs";
 import { validateMatter } from "../../apa-validate/validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -85,8 +85,10 @@ test("search dossier records query hash, source summary, ranked refs, and unveri
   assert.equal(dossier.dedupe_clusters.length, 1);
   assert.equal(dossier.excluded_results[0].reason, "duplicate-doc-number");
   assert.equal(dossier.coverage_limits.search_complete_asserted, false);
+  assert.equal(Array.isArray(dossier.search_plan), true);
+  assert.equal(dossier.search_plan[0].id, "claim-keywords");
   assert.ok(dossier.coverage_limits.known_unsearched_sources.some((s) => s.source_id === "uspto-pps"));
-  assert.ok(dossier.coverage_limits.known_unsearched_sources.some((s) => s.source_id === "non-patent-literature"));
+  assert.ok(dossier.coverage_limits.known_unsearched_sources.some((s) => s.source_id === "paywalled-npl-full-text"));
   assert.equal(dossier.ranked_candidates.length, 2);
   assert.equal(dossier.ranked_candidates[0].quote_handoff.quote, "a reservoir feeds a wick");
   assert.equal(dossier.ranked_candidates[0].quote_handoff.page_or_para, "mock abstract/snippet");
@@ -169,5 +171,36 @@ test("updateClosestArtSelection records human closest-art state and IDS readines
     });
     assert.equal(updated.closest_art_selection.verification.ids_ready, true);
     assert.equal(updated.assigned_references[0].verification.ids_ready, true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("updateReferenceVerification records IDS readiness without selecting closest art", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-dossier-ref-verify-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const { path } = writeSearchDossier(dir, {
+      query: { keywords: ["reservoir"], cpc: [], limit: 1 },
+      result: { verdict: { text: "reservoir\n{}", high: [], medium: [] }, perSource: [], ranked: REFS.slice(0, 1) },
+      assigned: [{ paId: "PA02", docNumber: "US-9000002-B1", title: "Wicking self-watering container" }],
+      limit: 1,
+      generatedAt: "2026-06-20T00:00:00.000Z",
+    });
+    const updated = updateReferenceVerification(path, {
+      paIds: ["PA02"],
+      notes: "Title, venue, canonical link, and relied-on passage checked against source document.",
+      reviewer: "reviewer@example.test",
+      verifiedAt: "2026-06-20T03:00:00.000Z",
+      checks: {
+        title_verified: true,
+        venue_verified: true,
+        canonical_link_verified: true,
+        relied_on_passage_verified: true,
+      },
+    });
+    assert.equal(updated.assigned_references[0].verification.human_verified, true);
+    assert.equal(updated.assigned_references[0].verification.ids_ready, true);
+    assert.equal(updated.assigned_references[0].verification_notes, "Title, venue, canonical link, and relied-on passage checked against source document.");
+    assert.equal(updated.closest_art_selection.human_verified, false);
+    assert.equal(updated.reference_verification_history.length, 1);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

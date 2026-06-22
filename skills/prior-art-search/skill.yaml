@@ -5,7 +5,7 @@ phase: search
 command: /apa-priorart
 version: "0.1"
 description: "Search prior-art sources and write PA blocks plus a search dossier."
-inputs: [PATENT.md, logic/claims.md, docs/source-registry.md]
+inputs: [PATENT.md, logic/claims.md, docs/source-registry.md, docs/prior-art-search-quality.md]
 outputs: [logic/prior_art.md, logic/reference_matrix.md, evidence/prior_art/, trace/runlog.jsonl]
 upstream: [apa-disclose, apa-compile]
 downstream: [apa-analyze, apa-rigor]

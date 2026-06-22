@@ -39,6 +39,33 @@ export function queryToString(query) {
   return [...(query.keywords || []), ...(query.cpc || []), query.assignee || "", query.dateFrom || "", query.dateTo || ""].filter(Boolean).join(" ");
 }
 
+export function buildSearchPlan(query, { broad = false } = {}) {
+  const base = normalizeQuery(query);
+  if (!broad) return [{ id: "claim-keywords", label: "Claim-derived keywords", query: base }];
+
+  const keywords = base.keywords || [];
+  const compact = keywords.filter((k) => String(k).length <= 48);
+  const phrases = keywords.filter((k) => /\s/.test(String(k))).slice(0, 12);
+  const shortCore = compact.slice(0, 10);
+  const coreTerms = compact.filter((k) => !/\s/.test(String(k)) && String(k).length >= 5).slice(0, 12);
+  const plan = [
+    { id: "claim-keywords", label: "All claim-derived keywords", query: base },
+    { id: "core-technical", label: "Core technical terms", query: { ...base, keywords: (coreTerms.length ? coreTerms : shortCore).slice(0, 3), cpc: [] } },
+    { id: "phrase-elements", label: "Multi-word claim elements", query: { ...base, keywords: (phrases.length ? phrases : shortCore).slice(-3), cpc: [] } },
+    { id: "focused-pair", label: "Focused leading claim pair", query: { ...base, keywords: shortCore.slice(0, 2), cpc: [] } },
+  ];
+  if ((base.cpc || []).length) plan.push({ id: "cpc-focused", label: "CPC-focused query", query: { ...base, keywords: shortCore.slice(0, 6), cpc: base.cpc } });
+  if (base.assignee) plan.push({ id: "assignee-focused", label: "Assignee-focused query", query: { ...base, keywords: shortCore.slice(0, 6), assignee: base.assignee } });
+
+  const seen = new Set();
+  return plan.filter((step) => {
+    const key = JSON.stringify({ keywords: step.query.keywords || [], cpc: step.query.cpc || [], assignee: step.query.assignee || "", dateFrom: step.query.dateFrom || "", dateTo: step.query.dateTo || "" });
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return (step.query.keywords || []).length || (step.query.cpc || []).length || step.query.assignee;
+  });
+}
+
 /** Scan the exact query bytes that will egress. Returns a verdict; HIGH blocks, MEDIUM needs confirm. */
 export function scanQueryAtSink(query) {
   // Scan a FULL serialization of the query - EVERY field (keywords, cpc, assignee, dateFrom, dateTo,
@@ -61,51 +88,57 @@ export function scanQueryAtSink(query) {
  * enabled source, dedupes + ranks. Pass `confirmMedium: true` to proceed past MEDIUM findings.
  */
 export async function runSearch({ query, sources, opts = {}, confirmMedium = false }) {
-  const verdict = scanQueryAtSink(query);
-  if (verdict.blocked) return { blocked: true, verdict, ranked: [], perSource: [] };
-  if (verdict.needsConfirm && !confirmMedium) return { needsConfirm: true, verdict, ranked: [], perSource: [] };
+  const plan = buildSearchPlan(query, { broad: Boolean(opts.broadSearch) });
+  const verdict = scanQueryAtSink({ ...query, search_plan: plan.map((p) => ({ id: p.id, query: p.query })) });
+  if (verdict.blocked) return { blocked: true, verdict, ranked: [], perSource: [], searchPlan: planSummary(plan) };
+  if (verdict.needsConfirm && !confirmMedium) return { needsConfirm: true, verdict, ranked: [], perSource: [], searchPlan: planSummary(plan) };
 
   const ids = sources && sources.length ? sources : listSources().filter((s) => s.enabledByDefault).map((s) => s.id);
   const perSource = [];
   let all = [];
-  for (const id of ids) {
-    const d = descriptor(id);
-    if (d && d.accessMode === "ui-restricted") {
-      perSource.push({
-        id,
-        count: 0,
-        rawCount: 0,
-        skipped: true,
-        accessMode: d.accessMode,
-        status: d.status,
-        parameters: { source_id: id, not_queried: true, reason: "ui-restricted-human-handoff" },
-        notes: [`${id}: UI-only/ToS-restricted - human handoff, not queried`],
-      });
-      continue;
-    }
-    try {
-      const mod = await loadSource(id);
-      const { records, rawCount, notes, parameters } = await mod.search(query, opts);
-      all = all.concat(records || []);
-      perSource.push({
-        id,
-        count: (records || []).length,
-        rawCount,
-        accessMode: d?.accessMode || mod.meta?.accessMode || "unknown",
-        status: d?.status || "implemented",
-        parameters: parameters || { source_id: id, query: compactQueryForAudit(query) },
-        notes: notes || [],
-      });
-    } catch (e) {
-      perSource.push({
-        id,
-        count: 0,
-        rawCount: 0,
-        accessMode: d?.accessMode || "unknown",
-        status: d?.status || "error",
-        parameters: { source_id: id, query: compactQueryForAudit(query) },
-        error: e.message,
-      });
+  for (const step of plan) {
+    for (const id of ids) {
+      const d = descriptor(id);
+      if (d && d.accessMode === "ui-restricted") {
+        perSource.push({
+          id,
+          strategy_id: step.id,
+          count: 0,
+          rawCount: 0,
+          skipped: true,
+          accessMode: d.accessMode,
+          status: d.status,
+          parameters: { source_id: id, strategy_id: step.id, not_queried: true, reason: "ui-restricted-human-handoff" },
+          notes: [`${id}: UI-only/ToS-restricted - human handoff, not queried`],
+        });
+        continue;
+      }
+      try {
+        const mod = await loadSource(id);
+        const { records, rawCount, notes, parameters } = await mod.search(step.query, opts);
+        all = all.concat((records || []).map((r) => ({ ...r, searchStrategy: step.id })));
+        perSource.push({
+          id,
+          strategy_id: step.id,
+          count: (records || []).length,
+          rawCount,
+          accessMode: d?.accessMode || mod.meta?.accessMode || "unknown",
+          status: d?.status || "implemented",
+          parameters: { ...(parameters || { source_id: id, query: compactQueryForAudit(step.query) }), strategy_id: step.id, strategy_label: step.label },
+          notes: notes || [],
+        });
+      } catch (e) {
+        perSource.push({
+          id,
+          strategy_id: step.id,
+          count: 0,
+          rawCount: 0,
+          accessMode: d?.accessMode || "unknown",
+          status: d?.status || "error",
+          parameters: { source_id: id, strategy_id: step.id, query: compactQueryForAudit(step.query) },
+          error: e.message,
+        });
+      }
     }
   }
   const dedupe = dedupeRefsDetailed(all);
@@ -118,6 +151,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
     dedupe: { clusters: dedupe.clusters, excludedResults: dedupe.excludedResults },
     ranked,
     perSource,
+    searchPlan: planSummary(plan),
     query,
   };
 }
@@ -133,4 +167,21 @@ function compactQueryForAudit(query) {
     dateTo: query?.dateTo || "",
     limit: query?.limit || null,
   };
+}
+
+function normalizeQuery(query = {}) {
+  return {
+    ...query,
+    keywords: [...new Set((query.keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k && !STOP.has(k)))],
+    cpc: [...new Set((query.cpc || []).map((c) => String(c).trim().toUpperCase()).filter(Boolean))],
+    limit: query.limit || 25,
+  };
+}
+
+function planSummary(plan) {
+  return plan.map((p) => ({
+    id: p.id,
+    label: p.label,
+    query: compactQueryForAudit(p.query),
+  }));
 }

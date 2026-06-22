@@ -6,12 +6,13 @@
  *
  *   node cli.mjs --query "self-watering planter float valve" --source mock
  *   node cli.mjs --matter <dir> --source patentsview --write        # PATENTSVIEW_API_KEY required
+ *   node cli.mjs --matter <dir> --source patentsview,crossref,arxiv --broad --write
  *
  * Exit: 0 ok · 2 MEDIUM scan findings (re-run with --yes to proceed) · 3 HIGH scan findings (blocked).
  */
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
-import { updateClosestArtSelection, writeLandscape, writeSearchDossier } from "./writers.mjs";
+import { updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { listSources } from "./sources/index.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -36,6 +37,7 @@ function parseArgs(argv) {
     else if (t === "--json") a.json = true;
     else if (t === "--write") a.write = true;
     else if (t === "--yes") a.yes = true;
+    else if (t === "--broad") a.broad = true;
     else if (t === "--list-sources") a.listSources = true;
   }
   return a;
@@ -62,6 +64,9 @@ async function main() {
   if (rawArgs[0] === "verify-closest-art") {
     process.exit(cmdVerifyClosestArt(rawArgs.slice(1)));
   }
+  if (rawArgs[0] === "verify-reference") {
+    process.exit(cmdVerifyReference(rawArgs.slice(1)));
+  }
   const a = parseArgs(rawArgs);
   if (a.listSources) {
     for (const s of listSources()) console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${s.note}`);
@@ -72,7 +77,7 @@ async function main() {
     : null;
   if (!query) { console.error("provide --query \"...\" or --matter <dir>"); process.exit(2); }
 
-  const opts = { apiKey: process.env.PATENTSVIEW_API_KEY };
+  const opts = { apiKey: process.env.PATENTSVIEW_API_KEY, broadSearch: a.broad };
   const res = await runSearch({ query, sources: a.sources, opts, confirmMedium: a.yes });
 
   if (res.blocked) {
@@ -90,6 +95,7 @@ async function main() {
     console.log(JSON.stringify({ query, ...res }, null, 2));
   } else {
     console.log(`Query: ${query.keywords.join(", ")}`);
+    if (res.searchPlan?.length > 1) console.log(`Search plan: ${res.searchPlan.map((s) => s.id).join(", ")}`);
     for (const s of res.perSource) console.log(`  source ${s.id}: ${s.count} result(s)${s.error ? ` [error: ${s.error}]` : ""}${(s.notes || []).length ? ` — ${s.notes.join("; ")}` : ""}`);
     console.log(`\nRanked candidates (${res.ranked.length}):`);
     res.ranked.slice(0, a.limit).forEach((r, i) => console.log(`  ${String(i + 1).padStart(2)}. [score ${r.score}] ${r.docNumber}  ${r.title || ""}`));
@@ -172,6 +178,43 @@ function cmdVerifyClosestArt(argv) {
       const v = updated.closest_art_selection.verification;
       console.log(`updated ${dossier}: closest art ${selected.join(", ")} human_verified=true ids_ready=${v.ids_ready}`);
       if (!v.ids_ready) console.log(`  ${v.ids_ready_reason}`);
+    }
+    return 0;
+  } catch (e) {
+    console.error(`error: ${e.message}`);
+    return 2;
+  }
+}
+
+function cmdVerifyReference(argv) {
+  const dossier = value(argv, "--dossier");
+  const selected = values(argv, "--pa").flatMap((v) => v.split(",")).map((s) => s.trim()).filter(Boolean);
+  const notes = value(argv, "--notes") || value(argv, "--rationale") || "";
+  const reviewer = value(argv, "--reviewer") || "";
+  if (!dossier || !selected.length || !notes) {
+    console.error("usage: verify-reference --dossier <search-dossier.json> --pa PA02[,PA03] --notes <verification notes> [--reviewer name] [--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified] [--json]");
+    return 2;
+  }
+  try {
+    const updated = updateReferenceVerification(dossier, {
+      paIds: selected,
+      notes,
+      reviewer,
+      checks: {
+        title_verified: argv.includes("--title-verified"),
+        venue_verified: argv.includes("--venue-verified"),
+        canonical_link_verified: argv.includes("--canonical-link-verified"),
+        relied_on_passage_verified: argv.includes("--relied-on-passage-verified"),
+      },
+    });
+    const refs = (updated.assigned_references || []).filter((r) => selected.includes(r.pa_id));
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify(refs, null, 2));
+    } else {
+      for (const ref of refs) {
+        console.log(`updated ${dossier}: ${ref.pa_id} human_verified=${ref.verification.human_verified} ids_ready=${ref.verification.ids_ready}`);
+        if (!ref.verification.ids_ready) console.log(`  ${ref.verification.ids_ready_reason}`);
+      }
     }
     return 0;
   } catch (e) {

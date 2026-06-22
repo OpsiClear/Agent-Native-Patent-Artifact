@@ -73,3 +73,32 @@ test("apa-search verify-closest-art updates dossier and gates IDS readiness on a
     assert.equal(parsed.assigned_references[0].verification.ids_ready, true);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
+
+test("apa-search verify-reference updates assigned reference IDS state without closest-art selection", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-search-ref-verify-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" });
+    const priorArtDir = join(d, "evidence", "prior_art");
+    const dossier = join(priorArtDir, readdirSync(priorArtDir).find((n) => /^search-dossier-.*\.json$/.test(n)));
+
+    execFileSync(process.execPath, [
+      CLI,
+      "verify-reference",
+      "--dossier", dossier,
+      "--pa", "PA02",
+      "--notes", "Human checked bibliographic fields and relied-on passage.",
+      "--reviewer", "reviewer@example.test",
+      "--title-verified",
+      "--venue-verified",
+      "--canonical-link-verified",
+      "--relied-on-passage-verified",
+    ], { stdio: "pipe" });
+    const parsed = JSON.parse(readFileSync(dossier, "utf8"));
+    assert.equal(parsed.assigned_references[0].verification.human_verified, true);
+    assert.equal(parsed.assigned_references[0].verification.ids_ready, true);
+    assert.equal(parsed.assigned_references[0].verification_notes, "Human checked bibliographic fields and relied-on passage.");
+    assert.equal(parsed.closest_art_selection.human_verified, false);
+    assert.equal(parsed.reference_verification_history.length, 1);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});

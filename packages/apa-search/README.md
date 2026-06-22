@@ -1,9 +1,10 @@
 # apa-search — prior-art search (Phase 2)
 
 API-first prior-art search for a Patent Artifact. Builds a query from a matter's claims, **scans it at
-the sink** (confidentiality) before egress, queries sanctioned sources, dedupes + ranks, and files the
-landscape as `PA##` blocks + raw evidence records + a reference-matrix scaffold. Node >= 21, ESM, zero
-dependencies. Fetched text is wrapped in an untrusted-content envelope before any LLM sees it.
+the sink** (confidentiality) before egress, queries sanctioned patent and non-patent metadata sources,
+dedupes + ranks, and files the landscape as `PA##` blocks + raw evidence records + a reproducible
+search dossier + a reference-matrix scaffold. Node >= 21, ESM, zero dependencies. Fetched text is
+wrapped in an untrusted-content envelope before any LLM sees it.
 
 > **Not a clearance.** Candidates are UNVERIFIED and structurally incomplete (examiner-grade USPTO PPS
 > is UI-only; NPL is paywalled). A human verifies each reference and selects the closest art. The tool
@@ -19,7 +20,7 @@ preferred and UI scraping is off by default**. This phase implements the API pat
 ## Sources & access modes
 
 `node cli.mjs --list-sources`. Each source declares an access mode:
-- **api** — `patentsview` (PatentsView PatentSearch API; free key) ✅, `mock` (offline, tests) ✅; `pqai`, `epo-ops` (planned).
+- **api** - `patentsview` (PatentsView PatentSearch API; free key), `crossref` (NPL metadata), `arxiv` (preprint metadata), `mock` (offline, tests); `pqai`, `epo-ops` (planned).
 - **dataset** — `google-bigquery` (the sanctioned, free Google path; planned).
 - **ui-restricted** — `uspto-pps` (examiner-grade, UI-only → human-handoff), `google-patents-ui` (disabled; UI scraping violates Google ToS). Never auto-scraped.
 
@@ -34,9 +35,17 @@ export PATENTSVIEW_API_KEY=...        # see ../../docs/source-registry.md
 node cli.mjs --matter <matter> --source patentsview            # preview ranked candidates
 node cli.mjs --matter <matter> --source patentsview --write    # also file PA## + evidence + reference_matrix
 
+# broad serious-search mode: fan out claim-derived query variants across patent + NPL metadata sources
+node cli.mjs --matter <matter> --source patentsview,crossref,arxiv --broad --write
+
 # mark the human closest-art selection after review
 node cli.mjs verify-closest-art --dossier <matter>/evidence/prior_art/search-dossier-....json \
   --pa PA02 --rationale "closest art after human review" --reviewer "<name>" \
+  --title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified
+
+# mark a citation as independently verified for IDS/readiness without selecting it as closest art
+node cli.mjs verify-reference --dossier <matter>/evidence/prior_art/search-dossier-....json \
+  --pa PA02 --notes "title, venue, canonical link, and relied-on passage checked" --reviewer "<name>" \
   --title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified
 ```
 
@@ -47,7 +56,7 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 - Appends `PA##` blocks to `logic/prior_art.md` (role-typed, `verification: false`).
 - Writes a raw record per reference under `evidence/prior_art/<paN>.md`.
 - Writes `evidence/prior_art/search-dossier-*.json` with query hash, exact source parameters,
-  top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
+  search plan/query variants, top-N candidates before dedupe, after dedupe, and after ranking, duplicate/excluded results,
   assigned `PA##` IDs, coverage limits, quote handoff fields, analysis handoff candidate cells, and
   the closest-art human-verification state.
 - Writes `logic/reference_matrix.md` — the "Blocks / Does-NOT-block" scaffold for analysis + a human.
@@ -55,12 +64,15 @@ query hit HIGH-tier secret content (**blocked, not sent**).
 The written matter still passes `apa-validate` (Level-1 mechanical). The hardened-verification and
 patentability-analysis steps (and a human) fill in `discloses`/`lacks` and the matrix.
 
-`verify-closest-art` updates only the dossier audit state. It marks the human-selected closest-art
-`PA##` IDs and rationale. `verification.ids_ready` remains false until title, venue, canonical link,
-and relied-on passage have all been independently verified.
+`verify-reference` updates assigned-reference verification and IDS-readiness state without selecting
+closest art. `verify-closest-art` marks the human-selected closest-art `PA##` IDs and rationale.
+`verification.ids_ready` remains false until title, venue, canonical link, and relied-on passage have
+all been independently verified.
+
+Quality targets and benchmark expectations live in `../../docs/prior-art-search-quality.md`.
 
 ## Files
 `cli.mjs` · `search.mjs` (orchestrator + scan-at-sink) · `writers.mjs` · `envelope.mjs`
-(untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `mock.mjs`) ·
+(untrusted-content + canary) · `sources/` (`index.mjs` registry, `patentsview.mjs`, `crossref.mjs`, `arxiv.mjs`, `mock.mjs`) ·
 `lib/refs.mjs` (record contract + dedupe/rank) · `test/`. Source policy lives in
 `../../docs/source-registry.md`.

@@ -76,6 +76,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
         medium_count: result?.verdict?.medium?.length || 0,
       },
     },
+    search_plan: result?.searchPlan || [{ id: "claim-keywords", label: "Claim-derived keywords", query: { keywords: query?.keywords || [], cpc: query?.cpc || [], limit } }],
     sources: (result?.perSource || []).map((s) => ({
       source_id: s.id,
       access_mode: s.accessMode || "unknown",
@@ -137,6 +138,46 @@ export function idsVerificationStatus(checks = {}) {
       ? "title, venue, canonical link, and relied-on passage verified"
       : "IDS-ready requires human verification of title, venue, canonical link, and relied-on passage",
   };
+}
+
+export function updateReferenceVerification(dossierPath, {
+  paIds = [],
+  notes = "",
+  reviewer = "",
+  verifiedAt = new Date().toISOString(),
+  checks = {},
+} = {}) {
+  const dossier = JSON.parse(readFileSync(dossierPath, "utf8"));
+  const selected = asList(paIds);
+  const assignedIds = new Set((dossier.assigned_references || []).map((r) => r.pa_id).filter(Boolean));
+  const missing = selected.filter((id) => !assignedIds.has(id));
+  if (!selected.length) throw new Error("paIds must include at least one PA## id");
+  if (missing.length) throw new Error(`selected PA id(s) not in dossier assigned_references: ${missing.join(", ")}`);
+  if (!String(notes || "").trim()) throw new Error("notes are required for reference verification");
+
+  const verification = idsVerificationStatus({
+    ...checks,
+    human_verified: true,
+    reviewer,
+    verified_at: verifiedAt,
+  });
+  dossier.assigned_references = (dossier.assigned_references || []).map((r) => (
+    selected.includes(r.pa_id)
+      ? { ...r, verification, verification_notes: String(notes).trim() }
+      : r
+  ));
+  dossier.reference_verification_history = [
+    ...(dossier.reference_verification_history || []),
+    {
+      pa_ids: selected,
+      reviewer: String(reviewer || ""),
+      verified_at: verifiedAt,
+      notes: String(notes).trim(),
+      verification,
+    },
+  ];
+  writeFileSync(dossierPath, JSON.stringify(dossier, null, 2) + "\n");
+  return dossier;
 }
 
 export function updateClosestArtSelection(dossierPath, {
@@ -231,10 +272,10 @@ function coverageLimits(perSource) {
       reason: "Google Patents UI scraping is disabled by source-registry policy.",
     },
     {
-      source_id: "non-patent-literature",
+      source_id: "paywalled-npl-full-text",
       access_mode: "paywalled/human-handoff",
       status: "unsearched",
-      reason: "Paywalled NPL and web literature are not covered by the default API search.",
+      reason: "Crossref/arXiv metadata discovery is not full-text NPL coverage; paywalled literature and web literature remain human-handoff.",
     },
     {
       source_id: "foreign-patent-full-text",
