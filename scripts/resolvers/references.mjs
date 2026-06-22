@@ -142,6 +142,7 @@ function sourceRegistryReference() {
     "| `arxiv` | API | yes | yes | arXiv API for preprint metadata; versions, dates, and publication status require human verification. |",
     "| `openalex` | API | yes | yes | OpenAlex Works API for broad scholarly metadata; venue, version, dates, links, and relied-on passages require human verification. |",
     "| `mock` | API-like fixture | no | no | Offline deterministic tests and demos only. |",
+    "| `fixture` | API-like fixture | no | no | Offline benchmark corpus only; not prior-art evidence. |",
     "| `pqai` | API | no | yes | Planned follow-on source. |",
     "| `epo-ops` | API | no | yes | Planned international source; requires credentials. |",
     "| `google-bigquery` | dataset | no | yes | Sanctioned Google patents-public-data path. |",
