@@ -13,7 +13,9 @@ test("apa-run plans the core pipeline", () => {
 test("apa-run inserts enabled software domain hook steps", () => {
   const plan = planPipeline({ matter: "examples/minimal-patent-artifact", domains: ["software"] });
   assert.ok(plan.steps.find((s) => s.id === "apa-software-patent"));
-  assert.ok(plan.steps.find((s) => s.hook === "claims.seed"));
+  const claimSeed = plan.steps.find((s) => s.hook === "claims.seed");
+  assert.ok(claimSeed);
+  assert.equal(claimSeed.runner, "node packages/apa-domain-software/cli.mjs claim-seeds");
 });
 
 test("apa-run status reads missing/present inputs without failing", () => {

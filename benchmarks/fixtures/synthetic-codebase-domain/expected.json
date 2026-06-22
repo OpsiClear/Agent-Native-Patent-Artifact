@@ -1,0 +1,20 @@
+{
+  "case_id": "synthetic-codebase-domain",
+  "mechanical": {
+    "files_scanned": 2,
+    "output_count": 5,
+    "canonical_writes": false,
+    "runlog_entries": 1,
+    "min_mechanism_terms": 3
+  },
+  "semantic_snapshot": {
+    "source_class": "synthetic_codebase",
+    "required_outputs": [
+      "domain/software/codebase_inventory.json",
+      "domain/software/software_disclosure_summary.md",
+      "domain/software/software_claim_seeds.json",
+      "domain/software/software_101_review.json",
+      "domain/software/software_architecture_figures.json"
+    ]
+  }
+}

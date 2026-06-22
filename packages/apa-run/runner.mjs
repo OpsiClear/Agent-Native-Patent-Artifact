@@ -33,6 +33,7 @@ function domainStepsForHook(graph, enabledDomains, hookId) {
         domain: domain.id,
         hook: hookId,
         status: skill.status || "scaffold",
+        runner: skill.runner || "",
         outputs: asArray(skill.outputs),
         source: "domain.yaml",
       });

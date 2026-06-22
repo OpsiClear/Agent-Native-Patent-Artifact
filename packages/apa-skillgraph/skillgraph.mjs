@@ -191,6 +191,16 @@ export function checkSkillGraph(graph = loadSkillGraph()) {
       if (skill.skill_path && !existsSync(join(graph.root, skill.skill_path, "skill.yaml"))) {
         add(errors, domain.relPath, `skill_path missing skill.yaml: ${skill.skill_path}`);
       }
+      if (skill.status === "active" && !skill.skill_path && !skill.runner) {
+        add(errors, domain.relPath, `active domain skill '${skill.id}' must declare skill_path or runner`);
+      }
+      if (skill.runner) {
+        const parts = String(skill.runner).split(/\s+/).filter(Boolean);
+        const script = parts.find((part) => part.startsWith("packages/"));
+        if (script && !existsSync(join(graph.root, script))) {
+          add(errors, domain.relPath, `runner script missing for skill '${skill.id}': ${script}`);
+        }
+      }
     }
   }
 
@@ -282,9 +292,9 @@ export function renderDomainPacksDoc(graph = loadSkillGraph()) {
       "|---|---|---|",
       ...asArray(d.hooks).map((h) => `| \`${h.id}\` | ${asArray(h.outputs).map((o) => `\`${o}\``).join(", ")} | ${h.blocking === true} |`),
       "",
-      "| Skill | Command | Status | Hook |",
-      "|---|---|---|---|",
-      ...asArray(d.skills).map((s) => `| \`${s.id}\` | \`${s.command}\` | ${s.status || "planned"} | \`${s.hook || ""}\` |`),
+      "| Skill | Command | Status | Hook | Runner |",
+      "|---|---|---|---|---|",
+      ...asArray(d.skills).map((s) => `| \`${s.id}\` | \`${s.command}\` | ${s.status || "planned"} | \`${s.hook || ""}\` | ${s.runner ? `\`${s.runner}\`` : "-"} |`),
       "",
     ].join("\n")),
   ].join("\n");

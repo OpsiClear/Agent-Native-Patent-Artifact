@@ -32,29 +32,34 @@ hooks:
     blocking: false
 skills:
   - id: apa-codebase-to-patent
-    status: scaffold
+    status: active
     command: /apa-codebase-to-patent
     hook: disclosure.enrich
+    runner: node packages/apa-domain-software/cli.mjs inventory
     outputs: [domain/software/codebase_inventory.json]
   - id: apa-software-disclosure-extractor
-    status: scaffold
+    status: active
     command: /apa-software-disclosure-extractor
     hook: disclosure.enrich
+    runner: node packages/apa-domain-software/cli.mjs disclosure
     outputs: [domain/software/software_disclosure_summary.md]
   - id: apa-software-claim-patterns
-    status: scaffold
+    status: active
     command: /apa-software-claim-patterns
     hook: claims.seed
+    runner: node packages/apa-domain-software/cli.mjs claim-seeds
     outputs: [domain/software/software_claim_seeds.json]
   - id: apa-software-101-review
-    status: scaffold
+    status: active
     command: /apa-software-101-review
     hook: analysis.domain
+    runner: node packages/apa-domain-software/cli.mjs 101-review
     outputs: [domain/software/software_101_review.json]
   - id: apa-software-architecture-figures
-    status: scaffold
+    status: active
     command: /apa-software-architecture-figures
     hook: figures.plan
+    runner: node packages/apa-domain-software/cli.mjs figures
     outputs: [domain/software/software_architecture_figures.json]
   - id: apa-software-patent
     status: active
@@ -63,6 +68,6 @@ skills:
     skill_path: skills/software-patent-review
     outputs: [domain/software/software_patent_report.json]
 benchmarks:
-  - id: software-public-codebase-to-patent
-    status: planned
-    source_class: public_repository
+  - id: synthetic-codebase-domain
+    status: active
+    source_class: synthetic_codebase

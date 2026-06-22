@@ -17,12 +17,12 @@ Writes only under: `domain/device/`
 | `figures.plan` | `domain/device/figure_plan.json` | false |
 | `figures.review` | `domain/device/reference_numeral_review.json` | false |
 
-| Skill | Command | Status | Hook |
-|---|---|---|---|
-| `apa-device-disclosure-extractor` | `/apa-device-disclosure-extractor` | planned | `disclosure.enrich` |
-| `apa-mechanical-claim-patterns` | `/apa-mechanical-claim-patterns` | planned | `claims.seed` |
-| `apa-device-figure-patterns` | `/apa-device-figure-patterns` | planned | `figures.plan` |
-| `apa-reference-numeral-review` | `/apa-reference-numeral-review` | planned | `figures.review` |
+| Skill | Command | Status | Hook | Runner |
+|---|---|---|---|---|
+| `apa-device-disclosure-extractor` | `/apa-device-disclosure-extractor` | planned | `disclosure.enrich` | - |
+| `apa-mechanical-claim-patterns` | `/apa-mechanical-claim-patterns` | planned | `claims.seed` | - |
+| `apa-device-figure-patterns` | `/apa-device-figure-patterns` | planned | `figures.plan` | - |
+| `apa-reference-numeral-review` | `/apa-reference-numeral-review` | planned | `figures.review` | - |
 
 ## formulation
 
@@ -39,12 +39,12 @@ Writes only under: `domain/formulation/`
 | `analysis.domain` | `domain/formulation/composition_enablement_review.json` | false |
 | `spec.review` | `domain/formulation/ranges_and_examples_review.json` | false |
 
-| Skill | Command | Status | Hook |
-|---|---|---|---|
-| `apa-formulation-disclosure-extractor` | `/apa-formulation-disclosure-extractor` | planned | `disclosure.enrich` |
-| `apa-formulation-claim-patterns` | `/apa-formulation-claim-patterns` | planned | `claims.seed` |
-| `apa-composition-enablement-review` | `/apa-composition-enablement-review` | planned | `analysis.domain` |
-| `apa-ranges-and-examples-review` | `/apa-ranges-and-examples-review` | planned | `spec.review` |
+| Skill | Command | Status | Hook | Runner |
+|---|---|---|---|---|
+| `apa-formulation-disclosure-extractor` | `/apa-formulation-disclosure-extractor` | planned | `disclosure.enrich` | - |
+| `apa-formulation-claim-patterns` | `/apa-formulation-claim-patterns` | planned | `claims.seed` | - |
+| `apa-composition-enablement-review` | `/apa-composition-enablement-review` | planned | `analysis.domain` | - |
+| `apa-ranges-and-examples-review` | `/apa-ranges-and-examples-review` | planned | `spec.review` | - |
 
 ## software
 
@@ -62,11 +62,11 @@ Writes only under: `domain/software/`
 | `figures.plan` | `domain/software/software_architecture_figures.json` | false |
 | `rigor.domain` | `domain/software/software_patent_report.json` | false |
 
-| Skill | Command | Status | Hook |
-|---|---|---|---|
-| `apa-codebase-to-patent` | `/apa-codebase-to-patent` | scaffold | `disclosure.enrich` |
-| `apa-software-disclosure-extractor` | `/apa-software-disclosure-extractor` | scaffold | `disclosure.enrich` |
-| `apa-software-claim-patterns` | `/apa-software-claim-patterns` | scaffold | `claims.seed` |
-| `apa-software-101-review` | `/apa-software-101-review` | scaffold | `analysis.domain` |
-| `apa-software-architecture-figures` | `/apa-software-architecture-figures` | scaffold | `figures.plan` |
-| `apa-software-patent` | `/apa-software-patent` | active | `rigor.domain` |
+| Skill | Command | Status | Hook | Runner |
+|---|---|---|---|---|
+| `apa-codebase-to-patent` | `/apa-codebase-to-patent` | active | `disclosure.enrich` | `node packages/apa-domain-software/cli.mjs inventory` |
+| `apa-software-disclosure-extractor` | `/apa-software-disclosure-extractor` | active | `disclosure.enrich` | `node packages/apa-domain-software/cli.mjs disclosure` |
+| `apa-software-claim-patterns` | `/apa-software-claim-patterns` | active | `claims.seed` | `node packages/apa-domain-software/cli.mjs claim-seeds` |
+| `apa-software-101-review` | `/apa-software-101-review` | active | `analysis.domain` | `node packages/apa-domain-software/cli.mjs 101-review` |
+| `apa-software-architecture-figures` | `/apa-software-architecture-figures` | active | `figures.plan` | `node packages/apa-domain-software/cli.mjs figures` |
+| `apa-software-patent` | `/apa-software-patent` | active | `rigor.domain` | - |

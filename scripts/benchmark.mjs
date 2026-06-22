@@ -10,8 +10,9 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { validateMatter } from "../packages/apa-validate/validate.mjs";
@@ -20,10 +21,12 @@ import { preflight } from "../packages/apa-assemble/preflight.mjs";
 import { parseOfficeActionFile } from "../packages/apa-prosecute/parse.mjs";
 import { computeDeadlines } from "../packages/apa-prosecute/deadlines.mjs";
 import { runSoftwarePatentSimulation } from "../packages/apa-bench/software-patent-sim.mjs";
+import { runSoftwareDomain } from "../packages/apa-domain-software/software-domain.mjs";
+import { validateRunlog } from "../packages/apa-trace/runlog.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_INDEX = "benchmarks/index.json";
-const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure", "synthetic_software_patent"]);
+const ALLOWED_SOURCE_CLASSES = new Set(["public_patent", "public_office_action", "synthetic_disclosure", "synthetic_software_patent", "synthetic_codebase"]);
 
 function parseArgs(argv) {
   const args = { index: DEFAULT_INDEX };
@@ -213,6 +216,64 @@ function runSoftwarePatentSimulationCase(testCase) {
     : passCase(testCase.id, testCase.kind, testCase.source_class, sim.metrics);
 }
 
+function runSyntheticCodebaseDomainCase(testCase, expected) {
+  const findings = [];
+  requirePath(findings, testCase.source, "source");
+  requirePath(findings, testCase.matter_template, "matter_template");
+  if (findings.length) return failCase(testCase.id, testCase.kind, testCase.source_class, {}, findings);
+
+  const tmp = mkdtempSync(join(tmpdir(), "apa-bench-codebase-domain-"));
+  try {
+    cpSync(resolve(ROOT, testCase.matter_template), tmp, { recursive: true });
+    const { outputs, result } = runSoftwareDomain({
+      command: "run-all",
+      source: resolve(ROOT, testCase.source),
+      matter: tmp,
+      argv: ["node", "packages/apa-domain-software/cli.mjs", "run-all", "--matter", tmp, "--source", testCase.source],
+    });
+    const relOutputs = outputs.map((p) => relative(tmp, p).replace(/\\/g, "/")).sort();
+    const runlog = validateRunlog(tmp);
+    const metrics = {
+      files_scanned: result.inventory.files_scanned,
+      output_count: outputs.length,
+      canonical_writes: relOutputs.some((p) => !p.startsWith("domain/software/")),
+      runlog_entries: runlog.entries.length,
+      mechanism_terms: result.seeds.method_seed.candidate_limitations.length,
+      outputs: relOutputs,
+      source_sha256: hashTree(resolve(ROOT, testCase.source)),
+    };
+
+    const mech = expected.mechanical || {};
+    for (const key of ["files_scanned", "output_count", "canonical_writes", "runlog_entries"]) {
+      if (Object.hasOwn(mech, key)) checkEqual(findings, metrics[key], mech[key], `mechanical.${key}`);
+    }
+    if (Number.isFinite(mech.min_mechanism_terms) && metrics.mechanism_terms < mech.min_mechanism_terms) {
+      findings.push({
+        severity: "blocking",
+        path: "mechanical.min_mechanism_terms",
+        expected: mech.min_mechanism_terms,
+        actual: metrics.mechanism_terms,
+        message: `mechanical.min_mechanism_terms: expected at least ${mech.min_mechanism_terms}, got ${metrics.mechanism_terms}`,
+      });
+    }
+    const semantic = expected.semantic_snapshot || {};
+    if (semantic.source_class) checkEqual(findings, testCase.source_class, semantic.source_class, "semantic_snapshot.source_class");
+    for (const out of semantic.required_outputs || []) {
+      if (!relOutputs.includes(out)) {
+        findings.push({ severity: "blocking", path: out, message: `required output missing: ${out}` });
+      }
+    }
+    if (!runlog.ok) {
+      findings.push({ severity: "blocking", path: "trace/runlog.jsonl", message: `runlog invalid: ${JSON.stringify(runlog.errors)}` });
+    }
+    return findings.length
+      ? failCase(testCase.id, testCase.kind, testCase.source_class, metrics, findings)
+      : passCase(testCase.id, testCase.kind, testCase.source_class, metrics);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 function runCase(testCase, opts) {
   const findings = [];
   if (!ALLOWED_SOURCE_CLASSES.has(testCase.source_class)) {
@@ -246,11 +307,35 @@ function runCase(testCase, opts) {
   if (testCase.kind === "synthetic-disclosure-to-assembly") {
     return runMatterCase(testCase, expected, { includePreflight: true, includeMockEval: opts.mock });
   }
+  if (testCase.kind === "synthetic-codebase-domain") return runSyntheticCodebaseDomainCase(testCase, expected);
   return failCase(testCase.id, testCase.kind, testCase.source_class, {}, [{
     severity: "blocking",
     path: "kind",
     message: `unknown benchmark case kind '${testCase.kind}'`,
   }]);
+}
+
+function hashTree(root) {
+  const files = [];
+  collectFiles(root, files);
+  const h = createHash("sha256");
+  for (const file of files.sort()) {
+    h.update(relative(root, file).replace(/\\/g, "/"));
+    h.update("\0");
+    h.update(readFileSync(file));
+    h.update("\0");
+  }
+  return h.digest("hex");
+}
+
+function collectFiles(dir, out) {
+  if (!existsSync(dir)) return out;
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) collectFiles(p, out);
+    else if (entry.isFile()) out.push(p);
+  }
+  return out;
 }
 
 export function runBenchmarks(opts = {}) {

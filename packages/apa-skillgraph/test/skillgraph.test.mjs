@@ -14,6 +14,10 @@ test("skill graph metadata validates", () => {
   assert.equal(result.ok, true, result.errors.map((e) => `${e.path}: ${e.message}`).join("\n"));
   assert.ok(result.skills.length >= 16);
   assert.equal(result.domains.length, 3);
+  const software = result.domains.find((d) => d.id === "software");
+  const activeRunners = software.skills.filter((s) => s.status === "active" && s.runner);
+  assert.ok(activeRunners.length >= 5);
+  assert.ok(activeRunners.every((s) => s.runner.startsWith("node packages/apa-domain-software/cli.mjs")));
 });
 
 test("skill graph docs mention hooks and domain packs", () => {
