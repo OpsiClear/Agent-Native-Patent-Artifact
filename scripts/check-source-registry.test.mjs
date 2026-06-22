@@ -59,6 +59,9 @@ test("source registry shape rejects unsafe defaults and missing modules", () => 
   assert.ok(errors.some((e) => e.includes("invalid source id 'bad source'")));
   assert.ok(errors.some((e) => e.includes("ui-auto: ui-restricted source cannot be enabled by default")));
   assert.ok(errors.some((e) => e.includes("no-module: implemented source must declare a module")));
+  assert.ok(errors.some((e) => e.includes("missing referenceUrl")));
+  assert.ok(errors.some((e) => e.includes("lastVerifiedAt must be YYYY-MM-DD")));
+  assert.ok(errors.some((e) => e.includes("invalid automationPolicy")));
 });
 
 test("sourceRegistryIds reflects executable registry order", () => {

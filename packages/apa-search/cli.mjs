@@ -78,8 +78,9 @@ async function main() {
   const a = parseArgs(rawArgs);
   if (a.listSources) {
     for (const s of listSources()) {
-      const policy = sourceHealth(s.id).rate_policy?.policy_id || "no-rate-policy";
-      console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${policy.padEnd(34)} ${s.note}`);
+      const health = sourceHealth(s.id);
+      const policy = health.rate_policy?.policy_id || "no-rate-policy";
+      console.log(`  ${s.id.padEnd(18)} ${s.accessMode.padEnd(14)} ${s.status.padEnd(14)} ${health.automation_policy.padEnd(14)} ${policy.padEnd(34)} ${s.note}`);
     }
     return;
   }

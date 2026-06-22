@@ -28,9 +28,13 @@ const REQUIRED_DOC_COLUMNS = [
   "Query payload class",
   "Returns full text?",
   "Human verification required",
+  "Reference URL",
+  "Last verified",
+  "Automation policy",
   "Rate-limit / quota notes",
   "Notes",
 ];
+const AUTOMATION_POLICIES = new Set(["automated", "planned", "human-handoff", "disabled", "local-only"]);
 
 export function parseSourceIds(markdown) {
   const ids = [];
@@ -78,6 +82,15 @@ export function validateSourceRegistryShape({ root = ROOT, registry = SOURCE_REG
     if (typeof source.humanVerificationRequired !== "boolean") errors.push(`${source.id}: humanVerificationRequired must be boolean`);
     if (typeof source.returnsFullText !== "boolean") errors.push(`${source.id}: returnsFullText must be boolean`);
     if (!String(source.queryPayloadClass || "").trim()) errors.push(`${source.id}: missing queryPayloadClass`);
+    if (!String(source.referenceUrl || "").trim()) errors.push(`${source.id}: missing referenceUrl`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(source.lastVerifiedAt || ""))) errors.push(`${source.id}: lastVerifiedAt must be YYYY-MM-DD`);
+    if (!AUTOMATION_POLICIES.has(source.automationPolicy)) errors.push(`${source.id}: invalid automationPolicy '${source.automationPolicy}'`);
+    if (source.accessMode === "ui-restricted" && source.automationPolicy === "automated") {
+      errors.push(`${source.id}: ui-restricted source cannot have automated policy`);
+    }
+    if (source.enabledByDefault && !["automated", "local-only"].includes(source.automationPolicy)) {
+      errors.push(`${source.id}: default-enabled source must be automated or local-only`);
+    }
     if (source.requiresKey && !String(source.keyEnv || "").trim()) errors.push(`${source.id}: requiresKey sources must declare keyEnv`);
     if (source.enabledByDefault && source.accessMode === "ui-restricted") {
       errors.push(`${source.id}: ui-restricted source cannot be enabled by default`);

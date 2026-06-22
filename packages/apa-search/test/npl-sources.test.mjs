@@ -55,6 +55,9 @@ test("sourceHealth exposes config and rate policy without secret values", () => 
   assert.equal(health.credential.key_present, true);
   assert.equal(JSON.stringify(health).includes("secret-value"), false);
   assert.match(health.rate_policy.policy_id, /patentsview/);
+  assert.equal(health.automation_policy, "automated");
+  assert.equal(health.last_verified_at, "2026-06-22");
+  assert.match(health.reference_url, /^https:\/\/data\.uspto\.gov\//);
   assert.match(health.current_notice, /Open Data Portal/);
 });
 

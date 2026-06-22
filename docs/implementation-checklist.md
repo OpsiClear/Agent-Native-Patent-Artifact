@@ -136,7 +136,8 @@ Verification:
 - [x] Keep `google-patents-ui` disabled for automation.
 - [x] Keep the registry field-complete: `source_id`, provider/name, official/nonofficial status,
   access mode, enabled-by-default state, query payload class, full-text availability, human
-  verification rule, ToS/usage posture, and rate-limit/quota notes.
+  verification rule, reference URL, last-verified date, automation policy, ToS/usage posture, and
+  rate-limit/quota notes.
 
 Target files:
 - `docs/source-registry.md`
@@ -147,6 +148,8 @@ Target files:
 Acceptance criteria:
 - [x] No skill uses ad hoc source names like "USPTO PatentSearch" without the canonical `source_id`.
 - [x] `node packages/apa-search/cli.mjs --list-sources` reflects the registry.
+- [x] `npm run sources:check` fails source descriptors missing `referenceUrl`, `lastVerifiedAt`, or a
+  safe `automationPolicy`.
 - [x] UI-only or UI-restricted sources remain human-handoff unless the registry adds a sanctioned
   API/dataset path and matching tests.
 - [x] A reviewer can determine from one registry row whether automation is allowed, what data leaves
