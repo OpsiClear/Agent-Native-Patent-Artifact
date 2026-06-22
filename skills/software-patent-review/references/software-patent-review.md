@@ -54,6 +54,32 @@ designed to keep the agent from overclaiming when the factual record is thin.
 When any scenario is under-supported, output `needs-inventor-confirmation` or
 `unsupported-new-matter-risk` instead of silently inventing implementation details.
 
+## Real-Public-Patent Tuning Rules
+
+These rules come from the public PageRank, grouped MapReduce, and vehicle OOD-detection fixtures.
+They are drafting-quality rules, not legal conclusions.
+
+- Preserve source terminology in the technical-improvement spine. Do not collapse concrete terms like
+  linked-document/linking-document scoring, common keys, heterogeneous schemas, group-specific
+  iterators, feature vectors, clusters, thresholds, filters, vehicle-control storage, sensor images,
+  or vehicle actions into generic phrases such as `ranking data`, `distributed processing`, or
+  `using AI`.
+- Treat pre-Alice or legacy `computer-readable medium` language as a CRM risk unless the source
+  actually supports non-transitory storage. Do not mark a non-transitory CRM family as supported just
+  because the public claim says computer-readable medium.
+- For AI/ML autonomous-driving or robotics inventions, keep the concrete pipeline visible: neural
+  network feature extraction, clustering or filtering, first/second filters, thresholds, classification
+  model selection, vehicle-control storage, sensor-image detection, classification, and vehicle action.
+  If the action is not source-enumerated, ask for steering, braking, acceleration, or other actuator
+  support instead of adding it as a fact.
+- For field-specific software, flag `field-of-use` risk when the field label may be doing too much
+  eligibility work, and flag `unclear-bound` when thresholds, confidence scores, OOD boundaries, or
+  vehicle-action triggers lack objective limits.
+- Put required mechanism terms in the field they support: baseline problem in
+  `technical_improvement.baseline_problem`, source-backed algorithm/mechanism in
+  `technical_improvement.mechanism`, and source-backed performance/control effect in
+  `technical_improvement.technical_effect`.
+
 ## 101 Eligibility Screen
 
 Create flags, not conclusions:

@@ -32,6 +32,7 @@
     "smoke": "node scripts/smoke.mjs",
     "benchmark": "node packages/apa-bench/cli.mjs --mock",
     "score:real-software-patents": "node packages/apa-bench/cli.mjs --mock --real-software-patents",
+    "tune:software-patent": "node packages/apa-bench/cli.mjs --mock --real-software-patents --fresh",
     "simulate:software-patent": "node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim",
     "coverage": "node scripts/coverage-summary.mjs",
     "test": "node --test \"packages/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"scripts/**/*.test.mjs\" \"hosts/**/*.test.mjs\" \"test/**/*.test.mjs\"",

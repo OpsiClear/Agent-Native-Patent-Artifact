@@ -19,6 +19,7 @@ node scripts/benchmark.mjs --mock
 node scripts/benchmark.mjs --mock --json --out benchmark-results.json
 node scripts/benchmark.mjs --mock --case software-patent-skill-sim
 npm run score:real-software-patents
+npm run tune:software-patent -- --json
 ```
 
 Use `/apa-public-patent-benchmark` when creating a new real public patent fixture. It converts the
@@ -42,8 +43,13 @@ to operate. The scorer reads each fixture's `source.md`, `expected.json`, and la
 `runs/*/software_patent_report.json`, verifies source hashes, checks source-span discipline, rewards
 recovery of source-backed technical mechanisms, and blocks forbidden legal-conclusion phrases.
 
+`npm run tune:software-patent -- --json` creates fresh candidate reports under
+`.apa/tune/software-patent/<run-id>/` from public `source.md` and the current
+`/apa-software-patent` skill instructions, then scores those candidates with tuning floors. Use this
+for skill-tuning loops so committed advisory reports are not mistaken for fresh outputs.
+
 Use the synthetic `software-patent-skill-sim` case as the fast regression guard for common traps
-such as thin SaaS claims, AI black boxes, math-only claims, and CRM transitory risk. Use the real
-public software-patent scorer as the fixed metric for skill tuning. Auto-tune runs should improve
-the real-patent average score while keeping `npm run simulate:software-patent` and
-`npm run skills:check` passing.
+such as thin SaaS claims, AI black boxes, math-only claims, and CRM transitory risk. Use the fresh
+real-public software-patent tuning command as the fixed metric for skill tuning. Auto-tune runs
+should improve the real-patent average score or reduce warnings while keeping
+`npm run simulate:software-patent` and `npm run skills:check` passing.

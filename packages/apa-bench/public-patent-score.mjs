@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -10,6 +10,12 @@ const DEFAULT_CASES = [
   "public-software-patent-ood-vehicle",
 ];
 const DEFAULT_THRESHOLD = 0.85;
+const TUNING_FLOORS = {
+  source_integrity: 1,
+  technical_mechanism_coverage: 0.85,
+  source_span_discipline: 0.9,
+  legal_overclaim_avoidance: 1,
+};
 
 const WEIGHTS = {
   source_integrity: 20,
@@ -113,6 +119,20 @@ function latestRunReport(root, fixtureRel, runId, findings) {
     return `${runsRel}/<missing>/software_patent_report.json`;
   }
   return `${runsRel}/${dirs[dirs.length - 1]}/software_patent_report.json`;
+}
+
+function candidateReportPath(root, candidateRoot, caseId) {
+  return resolve(root, candidateRoot, caseId, "software_patent_report.json");
+}
+
+function displayPath(root, path) {
+  const rel = relative(root, resolve(root, path)).replace(/\\/g, "/");
+  return rel && !rel.startsWith("..") ? rel : path;
+}
+
+function isFixtureRunPath(root, path) {
+  const rel = displayPath(root, path);
+  return rel.startsWith("benchmarks/fixtures/") && rel.includes("/runs/");
 }
 
 function ratio(passed, total) {
@@ -305,11 +325,29 @@ function weightedScore(dimensions) {
   return { score_points: Number(points.toFixed(2)), max_points: max, score: Number((points / max).toFixed(4)) };
 }
 
+function floorFindings(dimensions) {
+  const findings = [];
+  for (const [dimension, floor] of Object.entries(TUNING_FLOORS)) {
+    const actual = dimensions[dimension] ?? 0;
+    if (actual < floor) {
+      findings.push({
+        severity: "blocking",
+        path: "software_patent_report.json",
+        dimension,
+        message: `tuning floor failed: ${dimension} ${actual.toFixed(4)} < ${floor}`,
+      });
+    }
+  }
+  return findings;
+}
+
 export function scorePublicPatentFixture({
   root = ROOT,
   caseId,
   fixtureDir,
   runId,
+  candidateRoot,
+  enforceFloors = false,
 } = {}) {
   const id = caseId || (fixtureDir ? fixtureDir.split(/[\\/]/).filter(Boolean).pop() : null);
   if (!id) throw new Error("scorePublicPatentFixture requires caseId or fixtureDir");
@@ -318,7 +356,9 @@ export function scorePublicPatentFixture({
   const findings = [];
   const sourceRel = `${fixtureRel}/source.md`;
   const expectedRel = `${fixtureRel}/expected.json`;
-  const reportRel = latestRunReport(root, fixtureRel, runId, findings);
+  const reportRel = candidateRoot
+    ? candidateReportPath(root, candidateRoot, id)
+    : latestRunReport(root, fixtureRel, runId, findings);
 
   const sourceText = readText(root, sourceRel, findings, "source.md");
   const expectedText = readText(root, expectedRel, findings, "expected.json");
@@ -380,22 +420,42 @@ export function scorePublicPatentFixture({
     source_span_discipline: scoreEvidenceSpans(report, checks.required_evidence_spans || [], sourceText, findings),
     legal_overclaim_avoidance: scoreLegalOverclaim(report, checks.forbidden_legal_conclusion_terms || [], findings),
   };
+  if (enforceFloors) {
+    findings.push(...floorFindings(dimensions));
+    if (!candidateRoot) {
+      findings.push({
+        severity: "blocking",
+        path: reportRel,
+        dimension: "source_integrity",
+        message: "tuning mode requires a fresh candidateRoot outside committed fixture runs",
+      });
+    } else if (isFixtureRunPath(root, reportRel)) {
+      findings.push({
+        severity: "blocking",
+        path: reportRel,
+        dimension: "source_integrity",
+        message: "candidate reports must not be read from benchmarks/fixtures/**/runs",
+      });
+    }
+  }
   const score = weightedScore(dimensions);
   const blockingFailures = findings.filter((f) => f.severity === "blocking").length;
+  const warningCount = findings.filter((f) => f.severity === "warning").length;
 
   return {
     id,
     source_class: expected?.source_class || "public_patent",
     target_skill: "apa-software-patent",
-    mode: "offline-fixture",
+    mode: candidateRoot ? "fresh-candidate" : "offline-fixture",
     status: blockingFailures ? "fail" : "pass",
     fixture: fixtureRel,
-    report: reportRel,
+    report: displayPath(root, reportRel),
     score: score.score,
     score_points: score.score_points,
     max_points: score.max_points,
     dimensions,
     blocking_failures: blockingFailures,
+    warning_count: warningCount,
     findings,
   };
 }
@@ -404,19 +464,28 @@ export function scorePublicSoftwarePatentFixtures({
   root = ROOT,
   cases = DEFAULT_CASES,
   runId,
+  candidateRoot,
+  enforceFloors = false,
   threshold = DEFAULT_THRESHOLD,
 } = {}) {
-  const results = cases.map((caseId) => scorePublicPatentFixture({ root, caseId, runId }));
+  const results = cases.map((caseId) => scorePublicPatentFixture({
+    root,
+    caseId,
+    runId,
+    candidateRoot,
+    enforceFloors,
+  }));
   const averageScore = results.length
     ? Number((results.reduce((sum, c) => sum + c.score, 0) / results.length).toFixed(4))
     : 0;
   const blockingFailures = results.reduce((sum, c) => sum + c.blocking_failures, 0);
+  const warningCount = results.reduce((sum, c) => sum + c.warning_count, 0);
   const belowThreshold = results.filter((c) => c.score < threshold);
   const status = blockingFailures === 0 && averageScore >= threshold ? "pass" : "fail";
   return {
     schema: "apa-real-public-patent-score-v1",
     generated_at: new Date().toISOString(),
-    mode: "offline-fixture",
+    mode: candidateRoot ? "fresh-candidate" : "offline-fixture",
     status,
     ok: status === "pass",
     threshold,
@@ -424,7 +493,9 @@ export function scorePublicSoftwarePatentFixtures({
       cases: results.length,
       average_score: averageScore,
       blocking_failures: blockingFailures,
+      warning_count: warningCount,
       below_threshold: belowThreshold.length,
+      candidate_source: candidateRoot ? displayPath(root, candidateRoot) : "benchmarks/fixtures/**/runs",
     },
     cases: results,
   };

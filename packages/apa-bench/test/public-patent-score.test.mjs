@@ -9,6 +9,7 @@ import {
   scorePublicPatentFixture,
   scorePublicSoftwarePatentFixtures,
 } from "../public-patent-score.mjs";
+import { generateSoftwarePatentCandidateReports } from "../software-patent-tune.mjs";
 
 const ROOT = resolve(".");
 const FIXTURE_ROOT = "benchmarks/fixtures";
@@ -132,4 +133,52 @@ test("real software patent scorer is reachable through apa-bench CLI", () => {
   assert.equal(summary.schema, "apa-real-public-patent-score-v1");
   assert.equal(summary.metrics.cases, 1);
   assert.equal(summary.status, "pass");
+});
+
+test("fresh software patent tuning reports are scored from a candidate root, not committed advisory runs", () => {
+  const tuneRoot = mkdtempSync(join(tmpdir(), "apa-software-patent-tune-"));
+  const run = generateSoftwarePatentCandidateReports({
+    root: ROOT,
+    cases: [PAGERANK],
+    runId: "unit-test",
+    tuneRoot,
+    reviewedAt: "2026-06-21T00:00:00.000Z",
+  });
+  const summary = scorePublicSoftwarePatentFixtures({
+    root: ROOT,
+    cases: [PAGERANK],
+    candidateRoot: run.candidateRoot,
+    enforceFloors: true,
+  });
+  assert.equal(summary.mode, "fresh-candidate");
+  assert.equal(summary.status, "pass", JSON.stringify(summary.cases[0].findings, null, 2));
+  assert.equal(summary.metrics.warning_count, 0);
+  assert.ok(!summary.metrics.candidate_source.includes("benchmarks/fixtures"));
+  assert.ok(summary.cases[0].report.replace(/\\/g, "/").endsWith("public-software-patent-pagerank/software_patent_report.json"));
+});
+
+test("apa-bench CLI can run the fresh software patent tuning metric", () => {
+  const tuneRoot = mkdtempSync(join(tmpdir(), "apa-software-patent-cli-"));
+  const stdout = execFileSync(process.execPath, [
+    "packages/apa-bench/cli.mjs",
+    "--mock",
+    "--real-software-patents",
+    "--fresh",
+    "--tune-root",
+    tuneRoot,
+    "--run-id",
+    "unit-test-cli",
+    "--json",
+    "--case",
+    PAGERANK,
+  ], {
+    cwd: ROOT,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const summary = JSON.parse(stdout);
+  assert.equal(summary.mode, "fresh-candidate");
+  assert.equal(summary.metrics.cases, 1);
+  assert.equal(summary.status, "pass", JSON.stringify(summary.cases[0].findings, null, 2));
+  assert.equal(summary.tuning_run.runId, "unit-test-cli");
 });

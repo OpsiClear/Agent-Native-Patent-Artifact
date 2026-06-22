@@ -14,6 +14,7 @@ import {
   formatPublicPatentScore,
   scorePublicSoftwarePatentFixtures,
 } from "./public-patent-score.mjs";
+import { generateSoftwarePatentCandidateReports } from "./software-patent-tune.mjs";
 
 function parseRealPatentArgs(argv) {
   const args = { cases: [] };
@@ -25,6 +26,10 @@ function parseRealPatentArgs(argv) {
     else if (a === "--out") args.out = argv[++i];
     else if (a === "--case") args.cases.push(argv[++i]);
     else if (a === "--run-id") args.runId = argv[++i];
+    else if (a === "--fresh") args.fresh = true;
+    else if (a === "--candidate-root") args.candidateRoot = argv[++i];
+    else if (a === "--tune-root") args.tuneRoot = argv[++i];
+    else if (a === "--enforce-floors") args.enforceFloors = true;
     else if (a === "--threshold") args.threshold = Number(argv[++i]);
     else if (a === "-h" || a === "--help") args.help = true;
     else throw new Error(`unknown argument for --real-software-patents: ${a}`);
@@ -36,14 +41,27 @@ function parseRealPatentArgs(argv) {
 function runRealPatentCli(argv) {
   const args = parseRealPatentArgs(argv);
   if (args.help) {
-    console.log("usage: node packages/apa-bench/cli.mjs --mock --real-software-patents [--json] [--out <file>] [--case <id>] [--run-id <id>] [--threshold <score>]");
+    console.log("usage: node packages/apa-bench/cli.mjs --mock --real-software-patents [--fresh] [--json] [--out <file>] [--case <id>] [--run-id <id>] [--candidate-root <dir>] [--tune-root <dir>] [--threshold <score>]");
     return 0;
+  }
+  let candidateRoot = args.candidateRoot;
+  let tuningRun = null;
+  if (args.fresh) {
+    tuningRun = generateSoftwarePatentCandidateReports({
+      cases: args.cases.length ? args.cases : undefined,
+      runId: args.runId,
+      tuneRoot: args.tuneRoot,
+    });
+    candidateRoot = tuningRun.candidateRoot;
   }
   const summary = scorePublicSoftwarePatentFixtures({
     cases: args.cases.length ? args.cases : undefined,
     runId: args.runId,
+    candidateRoot,
+    enforceFloors: args.fresh || args.enforceFloors,
     threshold: args.threshold,
   });
+  if (tuningRun) summary.tuning_run = tuningRun;
   if (args.out) {
     const out = resolve(args.out);
     mkdirSync(dirname(out), { recursive: true });
