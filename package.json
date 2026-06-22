@@ -18,7 +18,8 @@
     "apa-skillgraph": "packages/apa-skillgraph/cli.mjs",
     "apa-run": "packages/apa-run/cli.mjs",
     "apa-bench": "packages/apa-bench/cli.mjs",
-    "apa-domain-software": "packages/apa-domain-software/cli.mjs"
+    "apa-domain-software": "packages/apa-domain-software/cli.mjs",
+    "apa-domain-device": "packages/apa-domain-device/cli.mjs"
   },
   "scripts": {
     "gen:skill-docs": "node scripts/gen-skill-docs.mjs",

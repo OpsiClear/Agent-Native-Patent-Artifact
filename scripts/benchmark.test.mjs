@@ -10,13 +10,14 @@ import { runBenchmarks } from "./benchmark.mjs";
 test("benchmark runner passes the committed public/synthetic fixtures offline", () => {
   const summary = runBenchmarks({ mock: true });
   assert.equal(summary.ok, true, JSON.stringify(summary.cases, null, 2));
-  assert.equal(summary.totals.cases, 5);
-  assert.equal(summary.totals.passed, 5);
+  assert.equal(summary.totals.cases, 6);
+  assert.equal(summary.totals.passed, 6);
   assert.ok(summary.cases.find((c) => c.id === "public-utility-patent-compile"));
   assert.ok(summary.cases.find((c) => c.id === "public-office-action"));
   assert.ok(summary.cases.find((c) => c.id === "synthetic-disclosure-to-assembly"));
   assert.ok(summary.cases.find((c) => c.id === "software-patent-skill-sim"));
   assert.ok(summary.cases.find((c) => c.id === "synthetic-codebase-domain"));
+  assert.ok(summary.cases.find((c) => c.id === "synthetic-device-domain"));
 });
 
 test("benchmark CLI writes a JSON summary artifact in mock mode", () => {
@@ -31,7 +32,7 @@ test("benchmark CLI writes a JSON summary artifact in mock mode", () => {
     const file = JSON.parse(readFileSync(out, "utf8"));
     assert.equal(stdout.ok, true);
     assert.equal(file.ok, true);
-    assert.equal(file.totals.passed, 5);
+    assert.equal(file.totals.passed, 6);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

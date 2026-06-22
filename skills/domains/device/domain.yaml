@@ -1,7 +1,7 @@
 schema: apa-domain-pack-v1
 id: device
 version: "0.1"
-status: scaffold
+status: active
 description: "Mechanical/device invention support for components, drawings, reference numerals, and structural claim patterns."
 detection_signals:
   - CAD
@@ -28,26 +28,30 @@ hooks:
     blocking: false
 skills:
   - id: apa-device-disclosure-extractor
-    status: planned
+    status: active
     command: /apa-device-disclosure-extractor
     hook: disclosure.enrich
+    runner: node packages/apa-domain-device/cli.mjs inventory
     outputs: [domain/device/component_inventory.json]
   - id: apa-mechanical-claim-patterns
-    status: planned
+    status: active
     command: /apa-mechanical-claim-patterns
     hook: claims.seed
+    runner: node packages/apa-domain-device/cli.mjs claim-seeds
     outputs: [domain/device/mechanical_claim_seeds.json]
   - id: apa-device-figure-patterns
-    status: planned
+    status: active
     command: /apa-device-figure-patterns
     hook: figures.plan
+    runner: node packages/apa-domain-device/cli.mjs figures
     outputs: [domain/device/figure_plan.json]
   - id: apa-reference-numeral-review
-    status: planned
+    status: active
     command: /apa-reference-numeral-review
     hook: figures.review
+    runner: node packages/apa-domain-device/cli.mjs numeral-review
     outputs: [domain/device/reference_numeral_review.json]
 benchmarks:
-  - id: device-public-hinge
-    status: planned
-    source_class: public_patent
+  - id: synthetic-device-domain
+    status: active
+    source_class: synthetic_device

@@ -1,0 +1,20 @@
+{
+  "case_id": "synthetic-device-domain",
+  "mechanical": {
+    "components": 4,
+    "relationships_min": 1,
+    "output_count": 4,
+    "canonical_writes": false,
+    "runlog_entries": 1,
+    "numeral_review_verdict": "ready-for-human-drawing-review"
+  },
+  "semantic_snapshot": {
+    "source_class": "synthetic_device",
+    "required_outputs": [
+      "domain/device/component_inventory.json",
+      "domain/device/mechanical_claim_seeds.json",
+      "domain/device/figure_plan.json",
+      "domain/device/reference_numeral_review.json"
+    ]
+  }
+}

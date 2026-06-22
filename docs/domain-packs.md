@@ -4,7 +4,7 @@ Generated from `skills/domains/*/domain.yaml`.
 
 ## device
 
-Status: `scaffold`
+Status: `active`
 
 Mechanical/device invention support for components, drawings, reference numerals, and structural claim patterns.
 
@@ -19,10 +19,10 @@ Writes only under: `domain/device/`
 
 | Skill | Command | Status | Hook | Runner |
 |---|---|---|---|---|
-| `apa-device-disclosure-extractor` | `/apa-device-disclosure-extractor` | planned | `disclosure.enrich` | - |
-| `apa-mechanical-claim-patterns` | `/apa-mechanical-claim-patterns` | planned | `claims.seed` | - |
-| `apa-device-figure-patterns` | `/apa-device-figure-patterns` | planned | `figures.plan` | - |
-| `apa-reference-numeral-review` | `/apa-reference-numeral-review` | planned | `figures.review` | - |
+| `apa-device-disclosure-extractor` | `/apa-device-disclosure-extractor` | active | `disclosure.enrich` | `node packages/apa-domain-device/cli.mjs inventory` |
+| `apa-mechanical-claim-patterns` | `/apa-mechanical-claim-patterns` | active | `claims.seed` | `node packages/apa-domain-device/cli.mjs claim-seeds` |
+| `apa-device-figure-patterns` | `/apa-device-figure-patterns` | active | `figures.plan` | `node packages/apa-domain-device/cli.mjs figures` |
+| `apa-reference-numeral-review` | `/apa-reference-numeral-review` | active | `figures.review` | `node packages/apa-domain-device/cli.mjs numeral-review` |
 
 ## formulation
 

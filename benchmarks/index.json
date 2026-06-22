@@ -6,7 +6,8 @@
       "public_office_action",
       "synthetic_disclosure",
       "synthetic_software_patent",
-      "synthetic_codebase"
+      "synthetic_codebase",
+      "synthetic_device"
     ],
     "offline_commit_gate": true,
     "live_llm_eval": "periodic-advisory-only"
@@ -63,6 +64,21 @@
         "apa-software-architecture-figures"
       ],
       "metrics": { "domain_outputs": "mechanical", "mechanism_signal_coverage": "synthetic" }
+    },
+    {
+      "id": "synthetic-device-domain",
+      "kind": "synthetic-device-domain",
+      "source_class": "synthetic_device",
+      "source": "benchmarks/fixtures/synthetic-device-domain/source",
+      "matter_template": "examples/minimal-patent-artifact",
+      "expected": "benchmarks/fixtures/synthetic-device-domain/expected.json",
+      "targeted_skills": [
+        "apa-device-disclosure-extractor",
+        "apa-mechanical-claim-patterns",
+        "apa-device-figure-patterns",
+        "apa-reference-numeral-review"
+      ],
+      "metrics": { "domain_outputs": "mechanical", "reference_numeral_review": "synthetic" }
     }
   ]
 }

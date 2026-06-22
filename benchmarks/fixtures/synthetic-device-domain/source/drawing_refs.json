@@ -1,0 +1,8 @@
+{
+  "refs": [
+    { "ref": "100", "label": "base plate" },
+    { "ref": "110", "label": "hinge arm" },
+    { "ref": "120", "label": "pivot pin" },
+    { "ref": "130", "label": "torsion spring" }
+  ]
+}
