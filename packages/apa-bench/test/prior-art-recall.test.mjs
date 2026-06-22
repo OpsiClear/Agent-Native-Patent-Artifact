@@ -8,12 +8,18 @@ test("public software prior-art recall fixture passes fixed retrieval floors", a
   const summary = await scorePriorArtRecallFixture();
   assert.equal(summary.schema, "apa-prior-art-recall-score-v1");
   assert.equal(summary.status, "pass", JSON.stringify(summary.scenarios, null, 2));
-  assert.equal(summary.metrics.scenarios, 3);
+  assert.equal(summary.metrics.scenarios, 4);
   assert.equal(summary.metrics.blocking_failures, 0);
   assert.ok(summary.metrics.average_recall_at_20 >= 0.8);
+  assert.ok(summary.metrics.average_recall_at_5 >= 0.7);
+  assert.ok(summary.metrics.average_mean_known_reciprocal_rank >= 0.7);
+  assert.ok(summary.metrics.average_top_expected_slot_precision >= 1);
+  assert.ok(summary.metrics.total_citation_expansion_added >= 1);
   assert.ok(summary.scenarios.every((s) => s.metrics.dossier_completeness === 1));
   assert.ok(summary.scenarios.every((s) => s.metrics.quote_handoff_coverage === 1));
   assert.ok(summary.scenarios.every((s) => s.metrics.rank_explanation_coverage === 1));
+  assert.ok(summary.scenarios.every((s) => s.metrics.candidate_type_diversity >= 2));
+  assert.ok(summary.scenarios.some((s) => s.metrics.citation_expansion_recall_gain >= 0.5));
 });
 
 test("prior-art recall scorer is reachable through apa-bench CLI", () => {
@@ -29,5 +35,7 @@ test("prior-art recall scorer is reachable through apa-bench CLI", () => {
   const summary = JSON.parse(stdout);
   assert.equal(summary.schema, "apa-prior-art-recall-score-v1");
   assert.equal(summary.status, "pass");
-  assert.equal(summary.metrics.scenarios, 3);
+  assert.equal(summary.metrics.scenarios, 4);
+  assert.ok(summary.metrics.average_recall_at_5 >= 0.7);
+  assert.ok(summary.metrics.average_mean_known_reciprocal_rank >= 0.7);
 });

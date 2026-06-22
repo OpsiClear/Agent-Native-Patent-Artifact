@@ -71,10 +71,11 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    Add `--title-verified --venue-verified --canonical-link-verified --relied-on-passage-verified`
    only after each check is actually complete; `ids_ready` must remain false until all four are true.
 9. **Regression scoring.** When improving this skill, run the fixed retrieval harness:
-   `npm run score:prior-art-search`. It scores known-reference recall@20, closest known-reference
-   rank, dossier completeness, quote-handoff coverage, and rank-explanation coverage on public
-   software-patent fixtures. It is a retrieval-quality metric only, not a legal conclusion or search
-   completeness claim.
+   `npm run score:prior-art-search`. It scores known-reference recall@20 and recall@5, mean known
+   reciprocal rank, top expected-slot precision against distractors, citation-expansion gain where
+   declared, candidate-type diversity, dossier completeness, quote-handoff coverage, and
+   rank-explanation coverage on public software-patent fixtures. It is a retrieval-quality metric
+   only, not a legal conclusion or search completeness claim.
 
 {{ANALYSIS_101_102_103_112}}
 

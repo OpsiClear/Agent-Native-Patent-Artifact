@@ -34,6 +34,42 @@ function ratio(n, d) {
   return d ? n / d : 1;
 }
 
+function recallAt(ranked, known, n) {
+  if (!known.size) return 1;
+  const top = (ranked || []).slice(0, n);
+  const found = top.filter((r) => known.has(normalizeDocNumber(r.docNumber)));
+  return ratio(found.length, known.size);
+}
+
+function ranksFor(ranked, known) {
+  return [...known].map((doc) => rankOf(ranked || [], doc));
+}
+
+function meanKnownReciprocalRank(ranks, knownCount) {
+  if (!knownCount) return 1;
+  const sum = ranks.reduce((acc, rank) => acc + (rank ? 1 / rank : 0), 0);
+  return sum / knownCount;
+}
+
+function topExpectedSlotPrecision(ranked, known) {
+  if (!known.size) return 1;
+  const top = (ranked || []).slice(0, known.size);
+  return ratio(top.filter((r) => known.has(normalizeDocNumber(r.docNumber))).length, known.size);
+}
+
+function candidateType(docNumber) {
+  const normalized = normalizeDocNumber(docNumber);
+  if (/^US[A-Z0-9]/.test(normalized)) return "patent";
+  if (/^ARXIV/.test(normalized)) return "arxiv";
+  if (/^NPL/.test(normalized)) return "npl";
+  if (/^DOI/.test(normalized)) return "npl";
+  return "other";
+}
+
+function candidateTypeDiversity(ranked) {
+  return new Set((ranked || []).map((r) => candidateType(r.docNumber))).size;
+}
+
 function dossierCompleteness(dossier) {
   const checks = [
     dossier?.schema === "apa-search-dossier-v1",
@@ -78,11 +114,55 @@ function buildFindings({ scenario, metrics, floors }) {
       message: `${scenario.id}: recall@20 ${metrics.recall_at_20.toFixed(4)} < ${floors.recall_at_20}`,
     });
   }
+  if (metrics.recall_at_5 < floors.recall_at_5) {
+    findings.push({
+      severity: "blocking",
+      path: `${scenario.id}.recall_at_5`,
+      message: `${scenario.id}: recall@5 ${metrics.recall_at_5.toFixed(4)} < ${floors.recall_at_5}`,
+    });
+  }
   if (metrics.closest_known_reference_rank === null || metrics.closest_known_reference_rank > floors.closest_known_reference_rank_max) {
     findings.push({
       severity: "blocking",
       path: `${scenario.id}.closest_known_reference_rank`,
       message: `${scenario.id}: closest known reference rank ${metrics.closest_known_reference_rank ?? "missing"} > ${floors.closest_known_reference_rank_max}`,
+    });
+  }
+  if (metrics.mean_known_reciprocal_rank < floors.mean_known_reciprocal_rank) {
+    findings.push({
+      severity: "blocking",
+      path: `${scenario.id}.mean_known_reciprocal_rank`,
+      message: `${scenario.id}: mean known reciprocal rank ${metrics.mean_known_reciprocal_rank.toFixed(4)} < ${floors.mean_known_reciprocal_rank}`,
+    });
+  }
+  if (metrics.top_expected_slot_precision < floors.top_expected_slot_precision) {
+    findings.push({
+      severity: "blocking",
+      path: `${scenario.id}.top_expected_slot_precision`,
+      message: `${scenario.id}: top expected-slot precision ${metrics.top_expected_slot_precision.toFixed(4)} < ${floors.top_expected_slot_precision}`,
+    });
+  }
+  if (metrics.candidate_type_diversity < floors.candidate_type_diversity_min) {
+    findings.push({
+      severity: "warning",
+      path: `${scenario.id}.candidate_type_diversity`,
+      message: `${scenario.id}: candidate type diversity ${metrics.candidate_type_diversity} < ${floors.candidate_type_diversity_min}`,
+    });
+  }
+  const expansionAddedMin = scenario.citation_expansion_added_min ?? floors.citation_expansion_added_min ?? 0;
+  if (metrics.citation_expansion_added_count < expansionAddedMin) {
+    findings.push({
+      severity: "blocking",
+      path: `${scenario.id}.citation_expansion_added_count`,
+      message: `${scenario.id}: citation expansion added ${metrics.citation_expansion_added_count} < ${expansionAddedMin}`,
+    });
+  }
+  const expansionGainMin = scenario.citation_expansion_recall_gain_min ?? floors.citation_expansion_recall_gain_min ?? 0;
+  if (metrics.citation_expansion_recall_gain < expansionGainMin) {
+    findings.push({
+      severity: "blocking",
+      path: `${scenario.id}.citation_expansion_recall_gain`,
+      message: `${scenario.id}: citation expansion recall gain ${metrics.citation_expansion_recall_gain.toFixed(4)} < ${expansionGainMin}`,
     });
   }
   if (metrics.dossier_completeness < floors.dossier_completeness) {
@@ -118,7 +198,13 @@ export async function scorePriorArtRecallFixture({
   const scenarios = Array.isArray(expected.scenarios) ? expected.scenarios : [];
   const floors = {
     recall_at_20: 0.7,
+    recall_at_5: 0.7,
     closest_known_reference_rank_max: 10,
+    mean_known_reciprocal_rank: 0.7,
+    top_expected_slot_precision: 1,
+    candidate_type_diversity_min: 1,
+    citation_expansion_added_min: 0,
+    citation_expansion_recall_gain_min: 0,
     dossier_completeness: 1,
     quote_handoff_coverage: 1,
     rank_explanation_coverage: 1,
@@ -128,7 +214,7 @@ export async function scorePriorArtRecallFixture({
 
   for (const scenario of scenarios) {
     const query = { limit: 20, ...(scenario.query || {}) };
-    const result = await runSearch({
+    const baseResult = await runSearch({
       query,
       sources: ["fixture"],
       opts: {
@@ -137,10 +223,23 @@ export async function scorePriorArtRecallFixture({
       },
       confirmMedium: true,
     });
+    const result = await runSearch({
+      query,
+      sources: ["fixture"],
+      opts: {
+        broadSearch: true,
+        citationExpand: true,
+        fixtureRecords: scenario.records || [],
+      },
+      confirmMedium: true,
+    });
     const known = normalizedSet(scenario.expected_known_refs || []);
     const rankedTop20 = (result.ranked || []).slice(0, 20);
     const found = rankedTop20.filter((r) => known.has(normalizeDocNumber(r.docNumber)));
-    const closestRanks = [...known].map((doc) => rankOf(result.ranked || [], doc)).filter((v) => v !== null);
+    const ranks = ranksFor(result.ranked || [], known);
+    const closestRanks = ranks.filter((v) => v !== null);
+    const baseRecallAt20 = recallAt(baseResult.ranked || [], known, 20);
+    const expandedRecallAt20 = recallAt(result.ranked || [], known, 20);
     const dossier = buildSearchDossier({
       query,
       result: { ...result, ranked: rankedTop20 },
@@ -155,8 +254,16 @@ export async function scorePriorArtRecallFixture({
     const metrics = {
       known_references: known.size,
       found_known_references: found.length,
+      found_known_references_at_5: rankedTop20.slice(0, 5).filter((r) => known.has(normalizeDocNumber(r.docNumber))).length,
       recall_at_20: Number(ratio(found.length, known.size).toFixed(4)),
+      recall_at_5: Number(recallAt(result.ranked || [], known, 5).toFixed(4)),
+      base_recall_at_20: Number(baseRecallAt20.toFixed(4)),
+      citation_expansion_recall_gain: Number((expandedRecallAt20 - baseRecallAt20).toFixed(4)),
+      citation_expansion_added_count: result.citationExpansion?.added_count || 0,
       closest_known_reference_rank: closestRanks.length ? Math.min(...closestRanks) : null,
+      mean_known_reciprocal_rank: Number(meanKnownReciprocalRank(ranks, known.size).toFixed(4)),
+      top_expected_slot_precision: Number(topExpectedSlotPrecision(result.ranked || [], known).toFixed(4)),
+      candidate_type_diversity: candidateTypeDiversity(rankedTop20),
       dossier_completeness: Number(dossierCompleteness(dossier).toFixed(4)),
       quote_handoff_coverage: Number(quoteCoverage(dossier).toFixed(4)),
       rank_explanation_coverage: Number(rankExplanationCoverage(dossier).toFixed(4)),
@@ -178,6 +285,16 @@ export async function scorePriorArtRecallFixture({
   const averageRecall = results.length
     ? Number((results.reduce((sum, r) => sum + r.metrics.recall_at_20, 0) / results.length).toFixed(4))
     : 0;
+  const averageRecallAt5 = results.length
+    ? Number((results.reduce((sum, r) => sum + r.metrics.recall_at_5, 0) / results.length).toFixed(4))
+    : 0;
+  const averageMeanKnownReciprocalRank = results.length
+    ? Number((results.reduce((sum, r) => sum + r.metrics.mean_known_reciprocal_rank, 0) / results.length).toFixed(4))
+    : 0;
+  const averageTopExpectedSlotPrecision = results.length
+    ? Number((results.reduce((sum, r) => sum + r.metrics.top_expected_slot_precision, 0) / results.length).toFixed(4))
+    : 0;
+  const totalCitationExpansionAdded = results.reduce((sum, r) => sum + r.metrics.citation_expansion_added_count, 0);
   const averageDossierCompleteness = results.length
     ? Number((results.reduce((sum, r) => sum + r.metrics.dossier_completeness, 0) / results.length).toFixed(4))
     : 0;
@@ -195,6 +312,10 @@ export async function scorePriorArtRecallFixture({
     metrics: {
       scenarios: results.length,
       average_recall_at_20: averageRecall,
+      average_recall_at_5: averageRecallAt5,
+      average_mean_known_reciprocal_rank: averageMeanKnownReciprocalRank,
+      average_top_expected_slot_precision: averageTopExpectedSlotPrecision,
+      total_citation_expansion_added: totalCitationExpansionAdded,
       average_dossier_completeness: averageDossierCompleteness,
       blocking_failures: blockingFailures,
       warning_count: warningCount,
@@ -209,10 +330,10 @@ export async function scorePriorArtRecallFixtures(opts = {}) {
 
 export function formatPriorArtRecallScore(summary) {
   const lines = [
-    `prior-art-recall: ${summary.status} recall@20=${summary.metrics.average_recall_at_20.toFixed(2)} scenarios=${summary.metrics.scenarios} blocking=${summary.metrics.blocking_failures}`,
+    `prior-art-recall: ${summary.status} recall@20=${summary.metrics.average_recall_at_20.toFixed(2)} recall@5=${summary.metrics.average_recall_at_5.toFixed(2)} mrr=${summary.metrics.average_mean_known_reciprocal_rank.toFixed(2)} scenarios=${summary.metrics.scenarios} blocking=${summary.metrics.blocking_failures}`,
   ];
   for (const scenario of summary.scenarios) {
-    lines.push(`  ${scenario.status === "pass" ? "ok" : "FAIL"} - ${scenario.id} recall@20=${scenario.metrics.recall_at_20.toFixed(2)} closest_rank=${scenario.metrics.closest_known_reference_rank ?? "missing"}`);
+    lines.push(`  ${scenario.status === "pass" ? "ok" : "FAIL"} - ${scenario.id} recall@20=${scenario.metrics.recall_at_20.toFixed(2)} recall@5=${scenario.metrics.recall_at_5.toFixed(2)} mrr=${scenario.metrics.mean_known_reciprocal_rank.toFixed(2)} closest_rank=${scenario.metrics.closest_known_reference_rank ?? "missing"}`);
     for (const finding of scenario.findings) lines.push(`    ${finding.severity}: ${finding.message}`);
   }
   return lines.join("\n");

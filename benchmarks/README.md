@@ -48,8 +48,12 @@ recovery of source-backed technical mechanisms, and blocks forbidden legal-concl
 `/apa-software-patent` skill instructions, then scores those candidates with tuning floors. Use this
 for skill-tuning loops so committed advisory reports are not mistaken for fresh outputs.
 
-Use the synthetic `software-patent-skill-sim` case as the fast regression guard for common traps
-such as thin SaaS claims, AI black boxes, math-only claims, and CRM transitory risk. Use the fresh
-real-public software-patent tuning command as the fixed metric for skill tuning. Auto-tune runs
-should improve the real-patent average score or reduce warnings while keeping
-`npm run simulate:software-patent` and `npm run skills:check` passing.
+Use `npm run score:prior-art-search` as the fixed prior-art retrieval harness. It gates top-20 and
+top-5 known-reference recall, mean known reciprocal rank, top expected-slot precision against
+distractors, citation-expansion gain where expected, candidate-type diversity, dossier completeness,
+quote handoff, and rank-explanation coverage. Use the synthetic `software-patent-skill-sim` case as
+the fast regression guard for common traps such as thin SaaS claims, AI black boxes, math-only claims,
+and CRM transitory risk. Use the fresh real-public software-patent tuning command as the fixed metric
+for skill tuning. Auto-tune runs should improve the relevant fixed score or reduce warnings while
+keeping `npm run simulate:software-patent`, `npm run score:prior-art-search`, and
+`npm run skills:check` passing.
