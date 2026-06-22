@@ -39,6 +39,11 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    (`google-patents-ui`) is **ToS-restricted** - these are **human-handoff**, never auto-scraped. Run
    `--list-sources` to see each source's access mode/status and `--source-health` to see configured
    credentials, automation readiness, source notices, and rate/quota policy before a live run.
+   When a human runs PPS and saves an export/snapshot, import it locally instead of scraping the UI:
+   `node packages/apa-search/cli.mjs import-pps-export --matter <matter> --file <pps-export.csv|json|txt> --query "<exact human-entered PPS query>" --reviewer "<name>"`.
+   The import command copies and hashes the export under `evidence/prior_art/imports/`, writes a
+   search dossier with `human_imports[]`, appends a runlog entry, and leaves all references
+   unverified.
    If a specific URL must be fetched for verification, use
    `node packages/apa-safe/cli.mjs fetch <url> --matter <matter> --out <matter>/evidence/prior_art/<id>-fetched.md`;
    do not use raw `WebFetch` or ad hoc network `Bash`.
@@ -68,6 +73,8 @@ confidentiality is paramount. Quality targets live in `docs/prior-art-search-qua
    `PA##` IDs, per-source `source_health` snapshots (credential-present booleans, implementation
    status, rate/quota policy, current notices), `coverage_limits.search_complete_asserted: false`,
    known unsearched source classes,
+   `human_imports[]` entries for any PPS/export handoff files with source file SHA-256 and copied
+   artifact path,
    candidate `quote_handoff` fields, candidate `rank_explanation` fields, `citation_expansion`,
    `analysis_handoff.candidate_cells`, and
    `closest_art_selection.human_verified: false` until a human fills it. Add a

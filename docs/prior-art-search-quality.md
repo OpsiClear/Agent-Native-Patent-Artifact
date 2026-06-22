@@ -21,6 +21,7 @@ completion, patentability, validity, infringement, or freedom to operate.
 | Dossier reproducibility | query bytes hash, source params, counts, dedupe, exclusions, and runlog present | Search runs must be auditable and resumable. |
 | Source-call hardening | API calls use timeout and response-size caps | Slow or unexpectedly large source responses should fail visibly, not hang or exhaust memory. |
 | Source-health capture | every source row records implementation/config/rate-policy state without secret values | Live-source failures and registry changes should be auditable after the run. |
+| Human PPS import capture | PPS exports are copied, hashed, parsed, and logged without UI automation | Examiner-grade UI workflows need an audit path while preserving the no-scraping policy. |
 
 ## Required Dossier Statements
 
@@ -31,6 +32,8 @@ Every search dossier must record:
 - source IDs skipped or unsearched, with reasons
 - source-health snapshots for every queried/skipped source, including credential-present booleans,
   implementation status, current notices, and rate/quota policy
+- `human_imports[]` records for any UI-only/human-handoff export, including source ID, reviewer,
+  notes, copied artifact path, source-file SHA-256, byte count, parsed rows, and parsed records
 - query plan / query variants used
 - top-N before dedupe, after dedupe, and after ranking
 - dedupe clusters and excluded results

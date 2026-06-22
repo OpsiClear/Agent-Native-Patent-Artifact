@@ -47,6 +47,30 @@
     },
     "search_plan": { "type": "array", "minItems": 1 },
     "sources": { "type": "array" },
+    "human_imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "imported_at", "format", "file_name", "bytes", "sha256", "parsed_rows", "parsed_records", "automation_statement"],
+        "properties": {
+          "source_id": { "type": "string" },
+          "imported_at": { "type": "string", "minLength": 1 },
+          "reviewer": { "type": "string" },
+          "notes": { "type": "string" },
+          "format": { "type": "string" },
+          "file_name": { "type": "string" },
+          "original_path": { "type": "string" },
+          "copied_path": { "type": "string" },
+          "bytes": { "type": "number" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "parsed_rows": { "type": "number" },
+          "parsed_records": { "type": "number" },
+          "parsing_warnings": { "type": "array", "items": { "type": "string" } },
+          "automation_statement": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
     "top_n": {
       "type": "object",
       "required": ["before_dedupe", "after_dedupe_before_ranking", "after_ranking"],

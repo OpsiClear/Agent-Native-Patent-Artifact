@@ -15,9 +15,10 @@
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
 import { updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "./writers.mjs";
 import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
+import { assertPpsExportSize, buildPpsImportResult } from "./pps-import.mjs";
 import { listSources, sourceHealth } from "./sources/index.mjs";
-import { readFileSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import {
   appendRunlog,
@@ -71,6 +72,9 @@ async function main() {
   }
   if (rawArgs[0] === "verify-reference") {
     process.exit(cmdVerifyReference(rawArgs.slice(1), { startedAt, rawArgs }));
+  }
+  if (rawArgs[0] === "import-pps-export") {
+    process.exit(cmdImportPpsExport(rawArgs.slice(1), { startedAt, rawArgs }));
   }
   if (rawArgs[0] === "check-dossier") {
     process.exit(cmdCheckDossier(rawArgs.slice(1)));
@@ -283,6 +287,101 @@ function cmdVerifyReference(argv, { startedAt = new Date().toISOString(), rawArg
   }
 }
 
+function cmdImportPpsExport(argv, { startedAt = new Date().toISOString(), rawArgs = [] } = {}) {
+  const matter = value(argv, "--matter");
+  const file = value(argv, "--file") || value(argv, "--export");
+  const queryText = value(argv, "--query") || "";
+  const reviewer = value(argv, "--reviewer") || "";
+  const notes = value(argv, "--notes") || "";
+  const limit = parseInt(value(argv, "--limit") || "25", 10) || 25;
+  if (!matter || !file || !queryText.trim()) {
+    console.error("usage: import-pps-export --matter <matter> --file <pps-export.csv|json|txt> --query <exact human-entered PPS query> [--reviewer name] [--notes text] [--limit n] [--json]");
+    return 2;
+  }
+  try {
+    assertPpsExportSize(file);
+    const importText = readFileSync(file, "utf8");
+    const importedAt = new Date().toISOString();
+    const copiedPath = copyImportIntoMatter(matter, file, importedAt);
+    const { query, result, importRecord } = buildPpsImportResult({
+      exportText: importText,
+      exportPath: file,
+      copiedPath,
+      queryText,
+      reviewer,
+      notes,
+      limit,
+      importedAt,
+    });
+    const { assigned } = writeLandscape(matter, result.ranked.slice(0, limit));
+    const { path: dossierPath, dossier } = writeSearchDossier(matter, {
+      query,
+      result: { ...result, ranked: result.ranked.slice(0, limit) },
+      assigned,
+      limit,
+      generatedAt: importedAt,
+    });
+    const outputPaths = [
+      copiedPath,
+      join(matter, "logic", "prior_art.md"),
+      join(matter, "logic", "reference_matrix.md"),
+      dossierPath,
+      ...assigned.map((x) => join(matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
+    ];
+    appendRunlog(matter, buildRunlogEntry({
+      timestamp: new Date().toISOString(),
+      skill: "apa-priorart",
+      ruleVersion: ruleVersionOf(matter),
+      inputs: [
+        ...existingFileRecords(matter, [
+          join(matter, "PATENT.md"),
+          join(matter, "logic", "claims.md"),
+        ]),
+        snapshotRecord(matter, file, importText),
+      ],
+      outputs: existingFileRecords(matter, outputPaths),
+      commands: [commandRecord({
+        argv: ["node", "packages/apa-search/cli.mjs", ...(rawArgs || [])],
+        cwd: process.cwd(),
+        exitCode: 0,
+        startedAt,
+        endedAt: new Date().toISOString(),
+      })],
+      externalSinks: [externalSinkRecord({
+        kind: "human-pps-query",
+        bytes: queryText,
+        scanVerdict: result.verdict,
+        humanApproved: true,
+      })],
+      humanCheckpoints: [
+        humanCheckpoint({ id: "pps-human-export-import", required: true, satisfied: true, reviewer, timestamp: importedAt }),
+        humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false }),
+        humanCheckpoint({ id: "ids-verification", required: true, satisfied: false }),
+      ],
+      notes: [
+        "Imported a human-exported USPTO PPS file; APA did not automate or scrape the PPS UI.",
+        "Imported references remain unverified candidates and do not establish search completeness.",
+      ],
+    }));
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify({ dossier_path: dossierPath, import: importRecord, assigned, dossier }, null, 2));
+    } else {
+      console.log(`imported ${importRecord.parsed_records} PPS candidate(s) from ${file}`);
+      console.log(`copied export: ${copiedPath}`);
+      console.log(`wrote search dossier: ${dossierPath}`);
+      console.log(`assigned references: ${assigned.map((x) => x.paId).join(", ") || "(none)"}`);
+      if (importRecord.parsing_warnings.length) {
+        for (const warning of importRecord.parsing_warnings) console.log(`warning: ${warning}`);
+      }
+      console.log("NOTE: PPS import is human-handoff evidence capture only; references remain UNVERIFIED.");
+    }
+    return 0;
+  } catch (e) {
+    console.error(`error: ${e.message}`);
+    return 2;
+  }
+}
+
 function cmdCheckDossier(argv) {
   const path = value(argv, "--dossier") || argv.find((a) => !a.startsWith("--"));
   if (!path) {
@@ -308,6 +407,16 @@ function cmdCheckDossier(argv) {
     }
     return 2;
   }
+}
+
+function copyImportIntoMatter(matterDir, file, importedAt) {
+  const importDir = join(matterDir, "evidence", "prior_art", "imports");
+  mkdirSync(importDir, { recursive: true });
+  const ext = extname(file) || ".txt";
+  const stamp = importedAt.replace(/[^0-9A-Za-z]+/g, "-").replace(/^-|-$/g, "");
+  const target = join(importDir, `pps-export-${stamp}${ext.toLowerCase()}`);
+  copyFileSync(file, target);
+  return target;
 }
 
 function ruleVersionOf(matterDir) {

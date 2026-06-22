@@ -70,6 +70,9 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
       keywords: query?.keywords || [],
       cpc: query?.cpc || [],
       limit,
+      ...(query?.human_query ? { human_query: query.human_query } : {}),
+      ...(query?.source_id ? { source_id: query.source_id } : {}),
+      ...(query?.source_mode ? { source_mode: query.source_mode } : {}),
       serialized_sha256: createHash("sha256").update(queryBytes).digest("hex"),
       scan_verdict: {
         blocked: Boolean(result?.blocked),
@@ -91,6 +94,7 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
       source_health: s.source_health || s.sourceHealth || safeSourceHealth(s.id),
       notes: s.notes || [],
     })),
+    ...(result?.humanImports?.length ? { human_imports: result.humanImports } : {}),
     top_n: {
       before_dedupe: raw.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1, stage: "before-dedupe" })),
       after_dedupe_before_ranking: deduped.slice(0, limit).map((r, index) => candidateRecord(r, { rank: index + 1, stage: "after-dedupe-before-ranking" })),

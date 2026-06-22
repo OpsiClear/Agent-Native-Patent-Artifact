@@ -105,7 +105,7 @@ export const SOURCE_REGISTRY = [
     referenceUrl: "https://www.uspto.gov/patents/search/patent-public-search",
     lastVerifiedAt: "2026-06-22",
     automationPolicy: "human-handoff",
-    note: "USPTO Patent Public Search is examiner-grade but UI-only (no API) - human-driven, never auto-trusted.",
+    note: "USPTO Patent Public Search is examiner-grade but UI-only (no API) - human-driven; import human exports with node packages/apa-search/cli.mjs import-pps-export, never auto-trusted.",
   },
   {
     id: "google-patents-ui", module: null, accessMode: "ui-restricted", jurisdiction: "global",

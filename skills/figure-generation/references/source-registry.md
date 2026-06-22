@@ -15,7 +15,7 @@ Generated routing reference. The canonical registry is `docs/source-registry.md`
 | `pqai` | API | no | yes | Planned; no executable rate policy yet. | Planned follow-on source. |
 | `epo-ops` | API | no | yes | Planned OAuth/fair-use controlled source. | Planned international source; requires credentials. |
 | `google-bigquery` | dataset | no | yes | Planned; governed by Google Cloud quota/billing controls. | Sanctioned Google patents-public-data path. |
-| `uspto-pps` | UI-only | no | yes | Human handoff only. | Human handoff for USPTO Patent Public Search snapshots/exports. |
+| `uspto-pps` | UI-only | no | yes | Human handoff only. | Import human PPS exports with `node packages/apa-search/cli.mjs import-pps-export` for hashing/runlog/dossier capture; no UI automation. |
 | `google-patents-ui` | UI-restricted | no | yes | Automation disabled. | Disabled for automation; do not scrape as a substitute. |
 
 Rules:
