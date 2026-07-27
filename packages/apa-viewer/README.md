@@ -73,7 +73,7 @@ The builder reads, per [`docs/protocol.md` §3](../../docs/protocol.md):
 | Source | Node kind(s) | Edges emitted |
 |---|---|---|
 | `PATENT.md` frontmatter | `inventor`, plus `meta` | `contributed_to` (from `inventorship_matrix`) |
-| `logic/claims.md` | `claim`, `claim-limitation` | `depends_on`, `distinguished_over`, `scope_set_at`, `supported_by`, `illustrated_by`, `practiced_by`, `antecedent_of` |
+| `logic/claims.md` | `claim`, `claim-limitation` | `depends_on`, `distinguished_over`, `scope_set_at`, `supported_by`, `defined_by`, `illustrated_by`, `practiced_by`, `antecedent_of` |
 | `logic/concepts.md` | `defined-term` | — |
 | `logic/prior_art.md` | `prior-art-reference` | — |
 | `src/embodiments.md` | `spec-paragraph` | — |

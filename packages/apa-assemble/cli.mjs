@@ -78,32 +78,42 @@ async function main() {
   if (parseErr) { console.error(`NO-GO: matter failed to parse (route to counsel): ${parseErr.msg}`); process.exit(2); }
 
   const fm = fmOf(matter);
-  const legend = buildLegend(matter);
-  const asm = assembleMatter(matter, { legend });
-  const ads = assembleAds(matter);
-  const ids = assembleIds(matter);
-  const decl = makeDeclaration(fm);
-
-  let fees = null;
-  try { const m = await import("./fees.mjs"); fees = m.computeFees(matter); } catch { /* fee engine optional */ }
-
   const assembledDir = join(matter, "assembled");
-  // Write the filing documents first so preflight's filing-document gate sees them.
-  if (doWrite) {
-    mkdirSync(join(assembledDir, "upload_set"), { recursive: true });
-    writeFileSync(join(assembledDir, "specification.md"), asm.markdown);
-    writeFileSync(join(assembledDir, "specification.html"), asm.html);
-    writeFileSync(join(assembledDir, "ADS.md"), ads.markdown);
-    writeFileSync(join(assembledDir, "IDS_SB08.md"), ids.markdown);
-    writeFileSync(join(assembledDir, "declaration_UNSIGNED.md"), decl);
-    writeFileSync(join(assembledDir, "FEE_WORKSHEET.md"), feeWorksheet(fees));
+  const pf = preflight(matter, {
+    assembledDir,
+    filingDocumentWillBeWritten: doWrite,
+  });
+  let asm = null;
+  let ads = null;
+  let ids = null;
+  let fees = null;
+
+  // Preflight is authoritative: never invoke the utility-only assembler/fee path or create filing
+  // artifacts when any hard gate blocks.
+  if (!pf.blocked) {
+    const legend = buildLegend(matter);
+    asm = assembleMatter(matter, { legend });
+    ads = assembleAds(matter);
+    ids = assembleIds(matter);
+    const decl = makeDeclaration(fm);
+    try { const m = await import("./fees.mjs"); fees = m.computeFees(matter); } catch { /* fee engine optional */ }
+
+    if (doWrite) {
+      mkdirSync(join(assembledDir, "upload_set"), { recursive: true });
+      writeFileSync(join(assembledDir, "specification.md"), asm.markdown);
+      writeFileSync(join(assembledDir, "specification.html"), asm.html);
+      writeFileSync(join(assembledDir, "ADS.md"), ads.markdown);
+      writeFileSync(join(assembledDir, "IDS_SB08.md"), ids.markdown);
+      writeFileSync(join(assembledDir, "declaration_UNSIGNED.md"), decl);
+      writeFileSync(join(assembledDir, "FEE_WORKSHEET.md"), feeWorksheet(fees));
+      writeFileSync(join(assembledDir, "PREFLIGHT.md"), renderPreflightMd(pf));
+      writeFileSync(join(assembledDir, "upload_set", "MANIFEST.txt"), pf.uploadSet.join("\n") + "\n\n" + pf.submitBoundary + "\n");
+      const uploadManifest = buildUploadManifest(matter, assembledDir, pf);
+      writeFileSync(join(assembledDir, "upload_manifest.json"), JSON.stringify(uploadManifest, null, 2) + "\n");
+    }
   }
-  const pf = preflight(matter, { assembledDir });
+
   if (doWrite) {
-    writeFileSync(join(assembledDir, "PREFLIGHT.md"), renderPreflightMd(pf));
-    writeFileSync(join(assembledDir, "upload_set", "MANIFEST.txt"), pf.uploadSet.join("\n") + "\n\n" + pf.submitBoundary + "\n");
-    const uploadManifest = buildUploadManifest(matter, assembledDir, pf);
-    writeFileSync(join(assembledDir, "upload_manifest.json"), JSON.stringify(uploadManifest, null, 2) + "\n");
     appendRunlog(matter, buildRunlogEntry({
       timestamp: new Date().toISOString(),
       skill: "apa-assemble",
@@ -116,7 +126,7 @@ async function main() {
         join(matter, "evidence", "drawings", "quality-review.json"),
         join(matter, "patent_rigor_report.json"),
       ]),
-      outputs: existingFileRecords(matter, [
+      outputs: pf.blocked ? [] : existingFileRecords(matter, [
         join(assembledDir, "specification.md"),
         join(assembledDir, "specification.html"),
         join(assembledDir, "ADS.md"),
@@ -135,28 +145,30 @@ async function main() {
         endedAt: new Date().toISOString(),
       })],
       humanCheckpoints: [
-        humanCheckpoint({ id: "print-to-pdf-and-visual-qa", required: true, satisfied: false }),
+        humanCheckpoint({ id: "filing-document-export-and-visual-qa", required: true, satisfied: false }),
         humanCheckpoint({ id: "ads-human-completion", required: true, satisfied: false }),
         humanCheckpoint({ id: "ids-reference-verification", required: true, satisfied: false }),
         humanCheckpoint({ id: "inventor-declaration-signature", required: true, satisfied: false }),
         humanCheckpoint({ id: "fee-entity-status-verification", required: true, satisfied: false }),
         humanCheckpoint({ id: "patent-center-human-upload", required: true, satisfied: false }),
       ],
+      notes: pf.blocked ? ["NO-GO: no assembled filing artifacts were written."] : [],
     }));
   }
 
-  if (asJson) { console.log(JSON.stringify({ warnings: asm.warnings, adsFlags: ads.flags, ids, fees, preflight: pf }, null, 2)); }
+  if (asJson) { console.log(JSON.stringify({ warnings: asm?.warnings || [], adsFlags: ads?.flags || [], ids, fees, preflight: pf }, null, 2)); }
   else {
     console.log(`apa-assemble: ${fm.title || matter} (${fm.application_type || "?"})`);
-    asm.warnings.forEach((w) => console.log(`  draft-gap: ${w}`));
-    if (ads.flags.length) console.log(`  ADS needs: ${ads.flags.join("; ")}`);
-    console.log(`  IDS: ${ids.count} reference(s), ${ids.unverified} unverified`);
+    (asm?.warnings || []).forEach((w) => console.log(`  draft-gap: ${w}`));
+    if (ads?.flags.length) console.log(`  ADS needs: ${ads.flags.join("; ")}`);
+    if (ids) console.log(`  IDS: ${ids.count} reference(s), ${ids.unverified} unverified`);
     if (fees) console.log(`  Fee estimate: ${fees.total} ${fees.currency || "USD"} (${fees.entityStatus}; verify currency)`);
     console.log("  Pre-filing gates:");
     pf.gates.forEach((g) => console.log(gateLine(g)));
     console.log(`  => ${pf.goNoGo}`);
     console.log(`  ${pf.submitBoundary}`);
-    if (doWrite) console.log(`  wrote ${assembledDir}/ (specification.md/html, ADS, IDS, declaration_UNSIGNED, fee worksheet, preflight, upload_set/MANIFEST, upload_manifest.json)`);
+    if (doWrite && pf.blocked) console.log("  no package written; preflight blocked assembly.");
+    else if (doWrite) console.log(`  wrote ${assembledDir}/ (specification.md/html, ADS, IDS, declaration_UNSIGNED, fee worksheet, preflight, upload_set/MANIFEST, upload_manifest.json)`);
   }
   process.exit(pf.blocked ? 2 : 0);
 }

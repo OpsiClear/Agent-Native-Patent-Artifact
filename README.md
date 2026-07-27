@@ -112,6 +112,26 @@ Live USPTO prior-art search uses source id `patentsview` (PatentsView PatentSear
 `export PATENTSVIEW_API_KEY=...`; see [docs/source-registry.md](docs/source-registry.md), then run
 `node packages/apa-search/cli.mjs --matter <matter> --source patentsview --write`.
 
+## Private local regression matters
+
+Confidential, Git-ignored matters may be used as local regression evidence without copying them into
+this repository. The verifier composes the validator, viewer, rigor, IDS, drawing, fingerprint, and
+preflight APIs in read-only mode and emits counts/statuses only. It does not emit matter text, people,
+citations, or configured paths.
+
+PowerShell:
+
+```powershell
+$env:APA_EXTERNAL_MATTER = "C:\absolute\path\to\gitignored\matter"
+npm run --silent verify:external-matter -- --now 2026-07-26T12:00:00.000Z --expect no-go --json
+Remove-Item Env:APA_EXTERNAL_MATTER
+```
+
+Use `--require` when an absent local matter should fail instead of skip. Do not add a private matter
+to `benchmarks/`, test fixtures, package output, or Git. See
+[the aggregate validation report](docs/gs-encoder-patent-validation-2026-07-26.md) for the
+evidence-backed hardening example.
+
 ## Use it in your own project (zero-install drop-in)
 
 Want patent prep available inside an existing codebase or research-article repo, triggered by a

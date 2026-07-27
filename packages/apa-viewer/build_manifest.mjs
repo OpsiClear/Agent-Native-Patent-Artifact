@@ -11,7 +11,7 @@
  *
  * Node kinds: claim, claim-limitation, spec-paragraph, drawing-figure, reference-numeral,
  *             prior-art-reference, defined-term, prosecution-node, inventor.
- * Edge kinds: supported_by, illustrated_by, practiced_by, antecedent_of, depends_on,
+ * Edge kinds: supported_by, defined_by, illustrated_by, practiced_by, antecedent_of, depends_on,
  *             distinguished_over, scope_set_at, contributed_to.
  *
  * DELIBERATE DIVERGENCE FROM ARA: an edge whose target node id does not exist is NOT dropped.
@@ -32,6 +32,19 @@ import {
   iterEntitySections,
 } from "../../lib/apa-parse.mjs";
 import { rulePackSummary } from "../apa-rules/rule-packs.mjs";
+
+const EDGE_TARGET_KINDS = Object.freeze({
+  supported_by: "spec-paragraph",
+  defined_by: "defined-term",
+  illustrated_by: "reference-numeral",
+  practiced_by: "spec-paragraph",
+  antecedent_of: "claim-limitation",
+  depends_on: "claim",
+  distinguished_over: "prior-art-reference",
+  scope_set_at: "prosecution-node",
+  contributed_to: "claim",
+});
+const FIXED_PROVENANCE_VALUES = new Set(["attorney", "ai-suggested", "ai-executed", "human-revised"]);
 
 // ------------------------------------------------------------------------------------------------
 // small fs helpers
@@ -67,12 +80,37 @@ function headingTitle(heading) {
 export function build(matterRoot) {
   const nodes = [];
   const edges = [];
-  const seen = new Set();
+  const nodeIndexById = new Map();
+  const collisionsById = new Map();
 
   function addNode(node) {
-    if (seen.has(node.id)) return;
-    seen.add(node.id);
-    nodes.push(node);
+    if (!node || node.id == null) return;
+    if (!nodeIndexById.has(node.id)) {
+      nodeIndexById.set(node.id, nodes.length);
+      nodes.push(node);
+      return;
+    }
+
+    const index = nodeIndexById.get(node.id);
+    const existing = nodes[index];
+    const canonicalKind = canonicalKindForId(node.id);
+    const retainIncoming = canonicalKind === node.kind && canonicalKind !== existing.kind;
+    const retained = retainIncoming ? node : existing;
+    if (retainIncoming) nodes[index] = node;
+
+    let collision = collisionsById.get(node.id);
+    if (!collision) {
+      collision = {
+        id: node.id,
+        declarations: [{ kind: existing.kind, title: existing.title || "" }],
+      };
+      collisionsById.set(node.id, collision);
+    }
+    collision.declarations.push({ kind: node.kind, title: node.title || "" });
+    collision.kinds = [...new Set(collision.declarations.map((d) => d.kind))];
+    collision.declaration_count = collision.declarations.length;
+    collision.retained_kind = retained.kind;
+    collision.status = `duplicate node id; manifest retained '${retained.kind}', and validator review is required`;
   }
 
   // Edges are collected raw; `resolved` is computed AFTER all nodes are known, so an edge to a
@@ -157,6 +195,7 @@ export function build(matterRoot) {
       });
       // typed edges from each limitation; `from` is the qualified CLM##.LIM## for legibility.
       for (const spec of asArray(lim.supported_by)) addEdge(qualified, spec, "supported_by");
+      for (const term of asArray(lim.defined_by)) addEdge(qualified, term, "defined_by");
       for (const fig of asArray(lim.illustrated_by)) addEdge(qualified, fig, "illustrated_by");
       for (const sp of asArray(lim.practiced_by)) addEdge(qualified, sp, "practiced_by");
       // antecedent_of: LIM -> earlier LIM (bare ids, same claim)
@@ -287,17 +326,23 @@ export function build(matterRoot) {
     }
   }
 
-  // --- resolve edges (THE divergence): emit every edge, stamping resolved against node ids -------
+  // --- resolve edges (THE divergence): emit every edge, stamping typed target resolution ----------
+  const nodeKindsById = new Map(nodes.map((n) => [n.id, n.kind]));
   for (const e of rawEdges) {
+    const resolution = targetResolution(e, nodeKindsById);
     edges.push({
       from: e.from,
       to: e.to,
       kind: e.kind,
-      resolved: targetExists(e.to, seen),
+      resolved: resolution.resolved,
+      ...(resolution.issue ? { resolution_issue: resolution.issue } : {}),
+      ...(resolution.issue && resolution.targetKind ? { target_kind: resolution.targetKind } : {}),
+      ...(resolution.issue && resolution.expectedTargetKind ? { expected_target_kind: resolution.expectedTargetKind } : {}),
     });
   }
 
-  const review = buildReview(matterRoot, nodes, edges);
+  const nodeCollisions = [...collisionsById.values()];
+  const review = buildReview(matterRoot, nodes, edges, nodeCollisions);
 
   return {
     meta: {
@@ -317,7 +362,7 @@ export function build(matterRoot) {
   };
 }
 
-function buildReview(matterRoot, nodes, edges) {
+function buildReview(matterRoot, nodes, edges, nodeCollisions = []) {
   const limitations = nodes.filter((n) => n.kind === "claim-limitation");
   const unadoptedLimitations = limitations
     .filter((n) => (n.provenance || "ai-suggested") === "ai-suggested")
@@ -327,6 +372,26 @@ function buildReview(matterRoot, nodes, edges) {
       title: n.title || "",
       provenance: n.provenance || "ai-suggested",
       status: "human adoption required before assembly",
+    }));
+  const declaredInventorIds = new Set(nodes.filter((n) => n.kind === "inventor").map((n) => n.id));
+  const invalidProvenance = nodes
+    .filter((node) => {
+      const provenance = node.provenance;
+      if (!provenance) return false;
+      if (FIXED_PROVENANCE_VALUES.has(provenance)) return false;
+      return !(
+        typeof provenance === "string"
+        && provenance.startsWith("inventor:")
+        && declaredInventorIds.has(provenance.slice("inventor:".length))
+      );
+    })
+    .map((node) => ({
+      id: node.id,
+      kind: node.kind,
+      claim: node.fields?.claim || "",
+      title: node.title || "",
+      provenance: node.provenance,
+      status: "invalid or undeclared provenance; validator review required",
     }));
 
   const priorArt = nodes.filter((n) => n.kind === "prior-art-reference");
@@ -346,6 +411,9 @@ function buildReview(matterRoot, nodes, edges) {
       from: e.from,
       to: e.to,
       kind: e.kind,
+      resolution_issue: e.resolution_issue || "missing-target",
+      target_kind: e.target_kind || null,
+      expected_target_kind: e.expected_target_kind || null,
       severity: e.kind === "supported_by" ? "fix-before-filing" : "warning",
     }));
 
@@ -356,11 +424,15 @@ function buildReview(matterRoot, nodes, edges) {
     schema: "apa-viewer-review-v1",
     provenance: {
       unadopted_limitations: unadoptedLimitations,
-      blocking_count: unadoptedLimitations.length,
+      invalid_provenance: invalidProvenance,
+      invalid_count: invalidProvenance.length,
+      blocking_count: unadoptedLimitations.length + invalidProvenance.length,
     },
     ids: {
+      node_collisions: nodeCollisions,
+      collision_count: nodeCollisions.length,
       unverified_prior_art: unverifiedPriorArt,
-      warning_count: unverifiedPriorArt.length,
+      warning_count: unverifiedPriorArt.length + nodeCollisions.length,
     },
     support: {
       unresolved_edges: unresolvedEdges,
@@ -416,20 +488,48 @@ function loadDrawingReview(matterRoot, drawingFigureCount) {
   }
 }
 
+function canonicalKindForId(id) {
+  const value = String(id);
+  if (/^CLM\d+$/.test(value)) return "claim";
+  if (/^LIM\d+$/.test(value)) return "claim-limitation";
+  if (/^TERM\d+$/.test(value)) return "defined-term";
+  if (/^PA\d+$/.test(value)) return "prior-art-reference";
+  if (/^SPEC\d+$/.test(value)) return "spec-paragraph";
+  if (/^FIG\d+#.+$/.test(value)) return "reference-numeral";
+  if (/^FIG\d+$/.test(value)) return "drawing-figure";
+  if (/^PH\d+$/.test(value)) return "prosecution-node";
+  return null;
+}
+
 /**
- * Whether an edge target id resolves to a node.
- * An edge `from` is sometimes the qualified form CLM##.LIM##, but edge TARGETS are always bare
- * node ids (SPEC####, FIG##numeral, LIM##, CLM##, PA##, PH##, inventor id), so a direct membership
- * test is correct. We also accept a qualified CLM##.LIM## target by falling back to its bare LIM##.
+ * Resolve an edge target by both id and protocol node kind.
+ * Qualified CLM##.LIM## targets fall back to their bare limitation id.
  */
-function targetExists(to, seen) {
-  if (seen.has(to)) return true;
-  const dot = to.indexOf(".");
-  if (dot > 0) {
-    const bare = to.slice(dot + 1);
-    if (seen.has(bare)) return true;
+function targetResolution(edge, nodeKindsById) {
+  let targetId = edge.to;
+  let targetKind = nodeKindsById.get(targetId);
+  if (!targetKind) {
+    const value = String(edge.to);
+    const dot = value.indexOf(".");
+    if (dot > 0) {
+      const bare = value.slice(dot + 1);
+      targetKind = nodeKindsById.get(bare);
+      if (targetKind) targetId = bare;
+    }
   }
-  return false;
+  if (!targetKind) return { resolved: false, issue: "missing-target" };
+
+  const expectedTargetKind = EDGE_TARGET_KINDS[edge.kind];
+  if (expectedTargetKind && targetKind !== expectedTargetKind) {
+    return {
+      resolved: false,
+      issue: "wrong-target-kind",
+      targetId,
+      targetKind,
+      expectedTargetKind,
+    };
+  }
+  return { resolved: true, targetId, targetKind };
 }
 
 function asArray(v) {

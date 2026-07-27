@@ -30,6 +30,18 @@ import {
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
 const SUPPORTED_USER_ROLES = new Set(["registered_practitioner", "pro_se", "unknown"]);
+const FIXED_PROVENANCE_VALUES = new Set(["attorney", "ai-suggested", "ai-executed", "human-revised"]);
+const EDGE_TARGET_KINDS = Object.freeze({
+  supported_by: "spec-paragraph",
+  defined_by: "defined-term",
+  illustrated_by: "reference-numeral",
+  practiced_by: "spec-paragraph",
+  antecedent_of: "claim-limitation",
+  depends_on: "claim",
+  distinguished_over: "prior-art-reference",
+  scope_set_at: "prosecution-node",
+  contributed_to: "claim",
+});
 // Unambiguous machine-inventor markers. Acronyms are matched CASE-SENSITIVELY so legitimate human
 // names ('Ai', 'Claude Monet', 'Neural Wang') are not blocked; phrase forms are case-insensitive.
 // DABUS is the AI from Thaler v. Vidal. (Tightened to remove human-name false positives.)
@@ -114,32 +126,57 @@ function buildNodeIds(m) {
   // to the inherited Function (truthy) - making antecedentScope iterate a non-array (uncaught TypeError)
   // and silently suppressing DEP_UNRESOLVED / MATRIX_BAD_CLAIM. Object.create(null) closes both.
   const ids = new Set();
+  const declarations = [];
+  const kindsById = new Map();
   const limOrderByClaim = Object.create(null);  // claimId -> [limId,...]
   const limOwner = Object.create(null);         // limId -> claimId
   const limById = Object.create(null);          // limId -> limitation binding
   const claimById = Object.create(null);
+  const register = (id, kind) => {
+    if (id == null) return;
+    ids.add(id);
+    declarations.push({ id, kind });
+    if (!kindsById.has(id)) kindsById.set(id, new Set());
+    kindsById.get(id).add(kind);
+  };
   for (const c of m.claims) {
-    ids.add(c.id);
+    register(c.id, "claim");
     claimById[c.id] = c.binding;
     limOrderByClaim[c.id] = [];
     for (const lim of asArray(c.binding.limitations).filter(Boolean)) {
-      ids.add(lim.id);
+      register(lim.id, "claim-limitation");
       limOrderByClaim[c.id].push(lim.id);
       limOwner[lim.id] = c.id;
       limById[lim.id] = lim;
     }
   }
-  for (const t of m.terms) ids.add(t.id);
-  for (const p of m.priorArt) ids.add(p.id);
-  for (const s of m.specs) ids.add(s.id);
+  for (const t of m.terms) register(t.id, "defined-term");
+  for (const p of m.priorArt) register(p.id, "prior-art-reference");
+  for (const s of m.specs) register(s.id, "spec-paragraph");
   const figNumerals = new Set();   // "FIG01#12"
   for (const f of m.figures) {
-    ids.add(f.id);
-    for (const n of asArray(f.binding.numerals).filter(Boolean)) { ids.add(`${f.id}#${n.numeral}`); figNumerals.add(`${f.id}#${n.numeral}`); }
+    register(f.id, "drawing-figure");
+    for (const n of asArray(f.binding.numerals).filter(Boolean)) {
+      const numeralId = `${f.id}#${n.numeral}`;
+      register(numeralId, "reference-numeral");
+      figNumerals.add(numeralId);
+    }
   }
-  if (m.prosecution && Array.isArray(m.prosecution.nodes)) for (const n of m.prosecution.nodes.filter(Boolean)) if (n && n.id) ids.add(n.id);
-  for (const inv of (Array.isArray(m.frontmatter.inventors) ? m.frontmatter.inventors : [])) if (inv && inv.id) ids.add(inv.id);
-  return { ids, limOrderByClaim, limOwner, limById, claimById, figNumerals };
+  if (m.prosecution && Array.isArray(m.prosecution.nodes)) {
+    for (const n of m.prosecution.nodes.filter(Boolean)) if (n && n.id) register(n.id, "prosecution-node");
+  }
+  for (const inv of (Array.isArray(m.frontmatter.inventors) ? m.frontmatter.inventors : [])) {
+    if (inv && inv.id) register(inv.id, "inventor");
+  }
+  return { ids, declarations, kindsById, limOrderByClaim, limOwner, limById, claimById, figNumerals };
+}
+
+function hasNodeKind(reg, id, expectedKind) {
+  return Boolean(reg.kindsById.get(id)?.has(expectedKind));
+}
+
+function nodeKindsLabel(reg, id) {
+  return [...(reg.kindsById.get(id) || [])].sort().join(", ") || "missing";
 }
 
 // claim -> ordered list of limitation ids in the claim's full antecedent scope (ancestors first).
@@ -162,8 +199,6 @@ function antecedentScope(claimId, reg) {
 // Checks
 // -------------------------------------------------------------------------------------------------
 
-const UNRESOLVED_WARN_EDGES = ["supported_by", "illustrated_by", "practiced_by", "distinguished_over", "scope_set_at"];
-
 export function validateMatter(dir) {
   const errors = [];
   const warnings = [];
@@ -180,6 +215,21 @@ export function validateMatter(dir) {
   catch (e) { return { dir, errors: [{ code: "PARSE_ERROR", msg: `failed to parse matter: ${e && e.message ? e.message : e}` }], warnings, info, meta: {} }; }
   const fm = m.frontmatter;
   const reg = buildNodeIds(m);
+  const targetStatus = (from, edgeKind, target) => {
+    if (!reg.ids.has(target)) return "missing";
+    const expectedKind = EDGE_TARGET_KINDS[edgeKind];
+    if (expectedKind && !hasNodeKind(reg, target, expectedKind)) {
+      const migrationHint = edgeKind === "supported_by" && hasNodeKind(reg, target, "defined-term")
+        ? " Use defined_by for lexicographic TERM links while retaining at least one SPEC supported_by edge."
+        : "";
+      E(
+        "EDGE_TARGET_KIND",
+        `${from} ${edgeKind} -> ${target} has target kind '${nodeKindsLabel(reg, target)}'; expected '${expectedKind}'.${migrationHint}`,
+      );
+      return "wrong-kind";
+    }
+    return "ok";
+  };
   const type = fm.application_type;
   const rulePackState = evaluateMatterRulePack({
     jurisdiction: fm.jurisdiction,
@@ -188,17 +238,19 @@ export function validateMatter(dir) {
   for (const e of rulePackState.errors) E(e.code, e.msg);
   for (const w of rulePackState.warnings) W(w.code, w.msg);
 
-  // --- global ID uniqueness (protocol: CLM/LIM/TERM/PA/SPEC/FIG ids are globally unique) ---
+  // --- global ID uniqueness (all graph-node ids, including inventors/prosecution/numerals) ---
   {
-    const declared = [];
-    for (const c of m.claims) { declared.push(c.id); for (const lim of asArray(c.binding.limitations).filter(Boolean)) declared.push(lim.id); }
-    for (const t of m.terms) declared.push(t.id);
-    for (const p of m.priorArt) declared.push(p.id);
-    for (const s of m.specs) declared.push(s.id);
-    for (const f of m.figures) declared.push(f.id);
     const seenId = new Set(); const dupes = new Set();
-    for (const id of declared) { if (id == null) continue; if (seenId.has(id)) dupes.add(id); else seenId.add(id); }
-    for (const id of dupes) E("DUPLICATE_ID", `entity id '${id}' is declared more than once; ids must be globally unique.`);
+    for (const { id } of reg.declarations) {
+      if (seenId.has(id)) dupes.add(id);
+      else seenId.add(id);
+    }
+    for (const id of dupes) {
+      E(
+        "DUPLICATE_ID",
+        `entity id '${id}' is declared more than once (${nodeKindsLabel(reg, id)}); ids must be globally unique.`,
+      );
+    }
   }
 
   // --- malformed list fields (fail LOUD, never silently coerce) ---
@@ -213,9 +265,10 @@ export function validateMatter(dir) {
     for (const c of m.claims) {
       for (const f of ["limitations", "distinguished_over", "scope_set_at"]) badField(c.id, c.binding, f);
       for (const lim of asArray(c.binding.limitations).filter(Boolean)) {
-        for (const f of ["supported_by", "illustrated_by", "practiced_by", "antecedent_of", "references"]) badField(`${c.id}.${lim.id}`, lim, f);
+        for (const f of ["supported_by", "defined_by", "illustrated_by", "practiced_by", "antecedent_of", "references"]) badField(`${c.id}.${lim.id}`, lim, f);
       }
     }
+    for (const s of m.specs) badField(s.id, s.binding, "defines_numerals");
     for (const f of m.figures) badField(f.id, f.binding, "numerals");
   }
 
@@ -225,7 +278,9 @@ export function validateMatter(dir) {
   else if (!SUPPORTED_TYPES.has(type)) E("TYPE_UNKNOWN", `application_type '${type}' is unknown (supported: provisional, utility, design).`);
 
   // --- user_role (drives pro-se vs practitioner skill posture) ---
-  if (fm.user_role !== undefined && !SUPPORTED_USER_ROLES.has(fm.user_role)) {
+  if (fm.user_role === undefined) {
+    W("USER_ROLE_MISSING", "PATENT.md has no user_role; assembly will remain blocked until registered_practitioner or pro_se is explicitly confirmed.");
+  } else if (!SUPPORTED_USER_ROLES.has(fm.user_role)) {
     E("USER_ROLE_UNKNOWN", `user_role '${fm.user_role}' is unknown (supported: registered_practitioner, pro_se, unknown).`);
   }
   const workflowMode = confidentialWorkflowModeOf(fm);
@@ -262,11 +317,44 @@ export function validateMatter(dir) {
 
   // --- inventors ---
   const inventors = Array.isArray(fm.inventors) ? fm.inventors : [];
+  const inventorIds = new Set(inventors.map((i) => i && i.id).filter(Boolean));
   if (fm.inventors !== undefined && !Array.isArray(fm.inventors)) E("INVENTORS_MALFORMED", "PATENT.md `inventors` must be a YAML list of {id, name}, not a scalar.");
   if (inventors.length === 0) E("NO_INVENTOR", "PATENT.md has zero inventors; at least one natural person is required.");
   for (const inv of inventors) {
     const probe = `${inv && inv.name || ""} ${inv && inv.id || ""}`;
     if (looksAiInventor(probe)) E("AI_INVENTOR", `inventor entry looks AI-named ('${inv && inv.name}'); only natural persons may be inventors.`);
+  }
+
+  // --- provenance vocabulary + inventor-reference integrity ---
+  // Missing provenance retains the protocol default (ai-suggested). An explicit value must be one
+  // of the fixed tags or inventor:<id>, and that id must resolve to this matter's inventor list.
+  {
+    const check = (label, binding) => {
+      if (!binding || !Object.prototype.hasOwnProperty.call(binding, "provenance")) return;
+      const provenance = binding.provenance;
+      if (typeof provenance === "string" && FIXED_PROVENANCE_VALUES.has(provenance)) return;
+      if (typeof provenance === "string" && provenance.startsWith("inventor:")) {
+        const inventorId = provenance.slice("inventor:".length);
+        if (inventorId && inventorIds.has(inventorId)) return;
+        E("PROVENANCE_BAD_INVENTOR", `${label} provenance '${provenance}' references an inventor id not declared in PATENT.md.`);
+        return;
+      }
+      E(
+        "PROVENANCE_UNKNOWN",
+        `${label} has unknown provenance '${String(provenance)}' (supported: inventor:<declared-id>, ${[...FIXED_PROVENANCE_VALUES].join(", ")}).`,
+      );
+    };
+    for (const c of m.claims) {
+      check(c.id, c.binding);
+      for (const lim of asArray(c.binding.limitations).filter(Boolean)) check(`${c.id}.${lim.id}`, lim);
+    }
+    for (const t of m.terms) check(t.id, t.binding);
+    for (const p of m.priorArt) check(p.id, p.binding);
+    for (const s of m.specs) check(s.id, s.binding);
+    for (const f of m.figures) check(f.id, f.binding);
+    if (m.prosecution && Array.isArray(m.prosecution.nodes)) {
+      for (const n of m.prosecution.nodes.filter(Boolean)) check(n.id || "(prosecution-node)", n);
+    }
   }
 
   // --- design: exactly one claim ---
@@ -278,9 +366,12 @@ export function validateMatter(dir) {
   // --- claim dependency graph ---
   for (const c of m.claims) {
     const b = c.binding;
-    if (b.type === "claim-dependent") {
-      if (!b.depends_on) E("DEP_MISSING", `${c.id} is claim-dependent but has no depends_on.`);
-      else if (!reg.claimById[b.depends_on]) E("DEP_UNRESOLVED", `${c.id} depends_on '${b.depends_on}' which does not exist.`);
+    if (b.type === "claim-dependent" && !b.depends_on) {
+      E("DEP_MISSING", `${c.id} is claim-dependent but has no depends_on.`);
+    }
+    if (b.depends_on) {
+      const status = targetStatus(c.id, "depends_on", b.depends_on);
+      if (status === "missing") E("DEP_UNRESOLVED", `${c.id} depends_on '${b.depends_on}' which does not exist.`);
     }
   }
   // cycle detection
@@ -301,7 +392,9 @@ export function validateMatter(dir) {
     // claim-level edges
     for (const ek of ["distinguished_over", "scope_set_at"]) {
       for (const target of asArray(c.binding[ek])) {
-        if (!reg.ids.has(target)) W("UNRESOLVED_EDGE", `${c.id} ${ek} -> ${target} (target missing; unresolved edge).`);
+        if (targetStatus(c.id, ek, target) === "missing") {
+          W("UNRESOLVED_EDGE", `${c.id} ${ek} -> ${target} (target missing; unresolved edge).`);
+        }
       }
     }
     for (const lim of asArray(c.binding.limitations).filter(Boolean)) {
@@ -309,7 +402,9 @@ export function validateMatter(dir) {
       // antecedent_of (errors)
       const introducedByAntecedents = new Set();
       for (const tgt of asArray(lim.antecedent_of)) {
-        if (!reg.limById[tgt]) { E("ANTECEDENT_UNRESOLVED", `${c.id}.${lim.id} antecedent_of -> ${tgt} (no such limitation).`); continue; }
+        const status = targetStatus(`${c.id}.${lim.id}`, "antecedent_of", tgt);
+        if (status === "missing") { E("ANTECEDENT_UNRESOLVED", `${c.id}.${lim.id} antecedent_of -> ${tgt} (no such limitation).`); continue; }
+        if (status === "wrong-kind") continue;
         const ti = idxInScope(tgt);
         if (ti === -1) E("ANTECEDENT_OUT_OF_SCOPE", `${c.id}.${lim.id} antecedent_of -> ${tgt} which is not in this claim's antecedent scope.`);
         else if (ti >= here) E("ANTECEDENT_NOT_EARLIER", `${c.id}.${lim.id} antecedent_of -> ${tgt} which is not earlier in the claim.`);
@@ -325,9 +420,9 @@ export function validateMatter(dir) {
         }
       }
       // support / illustration edges (warn on unresolved)
-      for (const ek of ["supported_by", "illustrated_by", "practiced_by"]) {
+      for (const ek of ["supported_by", "defined_by", "illustrated_by", "practiced_by"]) {
         for (const tgt of asArray(lim[ek])) {
-          if (!reg.ids.has(tgt)) {
+          if (targetStatus(`${c.id}.${lim.id}`, ek, tgt) === "missing") {
             if (ek === "supported_by") W("UNSUPPORTED_EDGE", `${c.id}.${lim.id} supported_by -> ${tgt} MISSING (§112 support edge unresolved).`);
             else W("UNRESOLVED_EDGE", `${c.id}.${lim.id} ${ek} -> ${tgt} (target missing; unresolved edge).`);
           }
@@ -349,7 +444,6 @@ export function validateMatter(dir) {
   if (rawMatrix !== undefined && (typeof rawMatrix !== "object" || rawMatrix === null || Array.isArray(rawMatrix))) {
     E("MATRIX_MALFORMED", `inventorship_matrix must be a mapping of claimId -> [inventorId,...]; got ${Array.isArray(rawMatrix) ? "a list" : (rawMatrix === null ? "null" : typeof rawMatrix)}.`);
   }
-  const inventorIds = new Set(inventors.map((i) => i && i.id).filter(Boolean));
   for (const [clm, invs] of Object.entries(matrix)) {
     if (!reg.claimById[clm]) E("MATRIX_BAD_CLAIM", `inventorship_matrix references claim '${clm}' which does not exist.`);
     if (!Array.isArray(invs)) { E("MATRIX_MALFORMED", `inventorship_matrix['${clm}'] must be a list of inventor ids; got ${invs === null ? "null" : typeof invs}.`); continue; }
@@ -369,9 +463,45 @@ export function validateMatter(dir) {
   }
 
   // --- figure numeral consistency ---
+  // The drawing-side `defined_in` pointer and the specification-side `defines_numerals` list are a
+  // reciprocal contract. Checking only that the SPEC target exists lets both sides silently disagree.
+  const drawingDefinedIn = new Map();
   for (const f of m.figures) {
     for (const n of asArray(f.binding.numerals).filter(Boolean)) {
-      if (n.defined_in && !reg.ids.has(n.defined_in)) E("NUMERAL_NO_SPEC", `${f.id}#${n.numeral} ('${n.element}') defined_in ${n.defined_in} which does not exist.`);
+      const numeralId = `${f.id}#${n.numeral}`;
+      if (!n.defined_in) continue;
+      drawingDefinedIn.set(numeralId, String(n.defined_in));
+      const status = targetStatus(numeralId, "practiced_by", n.defined_in);
+      if (status === "missing") E("NUMERAL_NO_SPEC", `${numeralId} ('${n.element}') defined_in ${n.defined_in} which does not exist.`);
+    }
+  }
+  const specDeclarations = new Map();
+  for (const s of m.specs) {
+    for (const numeralId of asArray(s.binding.defines_numerals)) {
+      const id = String(numeralId);
+      if (!specDeclarations.has(id)) specDeclarations.set(id, []);
+      specDeclarations.get(id).push(s.id);
+    }
+  }
+  const reciprocalNumeralIds = new Set([...drawingDefinedIn.keys(), ...specDeclarations.keys()]);
+  for (const numeralId of reciprocalNumeralIds) {
+    const drawingSpec = drawingDefinedIn.get(numeralId);
+    const declaringSpecs = [...new Set(specDeclarations.get(numeralId) || [])];
+    if (!drawingSpec) {
+      E(
+        "NUMERAL_SPEC_RECIPROCAL_MISSING",
+        `${declaringSpecs.join(", ")} defines_numerals includes ${numeralId}, but that drawing numeral is missing or has no defined_in pointer.`,
+      );
+    } else if (declaringSpecs.length === 0) {
+      E(
+        "NUMERAL_SPEC_RECIPROCAL_MISSING",
+        `${numeralId} points to ${drawingSpec}, but ${drawingSpec} does not include it in defines_numerals.`,
+      );
+    } else if (!declaringSpecs.includes(drawingSpec) || declaringSpecs.length > 1) {
+      E(
+        "NUMERAL_SPEC_RECIPROCAL_MISMATCH",
+        `${numeralId} points to ${drawingSpec}, but specification defines_numerals declares it under ${declaringSpecs.join(", ")}.`,
+      );
     }
   }
   const repFigs = m.figures.filter((f) => f.binding.representative === true);

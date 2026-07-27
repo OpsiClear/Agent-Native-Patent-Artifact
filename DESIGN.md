@@ -185,6 +185,7 @@ at crystallization, and every link must resolve bidirectionally (ARA's Seal Leve
 
 ```
 CLM07.LIM03  --supported_by-->  SPEC0042        (112 written-description/enablement support)
+CLM07.LIM03  --defined_by-->    TERM08          (lexicographic definition; not a substitute for SPEC support)
 CLM07.LIM03  --illustrated_by--> FIG02#numeral-214   (drawing support; numeral defined in spec)
 CLM07.LIM03  --practiced_by-->  src/embodiments.md#emb-3   (the embodiment that implements it)
 CLM07        --distinguished_over--> PA03         (the reference it must read past; 102/103)
@@ -408,7 +409,7 @@ parse-by-ID-prefix + cross-reference extraction -> typed `{meta, nodes, edges}` 
 the dependency-light claims-first `viewer.js` (always-visible headlines, lazy field expansion, typed-
 edge chip groups that recursively expand linked nodes, search, TOC scroll-spy, `showFatal`). New node
 kinds: `claim`, `claim-limitation`, `spec-paragraph`, `drawing-figure`, `reference-numeral`,
-`prior-art-reference`, `rigor-finding`. New edge kinds: `supported_by`, `illustrated_by`,
+`prior-art-reference`, `rigor-finding`. New edge kinds: `supported_by`, `defined_by`, `illustrated_by`,
 `antecedent_of`, `distinguished_over`, `flagged_by`. **The deliberate divergence:** a dropped
 unsupported `supported_by` edge renders as a **visible §112 warning**, not a silent drop. Clicking a
 claim walks to its spec support, drawings, prior-art hits, and rigor findings inline — static, near-

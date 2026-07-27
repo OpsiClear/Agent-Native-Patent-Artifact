@@ -12,7 +12,10 @@ const verifiedPriorArt = {
 };
 
 function verdict(scores) {
-  return computeVerdict(scores, { priorArtState: verifiedPriorArt });
+  return computeVerdict(scores, {
+    priorArtState: verifiedPriorArt,
+    now: "2026-06-20T00:00:00.000Z",
+  });
 }
 
 test("all 5s -> File-Ready; all 4s -> File-With-Revisions; all 3s -> Major-Rework", () => {
@@ -59,6 +62,7 @@ test("missing or stale prior-art state caps P5 and prevents a filing-quality ver
   assert.ok(missing.scoreCaps[0].reasons.includes("no-human-verified-closest-art"));
 
   const stale = computeVerdict(all(5), {
+    now: "2026-06-20T00:00:00.000Z",
     priorArtState: {
       evaluated_at: "2026-06-20T00:00:00.000Z",
       staleness_max_days: 180,
@@ -72,10 +76,30 @@ test("missing or stale prior-art state caps P5 and prevents a filing-quality ver
 });
 
 test("evaluatePriorArtState recognizes current human-verified closest art", () => {
-  const state = evaluatePriorArtState(verifiedPriorArt);
+  const state = evaluatePriorArtState(verifiedPriorArt, { now: "2026-06-20T00:00:00.000Z" });
   assert.equal(state.cap_required, false);
   assert.equal(state.max_p5_score, 5);
   assert.equal(state.closest_art_human_verified, true);
+});
+
+test("prior-art freshness uses the injected current time, not stored evaluated_at", () => {
+  const frozen = {
+    evaluated_at: "2026-01-02T00:00:00.000Z",
+    staleness_max_days: 30,
+    dossiers_found: 1,
+    newest_dossier: { generated_at: "2026-01-01T00:00:00.000Z" },
+    closest_art: { human_verified: true },
+  };
+  const current = evaluatePriorArtState(frozen, { now: "2026-01-15T00:00:00.000Z" });
+  const stale = evaluatePriorArtState(frozen, { now: "2026-03-15T00:00:00.000Z" });
+
+  assert.equal(current.evaluated_at, "2026-01-15T00:00:00.000Z");
+  assert.equal(current.newest_dossier_age_days, 14);
+  assert.equal(current.cap_required, false);
+  assert.equal(stale.evaluated_at, "2026-03-15T00:00:00.000Z");
+  assert.equal(stale.newest_dossier_age_days, 73);
+  assert.equal(stale.stale, true);
+  assert.ok(stale.cap_reasons.includes("prior-art-search-stale:73d>30d"));
 });
 
 function report(scores, extra = {}) {
@@ -85,21 +109,44 @@ function report(scores, extra = {}) {
 }
 
 test("validateReport: well-formed report validates and computes the verdict", () => {
-  const r = validateReport(report(all(5), { verdict: "File-Ready" }));
+  const r = validateReport(report(all(5), { verdict: "File-Ready" }), {
+    now: "2026-06-20T00:00:00.000Z",
+  });
   assert.equal(r.ok, true, JSON.stringify(r.errors));
   assert.equal(r.computed.verdict, "File-Ready");
+});
+
+test("validateReport recomputes the same report as current or stale at injected times", () => {
+  const rep = report(all(5));
+  rep.prior_art_state = {
+    evaluated_at: "2026-01-02T00:00:00.000Z",
+    staleness_max_days: 30,
+    dossiers_found: 1,
+    newest_dossier: { generated_at: "2026-01-01T00:00:00.000Z" },
+    closest_art: { human_verified: true },
+  };
+
+  const current = validateReport(rep, { now: "2026-01-15T00:00:00.000Z" });
+  const stale = validateReport(rep, { now: "2026-03-15T00:00:00.000Z" });
+  assert.equal(current.ok, true, JSON.stringify(current.errors));
+  assert.equal(current.computed.verdict, "File-Ready");
+  assert.equal(stale.ok, true, JSON.stringify(stale.errors));
+  assert.equal(stale.computed.verdict, "Major-Rework");
+  assert.equal(stale.computed.effectiveScores.P5, 2);
 });
 
 test("validateReport: a finding without evidence_span/amendment is invalid", () => {
   const rep = report(all(4));
   rep.findings = [{ dimension: "P2", severity: "minor" }];
-  const r = validateReport(rep);
+  const r = validateReport(rep, { now: "2026-06-20T00:00:00.000Z" });
   assert.equal(r.ok, false);
   assert.ok(r.errors.some((e) => /evidence_span/.test(e)) && r.errors.some((e) => /amendment/.test(e)));
 });
 
 test("validateReport: a hand-set verdict that disagrees with the computed one is flagged", () => {
-  const r = validateReport(report(all(5), { verdict: "Do-Not-File" }));
+  const r = validateReport(report(all(5), { verdict: "Do-Not-File" }), {
+    now: "2026-06-20T00:00:00.000Z",
+  });
   assert.equal(r.ok, false);
   assert.ok(r.errors.some((e) => /verdict/.test(e) && /computed/.test(e)));
 });
@@ -108,7 +155,7 @@ test("validateReport: malformed findings (non-array) is ok:false, not a throw", 
   const rep = report(all(5));
   rep.findings = "oops not an array";
   let r;
-  assert.doesNotThrow(() => { r = validateReport(rep); });
+  assert.doesNotThrow(() => { r = validateReport(rep, { now: "2026-06-20T00:00:00.000Z" }); });
   assert.equal(r.ok, false);
   assert.ok(r.errors.some((e) => /findings must be an array/.test(e)));
 });
@@ -118,7 +165,7 @@ test("validateReport: a null finding element (stray bounded-YAML `-`) is ok:fals
   const rep = report(all(5));
   rep.findings = [null, { dimension: "P1", severity: "minor", evidence_span: "x", amendment: "y" }];
   let r;
-  assert.doesNotThrow(() => { r = validateReport(rep); });
+  assert.doesNotThrow(() => { r = validateReport(rep, { now: "2026-06-20T00:00:00.000Z" }); });
   assert.equal(r.ok, false);
   assert.ok(r.errors.some((e) => /finding\[0\] is not an object/.test(e)));
 });

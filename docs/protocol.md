@@ -133,6 +133,7 @@ type: claim-independent
 | Edge | From -> To | Meaning | Unresolved target |
 |---|---|---|---|
 | `supported_by` | LIM -> SPEC | §112 written-description/enablement support | **warning** ("unsupported-edge") |
+| `defined_by` | LIM -> TERM | lexicographic/claim-term definition link; never a substitute for SPEC support | warning |
 | `illustrated_by` | LIM -> FIG#numeral | drawing support | warning |
 | `practiced_by` | LIM -> SPEC (embodiment) | the embodiment implementing it | warning |
 | `antecedent_of` | LIM -> LIM (earlier, same claim) | antecedent basis (`the X` -> earlier `a X`) | **error** |
@@ -175,6 +176,7 @@ limitations:
     text: "a frame"
     introduces: "frame"      # the noun phrase this limitation introduces ('a/an ...')
     supported_by: [SPEC0002]
+    defined_by: [TERM01]     # optional lexicographic link; supported_by remains LIM -> SPEC
     illustrated_by: [FIG01#10]
     provenance: inventor:AINVENTOR
   - id: LIM02
@@ -359,7 +361,7 @@ LLM-judge **flags for the attorney**, never a clearance. Exit codes: `0` clean �
 - Unknown `source_span_policy`.
 
 **Warnings (exit 1):**
-- An unresolved `supported_by` / `illustrated_by` / `practiced_by` / `distinguished_over` /
+- An unresolved `supported_by` / `defined_by` / `illustrated_by` / `practiced_by` / `distinguished_over` /
   `scope_set_at` edge (the "unsupported-edge" / §112-support warning).
 - A claim limitation with provenance `ai-suggested` (assembly blocker — must be adopted by a human).
 - An adopted claim limitation or adopted `SPEC####` paragraph missing source-span metadata.
@@ -388,7 +390,36 @@ missing-core error) is the more dangerous failure mode and is explicitly forbidd
 
 ---
 
-## 8. Naming
+## 8. Assembly package freshness
+
+`apa-assemble --write` emits `assembled/upload_manifest.json` with schema
+`apa-upload-manifest-v2`. Its `input_fingerprint` uses
+`apa-assembly-input-fingerprint-v1` to hash canonical matter inputs by relative POSIX path, byte
+length, and SHA-256 digest. The aggregate digest is location-independent, so moving an unchanged
+matter does not make the package stale.
+
+The fingerprint covers the manifest, claims/concepts/patentability/prior-art logic, specification
+sources, prosecution trace, rigor report, drawing source/bindings/QA, and schema-validatable search
+dossiers. Generated assembly output, exported PDFs/PNGs, staging notes, runlogs, and free-form review
+memos are excluded because they are not authoritative source inputs. Symbolic links in the
+fingerprinted input set are unsafe and block freshness.
+
+Preflight recomputes the fingerprint whenever it assesses an existing package:
+
+- a matching manifest may be described only as a current assembly snapshot, still subject to every
+  live gate and human filing action;
+- a changed/added/removed canonical input makes the saved package `STALE` and prevents its old `GO`
+  from carrying forward;
+- a historical manifest without a fingerprint is stale by construction and must be regenerated
+  after the live gates pass.
+
+The manifest is an audit record, not evidence that a filing act occurred and not a legal-readiness
+conclusion. Human-produced PDFs, signatures, form completion, and Patent Center activity remain
+separate deferred actions.
+
+---
+
+## 9. Naming
 
 - Matter directory: kebab-case slug of the title.
 - Files: lowercase; entity IDs uppercase with zero-padded numbers (`CLM01`, `SPEC0002`, `FIG01`).
@@ -396,7 +427,7 @@ missing-core error) is the more dangerous failure mode and is explicitly forbidd
 
 ---
 
-## 9. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
+## 10. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
 
 The core protocol stops at filing (DESIGN §8). This **optional** extension models the post-filing
 examination round-trip. It is deeper UPL territory: everything here is a flag/question for a registered

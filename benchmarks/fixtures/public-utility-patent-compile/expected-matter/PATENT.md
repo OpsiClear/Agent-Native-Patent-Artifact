@@ -19,14 +19,14 @@ priority_date: "1903-03-23"
 filing_date: "1903-03-23"
 related_applications: []
 status: "compiled-public"
-provenance_summary: { source-extracted: 6, not-recoverable: 1, ai-suggested: 0 }
+provenance_summary: { inventor: 0, attorney: 0, ai-suggested: 0, ai-executed: 10, human-revised: 0 }
 inventorship_matrix:
   CLM01: ["INV01", "INV02"]
 claims_summary:
   - "A public-patent benchmark extraction of a flying machine having connected aeroplanes, lateral portion angle adjustment, and a coordinated rudder."
 abstract: >
   Benchmark-only compiled fixture from public U.S. Patent No. 821,393. The fixture exists to exercise
-  APA mechanical validation and source-extracted provenance for public patent imports.
+  APA mechanical validation and ai-executed provenance with source-extracted spans for public imports.
 rules_effective_date: "2026-06-15"
 confidentiality: "PUBLIC BENCHMARK FIXTURE - no confidential disclosure material."
 ---

@@ -15,6 +15,10 @@ triggers: "assemble filing, prepare filing, file-ready, /apa-assemble, ADS, IDS,
 Collates the matter's drafted artifacts into an **assembly package draft** and runs the pre-filing gate. It
 **collates**, it does not author (use the drafting skills first). Run:
 `node packages/apa-assemble/cli.mjs --matter <matter> --write`.
+The deterministic assembler currently supports **utility applications only**. It fails closed for
+provisional, design, and other matters until type-aware assembly exists. Preflight runs before any filing
+artifact is written: on **NO-GO**, `--write` appends a blocked-attempt runlog entry but creates or modifies
+no files under `<matter>/assembled/`.
 
 It produces, under `<matter>/assembled/`:
 - `specification.md` + `specification.html` - the 37 CFR 1.77 document. **PDF is the filing-faithful
@@ -29,6 +33,8 @@ It produces, under `<matter>/assembled/`:
 - `upload_manifest.json` - SHA-256 hashes for generated source files; separate human-produced upload
   PDF placeholders; ADS/IDS/declaration/fee-schedule metadata; fee schedule source hash/effective
   date; machine-readable IDS no-admission/no-search-completeness notes; PDF export verification fields;
+  a location-independent fingerprint of canonical matter inputs that makes changed or legacy packages
+  stale;
   explicit `deferred_human_actions` linked to the upload-manifest fields they complete; confidential
   workflow mode and shareable-export exclusions for sensitive critique artifacts; and
   `human_verified: false` / `completed: false` flags for ADS completion, IDS verification,
@@ -40,8 +46,13 @@ It produces, under `<matter>/assembled/`:
 - **Inventorship-integrity gate:** assembly is **NO-GO** while any claim limitation is `ai-suggested` -
   a human must adopt each (-> `inventor`/`attorney`/`human-revised`) first.
 - **>= 1 natural-person inventor**, none AI-named.
+- **User role must be confirmed:** `unknown` is **NO-GO**. Pro-se assembly is neutral collation only and
+  must not recommend whether or when to file.
 - **Mechanical validation** must pass (no errors); claim-form + numeral findings are surfaced.
-- **Rigor review** (/apa-rigor, Phase 5) must reach File-Ready / File-With-Revisions before assembly.
+- **Saved-package freshness:** an existing manifest without a matching canonical-input fingerprint is
+  historical/stale and cannot carry forward its prior `GO`.
+- **Rigor review** (/apa-rigor, Phase 5) is required; a missing report is **NO-GO**, and its computed
+  verdict must reach File-Ready / File-With-Revisions before assembly.
 
 {{REDACT_INVOCATION_BLOCK:filing}}
 

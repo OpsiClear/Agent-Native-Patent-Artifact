@@ -2,7 +2,7 @@
  * Machine-readable upload-manifest draft for the assembled package.
  *
  * This is an audit aid, not a filing act. It hashes the generated local files and records the intended
- * human-produced upload papers that still require Print-to-PDF, signatures, IDS verification, and
+ * human-produced upload papers that still require export/review, signatures, IDS verification, and
  * Patent Center submission by a human.
  */
 
@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { dirname, join, relative } from "node:path";
 import { parseFrontmatter } from "../../lib/apa-parse.mjs";
 import { loadSchedule } from "./fees.mjs";
+import { buildAssemblyInputFingerprint } from "./input-fingerprint.mjs";
 import { confidentialWorkflowModeOf, shareableExportPolicy } from "../apa-redact/confidential-workflow.mjs";
 
 const GENERATED_FILES = [
@@ -27,18 +28,18 @@ const GENERATED_FILES = [
 const UPLOAD_DOCUMENTS = [
   {
     id: "specification-pdf",
-    document: "specification.pdf  (produce by Print-to-PDF from specification.html)",
+    document: "specification.pdf or DOCX  (export/review from specification.html; DOCX preferred where applicable)",
     source: "assembled/specification.html",
     source_path: "assembled/specification.html",
-    status: "print-to-pdf required",
+    status: "filing-document export/review required unless already completed post-assembly",
     actions: ["export-specification-pdf", "pdf-render-review"],
   },
   {
     id: "drawings-pdf",
-    document: "drawings.pdf  (from evidence/drawings/*.svg)",
+    document: "drawings.pdf  (export/review from evidence/drawings/*.svg)",
     source: "evidence/drawings/*.svg",
     source_path: "evidence/drawings/*.svg",
-    status: "render/export to PDF required",
+    status: "drawings export/review required unless already completed post-assembly",
     actions: ["export-drawings-pdf", "pdf-render-review"],
   },
   {
@@ -321,10 +322,11 @@ export function buildUploadManifest(matterDir, assembledDir, preflight, { genera
   const workflowMode = confidentialWorkflowModeOf(frontmatterOf(matterDir));
   const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
   return {
-    schema: "apa-upload-manifest-v1",
+    schema: "apa-upload-manifest-v2",
     generated_at: generatedAt,
     go_no_go: preflight.goNoGo,
     submit_boundary: preflight.submitBoundary,
+    input_fingerprint: buildAssemblyInputFingerprint(matterDir),
     confidential_workflow: {
       mode: workflowMode.mode,
       explicit_in_patent_manifest: workflowMode.explicit,
@@ -337,7 +339,7 @@ export function buildUploadManifest(matterDir, assembledDir, preflight, { genera
     deferred_human_actions: deferredHumanActions(),
     patent_center_upload_checklist: patentCenterChecklist(),
     human_verification_required: [
-      "Print or export generated HTML/SVG sources to filing-faithful PDF and inspect the rendered output.",
+      "Export generated HTML/SVG sources to filing-faithful PDF/DOCX as applicable and inspect the rendered output.",
       "Complete ADS required fields and verify inventor, applicant, benefit, and priority data.",
       "Verify every IDS reference under 37 CFR 1.97/1.98; this manifest is not an admission of materiality or search completeness.",
       "Obtain inventor-executed declaration signatures; APA never signs or generates an executed oath.",

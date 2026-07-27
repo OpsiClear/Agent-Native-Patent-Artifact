@@ -450,7 +450,9 @@ Current state: `apa-assemble --write` writes `assembled/upload_manifest.json` wi
 hashes, human-produced upload-PDF placeholders, form/version metadata, fee-schedule provenance,
 PDF-export verification fields, IDS caveats, explicit `deferred_human_actions` linked to the
 manifest fields they complete, Patent Center human-upload checklist fields, and human verification /
-completion flags defaulting false.
+completion flags defaulting false. Manifest v2 also records a deterministic fingerprint of canonical
+matter inputs; preflight rejects historical manifests without that fingerprint and marks a saved
+package stale when any covered input changes.
 
 Tasks:
 - [x] Add form/version metadata for ADS, IDS, declaration template, fee schedule, and generated date.
@@ -458,6 +460,9 @@ Tasks:
 - [x] Add explicit "not an admission of materiality" IDS note in machine-readable form.
 - [x] Add PDF export verification fields: page size, page count, visual QA completed, reviewer.
 - [x] Add Patent Center upload checklist fields without implying APA files.
+- [x] Bind the manifest to canonical matter inputs with relative-path SHA-256 records and an
+  aggregate digest.
+- [x] Make old or mismatched manifests stale so a historical `GO` cannot carry forward.
 
 Suggested targets:
 - `packages/apa-assemble/upload-manifest.mjs`
@@ -467,6 +472,8 @@ Suggested targets:
 Acceptance criteria:
 - [x] Manifest distinguishes generated files from human-produced upload PDFs.
 - [x] Manifest hashes every generated local file.
+- [x] Manifest fingerprints every covered canonical source input and rejects unsafe linked inputs.
+- [x] Preflight blocks stale or legacy saved-package authority.
 - [x] Manifest never marks a human filing act complete by default.
 
 Verification:

@@ -8,5 +8,5 @@ confidential inventor disclosure.
 ```binding
 term: "compiled public patent"
 objective_bound: true
-provenance: source-extracted
+provenance: ai-executed
 ```

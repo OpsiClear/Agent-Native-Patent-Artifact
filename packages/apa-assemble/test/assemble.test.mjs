@@ -9,10 +9,15 @@ import { assembleAds } from "../ads.mjs";
 import { assembleIds } from "../ids.mjs";
 import { preflight } from "../preflight.mjs";
 import { buildUploadManifest } from "../upload-manifest.mjs";
+import { compareAssemblyInputFingerprint } from "../input-fingerprint.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
 function clone() { const d = mkdtempSync(join(tmpdir(), "apa-asm-")); cpSync(EXAMPLE, d, { recursive: true }); return d; }
+function setUserRole(dir, role) {
+  const path = join(dir, "PATENT.md");
+  writeFileSync(path, readFileSync(path, "utf8").replace('user_role: "unknown"', `user_role: "${role}"`));
+}
 
 test("assembleMatter builds a 1.77 doc with claims, numbered paragraphs, abstract, and print CSS", () => {
   const { markdown, html } = assembleMatter(EXAMPLE);
@@ -73,11 +78,11 @@ test("assembleIds seeds from prior art (PA01) with verification status", () => {
   assert.match(ids.markdown, /PA01/);
 });
 
-test("preflight: clean example is GO with a rigor-review warning", () => {
+test("preflight: missing rigor report is a hard NO-GO", () => {
   const pf = preflight(EXAMPLE, {});
-  assert.equal(pf.blocked, false);
-  assert.match(pf.goNoGo, /^GO/);
-  assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "warn"));
+  assert.equal(pf.blocked, true);
+  assert.equal(pf.goNoGo, "NO-GO");
+  assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "block"));
   assert.ok(pf.gates.some((g) => g.name === "inventorship-integrity" && g.status === "pass"));
 });
 
@@ -94,20 +99,38 @@ test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-Fil
 
   const d1 = clone();
   try {
+    setUserRole(d1, "registered_practitioner");
     writeFileSync(join(d1, "patent_rigor_report.json"), JSON.stringify(mk(okDims(5))));
-    const pf = preflight(d1, {});
+    const pf = preflight(d1, { now: "2026-06-20T00:00:00.000Z" });
     assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "pass"), JSON.stringify(pf.gates));
     assert.equal(pf.blocked, false);
   } finally { rmSync(d1, { recursive: true, force: true }); }
 
   const d2 = clone();
   try {
+    setUserRole(d2, "registered_practitioner");
     const dims = okDims(5); dims.P5.score = 1;           // a single 1 -> Do-Not-File
     writeFileSync(join(d2, "patent_rigor_report.json"), JSON.stringify(mk(dims)));
-    const pf = preflight(d2, {});
+    const pf = preflight(d2, { now: "2026-06-20T00:00:00.000Z" });
     assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "block"));
     assert.equal(pf.blocked, true);
   } finally { rmSync(d2, { recursive: true, force: true }); }
+});
+
+test("preflight: unknown user role blocks, while pro-se is neutral-only", () => {
+  const unknown = preflight(EXAMPLE, {});
+  const unknownGate = unknown.gates.find((g) => g.name === "user-role");
+  assert.equal(unknownGate.status, "block", JSON.stringify(unknown.gates));
+  assert.match(unknownGate.msg, /unknown role cannot receive a filing-package GO/);
+
+  const d = clone();
+  try {
+    setUserRole(d, "pro_se");
+    const proSe = preflight(d, {});
+    const proSeGate = proSe.gates.find((g) => g.name === "user-role");
+    assert.equal(proSeGate.status, "warn", JSON.stringify(proSe.gates));
+    assert.match(proSeGate.msg, /neutral document collation only/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
 test("preflight: unsupported multiple-dependent claim form blocks assembly", () => {
@@ -127,6 +150,42 @@ test("preflight: unsupported multiple-dependent claim form blocks assembly", () 
   }
 });
 
+test("preflight: invalid legacy inventor provenance is an explicit inventorship-integrity block", () => {
+  const d = clone();
+  try {
+    const claimsPath = join(d, "logic", "claims.md");
+    writeFileSync(
+      claimsPath,
+      readFileSync(claimsPath, "utf8").replaceAll("provenance: inventor:AINVENTOR", "provenance: inventor"),
+    );
+    const pf = preflight(d, {});
+    const gate = pf.gates.find((g) => g.name === "inventorship-integrity");
+    assert.equal(gate.status, "block", JSON.stringify(pf.gates));
+    assert.match(gate.msg, /invalid or undeclared provenance/);
+    const mechanical = pf.gates.find((g) => g.name === "mechanical-validation");
+    assert.match(mechanical.msg, /PROVENANCE_UNKNOWN x\d+/);
+    assert.doesNotMatch(mechanical.msg, /PROVENANCE_UNKNOWN, PROVENANCE_UNKNOWN/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("preflight: non-utility matters fail closed until type-aware assembly exists", () => {
+  for (const type of ["provisional", "design"]) {
+    const d = clone();
+    try {
+      const p = join(d, "PATENT.md");
+      writeFileSync(p, readFileSync(p, "utf8")
+        .replace('application_type: "utility"', `application_type: "${type}"`));
+      const pf = preflight(d, {});
+      const gate = pf.gates.find((g) => g.name === "application-type");
+      assert.equal(gate.status, "block", JSON.stringify(pf.gates));
+      assert.match(gate.msg, /type-aware assembly is not implemented/);
+      assert.equal(pf.goNoGo, "NO-GO");
+    } finally { rmSync(d, { recursive: true, force: true }); }
+  }
+});
+
 test("preflight: blocking drawing-quality findings block assembly", () => {
   const d = clone();
   try {
@@ -139,6 +198,68 @@ test("preflight: blocking drawing-quality findings block assembly", () => {
     assert.equal(pf.blocked, true);
     assert.ok(pf.gates.some((g) => g.name === "drawing-quality" && g.status === "block"), JSON.stringify(pf.gates));
   } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("preflight: fix-before-filing drawing-quality findings block assembly", () => {
+  const d = clone();
+  try {
+    writeFileSync(join(d, "evidence", "drawings", "quality-review.json"), JSON.stringify({
+      blocking_count: 0,
+      fix_before_filing_count: 1,
+      min_score: 96,
+      verdict: "polish-before-filing",
+    }));
+    const pf = preflight(d, {});
+    assert.equal(pf.blocked, true);
+    assert.ok(pf.gates.some((g) => (
+      g.name === "drawing-quality" &&
+      g.status === "block" &&
+      /fix-before-filing/.test(g.msg)
+    )), JSON.stringify(pf.gates));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("preflight: drawing sheet-review findings block assembly", () => {
+  const d = clone();
+  try {
+    writeFileSync(join(d, "evidence", "drawings", "quality-review.json"), JSON.stringify({
+      blocking_count: 0,
+      fix_before_filing_count: 0,
+      min_score: 100,
+      verdict: "candidate-ready-for-human-review",
+    }));
+    writeFileSync(join(d, "evidence", "drawings", "sheet-review.json"), JSON.stringify({
+      sheet_count: 2,
+      verdict: "polish-before-filing",
+      findings: [
+        { severity: "fix-before-filing", code: "COMPACT_TEXT_SIZE_MISMATCH" },
+      ],
+    }));
+    const pf = preflight(d, {});
+    assert.equal(pf.blocked, true);
+    assert.ok(pf.gates.some((g) => (
+      g.name === "drawing-sheet-composition" &&
+      g.status === "block" &&
+      /sheet-composition/.test(g.msg)
+    )), JSON.stringify(pf.gates));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("preflight: reciprocal drawing/SPEC numeral mismatches are an explicit drawing block", () => {
+  const d = clone();
+  try {
+    const figurePath = join(d, "evidence", "drawings", "fig01.md");
+    writeFileSync(
+      figurePath,
+      readFileSync(figurePath, "utf8").replace("defined_in: SPEC0004", "defined_in: SPEC0003"),
+    );
+    const pf = preflight(d, {});
+    const gate = pf.gates.find((g) => g.name === "drawings");
+    assert.equal(gate.status, "block", JSON.stringify(pf.gates));
+    assert.match(gate.msg, /NUMERAL_SPEC_RECIPROCAL_MISMATCH x1/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });
 
 test("preflight: shareable_redacted mode warns and excludes sensitive critique reports", () => {
@@ -198,7 +319,6 @@ test("preflight: 'Claude Monet' is NOT AI-named but 'DABUS' IS blocked", () => {
     const pf = preflight(human, {});
     const g = pf.gates.find((x) => x.name === "inventorship");
     assert.equal(g.status, "pass", JSON.stringify(g));
-    assert.match(pf.goNoGo, /^GO/);
   } finally { rmSync(human, { recursive: true, force: true }); }
 
   const ai = clone();
@@ -227,7 +347,10 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     writeFileSync(join(assembled, "upload_set", "MANIFEST.txt"), "specification.pdf\n");
     const pf = preflight(d, { assembledDir: assembled });
     const manifest = buildUploadManifest(d, assembled, pf, { generatedAt: "2026-06-20T00:00:00.000Z" });
-    assert.equal(manifest.schema, "apa-upload-manifest-v1");
+    assert.equal(manifest.schema, "apa-upload-manifest-v2");
+    assert.equal(manifest.input_fingerprint.schema, "apa-assembly-input-fingerprint-v1");
+    assert.match(manifest.input_fingerprint.sha256, /^[0-9a-f]{64}$/);
+    assert.ok(manifest.input_fingerprint.files.every((file) => !file.path.includes("\\")));
     assert.equal(manifest.confidential_workflow.mode, "ordinary_local");
     assert.equal(manifest.confidential_workflow.shareable_export_policy.include_sensitive_critique_artifacts_by_default, false);
     assert.ok(manifest.generated_files.some((f) => (
@@ -279,7 +402,35 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     assert.ok(manifest.patent_center_upload_checklist.items.every((x) => x.human_verified === false));
     assert.ok(manifest.deferred_human_actions.every((x) => x.required === true && x.completed === false));
     assert.match(manifest.human_verification_required.join("\n"), /IDS reference/);
+
+    let freshness = compareAssemblyInputFingerprint(manifest.input_fingerprint, d);
+    assert.equal(freshness.ok, true, JSON.stringify(freshness));
+    const claimsPath = join(d, "logic", "claims.md");
+    writeFileSync(claimsPath, `${readFileSync(claimsPath, "utf8")}\n<!-- changed after assembly -->\n`);
+    freshness = compareAssemblyInputFingerprint(manifest.input_fingerprint, d);
+    assert.equal(freshness.ok, false);
+    assert.deepEqual(freshness.changed, ["logic/claims.md"]);
   } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("preflight treats a historical upload manifest without input hashes as stale", () => {
+  const d = clone();
+  try {
+    const assembled = join(d, "assembled");
+    mkdirSync(assembled, { recursive: true });
+    writeFileSync(join(assembled, "specification.html"), "<html>historical</html>");
+    writeFileSync(join(assembled, "upload_manifest.json"), JSON.stringify({
+      schema: "apa-upload-manifest-v1",
+      go_no_go: "GO (historical)",
+    }));
+    const pf = preflight(d, { assembledDir: assembled });
+    const gate = pf.gates.find((g) => g.name === "assembled-package-freshness");
+    assert.equal(gate.status, "block", JSON.stringify(pf.gates));
+    assert.match(gate.msg, /STALE/);
+    assert.match(gate.msg, /no input fingerprint/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });
 
 test("buildUploadManifest records shareable export exclusions for critique artifacts", () => {

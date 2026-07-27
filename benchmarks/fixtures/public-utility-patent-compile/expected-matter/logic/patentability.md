@@ -6,5 +6,5 @@ private conception facts.
 
 ```binding
 analysis_status: not-performed
-provenance: not-recoverable
+provenance: ai-executed
 ```

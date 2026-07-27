@@ -98,6 +98,37 @@ test("figure numeral pointing at a missing SPEC -> NUMERAL_NO_SPEC error", () =>
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 
+test("drawing defined_in and SPEC defines_numerals must agree reciprocally", () => {
+  const mismatch = clone();
+  try {
+    edit(mismatch, "evidence/drawings/fig01.md", (t) => t.replace(
+      "defined_in: SPEC0004",
+      "defined_in: SPEC0003",
+    ));
+    const r = validateMatter(mismatch);
+    const finding = r.errors.find((e) => e.code === "NUMERAL_SPEC_RECIPROCAL_MISMATCH");
+    assert.ok(finding, JSON.stringify(r.errors));
+    assert.match(finding.msg, /FIG01#14 points to SPEC0003/);
+    assert.match(finding.msg, /SPEC0004/);
+  } finally {
+    rmSync(mismatch, { recursive: true, force: true });
+  }
+
+  const missing = clone();
+  try {
+    edit(missing, "src/embodiments.md", (t) => t.replace(
+      'defines_numerals: ["FIG01#16"]',
+      "defines_numerals: []",
+    ));
+    const r = validateMatter(missing);
+    const finding = r.errors.find((e) => e.code === "NUMERAL_SPEC_RECIPROCAL_MISSING");
+    assert.ok(finding, JSON.stringify(r.errors));
+    assert.match(finding.msg, /FIG01#16/);
+  } finally {
+    rmSync(missing, { recursive: true, force: true });
+  }
+});
+
 test("unsupported application_type fails loud", () => {
   const d = clone();
   try {
@@ -114,6 +145,19 @@ test("unknown user_role fails loud", () => {
     const r = validateMatter(d);
     assert.ok(codes(r.errors).includes("USER_ROLE_UNKNOWN"), JSON.stringify(r.errors));
   } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("missing user_role warns that assembly remains blocked", () => {
+  const d = clone();
+  try {
+    edit(d, "PATENT.md", (t) => t.replace('user_role: "unknown"\n', ""));
+    const r = validateMatter(d);
+    const finding = r.warnings.find((warning) => warning.code === "USER_ROLE_MISSING");
+    assert.ok(finding, JSON.stringify(r.warnings));
+    assert.match(finding.msg, /assembly will remain blocked/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });
 
 test("confidential_workflow_mode is explicit, validated, and defaults with a warning when missing", () => {

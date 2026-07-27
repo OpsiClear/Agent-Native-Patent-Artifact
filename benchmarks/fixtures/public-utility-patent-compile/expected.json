@@ -12,7 +12,7 @@
   },
   "semantic_snapshot": {
     "source_class": "public_patent",
-    "compiled_provenance": "source-extracted",
+    "compiled_provenance": "ai-executed",
     "must_not_reconstruct_conception": true,
     "expected_title": "Compiled Public Patent Fixture - Flying-machine"
   }

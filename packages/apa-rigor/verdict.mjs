@@ -31,7 +31,7 @@ function capForScore(n) {
  * @returns {{ verdict, mean, meanBand, cap, capped, missing, scoreCaps, effectiveScores, display }}
  */
 export function computeVerdict(scores, opts = {}) {
-  const priorArt = evaluatePriorArtState(opts.priorArtState);
+  const priorArt = evaluatePriorArtState(opts.priorArtState, { now: opts.now });
   const effectiveScores = { ...(scores || {}) };
   const scoreCaps = [];
   if (priorArt.cap_required && typeof effectiveScores.P5 === "number" && effectiveScores.P5 > priorArt.max_p5_score) {
@@ -83,10 +83,10 @@ export function computeVerdict(scores, opts = {}) {
   };
 }
 
-export function evaluatePriorArtState(state = {}) {
+export function evaluatePriorArtState(state = {}, { now = new Date() } = {}) {
   const missingState = !state || typeof state !== "object" || Array.isArray(state);
   const s = missingState ? {} : state;
-  const evaluatedAt = parseDate(s.evaluated_at) || new Date();
+  const evaluatedAt = parseDate(now) || new Date();
   const maxDays = positiveNumber(s.staleness_max_days, 180);
   const newest = s.newest_dossier && typeof s.newest_dossier === "object" ? s.newest_dossier : {};
   const generatedAtRaw = newest.generated_at || s.generated_at || "";
@@ -137,7 +137,7 @@ export function isFileable(verdict) {
  * Structurally validate a patent_rigor_report.json and recompute the authoritative verdict.
  * @returns {{ ok:boolean, errors:string[], computed }}
  */
-export function validateReport(report) {
+export function validateReport(report, opts = {}) {
   const errors = [];
   if (!report || typeof report !== "object") return { ok: false, errors: ["report is not an object"], computed: null };
   const dims = report.dimensions || {};
@@ -167,7 +167,7 @@ export function validateReport(report) {
   if ("prior_art_state" in report && (!report.prior_art_state || typeof report.prior_art_state !== "object" || Array.isArray(report.prior_art_state))) {
     errors.push("prior_art_state must be an object when present");
   }
-  const computed = computeVerdict(scores, { priorArtState: report.prior_art_state });
+  const computed = computeVerdict(scores, { priorArtState: report.prior_art_state, now: opts.now });
   if (report.verdict && report.verdict !== computed.verdict) {
     errors.push(`report.verdict '${report.verdict}' != computed '${computed.verdict}' (verdict is computed, not chosen)`);
   }

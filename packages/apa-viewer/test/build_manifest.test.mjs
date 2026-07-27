@@ -17,6 +17,11 @@ import { build } from "../build_manifest.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(__dirname, "..", "..", "..", "examples", "minimal-patent-artifact");
 
+function edit(dir, rel, transform) {
+  const path = join(dir, rel);
+  writeFileSync(path, transform(readFileSync(path, "utf8")));
+}
+
 // ------------------------------------------------------------------------------------------------
 // the real example matter
 // ------------------------------------------------------------------------------------------------
@@ -106,6 +111,27 @@ test("review summary surfaces unadopted limitations and unverified prior-art ref
   }
 });
 
+test("review summary treats unknown and undeclared provenance as blocking", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-view-provenance-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    edit(dir, "logic/claims.md", (text) => text
+      .replace("provenance: inventor:AINVENTOR", "provenance: inventor")
+      .replace("provenance: inventor:AINVENTOR", "provenance: inventor:NOT_DECLARED"));
+
+    const manifest = build(dir);
+    const review = manifest.review.provenance;
+    assert.equal(review.invalid_count, 2);
+    assert.equal(review.blocking_count, 2);
+    assert.deepEqual(
+      review.invalid_provenance.map((entry) => entry.provenance),
+      ["inventor", "inventor:NOT_DECLARED"],
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ------------------------------------------------------------------------------------------------
 // the divergence: a dangling supported_by must be EMITTED, not dropped
 // ------------------------------------------------------------------------------------------------
@@ -185,6 +211,113 @@ test("a dangling supported_by [SPEC9999] is emitted with resolved:false (not dro
 
     // And no SPEC9999 node was invented.
     assert.ok(!m.nodes.some((n) => n.id === "SPEC9999"), "no phantom SPEC9999 node");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("present targets of the wrong node kind remain visible but unresolved", () => {
+  const cases = [
+    {
+      edgeKind: "supported_by",
+      target: "CLM01",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace("supported_by: [SPEC0002]", "supported_by: [CLM01]"),
+    },
+    {
+      edgeKind: "defined_by",
+      target: "SPEC0002",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace(
+        "    supported_by: [SPEC0002]",
+        "    supported_by: [SPEC0002]\n    defined_by: [SPEC0002]",
+      ),
+    },
+    {
+      edgeKind: "illustrated_by",
+      target: "FIG01",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace("illustrated_by: [FIG01#10]", "illustrated_by: [FIG01]"),
+    },
+    {
+      edgeKind: "practiced_by",
+      target: "PA01",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace(
+        "    supported_by: [SPEC0002]",
+        "    supported_by: [SPEC0002]\n    practiced_by: [PA01]",
+      ),
+    },
+    {
+      edgeKind: "distinguished_over",
+      target: "SPEC0001",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace("distinguished_over: [PA01]", "distinguished_over: [SPEC0001]"),
+    },
+    {
+      edgeKind: "depends_on",
+      target: "SPEC0001",
+      rel: "logic/claims.md",
+      mutate: (text) => text.replace("depends_on: CLM01", "depends_on: SPEC0001"),
+    },
+  ];
+
+  for (const fixture of cases) {
+    const dir = mkdtempSync(join(tmpdir(), "apa-viewer-typed-edge-"));
+    try {
+      cpSync(EXAMPLE, dir, { recursive: true });
+      edit(dir, fixture.rel, fixture.mutate);
+      const manifest = build(dir);
+      const edge = manifest.edges.find(
+        (candidate) => candidate.kind === fixture.edgeKind && candidate.to === fixture.target,
+      );
+      assert.ok(edge, `${fixture.edgeKind} edge is still emitted`);
+      assert.equal(edge.resolved, false, `${fixture.edgeKind} wrong-kind target must not resolve`);
+      assert.equal(edge.resolution_issue, "wrong-target-kind");
+      assert.ok(edge.target_kind);
+      assert.ok(edge.expected_target_kind);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("viewer emits a resolved defined_by edge to a TERM node", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-viewer-defined-by-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    edit(dir, "logic/claims.md", (text) => text.replace(
+      "    supported_by: [SPEC0002]",
+      "    supported_by: [SPEC0002]\n    defined_by: [TERM01]",
+    ));
+    const manifest = build(dir);
+    const edge = manifest.edges.find((candidate) => (
+      candidate.kind === "defined_by" && bare(candidate.from) === "LIM01" && candidate.to === "TERM01"
+    ));
+    assert.ok(edge);
+    assert.equal(edge.resolved, true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an inventor/claim id collision preserves the claim and surfaces a review finding", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-viewer-node-collision-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    edit(dir, "PATENT.md", (text) => text.replaceAll("AINVENTOR", "CLM01"));
+    edit(dir, "logic/claims.md", (text) => text.replaceAll("AINVENTOR", "CLM01"));
+    edit(dir, "src/embodiments.md", (text) => text.replaceAll("AINVENTOR", "CLM01"));
+
+    const manifest = build(dir);
+    const clm01Nodes = manifest.nodes.filter((node) => node.id === "CLM01");
+    assert.equal(clm01Nodes.length, 1, "manifest retains one canonical node per id");
+    assert.equal(clm01Nodes[0].kind, "claim", "the protocol claim node is not dropped");
+    assert.equal(manifest.review.ids.collision_count, 1);
+    assert.equal(manifest.review.ids.node_collisions[0].id, "CLM01");
+    assert.deepEqual(manifest.review.ids.node_collisions[0].kinds, ["inventor", "claim"]);
+    assert.equal(manifest.review.ids.node_collisions[0].retained_kind, "claim");
+    assert.equal(manifest.review.ids.warning_count, 1);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

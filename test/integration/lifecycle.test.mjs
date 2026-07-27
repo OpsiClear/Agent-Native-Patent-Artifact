@@ -62,6 +62,9 @@ test("the patent lifecycle composes end-to-end across every package", async () =
   const dir = mkdtempSync(join(tmpdir(), "apa-lifecycle-"));
   try {
     cpSync(EXAMPLE, dir, { recursive: true });
+    const patentPath = join(dir, "PATENT.md");
+    writeFileSync(patentPath, readFileSync(patentPath, "utf8")
+      .replace('user_role: "unknown"', 'user_role: "registered_practitioner"'));
 
     // ---------------------------------------------------------------------------------------------
     // 1. validate: the freshly-cloned matter is mechanically valid (0 errors) to start from.

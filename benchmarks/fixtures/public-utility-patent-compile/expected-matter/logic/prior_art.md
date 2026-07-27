@@ -14,5 +14,5 @@ discloses:
   - "vertical rudder coordination"
 lacks: []
 verification: { verified: true, confidence: high }
-provenance: source-extracted
+provenance: ai-executed
 ```

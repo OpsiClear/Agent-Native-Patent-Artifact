@@ -7,6 +7,7 @@
 
 import { validateMatter } from "../apa-validate/validate.mjs";
 import { lintClaims } from "../apa-draft/claim-lint.mjs";
+import { validateSearchDossier } from "../apa-search/dossier-schema.mjs";
 import { DIMENSIONS } from "./dimensions.mjs";
 import { evaluatePriorArtState } from "./verdict.mjs";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -17,21 +18,43 @@ export function scaffoldReport(matterDir, opts = {}) {
   const lint = lintClaims(matterDir);
   const errCodes = new Set(v.errors.map((e) => e.code));
   const warnCodes = v.warnings.map((w) => w.code);
+  const errorCounts = {};
+  for (const error of v.errors) errorCounts[error.code] = (errorCounts[error.code] || 0) + 1;
 
-  const antecedentBroken = [...errCodes].some((c) => /^ANTECEDENT_(BROKEN|UNRESOLVED|OUT_OF_SCOPE|NOT_EARLIER)$/.test(c));
+  const antecedentBroken = [...errCodes].some((c) => /^ANTECEDENT_(BROKEN|UNRESOLVED|OUT_OF_SCOPE|NOT_EARLIER)$/.test(c))
+    || v.errors.some((e) => e.code === "EDGE_TARGET_KIND" && /\bantecedent_of\b/.test(e.msg));
   const antecedentUndeclared = warnCodes.includes("ANTECEDENT_UNDECLARED");
-  const numeralBroken = errCodes.has("NUMERAL_NO_SPEC");
+  const numeralTargetMissing = errCodes.has("NUMERAL_NO_SPEC");
+  const reciprocalNumeralBroken = [
+    "NUMERAL_SPEC_RECIPROCAL_MISSING",
+    "NUMERAL_SPEC_RECIPROCAL_MISMATCH",
+  ].some((code) => errCodes.has(code));
+  const numeralBroken = numeralTargetMissing || reciprocalNumeralBroken;
+  const supportKindBroken = v.errors.some(
+    (e) => e.code === "EDGE_TARGET_KIND" && /\b(?:supported_by|illustrated_by|practiced_by)\b/.test(e.msg),
+  );
   const unsupportedEdge = warnCodes.includes("UNSUPPORTED_EDGE");
   const undefinedTermish = warnCodes.includes("UNRESOLVED_EDGE") || warnCodes.includes("TERM_NO_BOUND");
 
   const p3 = antecedentBroken ? 1 : antecedentUndeclared ? 4 : 5;
-  const p4 = numeralBroken ? 1 : (unsupportedEdge || undefinedTermish) ? 3 : 5;
+  const p4 = (numeralBroken || supportKindBroken) ? 1 : (unsupportedEdge || undefinedTermish) ? 3 : 5;
 
   const dimensions = {};
   for (const d of DIMENSIONS) {
     const entry = { name: d.name, ara_from: d.araFrom, mechanical: d.mechanical, anchors: d.anchors, strengths: [], weaknesses: [] };
     if (d.id === "P3") { entry.score = p3; entry.mechanical_signal = antecedentBroken ? "validator: broken antecedent basis" : antecedentUndeclared ? "validator: undeclared references" : "validator: clean antecedent basis"; }
-    else if (d.id === "P4") { entry.score = p4; entry.mechanical_signal = numeralBroken ? "validator: numeral with no SPEC" : unsupportedEdge ? "validator: dangling §112 support edge" : "validator: links resolve"; }
+    else if (d.id === "P4") {
+      entry.score = p4;
+      entry.mechanical_signal = numeralTargetMissing
+        ? "validator: numeral with no SPEC"
+        : reciprocalNumeralBroken
+          ? "validator: reciprocal drawing/SPEC numeral mismatch"
+        : supportKindBroken
+          ? "validator: wrong-kind claim-support or drawing edge"
+          : unsupportedEdge
+            ? "validator: dangling §112 support edge"
+            : "validator: links resolve";
+    }
     else { entry.score = null; entry.mechanical_signal = "judgment - score semantically against the anchors"; }
     dimensions[d.id] = entry;
   }
@@ -40,7 +63,14 @@ export function scaffoldReport(matterDir, opts = {}) {
     apa_rigor_version: "0.1",
     note: "ARA Seal Level 2 (semantic). Assumes Level 1 (mechanical) passed. READ-ONLY. Every finding is a flag/question for a registered practitioner - NEVER a patentability conclusion or §112 clearance. The verdict is computed deterministically from the scores (apa-rigor check), not chosen.",
     rule_pack: v.meta.rule_pack,
-    level1: { passed: v.errors.length === 0, errorCodes: [...errCodes], warningCount: v.warnings.length, claimFormFindings: lint.findings.map((f) => f.code) },
+    level1: {
+      passed: v.errors.length === 0,
+      errorCodes: [...errCodes],
+      errorCount: v.errors.length,
+      errorCounts,
+      warningCount: v.warnings.length,
+      claimFormFindings: lint.findings.map((f) => f.code),
+    },
     prior_art_state: buildPriorArtState(matterDir, opts),
     dimensions,
     findings: [],                 // [{ dimension, severity: critical|major|minor|suggestion, evidence_span, weakness, amendment }]
@@ -63,6 +93,7 @@ export function buildPriorArtState(matterDir, {
       const path = join(priorDir, name);
       try {
         const json = JSON.parse(readFileSync(path, "utf8"));
+        if (!validateSearchDossier(json).ok) continue;
         dossiers.push({
           path,
           relPath: relative(matterDir, path).replace(/\\/g, "/"),
@@ -97,7 +128,7 @@ export function buildPriorArtState(matterDir, {
       ids_ready: false,
     },
   };
-  const evaluated = evaluatePriorArtState(base);
+  const evaluated = evaluatePriorArtState(base, { now: evaluatedAt });
   const summary = priorArtFreshnessSummary(base, evaluated);
   return {
     ...base,

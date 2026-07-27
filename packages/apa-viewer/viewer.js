@@ -55,6 +55,7 @@ const KIND_BADGE = {
 // Edge kind -> { out: label when this node is the `from`, in: label when this node is the `to` }.
 const EDGE_GROUP = {
   supported_by: { out: "supported by (§112)", in: "supports limitations" },
+  defined_by: { out: "defined by", in: "defines limitations" },
   illustrated_by: { out: "illustrated by", in: "illustrates" },
   practiced_by: { out: "practiced by", in: "practices / described by" },
   antecedent_of: { out: "antecedent basis", in: "antecedent for" },
@@ -208,27 +209,42 @@ function renderReviewPanels() {
     <div class="review-grid"></div>
   `;
   const grid = wrap.querySelector(".review-grid");
+  const idReviewItems = [
+    ...(review.ids?.node_collisions || []).map((x) => ({
+      id: x.id,
+      text: `duplicate node id (${(x.kinds || []).join(", ")})`,
+      detail: x.status || "validator review required",
+    })),
+    ...(review.ids?.unverified_prior_art || []).map((x) => ({
+      id: x.id,
+      text: x.title || x.citation || x.id,
+      detail: x.status || "",
+    })),
+  ];
   grid.appendChild(reviewPanel({
     title: "Provenance adoption",
     issueCount: review.provenance?.blocking_count || 0,
     okText: "all limitations adopted",
     issueText: "human adoption required",
-    items: (review.provenance?.unadopted_limitations || []).map((x) => ({
-      id: x.id,
-      text: `${x.claim || ""} ${x.title || ""}`.trim(),
-      detail: x.status || "",
-    })),
+    items: [
+      ...(review.provenance?.unadopted_limitations || []).map((x) => ({
+        id: x.id,
+        text: `${x.claim || ""} ${x.title || ""}`.trim(),
+        detail: x.status || "",
+      })),
+      ...(review.provenance?.invalid_provenance || []).map((x) => ({
+        id: x.id,
+        text: `${x.kind || ""} provenance '${x.provenance || ""}'`.trim(),
+        detail: x.status || "",
+      })),
+    ],
   }));
   grid.appendChild(reviewPanel({
-    title: "IDS verification",
+    title: "IDs & references",
     issueCount: review.ids?.warning_count || 0,
-    okText: "prior-art references verified",
-    issueText: "reference verification required",
-    items: (review.ids?.unverified_prior_art || []).map((x) => ({
-      id: x.id,
-      text: x.title || x.citation || x.id,
-      detail: x.status || "",
-    })),
+    okText: "node IDs unique; prior-art references verified",
+    issueText: "ID or reference review required",
+    items: idReviewItems,
   }));
   grid.appendChild(reviewPanel({
     title: "Support edges",
@@ -238,7 +254,9 @@ function renderReviewPanels() {
     items: (review.support?.unresolved_edges || []).map((x) => ({
       id: bareId(x.from),
       text: `${x.from} ${x.kind} -> ${x.to}`,
-      detail: x.severity || "",
+      detail: x.resolution_issue === "wrong-target-kind"
+        ? `expected ${x.expected_target_kind}; found ${x.target_kind}`
+        : (x.severity || ""),
     })),
   }));
   const drawing = review.drawings || {};
@@ -468,6 +486,7 @@ function buildLinkGroups(node) {
   // Preferred display order: support/illustration first, then structure, then prosecution.
   const order = [
     "supported_by|out",
+    "defined_by|out",
     "illustrated_by|out",
     "practiced_by|out",
     "antecedent_of|out",
@@ -481,6 +500,7 @@ function buildLinkGroups(node) {
     "contributed_to|out",
     "contributed_to|in",
     "supported_by|in",
+    "defined_by|in",
     "illustrated_by|in",
     "practiced_by|in",
   ];

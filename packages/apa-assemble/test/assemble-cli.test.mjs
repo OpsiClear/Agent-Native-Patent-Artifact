@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,30 @@ import { validateRunlog } from "../../apa-trace/runlog.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "cli.mjs");
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
+
+function writeFileReadyRigor(matterDir) {
+  const patentPath = join(matterDir, "PATENT.md");
+  writeFileSync(patentPath, readFileSync(patentPath, "utf8")
+    .replace('user_role: "unknown"', 'user_role: "registered_practitioner"'));
+  const dimensions = {};
+  for (const id of ["P1", "P2", "P3", "P4", "P5", "P6"]) dimensions[id] = { score: 5, weaknesses: [] };
+  const generatedAt = new Date().toISOString();
+  writeFileSync(join(matterDir, "patent_rigor_report.json"), JSON.stringify({
+    dimensions,
+    prior_art_state: {
+      evaluated_at: generatedAt,
+      staleness_max_days: 180,
+      dossiers_found: 1,
+      newest_dossier: { path: "evidence/prior_art/search-dossier-current.json", generated_at: generatedAt },
+      closest_art: { human_verified: true, selected_pa_ids: ["PA01"], verified_at: generatedAt },
+    },
+    findings: [],
+    questions_for_attorney: [],
+    questions_for_inventor: [],
+    read_order: ["logic/claims.md"],
+    verdict: "File-Ready",
+  }));
+}
 
 // R5: the assemble CLI runs assembleMatter/assembleAds/assembleIds (which parse directly) BEFORE preflight,
 // so it must run the GUARDED validator first and short-circuit to the documented exit-2 NO-GO on a malformed
@@ -32,6 +56,7 @@ test("apa-assemble --write appends a runlog entry with generated outputs and fil
   const d = mkdtempSync(join(tmpdir(), "asmcli-runlog-"));
   try {
     cpSync(EXAMPLE, d, { recursive: true });
+    writeFileReadyRigor(d);
     execFileSync(process.execPath, [CLI, "--matter", d, "--write"], { stdio: "pipe" });
     const parsed = validateRunlog(d);
     assert.equal(parsed.ok, true, JSON.stringify(parsed.errors));
@@ -45,5 +70,30 @@ test("apa-assemble --write appends a runlog entry with generated outputs and fil
 
     execFileSync(process.execPath, [CLI, "--matter", d, "--write"], { stdio: "pipe" });
     assert.equal(validateRunlog(d).entries.length, 2, "second write appends a second entry");
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("apa-assemble --write records NO-GO but creates no assembled filing artifacts", () => {
+  const d = mkdtempSync(join(tmpdir(), "asmcli-blocked-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    let status = 0;
+    let stdout = "";
+    try {
+      execFileSync(process.execPath, [CLI, "--matter", d, "--write"], { stdio: "pipe" });
+    } catch (e) {
+      status = e.status;
+      stdout = String(e.stdout || "");
+    }
+    assert.equal(status, 2);
+    assert.match(stdout, /no package written; preflight blocked assembly/);
+    assert.equal(existsSync(join(d, "assembled")), false, "NO-GO must not create assembled/");
+
+    const parsed = validateRunlog(d);
+    assert.equal(parsed.ok, true, JSON.stringify(parsed.errors));
+    assert.equal(parsed.entries.length, 1);
+    assert.deepEqual(parsed.entries[0].outputs, []);
+    assert.equal(parsed.entries[0].commands[0].exit_code, 2);
+    assert.ok(parsed.entries[0].notes.some((note) => /no assembled filing artifacts were written/.test(note)));
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

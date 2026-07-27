@@ -6,7 +6,7 @@
 
 ```binding
 grounding: transcribed
-provenance: source-extracted
+provenance: ai-executed
 source: source-extracted
 source_span: "source.md:overview"
 source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -19,7 +19,7 @@ source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 ```binding
 grounding: transcribed
 defines_numerals: ["FIG01#10"]
-provenance: source-extracted
+provenance: ai-executed
 source: source-extracted
 source_span: "source.md:excerpt:aeroplanes"
 source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -33,7 +33,7 @@ different angles.
 ```binding
 grounding: transcribed
 defines_numerals: ["FIG01#12"]
-provenance: source-extracted
+provenance: ai-executed
 source: source-extracted
 source_span: "source.md:excerpt:lateral-portions"
 source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -47,7 +47,7 @@ smaller angle of incidence.
 ```binding
 grounding: transcribed
 defines_numerals: ["FIG01#14"]
-provenance: source-extracted
+provenance: ai-executed
 source: source-extracted
 source_span: "source.md:excerpt:vertical-rudder"
 source_sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
