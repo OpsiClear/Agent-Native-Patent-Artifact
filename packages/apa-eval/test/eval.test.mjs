@@ -325,6 +325,17 @@ test("recordRun/latestRun round-trips a timestamped record (timestamp passed in)
   assert.throws(() => recordRun(dir, runWith(4, 100)), /timestamp is required/);
 });
 
+test("latestRun selects the newest baseline for the same matter", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-eval-matter-store-"));
+  recordRun(dir, { ...runWith(3, 100), matter: "matter-a" }, "2026-06-15T10:00:00.000Z");
+  recordRun(dir, { ...runWith(5, 100), matter: "matter-b" }, "2026-06-15T11:00:00.000Z");
+  recordRun(dir, { ...runWith(4, 100), matter: "matter-a" }, "2026-06-15T12:00:00.000Z");
+
+  assert.equal(latestRun(dir, { matter: "matter-a" }).dimensions.claim.score, 4);
+  assert.equal(latestRun(dir, { matter: "matter-b" }).dimensions.claim.score, 5);
+  assert.equal(latestRun(dir, { matter: "missing" }), null);
+});
+
 test("appendEvalRunlog records cloud LLM sink hashes for live eval runs", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-eval-runlog-"));
   cpSync(EXAMPLE, d, { recursive: true });

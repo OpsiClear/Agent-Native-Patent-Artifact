@@ -86,13 +86,22 @@ phase skills and halts on every gate and human checkpoint.
   "Not specified in disclosure." Re-validation must stay error-free.
 
 ### 6. Figures
-- **Skill:** `/apa-figures` (author + render numbered B&W line-art, reconcile numerals).
-- **CLI (gate):** `node packages/apa-figure/cli.mjs render <figdef.json> --out f.svg` to render;
-  `node packages/apa-figure/cli.mjs legend --matter <matter>` to reconcile numerals (exit 1 = undefined
-  or inconsistent numerals).
-- **Produces:** `FIG##` SVGs under `evidence/drawings/` + a consolidated numeral legend.
-- **Gate:** legend must be flag-free; the authoritative numeral check remains `apa-validate`. (SVG is a
-  review format; formal 37 CFR 1.84 raster/PDF conversion is a later phase.)
+- **Skill:** `/apa-figures` (author + render numbered B&W line-art, reconcile numerals). For rough,
+  imported, or manually sketched views, enable the support skills with
+  `node packages/apa-run/cli.mjs plan --matter <matter> --support apa-tldraw-drawings --support apa-svg-upgrader`.
+- **CLI (gates):**
+  `node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`;
+  `node packages/apa-figure/cli.mjs render-dir <matter>/src/drawing_src --out-dir <matter>/evidence/drawings`;
+  `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`;
+  `node packages/apa-figure/cli.mjs sheet-html <matter>/evidence/drawings --out <matter>/evidence/drawings/drawing-sheets.html --compact`;
+  `node packages/apa-figure/cli.mjs sheet-review <matter>/evidence/drawings --compact --out <matter>/evidence/drawings/sheet-review.json`;
+  and `node packages/apa-figure/cli.mjs legend --matter <matter>` to reconcile numerals (exit 1 =
+  undefined or inconsistent numerals).
+- **Produces:** `FIG##` SVGs under `evidence/drawings/`, drawing-sheet HTML for print/PDF review,
+  quality and sheet-composition reports, and a consolidated numeral legend.
+- **Gate:** generation, quality, sheet-review, and legend findings must be resolved or deliberately
+  carried for human review; the authoritative numeral check remains `apa-validate`. SVG/HTML are review
+  formats; formal 37 CFR 1.84 raster/PDF conversion is a later phase.
 
 ### 7. Rigor review + examiner adversary
 - **Skill:** `/apa-rigor` (read-only six-dimension audit), then `/apa-examiner` (role-play examiner;
@@ -128,5 +137,5 @@ phase skills and halts on every gate and human checkpoint.
 
 ---
 
-*Rules and fee amounts are dated (e.g. `docs/fee-schedule.2026-06-15.json`) — verify currency. See
+*Rules and fee amounts are dated (e.g. `docs/fee-schedule.2026-07-26.json`) — verify currency. See
 `docs/legal-guardrails.md` and `DESIGN.md`.*

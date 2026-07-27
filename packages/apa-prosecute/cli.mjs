@@ -260,8 +260,9 @@ function cmdRespond(argv) {
 
   if (!matter) return usage("respond requires --matter <dir>");
   if (!oaFile) return usage("respond requires --oa <file>");
-  if (matterUserRole(matter) === "pro_se") {
-    return usage("respond scaffolds proposed amendments/arguments and is practitioner-mode only; pro-se matters should use parse/deadlines plus a neutral summary/checklist");
+  const userRole = matterUserRole(matter);
+  if (userRole !== "registered_practitioner") {
+    return usage(`respond scaffolds proposed amendments/arguments and is registered-practitioner-mode only; matter user_role is '${userRole}', so use parse/deadlines plus a neutral summary/checklist`);
   }
 
   let parsed;

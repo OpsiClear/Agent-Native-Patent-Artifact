@@ -154,6 +154,12 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
+function codeFor(entityStatus, [large, small, micro]) {
+  if (entityStatus === "small") return small;
+  if (entityStatus === "micro") return micro;
+  return large;
+}
+
 /**
  * Compute an itemized, entity-adjusted USPTO fee worksheet for a utility matter.
  *
@@ -203,32 +209,76 @@ export function computeFees(matterDir, opts = {}) {
       amount: round2(e * qty * multiplier),
     });
   };
+  const addDirect = (code, label, each, qty, largeEach = each) => {
+    const e = typeof each === "number" ? each : 0;
+    const le = typeof largeEach === "number" ? largeEach : e;
+    items.push({
+      code,
+      label,
+      each: e,
+      qty,
+      largeEach: le,
+      amount: round2(e * qty),
+    });
+  };
 
   // Base utility trio - always present for a utility filing.
-  add("1011", "Basic filing fee - Utility", u.basicFiling, 1);
-  add("1111", "Utility search fee", u.search, 1);
-  add("1311", "Utility examination fee", u.examination, 1);
+  // Fee 4011 is route-specific. Absence of an explicit filing-route choice must not be treated as
+  // affirmative evidence that the application will be filed electronically through Patent Center.
+  const electronicFiling = opts.electronicFiling === true;
+  const useElectronicSmallFilingFee =
+    entityStatus === "small" &&
+    electronicFiling &&
+    typeof u.basicFilingElectronicSmall === "number";
+  if (useElectronicSmallFilingFee) {
+    addDirect(
+      "4011",
+      "Basic filing fee - Utility (electronic filing for small entities)",
+      u.basicFilingElectronicSmall,
+      1,
+      u.basicFiling,
+    );
+  } else {
+    add(codeFor(entityStatus, ["1011", "2011", "3011"]), "Basic filing fee - Utility", u.basicFiling, 1);
+  }
+  add(codeFor(entityStatus, ["1111", "2111", "3111"]), "Utility search fee", u.search, 1);
+  add(codeFor(entityStatus, ["1311", "2311", "3311"]), "Utility examination fee", u.examination, 1);
 
   // Excess claims.
   const excessIndep = Math.max(0, independent - 3);
   if (excessIndep > 0) {
-    add("1201", "Each independent claim in excess of 3", u.excessIndependentOver3, excessIndep);
+    add(
+      codeFor(entityStatus, ["1201", "2201", "3201"]),
+      "Each independent claim in excess of 3",
+      u.excessIndependentOver3,
+      excessIndep,
+    );
   }
   const excessTotal = Math.max(0, total - 20);
   if (excessTotal > 0) {
-    add("1202", "Each claim in excess of 20", u.excessClaimsOver20, excessTotal);
+    add(
+      codeFor(entityStatus, ["1202", "2202", "3202"]),
+      "Each claim in excess of 20",
+      u.excessClaimsOver20,
+      excessTotal,
+    );
   }
   // 37 CFR 1.16(j): the multiple-dependent-claim fee is owed ONCE PER APPLICATION containing any
   // multiple dependent claim - never per multiple-dependent claim. Charge a single unit.
   if (multipleDependent > 0) {
-    add("1203", "Multiple dependent claim present (per application)", u.multipleDependentClaim, 1);
+    add(
+      codeFor(entityStatus, ["1203", "2203", "3203"]),
+      "Multiple dependent claim present (per application)",
+      u.multipleDependentClaim,
+      1,
+    );
   }
 
   // Optional: application-size fee (per additional 50 sheets, or fraction, over 100).
   if (typeof opts.sheets === "number" && opts.sheets > 100) {
     const blocks = Math.ceil((opts.sheets - 100) / 50);
     add(
-      "1081",
+      codeFor(entityStatus, ["1081", "2081", "3081"]),
       "Application size fee (per 50 sheets, or fraction, over 100)",
       u.applicationSizePer50SheetsOver100,
       blocks,
@@ -237,11 +287,11 @@ export function computeFees(matterDir, opts = {}) {
 
   // Optional: non-DOCX filing surcharge.
   if (opts.nonDocx) {
-    add("1054", "Non-DOCX filing surcharge", u.nonDocxSurcharge, 1);
+    add(codeFor(entityStatus, ["1054", "2054", "3054"]), "Non-DOCX filing surcharge", u.nonDocxSurcharge, 1);
   }
 
   const subtotalLarge = round2(
-    items.reduce((s, it) => s + it.each * it.qty, 0),
+    items.reduce((s, it) => s + (typeof it.largeEach === "number" ? it.largeEach : it.each) * it.qty, 0),
   );
   const total_ = round2(items.reduce((s, it) => s + it.amount, 0));
 
@@ -260,6 +310,12 @@ export function computeFees(matterDir, opts = {}) {
     notes.push(
       "Entity status was 'unknown' (or unset); LARGE-entity (no discount) was assumed. " +
         "Set entity_status in PATENT.md or pass entityOverride to apply a small-entity discount.",
+    );
+  }
+  if (useElectronicSmallFilingFee) {
+    notes.push(
+      "Small-entity electronic utility filing assumed; fee code 4011 was used for the basic filing fee. " +
+        "Verify the Patent Center filing route and entity status before relying on this worksheet.",
     );
   }
   notes.push(

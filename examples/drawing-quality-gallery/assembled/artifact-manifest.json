@@ -1,0 +1,26 @@
+{
+  "schema": "apa-drawing-gallery-artifacts-v1",
+  "verifiedDate": "2026-07-26",
+  "htmlCommand": "node packages/apa-figure/cli.mjs sheet-html examples/drawing-quality-gallery/evidence/drawings --out examples/drawing-quality-gallery/assembled/drawings.html --title \"Drawing Quality Gallery\"",
+  "screenshot": {
+    "method": "Playwright full-page screenshot at CSS pixel scale",
+    "browserFamily": "Chromium",
+    "browserVersion": "not retained by the original capture",
+    "viewportWidthCssPx": 1280,
+    "outputPixels": "1280x7296",
+    "note": "The screenshot hash binds the reviewed pixels; recapture must record the exact browser version."
+  },
+  "files": {
+    "drawings.html": "7083c22a9ab8f856e0b33b9a74a795d95fe6b8055b0d80fa45b3c626f534f1c5",
+    "drawings-review.png": "02f710126951b852dd8a908a86a1134e9a38178413b716ad7fa38b0ed92731db",
+    "../evidence/drawings/fig01.svg": "05625e248c969b443720f77f5aa5b204b3209a393c4834e66568f17326c0a420",
+    "../evidence/drawings/fig02.svg": "41be9d7df2e2523b05c30dab2cb5743c45d86f5c4e81c8a8efa0a900f6e0253d",
+    "../evidence/drawings/fig03.svg": "e3a65733605324dadc4c44a1df1702bf58e9fb961a154c87bd05d213df163d66",
+    "../evidence/drawings/fig04.svg": "ad08222c295c3dc785e6a331101eb43313fb6abb5c41f50159356d5ad780b1f9",
+    "../evidence/drawings/fig05.svg": "703c6b6769c51e9e76dfe6717b182711231ffe5fe971950bf4d085de9ad9745c",
+    "../evidence/drawings/fig06.svg": "07041ab02c7e9965e170cfcc7f8295514274004fbb54315f3a21782db4c9581f",
+    "../evidence/drawings/fig07.svg": "c51c8e7aa11e1d19bfa72e6451f5e31e8845d8a1cad51d59b1d0033cdbd21ee7",
+    "../evidence/drawings/fig08.svg": "0272ee1158127a838fbc71c876a150ffe97bb00eda45c517bcb9d297df140a8a",
+    "../reviews/round-08.json": "d2268c965d4160dbe5c94c3df4b14c311a058375ee6fa763052e35b124158d95"
+  }
+}

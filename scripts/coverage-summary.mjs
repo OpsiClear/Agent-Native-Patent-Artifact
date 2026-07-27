@@ -17,13 +17,17 @@ const TEST_ARGS = [
   "lib/**/*.test.mjs",
   "scripts/**/*.test.mjs",
   "hosts/**/*.test.mjs",
+  "skills/**/*.test.mjs",
   "test/**/*.test.mjs",
 ];
 const SKIP_PREFIXES = [
+  "benchmarks/fixtures/",
   "third_party/Agent-Native-Research-Artifact/",
   "third_party/gstack/",
   "node_modules/",
+  "packages/apa-skills/skills/",
   "dist/",
+  ".git/",
   ".autotune/",
 ];
 
@@ -48,6 +52,22 @@ function listCoverageFiles(dir) {
     else if (ent.isFile() && ent.name.endsWith(".json")) out.push(path);
   }
   return out;
+}
+
+function listFirstPartyFiles(dir = ROOT) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, entry.name);
+    const rel = fwd(relative(ROOT, file));
+    if (entry.isDirectory()) {
+      if (!SKIP_PREFIXES.some((prefix) => `${rel}/`.startsWith(prefix))) {
+        out.push(...listFirstPartyFiles(file));
+      }
+    } else if (entry.isFile() && isFirstPartyFile(file)) {
+      out.push(rel);
+    }
+  }
+  return out.sort();
 }
 
 function isTopLevelFunction(fn, sourceLength) {
@@ -80,7 +100,7 @@ function mergeCoverage(coverageDir) {
       byFile.set(rel, entry);
     }
   }
-  return [...byFile.values()]
+  const entries = [...byFile.values()]
     .map((e) => {
       const functions = [...e.functions.values()];
       const uncovered = functions.filter((fn) => !fn.covered).slice(0, 5).map((fn) => fn.name);
@@ -93,15 +113,19 @@ function mergeCoverage(coverageDir) {
     })
     .filter((e) => e.total > 0)
     .sort((a, b) => a.rel.localeCompare(b.rel));
+  return { entries, loadedFiles: [...byFile.keys()].sort() };
 }
 
 function percent(covered, total) {
   return total ? Math.round((covered / total) * 1000) / 10 : 100;
 }
 
-function render(entries) {
+function render({ entries, loadedFiles }, firstPartyFiles) {
   const total = entries.reduce((n, e) => n + e.total, 0);
   const covered = entries.reduce((n, e) => n + e.covered, 0);
+  const loaded = new Set(loadedFiles);
+  const loadedFirstParty = firstPartyFiles.filter((file) => loaded.has(file));
+  const unloaded = firstPartyFiles.filter((file) => !loaded.has(file));
   const weakest = entries
     .slice()
     .sort((a, b) => percent(a.covered, a.total) - percent(b.covered, b.total) || b.total - a.total)
@@ -109,7 +133,12 @@ function render(entries) {
   const lines = [];
   lines.push(`# APA Coverage Summary`);
   lines.push("");
-  lines.push(`Function coverage: ${covered}/${total} (${percent(covered, total)}%) across ${entries.length} first-party file(s).`);
+  lines.push(`First-party files loaded by tests: ${loadedFirstParty.length}/${firstPartyFiles.length} (${percent(loadedFirstParty.length, firstPartyFiles.length)}%).`);
+  lines.push(`Function coverage among loaded files with functions: ${covered}/${total} (${percent(covered, total)}%) across ${entries.length} file(s).`);
+  if (unloaded.length) {
+    const shown = unloaded.slice(0, 12).map((file) => `\`${file}\``).join(", ");
+    lines.push(`Unloaded production files (${unloaded.length}): ${shown}${unloaded.length > 12 ? ", ..." : ""}.`);
+  }
   lines.push("");
   lines.push(`| File | Functions | Covered |`);
   lines.push(`|---|---:|---:|`);
@@ -128,7 +157,7 @@ try {
     env: { ...process.env, NODE_V8_COVERAGE: coverageDir },
   });
   if (res.status !== 0) process.exit(res.status || 1);
-  const summary = render(mergeCoverage(coverageDir));
+  const summary = render(mergeCoverage(coverageDir), listFirstPartyFiles());
   console.log(`\n${summary}`);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
 } finally {

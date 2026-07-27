@@ -1,6 +1,6 @@
 # External Patent Matter Validation — 2026-07-26
 
-This report records a three-agent, evidence-backed hardening pass against a local, confidential,
+This generically named report records a three-agent, evidence-backed hardening pass against a local, confidential,
 Git-ignored patent matter. It contains aggregate mechanics only. The external matter was read but
 not copied, edited, committed, packaged, or added as a benchmark fixture. No title, person, citation,
 excerpt, absolute path, or source-content hash is recorded here.
@@ -23,7 +23,12 @@ The final local check used a pinned evaluation time and the opt-in aggregate ver
 
 ```powershell
 $env:APA_EXTERNAL_MATTER = "<local-gitignored-matter>"
-npm run --silent verify:external-matter -- --now 2026-07-26T12:00:00.000Z --expect no-go --json --require
+npm run --silent verify:external-matter -- --now 2026-07-26T12:00:00.000Z --expect no-go `
+  --domain software `
+  --support apa-review-form `
+  --support apa-tldraw-drawings `
+  --support apa-svg-upgrader `
+  --json --require
 Remove-Item Env:APA_EXTERNAL_MATTER
 ```
 
@@ -48,10 +53,13 @@ Remove-Item Env:APA_EXTERNAL_MATTER
 | Viewer parity | Invalid/undeclared provenance and wrong-kind targets remain visible as blockers/unresolved edges instead of silently resolving. | `packages/apa-viewer/test/build_manifest.test.mjs` |
 | Stale-package prevention | `apa-upload-manifest-v2` embeds an `apa-assembly-input-fingerprint-v1`; preflight recomputes it and blocks missing or mismatched historical manifests. | `packages/apa-assemble/test/assemble.test.mjs` |
 | Local private-corpus verifier | `scripts/verify-external-matter.mjs` composes read-only APIs and emits aggregate counts/status only; absence skips unless `--require` is set. | `scripts/verify-external-matter.test.mjs` |
+| Evidence-based orchestration status | `apa-run-status-v2` checks the latest command result, current recorded input/output hashes, declared output evidence, safe matter-local paths, and required human checkpoints before setting `completed: true`. | `packages/apa-run/test/runner.test.mjs` |
 
-## Post-fix aggregate result
+## Historical post-fix aggregate result
 
-The pinned verifier returned exit 0 because the observed state matched the expected `NO-GO`.
+The following snapshot is the evidence that originally exposed the migration gaps. It is retained as
+historical audit evidence and is not the matter's current mechanical state. The pinned verifier
+returned exit 0 because the observed state matched the expected `NO-GO`.
 
 | Surface | Aggregate result |
 |---|---|
@@ -71,45 +79,71 @@ The 98 errors are not 98 independent substantive defects. They comprise one repe
 provenance migration (70 records), one repeated legacy edge-typing migration (21 links), and seven
 newly exposed reciprocal drawing/SPEC inconsistencies.
 
+## Current aggregate revalidation
+
+After the external matter evolved, the same pinned, read-only verifier was rerun. The migration
+findings from the historical snapshot are now mechanically clear, but unresolved human and
+freshness evidence correctly keep the matter at `NO-GO`.
+
+| Surface | Current aggregate result |
+|---|---|
+| Mechanical validation | 0 errors; 0 warnings |
+| Parsed scope | 20 claims; 2 inventors; 6 figures; 18 active prior-art references |
+| Viewer graph | 223 nodes; 306 edges; 0 unresolved/wrong-kind edges; 0 provenance blockers |
+| Rigor | Level 1 passed; P3 = 5; P4 = 5; one valid dossier; prior-art cap still required because closest art is not human-verified; saved verdict `Major-Rework`, mean 3.67 |
+| IDS | 18 references; 18 unverified; one valid dossier |
+| Drawings | 6 figures; 52 numerals; no legend flags |
+| Filing gate | `NO-GO`; blocked on rigor review and stale assembled-package authority; user-role warning remains |
+| Input/privacy check | 100 canonical input files; zero unsafe linked paths; aggregate-only output |
+| Orchestration status v2 | 19 total steps; 14 pending; 5 stale; 0 falsely completed; 33 pending required checkpoints |
+
+Before status v2, the same ledger named prior-art search, rigor, and assembly as completed. After the
+fix, prior-art search reports input/output hash drift plus a pending checkpoint; rigor reports output
+hash drift plus pending checkpoints; and assembly reports input drift plus pending checkpoints.
+No private content is needed to explain any of those state transitions.
+
 ## Three-agent post-fix scores
 
-| Review lane | Dimension scores | Overall |
+| Review lane | Post-fix evidence | Overall |
 |---|---|---:|
-| Benchmark harness | Reproducibility 3; regression coverage 4; signal quality 5; operational/privacy safety 4 | 4.0/5 |
-| Corpus integrity | Ingest compatibility 5; structural integrity 4; traceability 4; fail-closed behavior 5 | 4.5/5 |
-| Patent fidelity | Content coverage 4.5; claim-support traceability 4; drawing-reference consistency 4.5; filing-state evidence 4.5 | 4.4/5 |
-| **Combined control score** | Mean of the twelve dimension scores | **4.3/5** |
+| Benchmark harness | Clean fingerprint is frozen once; failed or missing-key runs cannot become baselines; evidence remains available for failed runs. | 9.0/10 PASS |
+| Corpus integrity | Aggregate verifier exposes no private paths; review/date boundaries fail closed; bundle replacement is transactional and confined to `packageRoot/skills`. | 9.2/10 PASS |
+| Patent fidelity | Multi-root SVG payload is rejected; 11 gallery artifacts are hash-bound; tldraw safe/unsafe fixtures exercise the export boundary. | 9.2/10 PASS |
+| **Combined control score** | Mean of the three independent lane scores | **9.1/10 PASS** |
 
-Reproducibility remains below 5 because the confidential corpus is intentionally untracked and the
-current `--expect no-go` assertion detects status drift but not exact aggregate drift. Traceability
-remains below 5 because source-span hashes are shape-checked rather than dereferenced and joint
-inventor contribution is not yet representable at limitation granularity.
+The corpus lane initially blocked release packaging because the newly reviewed skill, fixtures,
+tests, and reports were untracked. This release change includes those files, satisfying that
+condition. The remaining deductions reflect the documented `apa-run run` handoff debt, the
+intentionally untracked confidential corpus, source-span hashes that are shape-checked rather than
+dereferenced, and the lack of limitation-granular joint-inventor contribution modeling.
 
 ## Verification performed
 
 - External-verifier privacy/read-only tests: 2/2 passed.
-- Combined rigor, assembly, validator, viewer, verifier, and lifecycle regressions: 132/132 passed.
+- Runner/ledger focused regressions: 18/18 passed.
 - Two pinned external-verifier runs produced byte-identical JSON.
 - Aggregate output contained no absolute/home path, email address, URL, or matter text.
 - External matter changes after review: zero.
-- `npm test`: 425/425 passed.
+- `npm test`: 494/494 passed.
 - `npm run build`: generation/freshness, skill graph, syntax, skill/source checks, tests, and smoke
   passed.
 - `npm run benchmark`: 8/8 offline cases passed.
 - `npm run score:prior-art-search`: recall@20 1.00, recall@5 1.00, MRR 0.75, zero blocking failures.
-- `npm run coverage`: 1399/1504 functions covered (93%) across 91 first-party files.
+- `npm run score:real-software-patents`: 3/3 cases, score 1.00, zero blocking failures.
+- `npm run coverage`: 101/110 first-party worktree files loaded; 1712/1876 functions covered among
+  loaded files (91.3%).
 - `git diff --check`: passed.
 
 ## Prioritized remaining improvement plan
 
 | Priority | Work | Acceptance evidence |
 |---|---|---|
-| P0 — human-controlled matter migration | Resolve 70 legacy provenance records with explicit declared contributors; move 21 TERM links to `defined_by`; repair seven reciprocal numeral relationships; confirm `user_role`; then rerun rigor/IDS and regenerate assembly only after all gates pass. Never infer one inventor where multiple people are declared. | Exact aggregate counts fall for the intended codes; all migrated IDs resolve; no filing output is generated while any gate remains blocked. |
+| P0 — complete human review before regeneration | The structural migration is mechanically clear, but 18 IDS references remain unverified, closest art is not human-verified, the saved rigor verdict remains `Major-Rework`, user role is not affirmative, and the assembled package is stale. | Authorized humans complete the required factual/review checkpoints; rigor is rerun against current inputs; assembly is regenerated only after every filing gate passes. |
 | P1 — strict source-span verification | Replace hash-shape checks with an allowed-root, per-artifact `{path, locator, sha256}` contract; block missing, escaped, or mismatched sources under strict mode. | Regressions for changed, missing, outside-root, multi-source, and `not-recoverable` inputs. |
 | P1 — joint-inventor/version contract | Add an explicit list-valued contributor/adoption relation and validate `apa_version` so breaking provenance and edge semantics are migration-aware. | Two declared contributors pass; empty/unknown contributors and unknown future versions fail loud. |
 | P1 — bind rigor to evaluated inputs | Record canonical claims/specification/drawing/dossier hashes inside the rigor report and recompute them during preflight. | Any covered source change makes rigor stale independently of upload-manifest freshness. |
 | P1 — exact private regression contract | Add an optional local aggregate oracle for the verifier: exact code histogram, valid-dossier count, required blocked-gate set, and non-emitted canonical digest. Do not commit a confidential matter digest. | Fixed-time identity, `--require`, invalid-path, unsafe-link, and contract-drift tests using public/synthetic fixtures. |
-| P2 — semantic runlog audit | Verify record hashes and state transitions, flag nonzero commands claiming successful outputs, and detect latest-output drift. | A current-state audit reports stale rigor/output records and impossible success transitions. |
+| P2 — runlog state-chain hardening | Status v2 now verifies hashes, command exits, output evidence, safe paths, and checkpoints, but the append-only ledger is not cryptographically chained and `apa-run run` remains a handoff. | Chain records to their predecessor, test truncation/reordering, execute only declared runners, and append failed attempts without claiming outputs. |
 | P2 — graph completeness and drift | Inventory inactive prior-art evidence; add warning-level claim-prose/binding parity hashes; define minimum `illustrated_by`/`distinguished_over` evidence expectations. | Prose-only/binding-only mutations and orphan evidence produce stable machine findings without pretending to decide legal sufficiency. |
 | P2 — freshness-bind human review | Bind review cards, questionnaires, and human-produced PDF checks to target hashes/counts. | A review state for a different IDS count or changed PDF becomes stale; unanswered factual questions block a readiness label without drawing legal conclusions. |
 

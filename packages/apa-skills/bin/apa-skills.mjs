@@ -31,7 +31,7 @@ Usage:
 Commands:
   install     Copy APA skills into each detected host's skill directory.
               Defaults to ALL detected hosts; narrow with --host.
-  uninstall   Remove previously installed <prefix>* skills and the lockfile.
+  uninstall   Remove skills owned by this installer according to its lockfile.
   list        Show discovered skills and detected hosts.
 
 Options:
@@ -183,7 +183,7 @@ function main(argv) {
       }
       if (h.lockRemoved) console.log(`    - ${path.basename(h.lockPath)}`);
     }
-    console.log(`\n${verb} ${total} skill dir(s) matching "${prefix}*".`);
+    console.log(`\n${verb} ${total} lockfile-owned skill dir(s) for prefix "${prefix}".`);
     console.log(`\n${DISCLAIMER}`);
     return 0;
   }

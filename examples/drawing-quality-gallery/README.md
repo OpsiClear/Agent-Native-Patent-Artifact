@@ -8,6 +8,7 @@ Run from the APA repository root:
 ```sh
 node packages/apa-figure/cli.mjs render-dir examples/drawing-quality-gallery/src/drawing_src --out-dir examples/drawing-quality-gallery/evidence/drawings
 node packages/apa-figure/cli.mjs review-dir examples/drawing-quality-gallery/src/drawing_src --svg-dir examples/drawing-quality-gallery/evidence/drawings --out examples/drawing-quality-gallery/reviews/round-01.json --min-score 88
+node packages/apa-figure/cli.mjs sheet-html examples/drawing-quality-gallery/evidence/drawings --out examples/drawing-quality-gallery/assembled/drawings.html --title "Drawing Quality Gallery"
 ```
 
 The review command is a drafting aid, not a formal USPTO compliance certification.

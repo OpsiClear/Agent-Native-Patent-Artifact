@@ -6,7 +6,16 @@
   </defs>
   <rect x="0" y="0" width="1280" height="760" fill="white"/>
   <text id="FIG01-title" x="640" y="26" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle">Adaptive processing system</text>
-  <line id="FIG01-arrow-0-line" x1="156.09" y1="150" x2="158.83" y2="250" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
+  <rect id="FIG01-part-100-shape" x="70" y="70" width="190" height="80" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-102-shape" x="70" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-104-shape" x="310" y="250" width="160" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-106-shape" x="530" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-108-shape" x="770" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-110-shape" x="1010" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-112-shape" x="650" y="470" width="190" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-114-shape" x="410" y="470" width="170" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <rect id="FIG01-part-116-shape" x="910" y="470" width="190" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <line id="FIG01-arrow-0-line" x1="163.91" y1="150" x2="161.17" y2="250" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
   <line id="FIG01-arrow-1-line" x1="250" y1="293" x2="310" y2="293" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
   <line id="FIG01-arrow-2-line" x1="470" y1="293" x2="530" y2="293" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
   <line id="FIG01-arrow-3-line" x1="710" y1="293" x2="770" y2="293" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
@@ -14,41 +23,32 @@
   <line id="FIG01-arrow-5-line" x1="837.52" y1="336" x2="767.48" y2="470" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
   <line id="FIG01-arrow-6-line" x1="840" y1="513" x2="910" y2="513" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
   <line id="FIG01-arrow-7-line" x1="595.57" y1="336" x2="519.43" y2="470" stroke="black" stroke-width="2" marker-end="url(#FIG01-arrowhead)"/>
-  <rect id="FIG01-part-100-shape" x="70" y="70" width="170" height="80" fill="white" stroke="black" stroke-width="2"/>
-  <text id="FIG01-part-100-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="155" y="110">processing system</tspan></text>
-  <line id="FIG01-part-100-lead" x1="58.97" y1="68.96" x2="70" y2="73.67" stroke="black" stroke-width="1"/>
-  <text id="FIG01-part-100-num" x="46.09" y="63.46" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">100</text>
-  <rect id="FIG01-part-102-shape" x="70" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
+  <text id="FIG01-part-100-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="165" y="110">processing system</tspan></text>
+  <path id="FIG01-part-100-lead" d="M 62.38 65.2 C 67.31 63.8 71.05 65.44 73.37 70" fill="none" stroke="black" stroke-width="1"/>
+  <text id="FIG01-part-100-num" x="49.55" y="59.6" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">100</text>
   <text id="FIG01-part-102-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="160" y="293">input interface</tspan></text>
-  <line id="FIG01-part-102-lead" x1="58.01" y1="288.66" x2="70" y2="289.17" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-102-lead" d="M 58.01 288.66 C 62.11 285.58 66.18 285.75 70 289.17" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-102-num" x="44.02" y="288.06" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">102</text>
-  <rect id="FIG01-part-104-shape" x="310" y="250" width="160" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-104-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="390" y="293">parser</tspan></text>
-  <line id="FIG01-part-104-lead" x1="298.04" y1="285.34" x2="310" y2="286.33" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-104-lead" d="M 298.04 285.34 C 302.26 282.43 306.32 282.77 310 286.33" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-104-num" x="284.09" y="284.17" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">104</text>
-  <rect id="FIG01-part-106-shape" x="530" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-106-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="620" y="293">normalizer</tspan></text>
-  <line id="FIG01-part-106-lead" x1="593.13" y1="239.27" x2="598.5" y2="250" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-106-lead" d="M 593.13 239.27 C 597.81 241.36 599.64 245 598.5 250" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-106-num" x="586.87" y="226.74" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">106</text>
-  <rect id="FIG01-part-108-shape" x="770" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-108-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="860" y="293">rules engine</tspan></text>
-  <line id="FIG01-part-108-lead" x1="961.95" y1="284.13" x2="950" y2="285.17" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-108-lead" d="M 961.95 284.13 C 958.29 287.72 954.23 288.07 950 285.17" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-108-num" x="975.9" y="282.92" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">108</text>
-  <rect id="FIG01-part-110-shape" x="1010" y="250" width="180" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-110-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="1100" y="293">model service</tspan></text>
-  <line id="FIG01-part-110-lead" x1="1201.99" y1="288.66" x2="1190" y2="289.17" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-110-lead" d="M 1201.99 288.66 C 1198.17 292.08 1194.09 292.25 1190 289.17" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-110-num" x="1215.98" y="288.06" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">110</text>
-  <rect id="FIG01-part-112-shape" x="650" y="470" width="190" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-112-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="745" y="513">confidence scorer</tspan></text>
-  <line id="FIG01-part-112-lead" x1="775.71" y1="566.4" x2="769.73" y2="556" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-112-lead" d="M 775.71 566.4 C 770.92 564.59 768.88 561.05 769.73 556" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-112-num" x="782.69" y="578.54" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">112</text>
-  <rect id="FIG01-part-114-shape" x="410" y="470" width="170" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-114-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="495" y="513">audit logger</tspan></text>
-  <line id="FIG01-part-114-lead" x1="459.26" y1="565.95" x2="465.98" y2="556" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-114-lead" d="M 459.26 565.95 C 458.78 560.85 461.07 557.46 465.98 556" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-114-num" x="451.43" y="577.55" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">114</text>
-  <rect id="FIG01-part-116-shape" x="910" y="470" width="190" height="86" fill="white" stroke="black" stroke-width="2"/>
   <text id="FIG01-part-116-label" font-family="Liberation Serif, Times New Roman, serif" font-size="16" fill="black" text-anchor="middle" dominant-baseline="middle"><tspan x="1005" y="513">output formatter</tspan></text>
-  <line id="FIG01-part-116-lead" x1="1096.21" y1="561.65" x2="1085.63" y2="556" stroke="black" stroke-width="1"/>
+  <path id="FIG01-part-116-lead" d="M 1096.21 561.65 C 1091.19 562.65 1087.59 560.73 1085.63 556" fill="none" stroke="black" stroke-width="1"/>
   <text id="FIG01-part-116-num" x="1108.57" y="568.24" font-family="Liberation Serif, Times New Roman, serif" font-size="20" fill="black" text-anchor="middle" dominant-baseline="middle">116</text>
-  <text id="FIG01-caption" x="640" y="742" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 1 (representative)</text>
+  <text id="FIG01-caption" x="640" y="742" font-family="Liberation Serif, Times New Roman, serif" font-size="24" fill="black" text-anchor="middle" font-weight="bold">FIG. 1</text>
 </svg>

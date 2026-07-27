@@ -1,6 +1,6 @@
 {
   "effectiveDate": "2025-01-19",
-  "retrievedDate": "2026-06-15",
+  "retrievedDate": "2026-07-26",
   "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
   "currency": "USD",
   "entityMultipliers": {
@@ -10,6 +10,7 @@
   },
   "utility": {
     "basicFiling": 350,
+    "basicFilingElectronicSmall": 70,
     "search": 770,
     "examination": 880,
     "excessIndependentOver3": 600,
@@ -17,6 +18,19 @@
     "multipleDependentClaim": 925,
     "applicationSizePer50SheetsOver100": 450,
     "nonDocxSurcharge": 430
+  },
+  "_sourceEvidence": {
+    "utility.basicFilingElectronicSmall": {
+      "feeCode": "4011",
+      "regulation": "37 CFR 1.16(a)",
+      "officialDescription": "Basic filing fee - Utility (electronic filing for small entities)",
+      "smallEntityAmount": 70,
+      "effectiveDate": "2025-01-19",
+      "retrievedDate": "2026-07-26",
+      "sourcePageLastUpdated": "2026-07-01",
+      "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+      "sourceSnapshotSha256": "220ac86593a412b29971872e5444b768a8ee3f6e1bc6ecdca18df4465e73bd03"
+    }
   },
   "ids": {
     "_model": "Cumulative-item tiers under 37 CFR 1.17(v) (effective 2025-01-19). The fee is a one-time, cumulative, large-entity amount keyed to the TOTAL number of items of information cited across all IDSs in the application; a later tier is reduced by amounts already paid in earlier tiers. APA does not auto-bill these; it surfaces the tier table for human review.",

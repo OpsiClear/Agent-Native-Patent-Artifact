@@ -16,7 +16,7 @@ wins.
 
 ## binding blocks
 Every entity is a `### <ID> ...` section with a ` ```binding ` YAML block. See `docs/protocol.md` §2-3
-for the exact per-layer fields and the typed edges (`supported_by`, `illustrated_by`, `antecedent_of`,
+for the exact per-layer fields and the typed edges (`supported_by`, `defined_by`, `illustrated_by`, `antecedent_of`,
 `depends_on`, `distinguished_over`, `scope_set_at`, `contributed_to`).
 
 ## What "done" means

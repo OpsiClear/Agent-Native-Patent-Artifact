@@ -1,0 +1,19 @@
+schema: apa-skill-v1
+id: apa-review-form
+kind: support
+phase: review
+command: /apa-review-form
+version: "0.1"
+description: "Generate local human-review forms, questionnaires, date checks, and agent-request queues for APA matters."
+inputs: [PATENT.md, logic/claims.md, assembled/]
+outputs: [assembled/human_review_form.html, assembled/human_review_state.json, assembled/date_verification.json, assembled/date_verification.md, assembled/agent_requests.json, assembled/agent_question_queue.json, assembled/agent_question_answers.json, assembled/agent_question_prompt.md]
+upstream: []
+downstream: []
+gates_after: [human-review-record]
+human_checkpoints: [inventor-fact-review, ids-date-review, claim-review, drawing-review, filing-readiness-review]
+domain_hooks: [assembly.preflight]
+external_sinks:
+  - tool: apa-safe-review-metadata-fetch
+    required: false
+    allow_hosts: [api.crossref.org, export.arxiv.org, api2.openreview.net, openreview.net, www.openreview.net, api.github.com, patents.google.com, image-ppubs.uspto.gov, iso.org, www.iso.org, mpeg.org, www.mpeg.org, mpeg.expert, www.mpeg.expert]
+safety: { legal_conclusion: false, requires_human_adoption: true, may_file: false }

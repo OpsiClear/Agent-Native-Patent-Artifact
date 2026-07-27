@@ -58,8 +58,10 @@ Each skill installs to `<skill-root>/<prefix><name>/` (e.g.
 `~/.claude/skills/apa-compiler/SKILL.md`, plus any `references/`). A small
 `.apa-skills.json` lockfile is written next to them recording the version,
 prefix, timestamp, and installed skill dirs so `uninstall` can clean up exactly
-what was added. `uninstall` also defensively removes any `<prefix>*` dirs found
-on disk.
+what was added. Installation refuses to overwrite a destination not owned by
+that lockfile, stages replacements before swapping them into place, and removes
+obsolete directories only when the prior lockfile owns them. `uninstall`
+preserves every unowned directory even when its name matches `<prefix>*`.
 
 ## Self-contained bundling
 

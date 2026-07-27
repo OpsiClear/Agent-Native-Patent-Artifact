@@ -127,14 +127,14 @@ export function buildSearchDossier({ query, result, assigned = [], limit = 25, g
 }
 
 export function idsVerificationStatus(checks = {}) {
+  const humanVerified = Boolean(checks.human_verified || checks.humanVerified);
   const required = {
     title: Boolean(checks.title || checks.title_verified || checks.titleVerified),
     venue: Boolean(checks.venue || checks.venue_verified || checks.venueVerified),
     canonical_link: Boolean(checks.canonical_link || checks.canonical_link_verified || checks.canonicalLinkVerified),
     relied_on_passage: Boolean(checks.relied_on_passage || checks.relied_on_passage_verified || checks.reliedOnPassageVerified),
   };
-  const idsReady = Object.values(required).every(Boolean);
-  const humanVerified = Boolean(checks.human_verified || checks.humanVerified);
+  const idsReady = humanVerified && Object.values(required).every(Boolean);
   return {
     human_verified: humanVerified,
     confidence: humanVerified ? (checks.confidence || "human-verified") : "unverified",

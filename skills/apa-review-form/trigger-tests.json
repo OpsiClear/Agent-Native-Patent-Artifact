@@ -1,0 +1,14 @@
+{
+  "command": "/apa-review-form",
+  "keywords": ["human review form", "date verification form", "agent requests", "review questionnaire"],
+  "should_trigger": [
+    "/apa-review-form generate the local review form and dynamic questionnaire for this APA matter.",
+    "Create a human review form with claim cards, IDS date checks, figure checks, and filing-readiness questions.",
+    "Launch the review questionnaire and agent requests workflow for an Agent-Native Patent Artifact matter."
+  ],
+  "should_not_trigger": [
+    "Use /apa-assemble to produce the filing package manifest.",
+    "Run /apa-drawing-quality on the patent figures PDF.",
+    "Review this repository for software license compatibility."
+  ]
+}

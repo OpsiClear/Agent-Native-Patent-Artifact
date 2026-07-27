@@ -4,7 +4,7 @@
   "width": 1180,
   "height": 760,
   "parts": [
-    { "numeral": "300", "label": "atlas map", "shape": "box", "x": 90, "y": 90, "w": 1000, "h": 470 },
+    { "numeral": "300", "label": "atlas map", "shape": "box", "x": 90, "y": 90, "w": 1000, "h": 470, "labelX": 590, "labelY": 110 },
     { "numeral": "302", "label": "region column", "shape": "box", "x": 115, "y": 125, "w": 180, "h": 110 },
     { "numeral": "304", "label": "bounds column", "shape": "box", "x": 295, "y": 125, "w": 190, "h": 110 },
     { "numeral": "306", "label": "priority column", "shape": "box", "x": 485, "y": 125, "w": 190, "h": 110 },
@@ -15,6 +15,6 @@
     { "numeral": "316", "label": "z-order curve", "shape": "ellipse", "x": 470, "y": 600, "w": 250, "h": 80 }
   ],
   "arrows": [
-    { "from": "316", "to": "312", "kind": "flow" }
+    { "from": "316", "to": "312", "kind": "flow", "points": [ { "x": 1105, "y": 640 }, { "x": 1105, "y": 332 } ] }
   ]
 }

@@ -139,6 +139,14 @@ test("idsVerificationStatus only becomes IDS-ready after all required checks", (
   assert.equal(partial.ids_ready, false);
   assert.equal(partial.required_checks.canonical_link, false);
 
+  const checksWithoutHuman = idsVerificationStatus({
+    title_verified: true,
+    venue_verified: true,
+    canonical_link_verified: true,
+    relied_on_passage_verified: true,
+  });
+  assert.equal(checksWithoutHuman.ids_ready, false, "all citation checks still require explicit human verification");
+
   const ready = idsVerificationStatus({
     human_verified: true,
     title_verified: true,

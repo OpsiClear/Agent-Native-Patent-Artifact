@@ -1,0 +1,59 @@
+{
+  "schema": "apa-tldraw-snapshot-fixture-v1",
+  "description": "Synthetic tldraw-style snapshot subset used to verify APA export acceptance; it is not a filing artifact.",
+  "page": {
+    "id": "page:figure-1",
+    "name": "FIG. 1"
+  },
+  "shapes": [
+    {
+      "id": "shape:controller",
+      "type": "geo",
+      "x": 120,
+      "y": 160,
+      "props": {
+        "geo": "rectangle",
+        "w": 220,
+        "h": 120,
+        "color": "black",
+        "fill": "none",
+        "text": "CONTROLLER"
+      },
+      "meta": {
+        "referenceNumeral": "100"
+      }
+    },
+    {
+      "id": "shape:memory",
+      "type": "geo",
+      "x": 460,
+      "y": 160,
+      "props": {
+        "geo": "rectangle",
+        "w": 220,
+        "h": 120,
+        "color": "black",
+        "fill": "none",
+        "text": "MEMORY"
+      },
+      "meta": {
+        "referenceNumeral": "200"
+      }
+    },
+    {
+      "id": "shape:flow",
+      "type": "arrow",
+      "x": 340,
+      "y": 220,
+      "props": {
+        "start": [0, 0],
+        "end": [120, 0],
+        "color": "black",
+        "dash": "solid"
+      },
+      "meta": {
+        "meaning": "data flow"
+      }
+    }
+  ]
+}

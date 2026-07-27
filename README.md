@@ -18,8 +18,8 @@ mined from a real worked patent package).
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
 phases below), **plus** a post-filing office-action extension, an LLM-judge eval harness, multi-host skill
-generation, CI, and an end-to-end integration test. The suite is **332 tests, all passing** (`bash
-build.sh`), and the parser, validator, and confidentiality/injection surfaces have been through a
+generation, CI, and an end-to-end integration test. The suite is kept green with `bash build.sh`, and
+the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
 injection, bounded parser recursion). Node-only, zero-dependency.
 
@@ -51,18 +51,19 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `packages/apa-reports/` | Shared semantic report schemas for claims, patentability, examiner-adversary, and office-action reports | ✅ tested |
 | `packages/apa-trace/` | Runlog and autoprep-state helpers for audit logs, resumable stages, checkpoint records, and examiner-loop caps | ✅ tested |
 | `packages/apa-skillgraph/` | Machine-readable skill/domain registry checker + generated skill graph/domain-pack documentation | ✅ tested |
-| `packages/apa-run/` | Graph-derived pipeline planner/status CLI for core skills plus enabled domain hook insertions | ✅ tested |
+| `packages/apa-run/` | Graph-derived pipeline planner/status CLI for core skills plus enabled domain/support hook insertions | ✅ tested |
 | `packages/apa-bench/software-patent-sim.mjs` | Offline scenario simulator for `/apa-software-patent`: thin SaaS, codec, AI/ML, UI, CRM, and math-only traps | ✅ tested |
 | `packages/apa-search/` | **(Phase 2)** API-first prior-art search (PatentsView PatentSearch API); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
 | `packages/apa-draft/` | **(Phase 3)** claim legal-form lint (single-sentence, transitional phrase, numbering, multi-dependent, 112(f) nonce) | ✅ tested |
 | `packages/apa-figure/` | **(Phase 3)** zero-dep SVG patent-figure generator (numbered parts, lead lines, arrows) + numeral reconciliation | ✅ tested |
-| `packages/apa-assemble/` | **(Phase 4)** collate 1.77 spec (HTML print-to-PDF) + ADS + SB/08 IDS + unsigned declaration + fee worksheet + pre-filing gate | ✅ tested |
-| `docs/fee-schedule.2026-06-15.json` | **(Phase 4)** dated USPTO fee schedule (2025 amounts; verify currency) driving the fee estimate | ✅ |
+| `packages/apa-assemble/` | **(Phase 4)** collate 1.77 spec (HTML print-to-PDF) + ADS + SB/08 IDS + unsigned declaration + fee worksheet + pre-filing gate; manifest v2 binds saved packages to canonical input hashes | ✅ tested |
+| `docs/fee-schedule.2026-07-26.json` | **(Phase 4)** dated USPTO fee schedule (2025 amounts; verify currency) driving the fee estimate | ✅ |
 | `packages/apa-rigor/` | **(Phase 5)** six-dimension rubric + **deterministic** verdict engine (mean + per-dimension floor; Do-Not-File cap) + report scaffold/schema | ✅ tested |
 | `packages/apa-skills/` | npx installer (`@apa/patent-skills`) — bundles the skills, detects hosts (claude/codex/cursor), installs `apa-*` with a lockfile + uninstall | ✅ tested |
 | `packages/apa-eval/` | LLM-judge eval harness (raw-`fetch` Anthropic client, forced-tool verdicts, deterministic pre-pass, budget-regression gate; `--mock` offline) | ✅ tested |
 | `packages/apa-prosecute/` | **(post-filing extension)** parse an Office Action, compute response deadlines (estimate), scaffold a response — never files | ✅ tested |
 | `benchmarks/` + `packages/apa-bench/` | Offline deterministic benchmark fixtures for public-patent compile, public Office Action, and synthetic disclosure-to-assembly regressions | ✅ tested |
+| `scripts/verify-external-matter.mjs` | Opt-in, read-only, aggregate-only regression check for a local confidential matter; never a committed benchmark fixture | ✅ tested |
 | `skills/office-action/` | **(post-filing)** `/apa-office-action` — map rejections to claims, deadlines, response scaffold (flags, not conclusions) | ✅ |
 | `skills/disclosure-capture/` | `/apa-disclose` — capture a disclosure into the artifact (file-I/O only) | ✅ |
 | `skills/compiler/` | `/apa-compile <path>` — lift an existing patent/publication into a validated artifact | ✅ |
@@ -70,6 +71,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/claim-drafting/` | **(Phase 3)** `/apa-claims` — dual-lens claim ladder, antecedent basis, spec-support binding | ✅ |
 | `skills/specification-drafting/` | **(Phase 3)** `/apa-spec` — 1.77 sections, grounding discipline, writing rubric | ✅ |
 | `skills/figure-generation/` | **(Phase 3)** `/apa-figures` — author + render numbered figures, reconcile numerals | ✅ |
+| `skills/tldraw-patent-drawing/` | **(Phase 3)** `/apa-tldraw-drawings` — use tldraw as a controlled patent drawing sketch layer before SVG normalization | ✅ |
 | `skills/patent-svg-upgrader/` | **(Phase 3)** `/apa-svg-upgrader` — normalize rough generated SVGs into professional utility-patent drawing candidates | ✅ |
 | `skills/patent-drawing-quality/` | **(Phase 3)** `/apa-drawing-quality` — review drawings for professional draftsperson quality, formal-risk precheck, and HTML/SVG/PDF export choices | ✅ |
 | `skills/patentability-analysis/` | **(Phase 3)** `/apa-analyze` — claim charts + 101/102/103/112 flags (never conclusions) | ✅ |
@@ -78,6 +80,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/filing-assembly/` | **(Phase 4)** `/apa-assemble` — assemble the filing package + pre-filing gate; stops at submit boundary | ✅ |
 | `skills/rigor-review/` | **(Phase 5)** `/apa-rigor` — read-only six-dimension audit → `patent_rigor_report.json` verdict | ✅ |
 | `skills/examiner-adversary/` | **(Phase 5)** `/apa-examiner` — role-play the examiner; critique→fix loop into the prosecution rationale | ✅ |
+| `skills/apa-review-form/` | `/apa-review-form` — generate local human-review forms, date checks, guided questionnaires, and agent-request queues for APA matters | ✅ |
 | `skills/software-license-review/` | `/apa-license` — review repository license posture, third-party notices, SPDX metadata, dependency obligations, and patent-license clauses as flags for human/counsel review | ✅ |
 | `skills/registry.yaml` + `skills/*/skill.yaml` + `skills/domains/*/domain.yaml` | Machine-readable skill contracts, global gates, hook points, and domain-pack declarations | ✅ tested |
 | `skills/autoprep/` | `/apa-autoprep` — orchestrates the whole lifecycle, enforcing the gates and human checkpoints between phases | ✅ |
@@ -96,6 +99,7 @@ npm run coverage                                                 # V8 first-part
 npm run smoke                                                    # cross-package CLI smoke checks
 node packages/apa-skillgraph/cli.mjs check                       # validate skill.yaml/domain.yaml/registry.yaml
 node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --domain software
+node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --support apa-tldraw-drawings --support apa-svg-upgrader
 node packages/apa-bench/cli.mjs --mock                           # deterministic benchmark suite
 node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim   # /apa-software-patent simulation
 node scripts/gen-skill-docs.mjs && node packages/apa-skillgraph/cli.mjs check   # includes /apa-public-patent-benchmark metadata
@@ -129,7 +133,7 @@ Remove-Item Env:APA_EXTERNAL_MATTER
 
 Use `--require` when an absent local matter should fail instead of skip. Do not add a private matter
 to `benchmarks/`, test fixtures, package output, or Git. See
-[the aggregate validation report](docs/gs-encoder-patent-validation-2026-07-26.md) for the
+[the aggregate validation report](docs/external-patent-validation-2026-07-26.md) for the
 evidence-backed hardening example.
 
 ## Use it in your own project (zero-install drop-in)

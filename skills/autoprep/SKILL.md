@@ -56,9 +56,17 @@ human checkpoint was satisfied. Use the deterministic helper in
    **Checkpoint:** a registered practitioner approves any claim-scope selection or narrowing edit; in
    pro-se mode, stop with options/questions rather than applying a strategic edit.
 6. **Specification** - `/apa-spec` (1.77 sections, grounding discipline). Re-validate.
-7. **Figures** - `/apa-figures` (render + reconcile numerals). If drawings exist, run
-   `/apa-drawing-quality` after `/apa-figures`; blocking drawing findings stop assembly until a human
-   accepts the risk or fixes the drawings.
+7. **Figures** - `/apa-figures` (source traceability, render, sheet composition, and numeral
+   reconciliation). If drawings exist, run the upgraded drawing flow:
+   `node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`;
+   `node packages/apa-figure/cli.mjs render-dir <matter>/src/drawing_src --out-dir <matter>/evidence/drawings`;
+   `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`;
+   `node packages/apa-figure/cli.mjs sheet-html <matter>/evidence/drawings --out <matter>/evidence/drawings/drawing-sheets.html --compact`;
+   and `node packages/apa-figure/cli.mjs sheet-review <matter>/evidence/drawings --compact --out <matter>/evidence/drawings/sheet-review.json`.
+   Use `/apa-tldraw-drawings` only when a tldraw snapshot or manual layout import is present, and run
+   `/apa-svg-upgrader` when generated or imported SVGs need normalization before final QA. Then run
+   `/apa-drawing-quality`; blocking drawing, sheet-review, or upgrade-parity findings stop assembly
+   until a human accepts the risk or fixes the drawings.
 8. **Rigor** - `/apa-rigor` -> `patent_rigor_report.json`. If the computed verdict is **Major-Rework or
    Do-Not-File**, run at most `max_examiner_loops` (default 2) of `/apa-examiner` -> human-approved
    edits -> `/apa-rigor`. After the cap, stop with a residual-risk report instead of looping.

@@ -39,17 +39,30 @@ export async function search(query, opts = {}) {
   try {
     res = await guardedFetch(url, { headers: { Accept: "application/json" } }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`crossref: network error - ${messageOf(err)}`] };
+    return failure(parameters, `crossref: network error - ${messageOf(err)}`);
   }
-  if (!res.ok) return { records: [], rawCount: 0, parameters, notes: [`crossref: HTTP ${res.status} ${res.statusText || ""}`.trim()] };
+  if (!res.ok) return failure(parameters, `crossref: HTTP ${res.status} ${res.statusText || ""}`.trim());
 
   let json;
   try {
     json = await readJsonCapped(res, opts);
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`crossref: failed to parse JSON - ${messageOf(err)}`] };
+    return failure(parameters, `crossref: failed to parse JSON - ${messageOf(err)}`);
   }
-  const items = Array.isArray(json?.message?.items) ? json.message.items : [];
+  if (
+    !json ||
+    typeof json !== "object" ||
+    Array.isArray(json) ||
+    !json.message ||
+    typeof json.message !== "object" ||
+    !Array.isArray(json.message.items)
+  ) {
+    return failure(parameters, "crossref: malformed JSON response - expected a message.items array");
+  }
+  if (json.status && json.status !== "ok") {
+    return failure(parameters, `crossref: API reported status ${oneLine(json.status)}`);
+  }
+  const items = json.message.items;
   const records = items.map(mapWork).filter((r) => r.docNumber || r.title);
   const rawCount = Number(json?.message?.["total-results"] ?? records.length);
   const notes = [
@@ -88,6 +101,7 @@ function first(v) { return Array.isArray(v) ? oneLine(v[0] || "") : oneLine(v ||
 function oneLine(text) { return String(text == null ? "" : text).replace(/[\r\n\u2028\u2029]+/g, " ").trim(); }
 function stripTags(text) { return oneLine(String(text || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(); }
 function messageOf(err) { return err && err.message ? err.message : String(err); }
+function failure(parameters, error) { return { records: [], rawCount: 0, parameters, error, notes: [error] }; }
 
 function dateParts(obj) {
   const parts = Array.isArray(obj?.["date-parts"]?.[0]) ? obj["date-parts"][0] : [];

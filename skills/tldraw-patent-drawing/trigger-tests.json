@@ -1,0 +1,14 @@
+{
+  "command": "/apa-tldraw-drawings",
+  "keywords": ["tldraw patent drawings", "tldraw SVG export", "compare tldraw"],
+  "should_trigger": [
+    "/apa-tldraw-drawings compare tldraw with our APA SVG patent drawing workflow.",
+    "Use /apa-tldraw-drawings for a manual tldraw patent figure layout pass.",
+    "Invoke /apa-tldraw-drawings and review a tldraw SVG export for patent drawing risks."
+  ],
+  "should_not_trigger": [
+    "Use /apa-svg-upgrader to normalize an existing SVG without tldraw.",
+    "Run /apa-drawing-quality on the final drawings PDF.",
+    "Create a consumer whiteboard app with React."
+  ]
+}

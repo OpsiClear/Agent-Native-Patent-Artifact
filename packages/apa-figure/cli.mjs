@@ -26,6 +26,7 @@ import { buildLegend } from "./numerals.mjs";
 import { aggregateReviews, missingSvgReview, reviewFigure } from "./quality.mjs";
 import { buildSvgUpgradeReport } from "./upgrade-report.mjs";
 import { buildFigureGenerationReport } from "./generation-report.mjs";
+import { analyzeDrawingSheetsFromDir, composeDrawingSheetsFromDir } from "./sheets.mjs";
 
 function argValue(args, name) {
   const i = args.indexOf(name);
@@ -41,11 +42,23 @@ function argValues(args, name) {
 function hasFlag(args, name) {
   return args.includes(name);
 }
+function numericArg(args, name, fallback) {
+  if (!hasFlag(args, name)) return fallback;
+  const raw = argValue(args, name);
+  if (raw === undefined || raw.startsWith("--") || raw.trim() === "") {
+    throw new Error(`${name} requires a numeric value`);
+  }
+  const value = Number(raw);
+  if (!Number.isFinite(value)) throw new Error(`${name} requires a finite numeric value`);
+  return value;
+}
 
 const USAGE = [
   "usage:",
   "  node cli.mjs render <figdef.json> [--out f.svg]",
   "  node cli.mjs render-dir <drawing_src_dir> --out-dir <svg_dir>",
+  "  node cli.mjs sheet-html <svg_dir> --out drawings.html [--compact] [--title text]",
+  "  node cli.mjs sheet-review <svg_dir> [--compact] [--out report.json] [--min-utilization N] [--max-font-ratio N] [--max-global-font-ratio N] [--min-text-pt N]",
   "  node cli.mjs generation-report --matter <matter_dir> [--source-dir drawing_src] --out figure_generation_report.json",
   "  node cli.mjs review-dir <drawing_src_dir> --svg-dir <svg_dir> [--out report.json] [--min-score N]",
   "  node cli.mjs upgrade-report --before-dir <svg_dir> --after-dir <svg_dir> [--source-dir drawing_src] --out svg_upgrade_report.json",
@@ -53,7 +66,7 @@ const USAGE = [
 ].join("\n");
 
 // Flags that consume the following token as their value (so it is NOT the positional figdef path).
-const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--min-score", "--before-dir", "--after-dir", "--source-dir", "--source-route", "--tool-note", "--matter"]);
+const VALUE_FLAGS = new Set(["--out", "--out-dir", "--svg-dir", "--title", "--min-score", "--min-utilization", "--max-font-ratio", "--max-global-font-ratio", "--min-text-pt", "--before-dir", "--after-dir", "--source-dir", "--source-route", "--tool-note", "--matter"]);
 
 function positional(args) {
   return args.find((a, i) => !a.startsWith("--") && !VALUE_FLAGS.has(args[i - 1]));
@@ -133,11 +146,70 @@ function cmdRenderDir(args) {
   return 0;
 }
 
+function cmdSheetHtml(args) {
+  const dir = positional(args);
+  const out = argValue(args, "--out");
+  if (!dir || !out) {
+    console.error("error: sheet-html requires <svg_dir> --out <drawings.html>\n" + USAGE);
+    return 1;
+  }
+  try {
+    const html = composeDrawingSheetsFromDir(dir, {
+      compact: hasFlag(args, "--compact"),
+      title: argValue(args, "--title") || "Drawings",
+    });
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, html, "utf8");
+    console.log(`wrote ${out}`);
+    return 0;
+  } catch (e) {
+    console.error(`error: sheet-html failed: ${e.message}`);
+    return 1;
+  }
+}
+
+function cmdSheetReview(args) {
+  const dir = positional(args);
+  const out = argValue(args, "--out");
+  if (!dir) {
+    console.error("error: sheet-review requires <svg_dir>\n" + USAGE);
+    return 1;
+  }
+  try {
+    const report = analyzeDrawingSheetsFromDir(dir, {
+      compact: hasFlag(args, "--compact"),
+      minUtilization: numericArg(args, "--min-utilization", 0.55),
+      maxCompactTextRatio: numericArg(args, "--max-font-ratio", 1.12),
+      maxGlobalTextRatio: numericArg(args, "--max-global-font-ratio", 1.12),
+      minRenderedTextPt: numericArg(args, "--min-text-pt", 9.1),
+    });
+    if (out) {
+      mkdirSync(dirname(out), { recursive: true });
+      writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    }
+    console.log(
+      `sheet review: sheets=${report.sheet_count} compact_candidate=${report.compact_candidate_sheet_count} ` +
+        `min_util=${report.min_height_utilization} findings=${report.findings.length} verdict=${report.verdict}`,
+    );
+    return report.findings.some((f) => f.severity === "fix-before-filing" || f.severity === "blocking") ? 1 : 0;
+  } catch (e) {
+    console.error(`error: sheet-review failed: ${e.message}`);
+    return 1;
+  }
+}
+
 function cmdReviewDir(args) {
   const dir = positional(args);
   const svgDir = argValue(args, "--svg-dir");
   const out = argValue(args, "--out");
-  const minScore = Number(argValue(args, "--min-score") || 80);
+  let minScore;
+  try {
+    minScore = numericArg(args, "--min-score", 80);
+    if (minScore < 0 || minScore > 100) throw new Error("--min-score must be between 0 and 100");
+  } catch (e) {
+    console.error(`error: review-dir failed: ${e.message}`);
+    return 1;
+  }
   if (!dir || !svgDir) {
     console.error("error: review-dir requires <drawing_src_dir> --svg-dir <svg_dir>\n" + USAGE);
     return 1;
@@ -164,7 +236,7 @@ function cmdReviewDir(args) {
     `reviewed ${report.figure_count} figure(s): mean=${report.mean_score} min=${report.min_score} ` +
       `blocking=${report.blocking_count} fixes=${report.fix_before_filing_count} verdict=${report.verdict}`,
   );
-  return report.blocking_count > 0 || report.min_score < minScore ? 1 : 0;
+  return report.blocking_count > 0 || report.fix_before_filing_count > 0 || report.min_score < minScore ? 1 : 0;
 }
 
 function cmdGenerationReport(args) {
@@ -273,6 +345,8 @@ function main(argv) {
   const rest = args.slice(1);
   if (cmd === "render") return cmdRender(rest);
   if (cmd === "render-dir") return cmdRenderDir(rest);
+  if (cmd === "sheet-html") return cmdSheetHtml(rest);
+  if (cmd === "sheet-review") return cmdSheetReview(rest);
   if (cmd === "generation-report") return cmdGenerationReport(rest);
   if (cmd === "review-dir") return cmdReviewDir(rest);
   if (cmd === "upgrade-report") return cmdUpgradeReport(rest);

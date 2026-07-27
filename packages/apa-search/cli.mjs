@@ -10,6 +10,7 @@
  *   node cli.mjs --matter <dir> --source patentsview --broad --citation-expand --write
  *
  * Exit: 0 ok · 2 MEDIUM scan findings (re-run with --yes to proceed) · 3 HIGH scan findings (blocked).
+ * Exit 1 additionally means every requested automated source failed.
  */
 
 import { runSearch, buildQueryFromClaims } from "./search.mjs";
@@ -117,6 +118,51 @@ async function main() {
     res.verdict.medium.forEach((f) => console.error("  " + mask(f)));
     process.exit(2);
   }
+  if (res.allRequestedSourcesFailed) {
+    const error = "prior-art search failed: every requested runnable source failed";
+    if (a.matter) {
+      const failureNotes = [
+        `requested sources: ${(res.sourceExecution?.requested_source_ids || a.sources).join(", ") || "default"}`,
+        ...res.perSource.map((source) =>
+          `source ${source.id}: ${source.skipped ? "skipped" : `failed:${sourceFailureCode(source.error)}`}`
+        ),
+      ];
+      appendRunlog(a.matter, buildRunlogEntry({
+        timestamp: new Date().toISOString(),
+        skill: "apa-priorart",
+        ruleVersion: ruleVersionOf(a.matter),
+        inputs: existingFileRecords(a.matter, [
+          join(a.matter, "PATENT.md"),
+          join(a.matter, "logic", "claims.md"),
+        ]),
+        outputs: [],
+        commands: [commandRecord({
+          argv: ["node", "packages/apa-search/cli.mjs", ...process.argv.slice(2)],
+          cwd: process.cwd(),
+          exitCode: 1,
+          startedAt,
+          endedAt: new Date().toISOString(),
+        })],
+        externalSinks: [externalSinkRecord({
+          kind: "prior-art-query",
+          bytes: res.verdict?.text || JSON.stringify(query),
+          scanVerdict: res.verdict,
+          humanApproved: Boolean(res.verdict?.needsConfirm && a.yes),
+        })],
+        notes: failureNotes,
+      }));
+    }
+    if (a.json) {
+      console.log(JSON.stringify({ ok: false, error, query, ...res }, null, 2));
+    } else {
+      console.error(`ERROR: ${error}; no landscape or dossier was written.`);
+      for (const s of res.perSource) {
+        if (s.error) console.error(`  source ${s.id}: failed - ${s.error}`);
+        else if (s.skipped) console.error(`  source ${s.id}: skipped - ${(s.notes || []).join("; ") || "not runnable"}`);
+      }
+    }
+    process.exit(1);
+  }
 
   if (a.json) {
     console.log(JSON.stringify({ query, ...res }, null, 2));
@@ -168,14 +214,30 @@ async function main() {
       })],
       humanCheckpoints: [humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false })],
     }));
-    console.log(`\nWrote ${assigned.length} reference(s) into ${a.matter}: ${assigned.map((x) => x.paId).join(", ")}`);
-    console.log(`Updated logic/prior_art.md + evidence/prior_art/ + logic/reference_matrix.md (scaffold).`);
-    console.log(`Wrote search dossier: ${dossierPath}`);
+    if (!a.json) {
+      console.log(`\nWrote ${assigned.length} reference(s) into ${a.matter}: ${assigned.map((x) => x.paId).join(", ")}`);
+      console.log(`Updated logic/prior_art.md + evidence/prior_art/ + logic/reference_matrix.md (scaffold).`);
+      console.log(`Wrote search dossier: ${dossierPath}`);
+    }
   }
 
-  console.log("\nNOTE: candidates are UNVERIFIED and possibly incomplete (examiner-grade PPS is UI-only; NPL is");
-  console.log("paywalled). A human must verify each reference and select the closest art. This is NOT a clearance");
-  console.log("and never asserts \"no anticipating art found.\"");
+  if (!a.json) {
+    console.log("\nNOTE: candidates are UNVERIFIED and possibly incomplete (examiner-grade PPS is UI-only; NPL is");
+    console.log("paywalled). A human must verify each reference and select the closest art. This is NOT a clearance");
+    console.log("and never asserts \"no anticipating art found.\"");
+  }
+}
+
+function sourceFailureCode(error) {
+  const value = String(error || "").toLowerCase();
+  if (/api key|required|auth|401|403/.test(value)) return "authentication";
+  if (/rate|429/.test(value)) return "rate-limit";
+  if (/timeout|abort/.test(value)) return "timeout";
+  if (/network|fetch|socket|dns/.test(value)) return "network";
+  if (/parse|json/.test(value)) return "parse";
+  if (/malformed|expected/.test(value)) return "malformed-payload";
+  if (/http\s+\d{3}/.test(value)) return "http";
+  return "source-error";
 }
 
 function cmdVerifyClosestArt(argv, { startedAt = new Date().toISOString(), rawArgs = [] } = {}) {

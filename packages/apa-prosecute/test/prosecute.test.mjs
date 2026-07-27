@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +18,14 @@ const FIXTURE = join(HERE, "fixtures", "oa-01.md");
 const REPO_ROOT = join(HERE, "..", "..", "..");
 const EXAMPLE_MATTER = join(REPO_ROOT, "examples", "minimal-patent-artifact");
 const CLI = join(HERE, "..", "cli.mjs");
+
+function setMatterUserRole(matter, role) {
+  const patent = join(matter, "PATENT.md");
+  writeFileSync(
+    patent,
+    readFileSync(patent, "utf8").replace(/user_role:\s*"[^"]+"/, `user_role: "${role}"`),
+  );
+}
 
 function writeUnsupportedOa(dir, actionType = "advisory action") {
   const file = join(dir, "oa-unsupported.md");
@@ -211,13 +219,27 @@ test("respond CLI refuses proposed response scaffolds for pro-se matters", () =>
   const d = mkdtempSync(join(tmpdir(), "apa-prosecute-"));
   try {
     cpSync(EXAMPLE_MATTER, d, { recursive: true });
-    const patent = join(d, "PATENT.md");
-    writeFileSync(patent, readFileSync(patent, "utf8").replace('user_role: "unknown"', 'user_role: "pro_se"'));
+    setMatterUserRole(d, "pro_se");
     const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", FIXTURE, "--write"], {
       encoding: "utf8",
     });
     assert.equal(res.status, 2);
-    assert.match(res.stderr, /practitioner-mode only/);
+    assert.match(res.stderr, /registered-practitioner-mode only/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("respond CLI fails closed when user_role is unknown", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-prosecute-unknown-"));
+  try {
+    cpSync(EXAMPLE_MATTER, d, { recursive: true });
+    const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", FIXTURE, "--write"], {
+      encoding: "utf8",
+    });
+    assert.equal(res.status, 2);
+    assert.match(res.stderr, /user_role is 'unknown'/);
+    assert.equal(existsSync(join(d, "prosecution", "response-01.md")), false);
   } finally {
     rmSync(d, { recursive: true, force: true });
   }
@@ -227,6 +249,7 @@ test("respond CLI writes a valid office_action_report.json in practitioner mode"
   const d = mkdtempSync(join(tmpdir(), "apa-prosecute-report-"));
   try {
     cpSync(EXAMPLE_MATTER, d, { recursive: true });
+    setMatterUserRole(d, "registered_practitioner");
     const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", FIXTURE, "--write", "--json"], {
       encoding: "utf8",
     });
@@ -274,6 +297,7 @@ test("respond CLI writes unsupported-event office_action_report.json and runlog"
   const d = mkdtempSync(join(tmpdir(), "apa-prosecute-unsupported-report-"));
   try {
     cpSync(EXAMPLE_MATTER, d, { recursive: true });
+    setMatterUserRole(d, "registered_practitioner");
     const oa = writeUnsupportedOa(d, "advisory action");
     const res = spawnSync(process.execPath, [CLI, "respond", "--matter", d, "--oa", oa, "--write", "--json"], {
       encoding: "utf8",

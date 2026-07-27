@@ -250,6 +250,18 @@ test("claims reports disallow strategic claim changes in pro-se mode", () => {
   assert.ok(result.errors.some((e) => e.path === "scope_decisions"));
 });
 
+test("claims reports treat an unknown user role as neutral-options-only", () => {
+  const report = defaultReportFor("claims", { matter: EXAMPLE });
+  assert.equal(report.user_role, "unknown");
+  report.claim_changes.push({ claim: "CLM01", change: "select a narrower hardware path" });
+  report.scope_decisions.push({ claim: "CLM01", decision: "choose the narrow scope" });
+
+  const result = validateReport(report, { kind: "claims" });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.path === "claim_changes" && /unknown/.test(e.message)));
+  assert.ok(result.errors.some((e) => e.path === "scope_decisions" && /unknown/.test(e.message)));
+});
+
 test("reports reject legal-conclusion fields and overbroad search assertions", () => {
   const report = defaultReportFor("patentability", { matter: EXAMPLE });
   report.search_completeness = "complete";

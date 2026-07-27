@@ -61,18 +61,21 @@ export async function search(query, opts = {}) {
   try {
     res = await guardedFetch(url, { headers: { Accept: "application/json" } }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`openalex: network error - ${messageOf(err)}`] };
+    return failure(parameters, `openalex: network error - ${messageOf(err)}`);
   }
-  if (!res.ok) return { records: [], rawCount: 0, parameters, notes: [`openalex: HTTP ${res.status} ${res.statusText || ""}`.trim()] };
+  if (!res.ok) return failure(parameters, `openalex: HTTP ${res.status} ${res.statusText || ""}`.trim());
 
   let json;
   try {
     json = await readJsonCapped(res, opts);
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`openalex: failed to parse JSON - ${messageOf(err)}`] };
+    return failure(parameters, `openalex: failed to parse JSON - ${messageOf(err)}`);
   }
 
-  const items = Array.isArray(json?.results) ? json.results : [];
+  if (!json || typeof json !== "object" || Array.isArray(json) || !Array.isArray(json.results)) {
+    return failure(parameters, "openalex: malformed JSON response - expected a results array");
+  }
+  const items = json.results;
   const records = items.map(mapWork).filter((r) => r.docNumber || r.title);
   const rawCount = Number(json?.meta?.count ?? records.length);
   const notes = [
@@ -175,4 +178,8 @@ function oneLine(text) {
 
 function messageOf(err) {
   return err && err.message ? err.message : String(err);
+}
+
+function failure(parameters, error) {
+  return { records: [], rawCount: 0, parameters, error, notes: [error] };
 }

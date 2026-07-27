@@ -29,7 +29,9 @@ do not select scope or apply narrowing edits.
    `distinguished_over: [PA##]` (the closest art the independent claim reads past), `scope_set_at: [PH##]`
    (log the scope decision in `trace/prosecution.yaml`), and `limitations:` each with `id` (`LIM##`,
    globally unique), `text`, `introduces` (the `a/an` noun phrase), `references` + `antecedent_of` (the
-   earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, and `provenance`.
+   earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, optional
+   `defined_by: [TERM##]` lexicographic links, and `provenance`. Never put a `TERM##` in
+   `supported_by`; definition links do not replace specification support.
 3. **Provenance.** Default every drafted limitation to `ai-suggested` - it is an **assembly blocker**
    until a human (inventor verbatim -> `inventor:<id>`; attorney -> `attorney`; paraphrase accepted ->
    `human-revised`) adopts it. When a limitation is adopted, preserve source metadata where available:

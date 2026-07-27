@@ -4,7 +4,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { renderSkill } from "./gen-skill-docs.mjs";
+import { discoverDirectSkills, renderSkill } from "./gen-skill-docs.mjs";
 import {
   checkSkills,
   DESCRIPTION_MAX_CHARS,
@@ -22,8 +22,14 @@ const SKILLS_DIR = join(ROOT, "skills");
 test("skill trigger fixtures and descriptions pass the offline checker", () => {
   const result = checkSkills();
   assert.equal(result.ok, true, result.errors.join("\n"));
-  assert.equal(result.skills.length, 18);
-  assert.equal(result.promptCount, 108);
+  assert.equal(result.skills.length, discoverInstallableSkillDirs().length);
+  assert.equal(
+    result.promptCount,
+    result.skills.reduce(
+      (sum, skill) => sum + skill.triggerTests.should_trigger.length + skill.triggerTests.should_not_trigger.length,
+      0
+    )
+  );
 });
 
 test("every skill has committed trigger fixtures with at least three positive and negative prompts", () => {
@@ -65,9 +71,29 @@ test("host-rendered frontmatter keeps concise descriptions and invocation trigge
   }
 });
 
+test("direct-source skills are discoverable for non-Claude host generation", () => {
+  const direct = discoverDirectSkills();
+  assert.ok(direct.some((s) => s.name === "apa-review-form"), "apa-review-form should be carried into non-Claude dist outputs");
+  const reviewForm = direct.find((s) => s.name === "apa-review-form");
+  const out = renderSkill(reviewForm.skill, "codex");
+  const fm = parseFrontmatter(out);
+  assert.equal(fm.name, "apa-review-form");
+  assert.ok(fm.description.length <= DESCRIPTION_MAX_CHARS);
+  assert.match(fm.description, /Invoke as \/apa-review-form/);
+  assert.doesNotMatch(out, /^allowed-tools:/m);
+  assert.match(out, /scripts\/generate_review_form\.mjs/);
+});
+
 function skillDirs() {
   return readdirSync(SKILLS_DIR, { withFileTypes: true })
     .filter((e) => e.isDirectory() && existsSync(join(SKILLS_DIR, e.name, "SKILL.md.tmpl")))
+    .map((e) => e.name)
+    .sort();
+}
+
+function discoverInstallableSkillDirs() {
+  return readdirSync(SKILLS_DIR, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && existsSync(join(SKILLS_DIR, e.name, "SKILL.md")))
     .map((e) => e.name)
     .sort();
 }

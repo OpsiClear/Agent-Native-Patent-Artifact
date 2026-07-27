@@ -7,7 +7,7 @@
     { "numeral": "500", "label": "", "shape": "box", "x": 95, "y": 150, "w": 210, "h": 260, "numX": 55, "numY": 185 },
     { "numeral": "502", "label": "stream", "shape": "box", "x": 130, "y": 215, "w": 140, "h": 66, "numX": 55, "numY": 250 },
     { "numeral": "504", "label": "network interface", "shape": "box", "x": 410, "y": 235, "w": 210, "h": 90 },
-    { "numeral": "506", "label": "client device", "shape": "box", "x": 730, "y": 90, "w": 360, "h": 570 },
+    { "numeral": "506", "label": "client device", "shape": "box", "x": 730, "y": 90, "w": 360, "h": 570, "labelX": 910, "labelY": 120 },
     { "numeral": "508", "label": "hardware decoder", "shape": "box", "x": 790, "y": 210, "w": 240, "h": 82, "numX": 1065, "numY": 230 },
     { "numeral": "510", "label": "frame buffer", "shape": "box", "x": 775, "y": 325, "w": 250, "h": 82, "numX": 1065, "numY": 345 },
     { "numeral": "512", "label": "display controller", "shape": "box", "x": 775, "y": 465, "w": 250, "h": 82, "numX": 1065, "numY": 485 },

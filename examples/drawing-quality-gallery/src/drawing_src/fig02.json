@@ -15,8 +15,8 @@
   "arrows": [
     { "from": "200", "to": "202", "kind": "flow" },
     { "from": "202", "to": "204", "kind": "flow" },
-    { "from": "204", "to": "206", "kind": "flow", "label": "yes" },
-    { "from": "204", "to": "208", "kind": "flow", "label": "no" },
+    { "from": "204", "to": "206", "kind": "flow", "label": "yes", "labelX": 310, "labelY": 390 },
+    { "from": "204", "to": "208", "kind": "flow", "label": "no", "labelX": 510, "labelY": 390 },
     { "from": "206", "to": "210", "kind": "flow" },
     { "from": "208", "to": "210", "kind": "flow" },
     { "from": "210", "to": "212", "kind": "flow" }

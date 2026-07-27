@@ -8,6 +8,7 @@ import path from "node:path";
 import { discoverSkills } from "./skills.mjs";
 
 const LOCK_FILE = ".apa-skills.json";
+let tempFileCounter = 0;
 
 function copyDir(src, dst) {
   fs.mkdirSync(dst, { recursive: true });
@@ -15,12 +16,17 @@ function copyDir(src, dst) {
     const s = path.join(src, entry.name);
     const d = path.join(dst, entry.name);
     if (entry.isDirectory()) copyDir(s, d);
-    else fs.copyFileSync(s, d);
+    else if (entry.isFile()) fs.copyFileSync(s, d);
+    else throw new Error(`refusing unsupported bundled skill entry: ${s}`);
   }
 }
 
 function rmIfExists(p) {
   if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
+}
+
+function prefixedDirName(name, prefix) {
+  return String(name || "").startsWith(prefix) ? String(name) : `${prefix}${name}`;
 }
 
 function readLock(lockPath) {
@@ -30,6 +36,103 @@ function readLock(lockPath) {
   } catch {
     return null;
   }
+}
+
+function lockOwnedDirs(lock) {
+  return new Set(
+    lock && Array.isArray(lock.skills)
+      ? lock.skills.map((s) => s && s.dir).filter((dir) => typeof dir === "string")
+      : [],
+  );
+}
+
+function safeLockedDirName(dirName) {
+  return typeof dirName === "string"
+    && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(dirName)
+    && path.basename(dirName) === dirName;
+}
+
+function validateOwnedDirs(lock, lockPath, prefix) {
+  const owned = lockOwnedDirs(lock);
+  for (const dirName of owned) {
+    if (!safeLockedDirName(dirName)) {
+      throw new Error(`refusing unsafe directory name in ownership lockfile ${lockPath}: ${JSON.stringify(dirName)}`);
+    }
+    if (!dirName.startsWith(prefix)) {
+      throw new Error(
+        `refusing directory outside recorded prefix "${prefix}" in ownership lockfile ${lockPath}: ${JSON.stringify(dirName)}`,
+      );
+    }
+  }
+  return owned;
+}
+
+function atomicWriteText(file, content) {
+  const temp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.${++tempFileCounter}.tmp`);
+  let fd;
+  try {
+    fd = fs.openSync(temp, "wx", 0o600);
+    fs.writeFileSync(fd, content, "utf8");
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = undefined;
+    fs.renameSync(temp, file);
+  } catch (error) {
+    if (fd !== undefined) {
+      try { fs.closeSync(fd); } catch { /* best-effort cleanup */ }
+    }
+    fs.rmSync(temp, { force: true });
+    throw error;
+  }
+}
+
+function installPlan(plan, { prefix, stamp, version }) {
+  fs.mkdirSync(plan.root, { recursive: true });
+  const transactionRoot = fs.mkdtempSync(path.join(plan.root, ".apa-skills-transaction-"));
+  const stagedRoot = path.join(transactionRoot, "staged");
+  const backupRoot = path.join(transactionRoot, "backup");
+  const touched = [];
+  try {
+    for (const skill of plan.installed) {
+      copyDir(skill.source, path.join(stagedRoot, skill.dir));
+    }
+
+    const currentByDir = new Map(plan.installed.map(skill => [skill.dir, skill]));
+    for (const dirName of [...currentByDir.keys(), ...plan.staleOwned]) {
+      const skill = currentByDir.get(dirName);
+      const dest = path.join(plan.root, dirName);
+      const backup = path.join(backupRoot, dirName);
+      const operation = { dest, backup, hadOld: false, installed: false };
+      touched.push(operation);
+      if (fs.existsSync(dest)) {
+        fs.mkdirSync(path.dirname(backup), { recursive: true });
+        fs.renameSync(dest, backup);
+        operation.hadOld = true;
+      }
+      if (skill) {
+        fs.renameSync(path.join(stagedRoot, dirName), dest);
+        operation.installed = true;
+      }
+    }
+
+    const lock = {
+      version,
+      prefix,
+      installedAt: stamp,
+      skills: plan.installed.map((s) => ({ name: s.name, dir: s.dir })),
+    };
+    atomicWriteText(plan.lockPath, JSON.stringify(lock, null, 2) + "\n");
+  } catch (error) {
+    for (const operation of touched.reverse()) {
+      if (operation.installed && fs.existsSync(operation.dest)) rmIfExists(operation.dest);
+      if (operation.hadOld && fs.existsSync(operation.backup)) {
+        fs.renameSync(operation.backup, operation.dest);
+      }
+    }
+    rmIfExists(transactionRoot);
+    throw error;
+  }
+  rmIfExists(transactionRoot);
 }
 
 /**
@@ -56,39 +159,55 @@ export function install({
   version = "0.0.0",
 }) {
   const skills = discoverSkills(skillsDir);
-  const hostSummaries = [];
-
-  for (const host of hosts) {
+  const plans = hosts.map((host) => {
     const root = path.join(home, host.skillRoot);
-    const installed = [];
-
-    for (const skill of skills) {
-      const dirName = `${prefix}${skill.name}`;
-      const dest = path.join(root, dirName);
-      if (!dryRun) {
-        rmIfExists(dest);
-        copyDir(skill.dir, dest);
-      }
-      installed.push({ name: skill.name, dir: dirName, dest });
-    }
-
     const lockPath = path.join(root, LOCK_FILE);
-    if (!dryRun) {
-      fs.mkdirSync(root, { recursive: true });
-      const lock = {
-        version,
-        prefix,
-        installedAt: stamp,
-        skills: installed.map((s) => ({ name: s.name, dir: s.dir })),
-      };
-      fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + "\n");
+    const lockExists = fs.existsSync(lockPath);
+    const lock = readLock(lockPath);
+    if (lockExists && !lock) {
+      throw new Error(`refusing to install over unreadable ownership lockfile: ${lockPath}`);
     }
+    if (lock && lock.prefix !== prefix) {
+      throw new Error(
+        `refusing to replace an installation owned by prefix "${lock.prefix}" with "${prefix}" at ${root}; uninstall it explicitly first`,
+      );
+    }
+    const owned = validateOwnedDirs(lock, lockPath, prefix);
+    const installed = skills.map((skill) => {
+      const dirName = prefixedDirName(skill.name, prefix);
+      if (!safeLockedDirName(dirName)) {
+        throw new Error(`refusing unsafe installed skill directory name: ${JSON.stringify(dirName)}`);
+      }
+      const dest = path.join(root, dirName);
+      return { name: skill.name, dir: dirName, dest, source: skill.dir };
+    });
+    const installedDirs = new Set();
+    for (const skill of installed) {
+      if (installedDirs.has(skill.dir)) {
+        throw new Error(`duplicate installed skill directory name: ${skill.dir}`);
+      }
+      installedDirs.add(skill.dir);
+    }
+    const conflicts = installed.filter((skill) => fs.existsSync(skill.dest) && !owned.has(skill.dir));
+    if (conflicts.length) {
+      throw new Error(
+        `refusing to overwrite skill director${conflicts.length === 1 ? "y" : "ies"} not owned by ${LOCK_FILE}: ${conflicts.map((s) => s.dest).join(", ")}`,
+      );
+    }
+    const staleOwned = [...owned].filter(dirName => !installedDirs.has(dirName));
+    return { host, root, lockPath, installed, staleOwned };
+  });
+
+  const hostSummaries = [];
+  for (const plan of plans) {
+    if (!dryRun) installPlan(plan, { prefix, stamp, version });
 
     hostSummaries.push({
-      host: host.id,
-      root,
-      lockPath,
-      installed,
+      host: plan.host.id,
+      root: plan.root,
+      lockPath: plan.lockPath,
+      installed: plan.installed.map(({ source, ...skill }) => skill),
+      staleOwned: plan.staleOwned.map(dir => ({ dir, dest: path.join(plan.root, dir) })),
     });
   }
 
@@ -98,9 +217,8 @@ export function install({
 /**
  * uninstall({ home, hosts, prefix='apa-', dryRun })
  *
- * Removes the <prefix>* skill dirs recorded in the lockfile (and, defensively,
- * any <prefix>* dirs present on disk) plus the lockfile itself. Returns a
- * summary of what was removed.
+ * Removes only skill dirs recorded in the ownership lockfile, plus that lockfile.
+ * Prefix-shaped directories not owned by this installer are deliberately preserved.
  */
 export function uninstall({ home, hosts, prefix = "apa-", dryRun = false }) {
   const hostSummaries = [];
@@ -110,19 +228,19 @@ export function uninstall({ home, hosts, prefix = "apa-", dryRun = false }) {
     const lockPath = path.join(root, LOCK_FILE);
     const removed = [];
 
-    // Collect dirs to remove: those recorded in the lockfile, plus any
-    // <prefix>* dirs found on disk (set-union, no duplicates).
     const targets = new Set();
+    const lockExists = fs.existsSync(lockPath);
     const lock = readLock(lockPath);
-    if (lock && Array.isArray(lock.skills)) {
-      for (const s of lock.skills) if (s && s.dir) targets.add(s.dir);
+    if (lockExists && !lock) {
+      throw new Error(`refusing to uninstall from unreadable ownership lockfile: ${lockPath}`);
     }
-    if (fs.existsSync(root)) {
-      for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-        if (entry.isDirectory() && entry.name.startsWith(prefix)) {
-          targets.add(entry.name);
-        }
-      }
+    if (lock && lock.prefix !== prefix) {
+      throw new Error(
+        `ownership lockfile uses prefix "${lock.prefix}", not "${prefix}", at ${root}; pass the recorded prefix explicitly`,
+      );
+    }
+    for (const dirName of validateOwnedDirs(lock, lockPath, prefix)) {
+      targets.add(dirName);
     }
 
     for (const dirName of targets) {

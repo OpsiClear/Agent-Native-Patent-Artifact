@@ -43,19 +43,23 @@ export async function search(query, opts = {}) {
   try {
     res = await guardedFetch(url, { headers: { Accept: "application/atom+xml" } }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`arxiv: network error - ${messageOf(err)}`] };
+    return failure(parameters, `arxiv: network error - ${messageOf(err)}`);
   }
-  if (!res.ok) return { records: [], rawCount: 0, parameters, notes: [`arxiv: HTTP ${res.status} ${res.statusText || ""}`.trim()] };
+  if (!res.ok) return failure(parameters, `arxiv: HTTP ${res.status} ${res.statusText || ""}`.trim());
 
   let xml;
   try {
     xml = await readTextCapped(res, opts);
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`arxiv: failed to read XML - ${messageOf(err)}`] };
+    return failure(parameters, `arxiv: failed to read XML - ${messageOf(err)}`);
   }
 
-  const entries = [...String(xml || "").matchAll(/<entry\b[^>]*>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
-  const total = Number((String(xml).match(/<opensearch:totalResults[^>]*>(\d+)<\/opensearch:totalResults>/) || [])[1] || entries.length);
+  const xmlText = String(xml || "");
+  if (!/<feed\b[^>]*>/i.test(xmlText) || !/<\/feed\s*>/i.test(xmlText)) {
+    return failure(parameters, "arxiv: malformed XML response - expected an Atom feed");
+  }
+  const entries = [...xmlText.matchAll(/<entry\b[^>]*>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
+  const total = Number((xmlText.match(/<opensearch:totalResults[^>]*>(\d+)<\/opensearch:totalResults>/) || [])[1] || entries.length);
   const records = entries.map(mapEntry).filter((r) => r.docNumber || r.title);
   const notes = [
     "arxiv: preprint metadata candidate source only - verify version, publication date/status, and relied-on passages before reliance",
@@ -105,3 +109,4 @@ function oneLine(text) { return String(text == null ? "" : text).replace(/[\r\n\
 function arxivIdOf(url) { return (String(url || "").match(/\/abs\/([^/?#]+)/) || [])[1] || ""; }
 function dateOnly(s) { return String(s || "").slice(0, 10) || undefined; }
 function messageOf(err) { return err && err.message ? err.message : String(err); }
+function failure(parameters, error) { return { records: [], rawCount: 0, parameters, error, notes: [error] }; }

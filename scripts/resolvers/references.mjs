@@ -124,7 +124,13 @@ function drawingStandardsReference() {
     "",
     "- Keep reference numerals, lead lines, figure captions, and text legible after PDF export.",
     "- Preserve numeral parity when upgrading SVGs; visual cleanup must not add unsupported matter.",
-    "- Run deterministic drawing QA and inspect rendered output before assembly review.",
+    "- Run `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88` before assembly review.",
+    "- For generated SVG sets, compose drawing-sheet HTML with `sheet-html --compact` when short views can share a page without crowding, then run `sheet-review --compact` to check page utilization, compact-sheet scale consistency, global text-size consistency, and minimum rendered text size.",
+    "- Do not accept compact sheets that create mixed-scale views, cramped labels, narrow label padding, numerals touching borders, or arrows/lead lines crossing text.",
+    "- When printing HTML sheets to PDF with headless Chrome, suppress browser print furniture. Reject PDF exports that include browser print headers or footers such as dates, document titles,",
+    "  file URLs, or browser-generated page counters; re-export with header/footer suppression before judging final scale.",
+    "- Route rough, imported, or AI-generated SVGs through `/apa-svg-upgrader` before final drawing-quality review, and preserve numeral parity and supported visual structure in the upgrade report.",
+    "- Treat tldraw snapshots as editable sketch/import artifacts only. Export vector SVG, normalize it, run SVG upgrade/parity checks, then run drawing-quality and sheet-review before filing-polish review.",
     "",
   ].join("\n");
 }

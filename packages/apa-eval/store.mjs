@@ -5,7 +5,7 @@
  *
  *   recordRun(dir, run, timestamp)  - write a timestamped JSON run record (timestamp is PASSED IN; this
  *                                     stays a pure function - the CLI passes new Date().toISOString()).
- *   latestRun(dir)                  - read back the most recent run record (by filename timestamp).
+ *   latestRun(dir, { matter })      - read back the most recent matching run record.
  *   compare(prev, cur)              - { regressions, deltas } per dimension.
  *   budgetGate(prev, cur)           - { ok, reasons } : FAIL on a claim-quality score drop or >2x cost growth.
  *
@@ -48,15 +48,26 @@ function listRunFiles(dir) {
     .sort();
 }
 
-/** Read the most recent run record, or null if none exists. */
-export function latestRun(dir) {
+/**
+ * Read the most recent run record, optionally restricted to one matter.
+ *
+ * Eval stores can contain several worked examples. Comparing whichever record happened to run last
+ * against a different matter creates a meaningless quality/cost baseline, so callers that know the
+ * matter should always provide it.
+ */
+export function latestRun(dir, { matter } = {}) {
   const files = listRunFiles(dir);
   if (files.length === 0) return null;
-  try {
-    return JSON.parse(readFileSync(join(dir, files[files.length - 1]), "utf8"));
-  } catch {
-    return null;
+  for (let i = files.length - 1; i >= 0; i--) {
+    try {
+      const run = JSON.parse(readFileSync(join(dir, files[i]), "utf8"));
+      if (matter !== undefined && run.matter !== matter) continue;
+      return run;
+    } catch {
+      // Skip a corrupt record and continue looking for the newest usable baseline.
+    }
   }
+  return null;
 }
 
 /** Read all run records oldest-first (handy for trend inspection / tests). */

@@ -67,6 +67,9 @@ pipeline:
     - apa-rigor
     - apa-assemble
 optional:
+  - apa-review-form
+  - apa-tldraw-drawings
+  - apa-svg-upgrader
   - apa-office-action
   - apa-license
   - apa-public-patent-benchmark

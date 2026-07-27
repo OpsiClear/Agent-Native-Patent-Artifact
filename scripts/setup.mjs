@@ -32,13 +32,17 @@ function nextBackupPath(dst) {
   return candidate;
 }
 
+function prefixedDirName(name, prefix = "apa-") {
+  return String(name || "").startsWith(prefix) ? String(name) : `${prefix}${name}`;
+}
+
 function install(hosts, { dryRun = false, backup = true } = {}) {
   const skillsDir = join(ROOT, "skills");
   const names = readdirSync(skillsDir).filter((n) => existsSync(join(skillsDir, n, "SKILL.md")));
   for (const h of hosts) {
     if (!dryRun) mkdirSync(h.abs, { recursive: true });
     for (const name of names) {
-      const dst = join(h.abs, `apa-${name}`);
+      const dst = join(h.abs, prefixedDirName(name));
       if (dryRun) {
         console.log(`  would install ${name} -> ${dst}`);
         continue;

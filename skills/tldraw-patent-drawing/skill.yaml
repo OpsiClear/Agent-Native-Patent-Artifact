@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-tldraw-drawings
+kind: support
+phase: drafting
+command: /apa-tldraw-drawings
+version: "0.1"
+description: "Use tldraw as a controlled patent drawing sketch layer before SVG normalization."
+inputs: [evidence/drawings/tldraw/]
+outputs: [evidence/drawings/tldraw/tldraw_comparison.md]
+upstream: [apa-figures]
+downstream: [apa-svg-upgrader, apa-drawing-quality]
+gates_after: [no-foreignobject, numeral-parity, pdf-visual-qa]
+human_checkpoints: [tldraw-export-review, drawing-change-review]
+domain_hooks: [figures.review]
+external_sinks: [{ tool: apa-safe-npx, required: true, condition: "installing or invoking tldraw-related packages through npx" }]
+safety: { legal_conclusion: false, may_file: false }

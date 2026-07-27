@@ -5,7 +5,7 @@
   "width": 1280,
   "height": 760,
   "parts": [
-    { "numeral": "100", "label": "processing system", "shape": "box", "x": 70, "y": 70, "w": 170, "h": 80 },
+    { "numeral": "100", "label": "processing system", "shape": "box", "x": 70, "y": 70, "w": 190, "h": 80 },
     { "numeral": "102", "label": "input interface", "shape": "box", "x": 70, "y": 250, "w": 180, "h": 86 },
     { "numeral": "104", "label": "parser", "shape": "box", "x": 310, "y": 250, "w": 160, "h": 86 },
     { "numeral": "106", "label": "normalizer", "shape": "box", "x": 530, "y": 250, "w": 180, "h": 86 },

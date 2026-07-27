@@ -126,7 +126,33 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
       }
       try {
         const mod = await loadSource(id);
-        const { records, rawCount, notes, parameters } = await mod.search(step.query, opts);
+        const sourceResult = await mod.search(step.query, opts);
+        const {
+          records = [],
+          rawCount = 0,
+          notes = [],
+          parameters,
+          error: sourceError,
+        } = sourceResult || {};
+        if (sourceError) {
+          perSource.push({
+            id,
+            strategy_id: step.id,
+            count: 0,
+            rawCount,
+            accessMode: d?.accessMode || mod.meta?.accessMode || "unknown",
+            status: d?.status || "error",
+            source_health: health,
+            parameters: {
+              ...(parameters || { source_id: id, query: compactQueryForAudit(step.query) }),
+              strategy_id: step.id,
+              strategy_label: step.label,
+            },
+            notes,
+            error: String(sourceError),
+          });
+          continue;
+        }
         all = all.concat((records || []).map((r) => ({ ...r, searchStrategy: step.id })));
         perSource.push({
           id,
@@ -160,6 +186,7 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
   };
   const dedupe = dedupeRefsDetailed(citationExpanded.records);
   const ranked = rankRefs(dedupe.deduped, query);
+  const sourceExecution = summarizeSourceExecution(ids, perSource);
   return {
     blocked: false,
     verdict,
@@ -170,8 +197,35 @@ export async function runSearch({ query, sources, opts = {}, confirmMedium = fal
     dedupe: { clusters: dedupe.clusters, excludedResults: dedupe.excludedResults },
     ranked,
     perSource,
+    sourceExecution,
+    allAutomatedSourcesFailed: sourceExecution.all_automated_sources_failed,
+    allRequestedSourcesFailed: sourceExecution.all_requested_sources_failed,
     searchPlan: planSummary(plan),
     query,
+  };
+}
+
+function summarizeSourceExecution(ids, perSource) {
+  const requested = [...new Set((ids || []).map(String))];
+  const successful = new Set(
+    perSource.filter((s) => !s.skipped && !s.error).map((s) => s.id),
+  );
+  const errored = new Set(perSource.filter((s) => Boolean(s.error)).map((s) => s.id));
+  const skipped = new Set(perSource.filter((s) => s.skipped).map((s) => s.id));
+  const automated = requested.filter((id) => descriptor(id)?.automationPolicy === "automated");
+  const runnableAttempts = perSource.filter((s) => !s.skipped);
+  return {
+    requested_source_ids: requested,
+    successful_source_ids: requested.filter((id) => successful.has(id)),
+    failed_source_ids: requested.filter((id) => errored.has(id) && !successful.has(id)),
+    skipped_source_ids: requested.filter((id) => skipped.has(id) && !successful.has(id)),
+    automated_source_ids: automated,
+    all_automated_sources_failed:
+      automated.length > 0 && automated.every((id) => !successful.has(id)),
+    all_requested_sources_failed:
+      runnableAttempts.length > 0 &&
+      successful.size === 0 &&
+      runnableAttempts.every((s) => Boolean(s.error)),
   };
 }
 

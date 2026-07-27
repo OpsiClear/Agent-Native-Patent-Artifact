@@ -218,33 +218,37 @@ export async function search(query, opts = {}) {
       body: JSON.stringify(body),
     }, { ...opts, ...rateFetchOptions(meta.id, opts) });
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`patentsview: network error - ${err && err.message ? err.message : err}`] };
+    return sourceFailure(parameters, `patentsview: network error - ${err && err.message ? err.message : err}`);
   }
 
   if (!res.ok) {
-    // Surface common cases (auth, rate limit) without throwing.
+    let error;
     if (res.status === 429) {
-      notes.push("patentsview: rate limited (HTTP 429) - the API allows ~45 requests/minute; back off and retry");
+      error = "patentsview: rate limited (HTTP 429) - the API allows ~45 requests/minute; back off and retry";
     } else if (res.status === 403 || res.status === 401) {
-      notes.push(`patentsview: auth failed (HTTP ${res.status}) - check PATENTSVIEW_API_KEY / X-Api-Key`);
+      error = `patentsview: auth failed (HTTP ${res.status}) - check PATENTSVIEW_API_KEY / X-Api-Key`;
     } else {
-      notes.push(`patentsview: HTTP ${res.status} ${res.statusText || ""}`.trim());
+      error = `patentsview: HTTP ${res.status} ${res.statusText || ""}`.trim();
     }
-    return { records: [], rawCount: 0, parameters, notes };
+    return sourceFailure(parameters, error);
   }
 
   let json;
   try {
     json = await readJsonCapped(res, opts);
   } catch (err) {
-    return { records: [], rawCount: 0, parameters, notes: [`patentsview: failed to parse JSON - ${err && err.message ? err.message : err}`] };
+    return sourceFailure(parameters, `patentsview: failed to parse JSON - ${err && err.message ? err.message : err}`);
   }
 
   if (json && json.error) {
-    return { records: [], rawCount: 0, parameters, notes: [`patentsview: API reported error - ${JSON.stringify(json.error)}`] };
+    const code = safeApiErrorCode(json.error);
+    return sourceFailure(parameters, `patentsview: API reported error${code ? ` (${code})` : ""}`);
+  }
+  if (!json || typeof json !== "object" || !Array.isArray(json.patents)) {
+    return sourceFailure(parameters, "patentsview: malformed JSON response - expected a patents array");
   }
 
-  const patents = Array.isArray(json && json.patents) ? json.patents : [];
+  const patents = json.patents;
   const records = patents.map(mapPatent).filter((r) => r.docNumber);
 
   // total_hits is the full match count; count is what was returned in this page.
@@ -259,4 +263,18 @@ export async function search(query, opts = {}) {
   }
 
   return { records, rawCount, parameters, notes };
+}
+
+function sourceFailure(parameters, error) {
+  return { records: [], rawCount: 0, parameters, error, notes: [error] };
+}
+
+function safeApiErrorCode(value) {
+  const candidate = typeof value === "string"
+    ? value
+    : value && typeof value === "object"
+      ? value.code ?? value.status ?? value.type
+      : "";
+  const normalized = String(candidate || "").trim();
+  return /^[A-Za-z0-9_.-]{1,64}$/.test(normalized) ? normalized : "";
 }

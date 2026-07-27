@@ -17,6 +17,7 @@ import { buildAssemblyInputFingerprint } from "../packages/apa-assemble/input-fi
 import { buildLegend } from "../packages/apa-figure/numerals.mjs";
 import { scaffoldReport } from "../packages/apa-rigor/scaffold.mjs";
 import { validateReport } from "../packages/apa-rigor/verdict.mjs";
+import { statusForMatter } from "../packages/apa-run/runner.mjs";
 import { validateMatter } from "../packages/apa-validate/validate.mjs";
 import { build as buildViewerManifest } from "../packages/apa-viewer/build_manifest.mjs";
 
@@ -30,7 +31,11 @@ function normalizedGoNoGo(value) {
   return String(value || "").startsWith("NO-GO") ? "NO-GO" : "GO";
 }
 
-export function verifyExternalMatter(matterDir, { now = new Date().toISOString() } = {}) {
+export function verifyExternalMatter(matterDir, {
+  now = new Date().toISOString(),
+  domains = [],
+  supports = [],
+} = {}) {
   if (!matterDir || !existsSync(join(matterDir, "PATENT.md"))) {
     throw new Error("external matter directory is missing or has no PATENT.md");
   }
@@ -47,6 +52,7 @@ export function verifyExternalMatter(matterDir, { now = new Date().toISOString()
     now: evaluatedAt.toISOString(),
   });
   const fingerprint = buildAssemblyInputFingerprint(matterDir);
+  const runStatus = statusForMatter({ matter: matterDir, domains, supports });
 
   let savedRigor = { present: false };
   const rigorPath = join(matterDir, "patent_rigor_report.json");
@@ -124,16 +130,29 @@ export function verifyExternalMatter(matterDir, { now = new Date().toISOString()
       unsafe_linked_input_paths: fingerprint.unsafe_paths.length,
       aggregate_only: true,
     },
+    orchestration: {
+      schema: runStatus.schema,
+      runlog_ok: runStatus.runlog_ok,
+      runlog_error_count: runStatus.runlog_errors.length,
+      steps: runStatus.steps.length,
+      completed: runStatus.steps.filter((step) => step.completion.status === "completed").length,
+      pending: runStatus.steps.filter((step) => step.completion.status === "pending").length,
+      stale: runStatus.steps.filter((step) => step.completion.status === "stale").length,
+      failed: runStatus.steps.filter((step) => step.completion.status === "failed").length,
+      pending_required_checkpoints: runStatus.pending_checkpoints.length,
+    },
   };
 }
 
 function parseArgs(argv) {
-  const args = { expect: "any", json: false, require: false };
+  const args = { expect: "any", json: false, require: false, domains: [], supports: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--matter") args.matter = argv[++i];
     else if (arg === "--now") args.now = argv[++i];
     else if (arg === "--expect") args.expect = String(argv[++i] || "").toLowerCase();
+    else if (arg === "--domain") args.domains.push(String(argv[++i] || ""));
+    else if (arg === "--support") args.supports.push(String(argv[++i] || ""));
     else if (arg === "--json") args.json = true;
     else if (arg === "--require") args.require = true;
     else if (arg === "-h" || arg === "--help") args.help = true;
@@ -153,6 +172,7 @@ function humanSummary(result, expectation, ok) {
     `  rigor: Level-1 ${result.rigor.level1_passed ? "passed" : "failed"}; P4=${result.rigor.p4_score}; valid dossiers=${result.rigor.valid_dossiers}`,
     `  IDS: ${result.ids.references} reference(s), ${result.ids.unverified} unverified`,
     `  filing: ${result.filing.go_no_go}; blocked gates=${result.filing.blocked_gates.join(", ") || "none"}`,
+    `  orchestration: ${result.orchestration.steps} step(s); ${result.orchestration.pending} pending; ${result.orchestration.stale} stale`,
     `  privacy: aggregate-only; ${result.privacy.canonical_input_files} canonical input file(s); unsafe links=${result.privacy.unsafe_linked_input_paths}`,
   ];
   return lines.join("\n");
@@ -167,7 +187,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
     return 2;
   }
   if (args.help) {
-    console.log("usage: node scripts/verify-external-matter.mjs [--matter <dir>] [--now <iso>] [--expect any|go|no-go] [--json] [--require]");
+    console.log("usage: node scripts/verify-external-matter.mjs [--matter <dir>] [--now <iso>] [--expect any|go|no-go] [--domain <id>] [--support <id>] [--json] [--require]");
     console.log("       path may instead be supplied in APA_EXTERNAL_MATTER; output is aggregate-only and read-only");
     return 0;
   }
@@ -185,7 +205,11 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   try {
-    const result = verifyExternalMatter(matter, { now: args.now || new Date().toISOString() });
+    const result = verifyExternalMatter(matter, {
+      now: args.now || new Date().toISOString(),
+      domains: args.domains.filter(Boolean),
+      supports: args.supports.filter(Boolean),
+    });
     const expected = args.expect === "any" ? null : args.expect === "go" ? "GO" : "NO-GO";
     const expectationMatches = expected === null || result.filing.go_no_go === expected;
     const privacySafe = result.privacy.unsafe_linked_input_paths === 0;

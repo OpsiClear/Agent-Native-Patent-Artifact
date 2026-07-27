@@ -36,6 +36,10 @@ test("external verifier is read-only and aggregate-only", () => {
       "--matter", matter,
       "--now", "2026-07-26T12:00:00.000Z",
       "--expect", "no-go",
+      "--domain", "software",
+      "--support", "apa-review-form",
+      "--support", "apa-tldraw-drawings",
+      "--support", "apa-svg-upgrader",
       "--json",
     ], { cwd: REPO, encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -47,6 +51,9 @@ test("external verifier is read-only and aggregate-only", () => {
     assert.equal(parsed.filing.go_no_go, "NO-GO");
     assert.equal(parsed.privacy.aggregate_only, true);
     assert.equal(parsed.privacy.unsafe_linked_input_paths, 0);
+    assert.equal(parsed.orchestration.schema, "apa-run-status-v2");
+    assert.ok(parsed.orchestration.steps > 0);
+    assert.equal(parsed.orchestration.runlog_error_count, 0);
   } finally {
     rmSync(matter, { recursive: true, force: true });
   }

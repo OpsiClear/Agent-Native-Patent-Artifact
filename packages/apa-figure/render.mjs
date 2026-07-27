@@ -32,6 +32,27 @@ const LABEL_SIZE = 16; // part label size
 const CAPTION_SIZE = 24;
 const TITLE_SIZE = 16;
 
+function style(figDef = {}) {
+  const scale = Number.isFinite(Number(figDef.styleScale ?? figDef.fontScale))
+    ? Math.max(0.25, Number(figDef.styleScale ?? figDef.fontScale))
+    : 1;
+  return {
+    scale,
+    strokeW: STROKE_W * scale,
+    leadW: LEAD_W * scale,
+    numeralSize: NUMERAL_SIZE * scale,
+    labelSize: LABEL_SIZE * scale,
+    captionSize: CAPTION_SIZE * scale,
+    titleSize: TITLE_SIZE * scale,
+    markerSize: 12 * scale,
+    markerRefX: 9 * scale,
+    markerRefY: 5 * scale,
+    markerPointX: 10 * scale,
+    markerPointY: 5 * scale,
+    markerPointY2: 10 * scale,
+  };
+}
+
 // -------------------------------------------------------------------------------------------------
 // Small helpers
 // -------------------------------------------------------------------------------------------------
@@ -122,36 +143,80 @@ function edgePoint(p, target) {
 // Primitive emitters (return SVG fragment strings)
 // -------------------------------------------------------------------------------------------------
 
-function shapeEl(p, idBase) {
+function shapeEl(p, idBase, s) {
   const c = center(p);
   if (p.shape === "ellipse") {
     return (
       `  <ellipse id="${idBase}-shape" cx="${n(c.x)}" cy="${n(c.y)}" ` +
-      `rx="${n(p.w / 2)}" ry="${n(p.h / 2)}" fill="${FILL}" stroke="${STROKE}" stroke-width="${STROKE_W}"/>`
+      `rx="${n(p.w / 2)}" ry="${n(p.h / 2)}" fill="${FILL}" stroke="${STROKE}" stroke-width="${n(s.strokeW)}"/>`
     );
   }
   // default: box (rounded a touch is still acceptable line-art; keep square for 1.84 simplicity)
   return (
     `  <rect id="${idBase}-shape" x="${n(p.x)}" y="${n(p.y)}" width="${n(p.w)}" height="${n(p.h)}" ` +
-    `fill="${FILL}" stroke="${STROKE}" stroke-width="${STROKE_W}"/>`
+    `fill="${FILL}" stroke="${STROKE}" stroke-width="${n(s.strokeW)}"/>`
   );
 }
 
 /** Part label - drawn inside the shape near its center. */
-function labelEl(p, idBase) {
+function labelEl(p, idBase, s) {
   if (!p.label) return "";
   const c = center(p);
-  const maxChars = Math.max(10, Math.floor((Number(p.w) || 120) / 9));
+  const labelPoint = {
+    x: Number.isFinite(p.labelX) ? p.labelX : c.x,
+    y: Number.isFinite(p.labelY) ? p.labelY : c.y,
+  };
+  const maxChars = Math.max(8, Math.floor((Number(p.w) || 120) / Math.max(8, s.labelSize * 0.58)));
   const lines = wrapText(p.label, maxChars, 3);
-  const lineHeight = LABEL_SIZE * 1.18;
-  const startY = c.y - ((lines.length - 1) * lineHeight) / 2;
+  const lineHeight = s.labelSize * 1.18;
+  const startY = labelPoint.y - ((lines.length - 1) * lineHeight) / 2;
   const tspans = lines
-    .map((line, i) => `<tspan x="${n(c.x)}" y="${n(startY + i * lineHeight)}">${esc(line)}</tspan>`)
+    .map((line, i) => `<tspan x="${n(labelPoint.x)}" y="${n(startY + i * lineHeight)}">${esc(line)}</tspan>`)
     .join("");
   return (
-    `  <text id="${idBase}-label" font-family="${FONT}" font-size="${LABEL_SIZE}" ` +
+    `  <text id="${idBase}-label" font-family="${FONT}" font-size="${n(s.labelSize)}" ` +
     `fill="${STROKE}" text-anchor="middle" dominant-baseline="middle">${tspans}</text>`
   );
+}
+
+function straightLeadEl(idBase, start, end, s) {
+  return (
+    `  <line id="${idBase}-lead" x1="${n(start.x)}" y1="${n(start.y)}" ` +
+    `x2="${n(end.x)}" y2="${n(end.y)}" stroke="${STROKE}" stroke-width="${n(s.leadW)}"/>`
+  );
+}
+
+function curvedLeadEl(idBase, start, end, partCenter, s) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  // Keep patent lead lines restrained: a shallow cubic gives the familiar
+  // hand-drafted callout feel without becoming a decorative squiggle or
+  // drifting into nearby content.
+  const amp = Math.min(8 * s.scale, Math.max(3.25 * s.scale, len * 0.12));
+  const mid = { x: start.x + dx * 0.5, y: start.y + dy * 0.5 };
+  const sideA = { x: mid.x + nx * amp, y: mid.y + ny * amp };
+  const sideB = { x: mid.x - nx * amp, y: mid.y - ny * amp };
+  const dA = Math.hypot(sideA.x - partCenter.x, sideA.y - partCenter.y);
+  const dB = Math.hypot(sideB.x - partCenter.x, sideB.y - partCenter.y);
+  const sign = dA >= dB ? 1 : -1;
+  const c1 = { x: start.x + dx * 0.33 + nx * amp * sign, y: start.y + dy * 0.33 + ny * amp * sign };
+  const c2 = { x: start.x + dx * 0.67 + nx * amp * sign, y: start.y + dy * 0.67 + ny * amp * sign };
+  return (
+    `  <path id="${idBase}-lead" d="M ${n(start.x)} ${n(start.y)} ` +
+    `C ${n(c1.x)} ${n(c1.y)} ${n(c2.x)} ${n(c2.y)} ${n(end.x)} ${n(end.y)}" ` +
+    `fill="none" stroke="${STROKE}" stroke-width="${n(s.leadW)}"/>`
+  );
+}
+
+function leadEl(p, idBase, start, end, partCenter, s) {
+  if (p.leadStyle === "straight") return straightLeadEl(idBase, start, end, s);
+  if (p.leadStyle === "curved") return curvedLeadEl(idBase, start, end, partCenter, s);
+  const len = Math.hypot(end.x - start.x, end.y - start.y) || 1;
+  if (len <= 8 * s.scale) return straightLeadEl(idBase, start, end, s);
+  return curvedLeadEl(idBase, start, end, partCenter, s);
 }
 
 /**
@@ -159,7 +224,7 @@ function labelEl(p, idBase) {
  * from the figure center) and a thin lead line runs from the numeral toward the part
  * edge - the 1.84 lead-line convention.
  */
-function numeralEl(p, idBase, figCenter) {
+function numeralEl(p, idBase, figCenter, s) {
   const c = center(p);
   // Direction from the figure center outward by default, so numerals sit on the outside.
   // `numX`/`numY` lets a draftsperson override automatic placement for crowded figures.
@@ -182,33 +247,39 @@ function numeralEl(p, idBase, figCenter) {
   const luy = ndy / nlen;
   // Lead line: from a point just shy of the numeral to the part edge.
   const leadStart = { x: np.x - lux * 14, y: np.y - luy * 14 };
-  const lead =
-    `  <line id="${idBase}-lead" x1="${n(leadStart.x)}" y1="${n(leadStart.y)}" ` +
-    `x2="${n(edge.x)}" y2="${n(edge.y)}" stroke="${STROKE}" stroke-width="${LEAD_W}"/>`;
+  const lead = leadEl(p, idBase, leadStart, edge, c, s);
   const text =
     `  <text id="${idBase}-num" x="${n(np.x)}" y="${n(np.y)}" font-family="${FONT}" ` +
-    `font-size="${NUMERAL_SIZE}" fill="${STROKE}" text-anchor="middle" dominant-baseline="middle">` +
+    `font-size="${n(s.numeralSize)}" fill="${STROKE}" text-anchor="middle" dominant-baseline="middle">` +
     `${esc(p.numeral)}</text>`;
   return `${lead}\n${text}`;
 }
 
 /** A flow arrow between two part centers, clipped to the part edges, with an arrowhead marker. */
-function flowArrowEl(from, to, label, idBase, markerId) {
+function flowArrowEl(from, to, arrow, idBase, markerId, s) {
+  const label = arrow?.label;
   const cFrom = center(from);
   const cTo = center(to);
-  const start = edgePoint(from, cTo);
-  const end = edgePoint(to, cFrom);
-  const line =
-    `  <line id="${idBase}-line" x1="${n(start.x)}" y1="${n(start.y)}" ` +
-    `x2="${n(end.x)}" y2="${n(end.y)}" stroke="${STROKE}" stroke-width="${STROKE_W}" ` +
-    `marker-end="url(#${markerId})"/>`;
+  const routePoints = Array.isArray(arrow?.points) ? arrow.points.filter((p) => Number.isFinite(p?.x) && Number.isFinite(p?.y)) : [];
+  const startTarget = routePoints[0] || cTo;
+  const endTarget = routePoints.length ? routePoints[routePoints.length - 1] : cFrom;
+  const start = edgePoint(from, startTarget);
+  const end = edgePoint(to, endTarget);
+  const linePoints = [start, ...routePoints, end];
+  const line = routePoints.length
+    ? `  <polyline id="${idBase}-line" points="${linePoints.map((p) => `${n(p.x)},${n(p.y)}`).join(" ")}" ` +
+      `fill="none" stroke="${STROKE}" stroke-width="${n(s.strokeW)}" marker-end="url(#${markerId})"/>`
+    : `  <line id="${idBase}-line" x1="${n(start.x)}" y1="${n(start.y)}" ` +
+      `x2="${n(end.x)}" y2="${n(end.y)}" stroke="${STROKE}" stroke-width="${n(s.strokeW)}" ` +
+      `marker-end="url(#${markerId})"/>`;
   let text = "";
   if (label) {
-    const mx = (start.x + end.x) / 2;
-    const my = (start.y + end.y) / 2 - 6;
+    const mid = linePoints[Math.floor(linePoints.length / 2)];
+    const mx = Number.isFinite(arrow.labelX) ? arrow.labelX : routePoints.length ? mid.x : (start.x + end.x) / 2;
+    const my = Number.isFinite(arrow.labelY) ? arrow.labelY : routePoints.length ? mid.y - 8 : (start.y + end.y) / 2 - 6;
     text =
       `\n  <text id="${idBase}-label" x="${n(mx)}" y="${n(my)}" font-family="${FONT}" ` +
-      `font-size="${LABEL_SIZE}" fill="${STROKE}" text-anchor="middle">${esc(label)}</text>`;
+      `font-size="${n(s.labelSize)}" fill="${STROKE}" text-anchor="middle">${esc(label)}</text>`;
   }
   return line + text;
 }
@@ -217,7 +288,7 @@ function flowArrowEl(from, to, label, idBase, markerId) {
  * A self/loop feedback arrow: a curved cubic path leaving the top edge of the part and
  * returning to the right edge, ending in an arrowhead - the g2tree loop_arrow primitive.
  */
-function loopArrowEl(p, label, idBase, markerId) {
+function loopArrowEl(p, label, idBase, markerId, s) {
   const top = { x: p.x + p.w * 0.5, y: p.y };
   const right = { x: p.x + p.w, y: p.y + p.h * 0.3 };
   const r = Math.max(p.w, p.h) * 0.45 + 24;
@@ -227,14 +298,14 @@ function loopArrowEl(p, label, idBase, markerId) {
   const path =
     `  <path id="${idBase}-loop" d="M ${n(top.x)} ${n(top.y)} ` +
     `C ${n(c1.x)} ${n(c1.y)} ${n(c2.x)} ${n(c2.y)} ${n(right.x)} ${n(right.y)}" ` +
-    `fill="none" stroke="${STROKE}" stroke-width="${STROKE_W}" marker-end="url(#${markerId})"/>`;
+    `fill="none" stroke="${STROKE}" stroke-width="${n(s.strokeW)}" marker-end="url(#${markerId})"/>`;
   let text = "";
   if (label) {
     const lx = top.x + r * 0.7;
     const ly = top.y - r * 0.65;
     text =
       `\n  <text id="${idBase}-loop-label" x="${n(lx)}" y="${n(ly)}" font-family="${FONT}" ` +
-      `font-size="${LABEL_SIZE}" fill="${STROKE}" text-anchor="middle">${esc(label)}</text>`;
+      `font-size="${n(s.labelSize)}" fill="${STROKE}" text-anchor="middle">${esc(label)}</text>`;
   }
   return path + text;
 }
@@ -262,6 +333,7 @@ export function renderFigure(figDef) {
   const height = Number(figDef.height) || 600; // letter-ish aspect via the viewBox
   const parts = Array.isArray(figDef.parts) ? figDef.parts : [];
   const arrows = Array.isArray(figDef.arrows) ? figDef.arrows : [];
+  const s = style(figDef);
 
   // Index parts by numeral for arrow resolution.
   const byNumeral = new Map();
@@ -291,10 +363,10 @@ export function renderFigure(figDef) {
   // Deterministic <defs>: a single shared triangular arrowhead marker (black, no color).
   out.push(`  <defs>`);
   out.push(
-    `    <marker id="${markerId}" markerWidth="12" markerHeight="12" refX="9" refY="5" ` +
+    `    <marker id="${markerId}" markerWidth="${n(s.markerSize)}" markerHeight="${n(s.markerSize)}" refX="${n(s.markerRefX)}" refY="${n(s.markerRefY)}" ` +
       `orient="auto" markerUnits="userSpaceOnUse">`,
   );
-  out.push(`      <polygon points="0,0 10,5 0,10" fill="${STROKE}" stroke="${STROKE}"/>`);
+  out.push(`      <polygon points="0,0 ${n(s.markerPointX)},${n(s.markerPointY)} 0,${n(s.markerPointY2)}" fill="${STROKE}" stroke="${STROKE}"/>`);
   out.push(`    </marker>`);
   out.push(`  </defs>`);
   // White background (explicit white fill, 1.84: white page).
@@ -304,40 +376,46 @@ export function renderFigure(figDef) {
   if (figDef.title) {
     out.push(
       `  <text id="${figSlug}-title" x="${n(width / 2)}" y="26" font-family="${FONT}" ` +
-        `font-size="${TITLE_SIZE}" fill="${STROKE}" text-anchor="middle">${esc(figDef.title)}</text>`,
+        `font-size="${n(s.titleSize)}" fill="${STROKE}" text-anchor="middle">${esc(figDef.title)}</text>`,
     );
   }
 
-  // Arrows first (so part outlines/labels draw on top of arrow lines).
+  // Parts: draw feature outlines before connectors so short arrowheads remain visible.
+  for (const p of parts) {
+    if (!p) continue;
+    const idBase = `${figSlug}-part-${slug(p.numeral) || "x"}`;
+    out.push(shapeEl(p, idBase, s));
+  }
+
+  // Connectors: draw after feature outlines, before labels and numerals.
   let ai = 0;
   for (const a of arrows) {
     if (!a) continue;
     const idBase = `${figSlug}-arrow-${ai++}`;
     if (a.kind === "loop" || a.self != null) {
       const p = byNumeral.get(String(a.self != null ? a.self : a.from));
-      if (p) out.push(loopArrowEl(p, a.label, idBase, markerId));
+      if (p) out.push(loopArrowEl(p, a.label, idBase, markerId, s));
       continue;
     }
     const from = byNumeral.get(String(a.from));
     const to = byNumeral.get(String(a.to));
-    if (from && to) out.push(flowArrowEl(from, to, a.label, idBase, markerId));
+    if (from && to) out.push(flowArrowEl(from, to, a, idBase, markerId, s));
   }
 
-  // Parts: shape + inner label + numeral with lead line.
+  // Text: draw inner labels and reference numerals last to preserve legibility.
   for (const p of parts) {
     if (!p) continue;
     const idBase = `${figSlug}-part-${slug(p.numeral) || "x"}`;
-    out.push(shapeEl(p, idBase));
-    const lbl = labelEl(p, idBase);
+    const lbl = labelEl(p, idBase, s);
     if (lbl) out.push(lbl);
-    if (p.numeral != null) out.push(numeralEl(p, idBase, figCenter));
+    if (p.numeral != null) out.push(numeralEl(p, idBase, figCenter, s));
   }
 
   // FIG. N caption centered at the bottom.
   out.push(
     `  <text id="${figSlug}-caption" x="${n(width / 2)}" y="${n(height - 18)}" font-family="${FONT}" ` +
-      `font-size="${CAPTION_SIZE}" fill="${STROKE}" text-anchor="middle" font-weight="bold">` +
-      `${esc(figCaption(figId))}${figDef.representative ? " (representative)" : ""}</text>`,
+      `font-size="${n(s.captionSize)}" fill="${STROKE}" text-anchor="middle" font-weight="bold">` +
+      `${esc(figCaption(figId))}</text>`,
   );
 
   out.push(`</svg>`);

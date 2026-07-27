@@ -38,8 +38,9 @@ to a human.
 
 ## Target users (v1)
 Both **registered practitioners** and **pro-se / unrepresented inventors** are supported. Persist the
-role as `user_role` in `PATENT.md` (`registered_practitioner` | `pro_se` | `unknown`). For the pro-se
-path APA sits closer to the unauthorized-practice-of-law line: it does **not** recommend a course of
+role as `user_role` in `PATENT.md` (`registered_practitioner` | `pro_se` | `unknown`). Until a user is
+affirmatively identified as a registered practitioner, use the stricter pro-se posture. On that path
+APA sits closer to the unauthorized-practice-of-law line: it does **not** recommend a course of
 action (claim scope, which art to cite, file/don't-file timing), does **not** apply narrowing
 amendments, reframes analytical output as neutral self-education/options/questions, and surfaces a
 prominent "this is not legal advice; consult a registered patent attorney or agent" banner. (A

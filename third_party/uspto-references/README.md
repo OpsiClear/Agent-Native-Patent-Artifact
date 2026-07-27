@@ -52,7 +52,7 @@ re-confirmed (or is a placeholder pending the schedule).
 | `drawingStandards()` — every numeral in ≥1 figure & vice versa; color/photo needs petition | 37 CFR 1.83(a), 1.84(a)(2),(b) | matches |
 | `rulesEffectiveDate = "2026-06-15"` | (project metadata; fee figures are eff. 2025-01-19) | matches (date is the encoding date, not a USPTO effective date) |
 
-### B. Fee-schedule fields — `docs/fee-schedule.2026-06-15.json` + `packages/apa-assemble/fees.mjs`
+### B. Fee-schedule fields — `docs/fee-schedule.2026-07-26.json` + `packages/apa-assemble/fees.mjs`
 
 | APA artifact (field / symbol) | Authoritative source | Status |
 |---|---|---|

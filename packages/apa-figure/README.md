@@ -28,14 +28,16 @@ ReportLab path is reimplemented in plain Node.
    SVG constructs, numerals, lead lines, crowding, caption clearance, long labels, text size, and
    line weight. Findings include sheet, figure, bbox, issue type, rule reference, measured/visual
    status, and a suggested fix.
-4. **`generation-report.mjs`** - deterministic first-pass report for `/apa-figures`: generated
+4. **`sheets.mjs`** - fixed patent drawing sheet HTML composition plus sheet-level review for compact
+   multi-view sheets, physical text size, sheet utilization, and cross-sheet scale consistency.
+5. **`generation-report.mjs`** - deterministic first-pass report for `/apa-figures`: generated
    numerals, removed/transcribed numerals, visual part traceability, arrow traceability, and
    unsupported visual-change risks before SVG rendering.
-5. **`upgrade-report.mjs`** - deterministic pre/post SVG upgrade report for `/apa-svg-upgrader`:
+6. **`upgrade-report.mjs`** - deterministic pre/post SVG upgrade report for `/apa-svg-upgrader`:
    SVG diffs, numeral parity, visual-structure additions, preflight before/after, and readiness for
    `/apa-drawing-quality`.
-6. **`cli.mjs`** — `render`, `render-dir`, `generation-report`, `review-dir`, `upgrade-report`, and
-   `legend` subcommands.
+7. **`cli.mjs`** — `render`, `render-dir`, `generation-report`, `review-dir`, `sheet-html`,
+   `sheet-review`, `upgrade-report`, and `legend` subcommands.
 
 ---
 
@@ -45,7 +47,7 @@ ReportLab path is reimplemented in plain Node.
 {
   "fig": "FIG01",                 // figure id; the caption ordinal is derived: FIG01 -> "FIG. 1"
   "title": "Sectional view",      // optional small title at the top
-  "representative": true,         // marks the front-page representative view (annotates the caption)
+  "representative": true,         // metadata for representative-view selection; caption stays "FIG. N"
   "width": 800,                   // viewBox width  (default 800)
   "height": 600,                  // viewBox height (default 600; letter-ish aspect via the viewBox)
 
@@ -112,6 +114,10 @@ node cli.mjs generation-report \
 
 # run the deterministic drawing-quality preflight on rendered SVGs
 node cli.mjs review-dir src/drawing_src --svg-dir evidence/drawings --out drawing-review.json --min-score 88
+
+# compose fixed drawing-sheet HTML and review sheet utilization/scale
+node cli.mjs sheet-html evidence/drawings --out evidence/drawings/drawing-sheets.html --compact
+node cli.mjs sheet-review evidence/drawings --compact --out evidence/drawings/sheet-review.json
 
 # write a pre/post upgrade-control report before drawing-quality review
 node cli.mjs upgrade-report \

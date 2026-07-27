@@ -62,6 +62,25 @@ human-verified, often by a professional draftsperson.
 - Black solid lines; numbered parts with lead lines; `FIG. N` labels; one representative figure.
 - Reference characters >= 0.32 cm (1/8 in) high; **drawing-sheet** margins (top 2.5cm, left 2.5cm,
   right 1.5cm, bottom 1.0cm) — distinct from the 1.52 SPECIFICATION margins.
+- Reference characters must not cross, touch, or mingle with drawing lines. Lead lines should be
+  short, clear, and non-crossing; use straight or a single shallow curved leader where practical,
+  not decorative wave/squiggle leaders. Arrows and flow connectors should not run through text,
+  labels, or reference numerals.
+- Drawings should remain suitable for reproduction: at whole-sheet and reduced scale, lines, labels,
+  numerals, and claimed features must still be clear enough to understand without blur or ambiguity.
+- Arrange views in a logical order, generally from high-level context to detail. Multiple views on a
+  sheet should not overlap and should share a consistent orientation unless a rotated view is needed
+  and clearly labeled.
+- Maintain proportionality and consistency across figures: the same feature should keep the same
+  reference character, visual identity, and relative relationship wherever it appears.
+- Choose the view type that best explains the invention: perspective/overview, plan/elevation,
+  section, exploded/detail, graph, schematic, or flowchart. Use consistent flowchart symbols and
+  line conventions, and use hidden, projection, center, cutting-plane, or shading lines only when
+  they clarify supported subject matter.
+- Professional exemplar benchmark: use established patent-illustration samples only as style
+  references, never copied art. Look for perimeter reference numerals, single-purpose straight or
+  gently curved leaders, consistent line-weight hierarchy, generous white space, and FIG captions
+  that do not compete with the view.
 - Every claimed/spec numeral appears in >= 1 figure (1.83(a)) and vice versa; the Brief Description
   of the Drawings lists every figure. Color/photo drawings require a petition.
 

@@ -167,12 +167,13 @@ function validateTypeSpecific(errors, report, type) {
     for (const key of ["claims_reviewed", "claim_changes", "scope_decisions", "unsupported_features"]) {
       if (!Array.isArray(report[key])) push(errors, key, "must be an array");
     }
-    if (report.user_role === "pro_se") {
+    if (report.user_role !== "registered_practitioner") {
+      const role = report.user_role || "unknown";
       if (asArray(report.claim_changes).length > 0) {
-        push(errors, "claim_changes", "must be empty for pro_se reports; provide neutral options/questions only");
+        push(errors, "claim_changes", `must be empty for ${role} reports; provide neutral options/questions only`);
       }
       if (asArray(report.scope_decisions).length > 0) {
-        push(errors, "scope_decisions", "must be empty for pro_se reports; do not select claim scope");
+        push(errors, "scope_decisions", `must be empty for ${role} reports; do not select claim scope`);
       }
     }
     asArray(report.unsupported_features).forEach((feature, i) => validateUnsupportedFeature(errors, `unsupported_features[${i}]`, feature));

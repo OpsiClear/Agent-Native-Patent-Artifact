@@ -118,7 +118,7 @@ async function main() {
   const run = { matter: a.matter, mock: !!a.mock, model: client.model, dimensions };
   run.cost = costOf(run);
 
-  const prev = a.out ? latestRun(a.out) : null;
+  const prev = a.out ? latestRun(a.out, { matter: a.matter }) : null;
   const gate = budgetGate(prev, run);
 
   if (a.json) {

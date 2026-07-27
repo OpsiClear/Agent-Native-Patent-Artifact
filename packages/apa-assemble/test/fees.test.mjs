@@ -12,9 +12,10 @@ const SCHEDULE = {
   retrievedDate: "2026-06-15",
   source: "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
   currency: "USD",
-  entityMultipliers: { large: 1.0, small: 0.5, micro: 0.25 },
+  entityMultipliers: { large: 1.0, small: 0.4, micro: 0.2 },
   utility: {
     basicFiling: 350,
+    basicFilingElectronicSmall: 70,
     search: 770,
     examination: 880,
     excessIndependentOver3: 600,
@@ -142,51 +143,80 @@ test("small matter, large entity: only base filing/search/exam, no excess line i
   }
 });
 
+test("small-entity fee 4011 requires an explicit electronic-filing selection", () => {
+  const dir = buildMatter("small", 1, 3);
+  try {
+    const implicit = byCode(computeFees(dir, { schedule: SCHEDULE }).lineItems);
+    assert.equal(implicit["4011"], undefined);
+    assert.equal(implicit["2011"].amount, 140);
+
+    const explicit = byCode(computeFees(dir, {
+      schedule: SCHEDULE,
+      electronicFiling: true,
+    }).lineItems);
+    assert.equal(explicit["2011"], undefined);
+    assert.equal(explicit["4011"].amount, 70);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ------------------------------------------------------------------------------------------------
-// (b) 5 independent + 25 total, small entity -> excess-indep qty=2, excess-total qty=5,
-//     and every amount = large-amount x 0.5
+// (b) 5 independent + 25 total, small entity -> electronic filing fee code 4011,
+//     excess-indep qty=2, excess-total qty=5, and discountable rows use x0.4
 // ------------------------------------------------------------------------------------------------
 
-test("big matter, small entity: excess line items present and all amounts halved", () => {
+test("big matter, small entity: electronic small filing row plus discounted excess line items", () => {
   const dir = buildMatter("small", 5, 25);
   try {
     const counts = countClaims(dir);
     assert.deepEqual(counts, { independent: 5, total: 25, multipleDependent: 0 });
 
-    const r = computeFees(dir, { schedule: SCHEDULE });
+    const r = computeFees(dir, { schedule: SCHEDULE, electronicFiling: true });
     const items = byCode(r.lineItems);
 
+    assert.ok(items["4011"], "electronic small-entity basic filing fee line item present");
+    assert.equal(items["4011"].amount, 70);
+    assert.equal(items["4011"].largeEach, 350);
+    assert.ok(items["2111"], "small-entity search fee line item present");
+    assert.ok(items["2311"], "small-entity examination fee line item present");
+
     // Excess-independent: qty = 5 - 3 = 2.
-    assert.ok(items["1201"], "excess-independent line item present");
-    assert.equal(items["1201"].qty, 2);
+    assert.ok(items["2201"], "small-entity excess-independent line item present");
+    assert.equal(items["2201"].qty, 2);
     // Excess-total: qty = 25 - 20 = 5.
-    assert.ok(items["1202"], "excess-total line item present");
-    assert.equal(items["1202"].qty, 5);
+    assert.ok(items["2202"], "small-entity excess-total line item present");
+    assert.equal(items["2202"].qty, 5);
 
     assert.equal(r.entityStatus, "small");
-    assert.equal(r.multiplier, 0.5);
+    assert.equal(r.multiplier, 0.4);
 
-    // Every amount equals large-entity (each*qty) x 0.5.
+    // Every discountable amount equals large-entity (each*qty) x 0.4.
     for (const it of r.lineItems) {
+      if (it.code === "4011") continue;
       assert.equal(
         it.amount,
-        Math.round(it.each * it.qty * 0.5 * 100) / 100,
-        `amount for ${it.code} should be the large amount x 0.5`,
+        Math.round(it.each * it.qty * 0.4 * 100) / 100,
+        `amount for ${it.code} should be the large amount x 0.4`,
       );
     }
 
     // Concrete totals.
     // Large each*qty: 350 + 770 + 880 + 600*2 + 200*5 = 4200.
     assert.equal(r.subtotalLarge, 4200);
-    // Total at 0.5: 2100.
-    assert.equal(r.total, 2100);
-    assert.equal(items["1201"].amount, 600); // 600*2*0.5
-    assert.equal(items["1202"].amount, 500); // 200*5*0.5
+    // Total: 4011 direct 70 + 770*.4 + 880*.4 + 600*2*.4 + 200*5*.4.
+    assert.equal(r.total, 1610);
+    assert.equal(items["2201"].amount, 480); // 600*2*0.4
+    assert.equal(items["2202"].amount, 400); // 200*5*0.4
 
     // notes carry the verify caveat.
     assert.ok(
       r.notes.some((n) => /ESTIMATE ONLY/i.test(n) && /verify/i.test(n)),
       "notes must include the estimate/verify caveat",
+    );
+    assert.ok(
+      r.notes.some((n) => /4011/i.test(n) && /Patent Center/i.test(n)),
+      "notes must explain the electronic small-entity filing fee assumption",
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -211,7 +241,7 @@ test("unknown entity assumed large with an explanatory note; override wins", () 
     // entityOverride beats PATENT.md.
     const r2 = computeFees(dir, { schedule: SCHEDULE, entityOverride: "micro" });
     assert.equal(r2.entityStatus, "micro");
-    assert.equal(r2.multiplier, 0.25);
+    assert.equal(r2.multiplier, 0.2);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -384,5 +414,6 @@ test("loadSchedule reads the newest dated schedule from the repo docs/ dir", () 
   const sched = loadSchedule();
   assert.equal(typeof sched.effectiveDate, "string");
   assert.equal(typeof sched.utility.basicFiling, "number");
+  assert.equal(typeof sched.utility.basicFilingElectronicSmall, "number");
   assert.ok(sched.entityMultipliers && typeof sched.entityMultipliers.large === "number");
 });

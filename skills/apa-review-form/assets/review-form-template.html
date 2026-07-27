@@ -1,0 +1,1631 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APA Human Review Form</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --soft: #f8fafc;
+      --accent: #1f4f82;
+      --bad: #9f1d20;
+      --ok: #116149;
+      --surface-shadow: none;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.98);
+      border-bottom: 1px solid #edf2f7;
+      padding: 12px 20px;
+    }
+    main.app-shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 20px 48px;
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+    h1 { margin: 0 0 4px; font-size: 18px; letter-spacing: 0; }
+    h2 { margin: 0; font-size: 17px; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    p { margin: 6px 0; }
+    .muted { color: var(--muted); }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+    .subtitle {
+      max-width: 900px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .tools-menu {
+      position: relative;
+    }
+    .tools-menu summary {
+      list-style: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tools-menu summary::-webkit-details-marker { display: none; }
+    .tools-menu summary:hover { border-color: var(--line-strong); background: var(--soft); }
+    .tools-popover {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: min(340px, calc(100vw - 32px));
+      z-index: 10;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      box-shadow: 0 14px 32px rgba(24, 33, 47, 0.14);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .tool-context {
+      border-bottom: 1px solid var(--line);
+      padding: 0 0 8px;
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+    }
+    .tool-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .tool-actions button {
+      width: 100%;
+      text-align: center;
+    }
+    .tool-subdetails {
+      margin: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      box-shadow: none;
+    }
+    .tool-subdetails summary {
+      padding: 8px 2px;
+      background: transparent;
+      color: var(--accent);
+      font-weight: 650;
+    }
+    .tool-subdetails[open] summary {
+      border-bottom: 0;
+      border-radius: 6px;
+    }
+    .tool-subbody {
+      display: grid;
+      gap: 8px;
+      padding: 6px 0 0;
+    }
+    .sidebar {
+      position: sticky;
+      top: 86px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+    .workspace { min-width: 0; }
+    .page-tabs {
+      display: grid;
+      gap: 2px;
+      padding: 0;
+      margin: 0;
+    }
+    .page-tab {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .page-tab.active {
+      background: transparent;
+      color: var(--ink);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .page-view[hidden] { display: none; }
+    .page-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+      padding: 0;
+    }
+    .page-title h2 { font-size: 20px; font-weight: 700; }
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--line-strong); background: var(--soft); }
+    button:disabled {
+      cursor: default;
+      color: #9aa5b1;
+      background: #f8fafc;
+      border-color: #e5ebf3;
+    }
+    button:disabled:hover {
+      background: #f8fafc;
+      border-color: #e5ebf3;
+    }
+    button.primary { background: #1f4f82; color: #fff; border-color: #1f4f82; }
+    button.primary:hover { background: #173f68; border-color: #173f68; }
+    input[type="file"] { display: none; }
+    .agent-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+      background: var(--panel);
+      box-shadow: var(--surface-shadow);
+    }
+    .agent-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start; }
+    .request-list { margin-top: 10px; display: grid; gap: 8px; }
+    .request-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--panel);
+    }
+    .request-card.compact {
+      padding: 8px;
+      background: #f8fafc;
+    }
+    .request-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .request-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .request-response {
+      white-space: pre-wrap;
+      margin-top: 8px;
+      color: var(--ink);
+    }
+    .status-pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 1px 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .status-pill.answered { color: var(--ok); border-color: #b7dfd1; }
+    .status-pill.error,
+    .status-pill.cancelled { color: var(--bad); border-color: #f2bbbb; }
+    .card-agent-requests {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .start-card .review-card-body {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .start-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .question-panel {
+      margin: 8px 0;
+      background: transparent;
+    }
+    .question-body {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .question-meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .question-prompt {
+      max-width: 920px;
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.4;
+      margin-bottom: 18px;
+    }
+    .question-help-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .question-help {
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      padding: 0;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      line-height: 17px;
+      text-align: center;
+    }
+    .question-help:hover,
+    .question-help:focus-visible {
+      color: var(--accent);
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+    .question-help-tip {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 7px);
+      z-index: 20;
+      display: none;
+      width: min(340px, calc(100vw - 48px));
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--muted);
+      box-shadow: 0 8px 24px rgba(24, 33, 47, 0.12);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .question-help-wrap:hover .question-help-tip,
+    .question-help:focus-visible + .question-help-tip {
+      display: block;
+    }
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      margin: 10px 0 4px;
+      border-top: 1px solid #edf2f7;
+    }
+    .choice-card {
+      text-align: left;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid #edf2f7;
+      border-radius: 0;
+      min-height: 0;
+      padding: 10px 0 10px 12px;
+    }
+    .choice-card:hover { background: transparent; }
+    .choice-card:focus-visible {
+      outline: 2px solid rgba(31, 79, 130, 0.35);
+      outline-offset: -2px;
+    }
+    .choice-card.active {
+      border-color: #edf2f7;
+      box-shadow: inset 3px 0 0 var(--accent);
+      background: rgba(255, 255, 255, 0.56);
+    }
+    .choice-card strong { display: block; margin-bottom: 3px; }
+    .question-secondary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .note-drawer:not([open]) {
+      display: inline-block;
+      margin: 0 14px 0 0;
+    }
+    .link-action {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 0;
+    }
+    .link-action:hover {
+      background: transparent;
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    .note-drawer {
+      margin: 0;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .note-drawer summary {
+      display: inline-flex;
+      width: fit-content;
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 600;
+      list-style: none;
+      padding: 3px 0;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+    }
+    .note-drawer summary::-webkit-details-marker { display: none; }
+    .note-drawer summary:hover {
+      border-color: transparent;
+      background: transparent;
+      text-decoration: underline;
+    }
+    .note-drawer[open] summary {
+      border-bottom: 1px solid transparent;
+      border-radius: 6px;
+    }
+    .compact-note { margin-top: 10px; }
+    .question-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #edf2f7;
+    }
+    .question-nav div { display: flex; flex-wrap: wrap; gap: 8px; }
+    .review-list {
+      display: grid;
+      gap: 14px;
+    }
+    .review-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+      box-shadow: var(--surface-shadow);
+    }
+    .review-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px 10px;
+      background: var(--panel);
+      border-bottom: 1px solid #edf1f6;
+    }
+    .review-card-head h3 { margin-top: 4px; margin-bottom: 4px; }
+    .review-card-head p { margin: 0; color: var(--muted); }
+    .review-card-body {
+      padding: 14px 16px 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.8fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .overview-card-body {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .overview-card-body p {
+      margin: 3px 0;
+    }
+    .overview-card-body .workflow-nav {
+      margin-top: 8px;
+    }
+    .source-pane,
+    .decision-pane {
+      min-width: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .source-box {
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      max-height: 440px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .evidence-list {
+      margin: 0;
+      padding: 10px 12px 10px 28px;
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card-controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .card-details {
+      margin: 0;
+      box-shadow: none;
+      background: transparent;
+      border-color: #e5ebf3;
+    }
+    .card-details summary {
+      padding: 8px 10px;
+      background: #f8fafc;
+      color: var(--accent);
+      font-weight: 650;
+    }
+    .card-details-body {
+      display: grid;
+      gap: 10px;
+      padding: 10px;
+    }
+    .card-details .evidence-list {
+      margin: 0;
+    }
+    [data-agent-card] { white-space: nowrap; }
+    .workflow-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 2px;
+    }
+    .workflow-nav div { display: flex; flex-wrap: wrap; gap: 8px; }
+    .field label { display: block; font-weight: 650; margin-bottom: 4px; }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 8px;
+      font: inherit;
+      background: #fff;
+    }
+    textarea { min-height: 62px; resize: vertical; }
+    .decision-pane textarea { min-height: 104px; }
+    td textarea { min-height: 50px; }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0;
+      background: var(--panel);
+      box-shadow: var(--surface-shadow);
+    }
+    summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      background: var(--panel);
+      border-radius: 8px;
+    }
+    details[open] summary { border-bottom: 1px solid #edf1f6; border-radius: 8px 8px 0 0; }
+    .section-body { padding: 12px 14px 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
+    th { text-align: left; font-size: 12px; color: var(--muted); }
+    td.status { width: 150px; }
+    td.notes { width: 280px; }
+    .tag { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; margin-right: 4px; color: var(--muted); font-size: 12px; }
+    .pass { color: var(--ok); }
+    .issue { color: var(--bad); }
+    .apa-output {
+      white-space: pre-wrap;
+      background: #0f1720;
+      color: #d9e2ec;
+      border-radius: 8px;
+      padding: 10px;
+      overflow: auto;
+      max-height: 260px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+@media print {
+  header { position: static; }
+  button, .sidebar, .workflow-nav { display: none; }
+      main.app-shell { display: block; max-width: none; padding: 0; }
+      details { break-inside: avoid; }
+      textarea { min-height: 44px; }
+      .question-panel { break-inside: avoid; }
+    }
+    @media (max-width: 1100px) {
+      .review-card-body { grid-template-columns: 1fr; }
+      .source-box { max-height: 340px; }
+    }
+    @media (max-width: 760px) {
+      header { position: static; }
+      main.app-shell {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+      .topbar { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+      .subtitle { white-space: normal; }
+      .toolbar { justify-content: flex-end; }
+      .tools-popover {
+        left: auto;
+        right: 0;
+      }
+      .question-help-tip {
+        left: auto;
+        right: 0;
+        width: min(280px, calc(100vw - 32px));
+      }
+      .sidebar {
+        position: static;
+      }
+      .page-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .agent-row,
+      .card-controls,
+      .review-card-head,
+      .page-title {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      #sections details[open] table,
+      #sections details[open] thead,
+      #sections details[open] tbody,
+      #sections details[open] tr,
+      #sections details[open] th,
+      #sections details[open] td {
+        display: block;
+        width: 100%;
+      }
+      #sections details[open] thead {
+        display: none;
+      }
+      #sections details[open] tr {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+      #sections details[open] td {
+        border-bottom: 0;
+        padding: 4px 0;
+      }
+      #sections details[open] td.status,
+      #sections details[open] td.notes {
+        width: 100%;
+      }
+      #sections details[open] td.status::before,
+      #sections details[open] td.notes::before {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+        margin-bottom: 4px;
+      }
+      #sections details[open] td.status::before { content: "Status"; }
+      #sections details[open] td.notes::before { content: "Notes"; }
+      #sections details[open] td textarea {
+        min-height: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="review-data">__REVIEW_DATA__</script>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>APA Human Review</h1>
+        <p class="muted subtitle" id="subtitle"></p>
+      </div>
+      <div class="toolbar">
+        <details class="tools-menu" id="more-menu">
+          <summary>More</summary>
+          <div class="tools-popover">
+            <div class="tool-actions primary-tool-actions">
+              <button data-tools-page="agent">Agent requests</button>
+              <button data-tools-page="checklist">Full checklist</button>
+            </div>
+            <details class="tool-subdetails">
+              <summary>Matter details</summary>
+              <div class="tool-subbody">
+                <p class="muted tool-context" id="matter-context"></p>
+              </div>
+            </details>
+            <details class="tool-subdetails">
+              <summary>Data tools</summary>
+              <div class="tool-subbody tool-actions">
+                <button id="export-json">Export backup</button>
+                <button id="import-json-button">Import backup</button>
+                <input id="import-json" type="file" accept="application/json">
+                <button id="print-page">Print page</button>
+                <button id="clear-local">Reset saved data</button>
+              </div>
+            </details>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+  <main class="app-shell">
+    <aside class="sidebar">
+      <nav class="page-tabs" id="page-tabs" aria-label="Review workflow"></nav>
+    </aside>
+    <section class="workspace">
+    <section class="page-view" id="page-overview">
+      <div class="page-title">
+        <div>
+          <h2>Start</h2>
+        </div>
+      </div>
+      <div class="review-list" id="overview-workflow"></div>
+    </section>
+
+    <section class="page-view" id="page-disclosures" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Disclosures</h2>
+        </div>
+      </div>
+      <section class="question-panel" id="question-panel">
+        <div class="question-body" id="question-body"></div>
+      </section>
+    </section>
+
+    <section class="page-view" id="page-claims" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Claims</h2>
+        </div>
+      </div>
+      <div class="review-list" id="claims-workflow"></div>
+    </section>
+
+    <section class="page-view" id="page-ids" hidden>
+      <div class="page-title">
+        <div>
+          <h2>IDS & Dates</h2>
+        </div>
+      </div>
+      <div class="review-list" id="ids-workflow"></div>
+    </section>
+
+    <section class="page-view" id="page-figures" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Figures</h2>
+        </div>
+      </div>
+      <div class="review-list" id="figures-workflow"></div>
+    </section>
+
+    <section class="page-view" id="page-filing" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Filing</h2>
+        </div>
+      </div>
+      <div class="review-list" id="filing-workflow"></div>
+    </section>
+
+    <section class="page-view" id="page-agent" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Agent</h2>
+        </div>
+      </div>
+      <section class="agent-panel">
+        <h2>Agent Requests</h2>
+        <p class="muted" id="agent-help">Run as a localhost app to persist requests where the agent can read them.</p>
+        <p class="muted" id="agent-context"></p>
+        <div class="agent-row">
+          <textarea id="agent-prompt" placeholder="Ask the agent to review a claim, verify a citation, explain a drawing issue, or inspect code consistency."></textarea>
+          <button id="agent-request">Ask Agent</button>
+        </div>
+        <div class="request-list" id="agent-requests"></div>
+      </section>
+    </section>
+
+    <section class="page-view" id="page-checklist" hidden>
+      <div class="page-title">
+        <div>
+          <h2>Full Checklist</h2>
+        </div>
+      </div>
+      <section id="sections"></section>
+      <details class="command-details">
+        <summary><h2>APA command output</h2><span class="muted">validate / lint / assemble</span></summary>
+        <div class="section-body" id="apa-output"></div>
+      </details>
+    </section>
+    </section>
+  </main>
+  <script>
+    const DATA = JSON.parse(document.getElementById("review-data").textContent);
+    const storageKey = "apa-review-form:" + (DATA.matterId || DATA.title || "matter");
+    let agentRequests = DATA.agentRequests || [];
+    const questionTopics = DATA.questionQueues || {};
+    const reviewPages = DATA.reviewPages || [];
+    const workflowPageOrder = ["overview", "disclosures", "claims", "ids", "figures", "filing"];
+    const utilityPageOrder = ["agent", "checklist"];
+    const pageOrder = [...workflowPageOrder, ...utilityPageOrder];
+    let answers = initialAnswers();
+    const savedActivePage = getPath(answers, "ui.activePage");
+    let activePage = workflowPageOrder.includes(savedActivePage) ? savedActivePage : "overview";
+    const questionTopic = questionTopics.disclosures ? "disclosures" : Object.keys(questionTopics)[0] || "";
+    let questionIndex = Number(getPath(answers, `questionnaireMeta.indices.${questionTopic}`) || 0);
+    let pendingAgentContext = null;
+    let agentEventSource = null;
+    let agentRefreshTimer = null;
+    let stateRevision = Number.isSafeInteger(DATA.initialRevision) ? DATA.initialRevision : 0;
+    let serverSaveChain = Promise.resolve();
+
+    function loadAnswers() {
+      try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
+      catch { return {}; }
+    }
+    function hasOwnData(value) {
+      return value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0;
+    }
+    function deepMerge(base, overlay) {
+      const result = hasOwnData(base) ? { ...base } : {};
+      if (!hasOwnData(overlay)) return result;
+      for (const [key, value] of Object.entries(overlay)) {
+        if (hasOwnData(value) && hasOwnData(result[key])) {
+          result[key] = deepMerge(result[key], value);
+        } else {
+          result[key] = value;
+        }
+      }
+      return result;
+    }
+    function initialAnswers() {
+      const serverAnswers = DATA.initialAnswers || {};
+      const localAnswers = loadAnswers();
+      if (DATA.serverMode) return hasOwnData(localAnswers) ? deepMerge(serverAnswers, localAnswers) : serverAnswers;
+      return localAnswers;
+    }
+    function persistAnswers() {
+      localStorage.setItem(storageKey, JSON.stringify(answers));
+      if (DATA.serverMode) {
+        const pendingAnswers = JSON.parse(JSON.stringify(answers));
+        serverSaveChain = serverSaveChain
+          .catch(() => {})
+          .then(async () => {
+            let candidateAnswers = pendingAnswers;
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const revision = stateRevision + 1;
+              const res = await fetch("/api/state", {
+                method: "PUT",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ answers: candidateAnswers, revision })
+              });
+              const saved = await res.json().catch(() => ({}));
+              if (res.status === 409) {
+                if (Number.isSafeInteger(saved.revision)) {
+                  stateRevision = Math.max(stateRevision, saved.revision);
+                }
+                candidateAnswers = deepMerge(saved.answers || {}, candidateAnswers);
+                continue;
+              }
+              if (!res.ok) throw new Error(saved.error || "state save failed");
+              if (Number.isSafeInteger(saved.revision)) {
+                stateRevision = Math.max(stateRevision, saved.revision);
+              }
+              return;
+            }
+            throw new Error("state save conflicted repeatedly; refresh before continuing");
+          });
+      }
+      return serverSaveChain;
+    }
+    function saveAnswers() {
+      persistAnswers();
+      updateCounts();
+      renderPageTabs();
+    }
+    function getPath(obj, path) {
+      return path.split(".").reduce((acc, key) => acc && acc[key], obj);
+    }
+    function setPath(obj, path, value) {
+      const parts = path.split(".");
+      let cur = obj;
+      while (parts.length > 1) {
+        const key = parts.shift();
+        cur[key] = cur[key] || {};
+        cur = cur[key];
+      }
+      cur[parts[0]] = value;
+    }
+    function itemKey(sectionId, itemId, field) {
+      return ["sections", sectionId, itemId, field].join(".");
+    }
+    function cardKey(pageId, cardId, field) {
+      return ["reviewPages", pageId, cardId, field].join(".");
+    }
+    function escapeHtml(text) {
+      return String(text ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
+    }
+    function statusCell(section, item) {
+      const key = itemKey(section.id, item.id, "status");
+      const value = getPath(answers, key) || "";
+      return `<select data-key="${escapeHtml(key)}">
+        <option value="" ${value === "" ? "selected" : ""}>Pending</option>
+        <option ${value === "OK" ? "selected" : ""}>OK</option>
+        <option ${value === "Issue" ? "selected" : ""}>Issue</option>
+        <option ${value === "N/A" ? "selected" : ""}>N/A</option>
+      </select>`;
+    }
+    function notesCell(section, item) {
+      const key = itemKey(section.id, item.id, "notes");
+      return `<textarea data-key="${escapeHtml(key)}">${escapeHtml(getPath(answers, key) || "")}</textarea>`;
+    }
+    function pageById(id) {
+      return reviewPages.find(page => page.id === id) || { id, title: id, cards: [] };
+    }
+    function cardStatus(pageId, cardId) {
+      return getPath(answers, cardKey(pageId, cardId, "status")) || "";
+    }
+    function requestStatus(req) {
+      return req.status === "open" ? "queued" : (req.status || "queued");
+    }
+    function requestSourceLabel(req) {
+      const source = req.source || {};
+      return [source.pageId, source.cardId, source.title].filter(Boolean).join(" / ") || "General request";
+    }
+    function requestForCard(req, pageId, cardId) {
+      return req.source?.pageId === pageId && req.source?.cardId === cardId;
+    }
+    function findAgentRequest(id) {
+      return agentRequests.find(req => req.id === id);
+    }
+    function activeWorkflowTarget() {
+      return ["claims", "ids", "figures", "filing"].includes(activePage) ? `${activePage}-workflow` : "";
+    }
+    function rerenderAgentSurfaces() {
+      renderAgentRequests();
+      const targetId = activeWorkflowTarget();
+      if (targetId) renderWorkflowPage(activePage, targetId);
+    }
+    function agentRequestActions(req) {
+      const status = requestStatus(req);
+      const hasCard = req.source?.pageId && req.source?.cardId;
+      const actions = [];
+      if (["queued", "running"].includes(status)) {
+        actions.push(`<button data-agent-cancel="${escapeHtml(req.id)}">Cancel</button>`);
+      }
+      if (status === "answered" && req.response && hasCard) {
+        actions.push(`<button data-agent-apply="${escapeHtml(req.id)}">Add to notes</button>`);
+        actions.push(`<button data-agent-mark-issue="${escapeHtml(req.id)}">Mark issue</button>`);
+      }
+      return actions.length ? `<div class="request-actions">${actions.join("")}</div>` : "";
+    }
+    function renderAgentRequestCard(req, compact = false) {
+      const status = requestStatus(req);
+      const source = requestSourceLabel(req);
+      return `<div class="request-card ${compact ? "compact" : ""}" data-agent-request="${escapeHtml(req.id)}">
+        <div class="request-head">
+          <div><span class="status-pill ${escapeHtml(status)}">${escapeHtml(status)}</span> <span class="muted">${escapeHtml(source)}</span></div>
+          <span class="muted">${escapeHtml(req.updatedAt || req.createdAt || "")}</span>
+        </div>
+        ${compact ? "" : `<p>${escapeHtml(req.prompt || "")}</p>`}
+        ${req.response ? `<div class="request-response">${escapeHtml(req.response)}</div>` : ""}
+        ${req.error ? `<p class="issue">${escapeHtml(req.error)}</p>` : ""}
+        ${agentRequestActions(req)}
+      </div>`;
+    }
+    function renderCardAgentRequests(pageId, cardId) {
+      const requests = agentRequests.filter(req => requestForCard(req, pageId, cardId));
+      if (!requests.length) return "";
+      return `<div class="card-agent-requests">${requests.slice().reverse().slice(0, 3).map(req => renderAgentRequestCard(req, true)).join("")}</div>`;
+    }
+    function setAgentContextText() {
+      const el = document.getElementById("agent-context");
+      if (!el) return;
+      el.textContent = pendingAgentContext
+        ? `Context: ${[pendingAgentContext.source.pageId, pendingAgentContext.source.cardId, pendingAgentContext.source.title].filter(Boolean).join(" / ")}`
+        : "";
+    }
+    function renderPageTabs() {
+      const tabs = document.getElementById("page-tabs");
+      tabs.innerHTML = workflowPageOrder.map(pageId => {
+        const page = pageById(pageId);
+        const active = activePage === pageId;
+        return `<button class="page-tab ${active ? "active" : ""}" data-page="${escapeHtml(pageId)}" ${active ? `aria-current="page"` : ""}><span>${escapeHtml(page.title || pageId)}</span></button>`;
+      }).join("");
+      tabs.querySelectorAll("[data-page]").forEach(button => {
+        button.addEventListener("click", () => showPage(button.getAttribute("data-page")));
+      });
+    }
+    function showPage(pageId) {
+      activePage = pageOrder.includes(pageId) ? pageId : "overview";
+      setPath(answers, "ui.activePage", activePage);
+      persistAnswers();
+      const menu = document.getElementById("more-menu");
+      if (menu) menu.open = false;
+      document.querySelectorAll(".page-view").forEach(view => {
+        view.hidden = view.id !== "page-" + activePage;
+      });
+      renderPageTabs();
+      syncChecklistPage();
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    }
+    function renderWorkflowNav(pageId) {
+      const idx = workflowPageOrder.indexOf(pageId);
+      const prev = idx > 0 ? workflowPageOrder[idx - 1] : "";
+      const next = idx >= 0 && idx < workflowPageOrder.length - 1 ? workflowPageOrder[idx + 1] : "";
+      return `<div class="workflow-nav">
+        <div>${prev ? `<button data-go-page="${escapeHtml(prev)}">Previous: ${escapeHtml(pageById(prev).title || prev)}</button>` : ""}</div>
+        <div>${next ? `<button class="primary" data-go-page="${escapeHtml(next)}">Next: ${escapeHtml(pageById(next).title || next)}</button>` : ""}</div>
+      </div>`;
+    }
+    function cardStatusSelect(pageId, card) {
+      const key = cardKey(pageId, card.id, "status");
+      const value = getPath(answers, key) || "";
+      return `<select data-card-field="${escapeHtml(key)}">
+        <option value="" ${value === "" ? "selected" : ""}>Pending</option>
+        <option ${value === "OK" ? "selected" : ""}>OK</option>
+        <option ${value === "Issue" ? "selected" : ""}>Issue</option>
+        <option ${value === "N/A" ? "selected" : ""}>N/A</option>
+      </select>`;
+    }
+    function renderReviewCard(pageId, card) {
+      const noteKey = cardKey(pageId, card.id, "notes");
+      const evidence = (card.evidence || []).filter(Boolean);
+      const status = cardStatus(pageId, card.id);
+      const note = getPath(answers, noteKey) || "";
+      const detailsOpen = status === "Issue" || note ? " open" : "";
+      const detailsLabel = status === "Issue" || note ? "Notes and actions" : "Add note or ask agent";
+      return `<article class="review-card" id="card-${escapeHtml(pageId)}-${escapeHtml(card.id)}">
+        <div class="review-card-head">
+          <div>
+            <div>${card.tag ? `<span class="tag">${escapeHtml(card.tag)}</span>` : ""}<span class="muted">${escapeHtml(card.sourceLabel || "")}</span></div>
+            <h3>${escapeHtml(card.title || card.id)}</h3>
+            <p>${escapeHtml(card.prompt || "")}</p>
+          </div>
+        </div>
+        <div class="review-card-body">
+          <div class="source-pane">
+            <strong>Exact Text</strong>
+            <div class="source-box">${escapeHtml(card.exactText || "")}</div>
+          </div>
+          <div class="decision-pane">
+            <div class="card-controls">
+              <div class="field">
+                <label>Status</label>
+                ${cardStatusSelect(pageId, card)}
+              </div>
+              <details class="card-details"${detailsOpen}>
+                <summary>${escapeHtml(detailsLabel)}</summary>
+                <div class="card-details-body">
+                  ${evidence.length ? `<div><strong>Review cues</strong><ul class="evidence-list">${evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+                  <div class="field">
+                    <label>Notes</label>
+                    <textarea data-card-field="${escapeHtml(noteKey)}" placeholder="${escapeHtml(card.notePrompt || "Optional notes")}">${escapeHtml(note)}</textarea>
+                  </div>
+                  <div class="inline-actions">
+                    <button data-agent-card="${escapeHtml(pageId)}:${escapeHtml(card.id)}">Ask Agent</button>
+                    <button data-clear-card="${escapeHtml(pageId)}:${escapeHtml(card.id)}">Clear status and notes</button>
+                  </div>
+                  ${renderCardAgentRequests(pageId, card.id)}
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </article>`;
+    }
+    function renderWorkflowPage(pageId, targetId) {
+      const page = pageById(pageId);
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      if (!page.cards?.length) {
+        target.innerHTML = `<p class="muted">No card review items on this page.</p>${renderWorkflowNav(pageId)}`;
+      } else {
+        target.innerHTML = page.cards.map(card => renderReviewCard(pageId, card)).join("") + renderWorkflowNav(pageId);
+      }
+      target.querySelectorAll("[data-card-field]").forEach(el => {
+        el.addEventListener("input", () => {
+          setPath(answers, el.getAttribute("data-card-field"), el.value);
+          saveAnswers();
+          renderPageTabs();
+          if (el.tagName === "SELECT") renderWorkflowPage(pageId, targetId);
+        });
+      });
+      target.querySelectorAll("[data-clear-card]").forEach(button => {
+        button.addEventListener("click", () => {
+          const [p, id] = button.getAttribute("data-clear-card").split(":");
+          setPath(answers, cardKey(p, id, "status"), "");
+          setPath(answers, cardKey(p, id, "notes"), "");
+          saveAnswers();
+          renderWorkflowPage(pageId, targetId);
+          renderPageTabs();
+        });
+      });
+      target.querySelectorAll("[data-agent-card]").forEach(button => {
+        button.addEventListener("click", () => {
+          const [p, id] = button.getAttribute("data-agent-card").split(":");
+          const page = pageById(p);
+          const card = (page.cards || []).find(item => item.id === id);
+          const status = cardStatus(p, id);
+          const note = getPath(answers, cardKey(p, id, "notes")) || "";
+          const prompt = `Review ${p}/${id}: ${card?.prompt || ""}`;
+          pendingAgentContext = {
+            source: {
+              pageId: p,
+              cardId: id,
+              title: card?.title || id,
+              sourceLabel: card?.sourceLabel || card?.source || ""
+            },
+            context: {
+              prompt: card?.prompt || "",
+              exactText: card?.exactText || "",
+              currentStatus: status,
+              currentNotes: note
+            }
+          };
+          const input = document.getElementById("agent-prompt");
+          if (input) input.value = prompt;
+          setAgentContextText();
+          showPage("agent");
+        });
+      });
+      bindAgentRequestActions(target);
+      target.querySelectorAll("[data-go-page]").forEach(button => {
+        button.addEventListener("click", () => showPage(button.getAttribute("data-go-page")));
+      });
+    }
+    function renderGuidedWorkflows() {
+      const overview = document.getElementById("overview-workflow");
+      if (overview) {
+        overview.innerHTML = `<article class="review-card start-card"><div class="review-card-body overview-card-body">
+          <div>
+            <strong>Guided review</strong>
+          </div>
+          <div class="start-actions">
+            <button class="primary" data-go-page="disclosures">Continue to Disclosures</button>
+          </div>
+        </div></article>`;
+        overview.querySelectorAll("[data-go-page]").forEach(button => button.addEventListener("click", () => showPage(button.getAttribute("data-go-page"))));
+      }
+      renderWorkflowPage("claims", "claims-workflow");
+      renderWorkflowPage("ids", "ids-workflow");
+      renderWorkflowPage("figures", "figures-workflow");
+      renderWorkflowPage("filing", "filing-workflow");
+    }
+    function renderChecklistSectionBody(section, body) {
+      if (!body || body.dataset.rendered) return;
+      body.innerHTML = `
+        ${section.description ? `<p class="muted">${escapeHtml(section.description)}</p>` : ""}
+        <table>
+          <thead><tr><th>Item</th><th class="status">Status</th><th class="notes">Notes</th></tr></thead>
+          <tbody>
+            ${section.items.map(item => `
+              <tr>
+                <td>${item.tag ? `<span class="tag">${escapeHtml(item.tag)}</span>` : ""}${escapeHtml(item.text)}</td>
+                <td class="status">${statusCell(section, item)}</td>
+                <td class="notes">${notesCell(section, item)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+      body.dataset.rendered = "true";
+      bindInputs(body);
+    }
+    function bindChecklistDetails() {
+      document.querySelectorAll("[data-section-id]").forEach(details => {
+        const section = DATA.sections.find(item => item.id === details.getAttribute("data-section-id"));
+        const body = details.querySelector("[data-section-body]");
+        details.addEventListener("toggle", () => {
+          if (details.open) {
+            renderChecklistSectionBody(section, body);
+          } else if (body) {
+            body.innerHTML = "";
+            delete body.dataset.rendered;
+          }
+        });
+      });
+      syncChecklistPage();
+    }
+    function syncChecklistPage() {
+      const details = Array.from(document.querySelectorAll("[data-section-id]"));
+      if (!details.length) return;
+      if (activePage !== "checklist") {
+        details.forEach(item => {
+          const body = item.querySelector("[data-section-body]");
+          item.open = false;
+          if (body) {
+            body.innerHTML = "";
+            delete body.dataset.rendered;
+          }
+        });
+        return;
+      }
+      details.forEach(item => {
+        if (!item.open) return;
+        const section = DATA.sections.find(section => section.id === item.getAttribute("data-section-id"));
+        renderChecklistSectionBody(section, item.querySelector("[data-section-body]"));
+      });
+    }
+    function renderSections() {
+      document.getElementById("subtitle").textContent = `${DATA.docket || "Guided review"} - ${DATA.serverMode ? "Local autosave" : "File mode"}`;
+      const matterContext = document.getElementById("matter-context");
+      if (matterContext) matterContext.textContent = DATA.title || "Untitled matter";
+      document.getElementById("agent-help").textContent = DATA.serverMode
+        ? "Requests are saved to the local agent queue; run the worker to answer queued requests."
+        : "Open this form through the localhost review app to save agent requests.";
+      document.getElementById("sections").innerHTML = DATA.sections.map(section => `
+        <details data-section-id="${escapeHtml(section.id)}">
+          <summary><h2>${escapeHtml(section.title)}</h2><span class="muted" id="count-${escapeHtml(section.id)}"></span></summary>
+          <div class="section-body" data-section-body></div>
+        </details>
+      `).join("");
+
+      const out = document.getElementById("apa-output");
+      out.innerHTML = DATA.apaCommands.length
+        ? DATA.apaCommands.map(cmd => `<h3>${escapeHtml(cmd.name)} <span class="${cmd.ok ? "pass" : "issue"}">${cmd.ok ? "OK" : "Issue"}</span></h3><pre class="apa-output">${escapeHtml(cmd.output)}</pre>`).join("")
+        : `<p class="muted">No APA commands were run. Regenerate with <code>--run-apa</code> to embed validate, claim-lint, and assemble output.</p>`;
+      renderGuidedWorkflows();
+      bindChecklistDetails();
+      renderPageTabs();
+      showPage(activePage);
+      renderAgentRequests();
+      renderQuestionPanel();
+    }
+    function bindInputs(root = document) {
+      root.querySelectorAll("[data-key]").forEach(el => {
+        if (el.dataset.bound === "true") return;
+        el.dataset.bound = "true";
+        const key = el.getAttribute("data-key");
+        const value = getPath(answers, key);
+        if (value !== undefined) el.value = value;
+        el.addEventListener("input", () => {
+          setPath(answers, key, el.value);
+          saveAnswers();
+        });
+      });
+    }
+    function updateCounts() {
+      for (const section of DATA.sections) {
+        let ok = 0, issue = 0;
+        for (const item of section.items) {
+          const status = getPath(answers, itemKey(section.id, item.id, "status"));
+          if (status === "OK") ok++;
+          if (status === "Issue") issue++;
+        }
+        const el = document.getElementById("count-" + section.id);
+        if (el) el.innerHTML = `<span class="pass">${ok} OK</span> / <span class="issue">${issue} issues</span> / ${section.items.length} total`;
+      }
+    }
+    function questionAnswers() {
+      answers.questionnaire = answers.questionnaire || {};
+      return answers.questionnaire;
+    }
+    function currentQueue() {
+      return questionTopics[questionTopic] || [];
+    }
+    function clampQuestionIndex() {
+      const queue = currentQueue();
+      if (!queue.length) {
+        questionIndex = 0;
+        return;
+      }
+      questionIndex = Math.max(0, Math.min(questionIndex, queue.length - 1));
+    }
+    function answeredQuestionCount(topic = questionTopic) {
+      const queue = questionTopics[topic] || [];
+      const qa = questionAnswers();
+      return queue.filter(q => qa[q.id]?.choice).length;
+    }
+    function saveQuestionCursor() {
+      answers.questionnaireMeta = answers.questionnaireMeta || {};
+      answers.questionnaireMeta.indices = answers.questionnaireMeta.indices || {};
+      answers.questionnaireMeta.indices[questionTopic] = questionIndex;
+      saveAnswers();
+    }
+    function recordQuestionChoice(q, choice) {
+      const noteEl = document.getElementById("question-note");
+      questionAnswers()[q.id] = {
+        id: q.id,
+        category: q.category,
+        prompt: q.prompt,
+        choice: choice.value,
+        choiceLabel: choice.label,
+        note: noteEl ? noteEl.value.trim() : "",
+        answeredAt: new Date().toISOString()
+      };
+      saveQuestionCursor();
+    }
+    function nextPageForQuestionTopic(topic) {
+      return {
+        disclosures: "claims",
+        dates: "ids",
+        ids: "figures",
+        figures: "filing",
+        all: "claims"
+      }[topic] || "claims";
+    }
+    function nextPageLabelForQuestionTopic(topic) {
+      const page = pageById(nextPageForQuestionTopic(topic));
+      return page.title || "Next page";
+    }
+    function renderQuestionPanel() {
+      clampQuestionIndex();
+      const body = document.getElementById("question-body");
+      const queue = currentQueue();
+      if (!queue.length) {
+        body.innerHTML = `<p class="muted">No questions available.</p>`;
+        return;
+      }
+      const q = queue[questionIndex];
+      const saved = questionAnswers()[q.id] || {};
+      const answered = answeredQuestionCount();
+      const complete = queue.length > 0 && answered >= queue.length;
+      const nextPage = nextPageForQuestionTopic(questionTopic);
+      const nextPageLabel = nextPageLabelForQuestionTopic(questionTopic);
+      const selectedChoice = q.choices.find(choice => choice.value === saved.choice);
+      const atLastQuestion = questionIndex >= queue.length - 1;
+      const nextButtonLabel = "Next";
+      const choiceCards = `<div class="choice-grid" role="radiogroup" aria-labelledby="question-prompt">
+          ${q.choices.map((choice, i) => `
+            <button type="button" role="radio" class="choice-card ${saved.choice === choice.value ? "active" : ""}" data-choice-index="${i}" aria-checked="${saved.choice === choice.value ? "true" : "false"}" tabindex="${saved.choice === choice.value || (!saved.choice && i === 0) ? "0" : "-1"}">
+              <strong>${i + 1}. ${escapeHtml(choice.label)}</strong>
+              <span class="muted">${escapeHtml(choice.effect)}</span>
+            </button>
+          `).join("")}
+        </div>`;
+      const noteLabel = q.notePrompt || "Notes";
+      const noteField = `<div class="field compact-note">
+          <label for="question-note">${escapeHtml(noteLabel)}</label>
+          <textarea id="question-note">${escapeHtml(saved.note || "")}</textarea>
+        </div>`;
+      const noteMarkup = !saved.note
+        ? `<details class="note-drawer">
+            <summary>Add note</summary>
+            ${noteField}
+          </details>`
+        : noteField;
+      const helpText = [q.why, q.source].filter(Boolean).join(" ");
+      const helpMarkup = helpText
+        ? `<span class="question-help-wrap">
+            <button type="button" class="question-help" aria-label="${escapeHtml("Why this is asked: " + helpText)}">?</button>
+            <span class="question-help-tip" role="tooltip">${escapeHtml(helpText)}</span>
+          </span>`
+        : "";
+      const navPrimary = !atLastQuestion
+        ? `<button class="primary" id="question-next">${escapeHtml(nextButtonLabel)}</button>`
+        : complete
+          ? `<button class="primary" id="question-continue">Continue to ${escapeHtml(nextPageLabel)}</button>`
+          : `<button class="primary" id="question-next">${escapeHtml(nextButtonLabel)}</button>`;
+      body.innerHTML = `
+        <div class="question-meta-line"><span class="tag">${escapeHtml(q.id)}</span><span class="muted">${questionIndex + 1}/${queue.length}</span>${helpMarkup}</div>
+        <h3 class="question-prompt" id="question-prompt">${escapeHtml(q.prompt)}</h3>
+        ${choiceCards}
+        <div class="question-secondary-actions">
+          ${noteMarkup}
+          ${selectedChoice ? `<button class="link-action" data-clear-question="answer">Clear answer</button>` : ""}
+        </div>
+        <div class="question-nav">
+          <div>
+            <button id="question-prev" ${questionIndex <= 0 ? "disabled" : ""}>Previous</button>
+            ${navPrimary}
+          </div>
+          <div>
+            ${!selectedChoice && saved.note ? `<button class="link-action" data-clear-question="note">Clear note</button>` : ""}
+          </div>
+        </div>
+      `;
+      body.querySelectorAll("[data-choice-index]").forEach((button, index, buttons) => {
+        button.addEventListener("click", () => {
+          const choice = q.choices[Number(button.getAttribute("data-choice-index"))];
+          recordQuestionChoice(q, choice);
+          renderQuestionPanel();
+        });
+        button.addEventListener("keydown", event => {
+          const forward = ["ArrowDown", "ArrowRight"].includes(event.key);
+          const backward = ["ArrowUp", "ArrowLeft"].includes(event.key);
+          if (!forward && !backward) return;
+          event.preventDefault();
+          const nextIndex = forward
+            ? (index + 1) % buttons.length
+            : (index - 1 + buttons.length) % buttons.length;
+          recordQuestionChoice(q, q.choices[nextIndex]);
+          renderQuestionPanel();
+          window.requestAnimationFrame(() => {
+            document.querySelector(`[data-choice-index="${nextIndex}"]`)?.focus();
+          });
+        });
+      });
+      const continueButton = document.getElementById("question-continue");
+      if (continueButton) continueButton.addEventListener("click", () => showPage(nextPage));
+      document.getElementById("question-note").addEventListener("input", event => {
+        const existing = questionAnswers()[q.id] || { id: q.id, category: q.category, prompt: q.prompt, choice: "", choiceLabel: "" };
+        existing.note = event.target.value;
+        existing.updatedAt = new Date().toISOString();
+        questionAnswers()[q.id] = existing;
+        saveAnswers();
+      });
+      document.getElementById("question-prev").addEventListener("click", () => {
+        questionIndex = Math.max(0, questionIndex - 1);
+        saveQuestionCursor();
+        renderQuestionPanel();
+      });
+      const nextButton = document.getElementById("question-next");
+      if (nextButton) nextButton.addEventListener("click", () => {
+        if (questionIndex >= queue.length - 1) {
+          const qa = questionAnswers();
+          const next = queue.findIndex((item, idx) => idx > questionIndex && !qa[item.id]?.choice);
+          const wrapped = queue.findIndex(item => !qa[item.id]?.choice);
+          const target = next >= 0 ? next : wrapped;
+          if (target >= 0) {
+            questionIndex = target;
+            saveQuestionCursor();
+            renderQuestionPanel();
+            return;
+          }
+          saveQuestionCursor();
+          showPage(nextPage);
+          return;
+        }
+        questionIndex = Math.min(queue.length - 1, questionIndex + 1);
+        saveQuestionCursor();
+        renderQuestionPanel();
+      });
+      body.querySelectorAll("[data-clear-question]").forEach(button => {
+        button.addEventListener("click", () => {
+          const mode = button.getAttribute("data-clear-question");
+          const existing = questionAnswers()[q.id] || {};
+          if (mode === "note") {
+            if (existing.choice) {
+              questionAnswers()[q.id] = {
+                ...existing,
+                note: "",
+                updatedAt: new Date().toISOString()
+              };
+            } else {
+              delete questionAnswers()[q.id];
+            }
+          } else if (existing.note) {
+            questionAnswers()[q.id] = {
+              id: q.id,
+              category: q.category,
+              prompt: q.prompt,
+              choice: "",
+              choiceLabel: "",
+              note: existing.note,
+              updatedAt: new Date().toISOString()
+            };
+          } else {
+            delete questionAnswers()[q.id];
+          }
+          saveAnswers();
+          renderQuestionPanel();
+        });
+      });
+    }
+    function exportJson() {
+      const payload = { matter: DATA, answers, agentRequests, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "apa-human-review.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    document.getElementById("export-json").addEventListener("click", exportJson);
+    document.getElementById("print-page").addEventListener("click", () => window.print());
+    document.getElementById("clear-local").addEventListener("click", async () => {
+      const message = DATA.serverMode
+        ? "Clear saved answers for this form, including the localhost autosave state?"
+        : "Clear locally saved answers for this form?";
+      if (confirm(message)) {
+        answers = {};
+        localStorage.removeItem(storageKey);
+        if (DATA.serverMode) {
+          try { await persistAnswers(); } catch {}
+        }
+        location.reload();
+      }
+    });
+    document.querySelectorAll("[data-tools-page]").forEach(button => {
+      button.addEventListener("click", () => {
+        const menu = document.getElementById("more-menu");
+        if (menu) menu.open = false;
+        showPage(button.getAttribute("data-tools-page"));
+      });
+    });
+    document.addEventListener("keydown", event => {
+      if (activePage !== "disclosures") return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target && ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)) return;
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement !== document.body && !activeElement.classList.contains("choice-card")) return;
+      if (!["1", "2", "3"].includes(event.key)) return;
+      const queue = currentQueue();
+      const q = queue[questionIndex];
+      if (!q || !q.choices[Number(event.key) - 1]) return;
+      event.preventDefault();
+      const choiceIndex = Number(event.key) - 1;
+      const choice = q.choices[choiceIndex];
+      recordQuestionChoice(q, choice);
+      renderQuestionPanel();
+      window.requestAnimationFrame(() => {
+        document.querySelector(`[data-choice-index="${choiceIndex}"]`)?.focus();
+      });
+    });
+    function renderAgentRequests() {
+      const list = document.getElementById("agent-requests");
+      if (!list) return;
+      setAgentContextText();
+      if (!agentRequests.length) {
+        list.innerHTML = `<p class="muted">No agent requests yet.</p>`;
+        return;
+      }
+      const sorted = agentRequests.slice().sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
+      list.innerHTML = sorted.map(req => renderAgentRequestCard(req)).join("");
+      bindAgentRequestActions(list);
+    }
+    function bindAgentRequestActions(root = document) {
+      root.querySelectorAll("[data-agent-cancel]").forEach(button => {
+        if (button.dataset.bound === "true") return;
+        button.dataset.bound = "true";
+        button.addEventListener("click", async () => {
+          const id = button.getAttribute("data-agent-cancel");
+          if (!DATA.serverMode) return;
+          const res = await fetch(`/api/agent-requests/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+          if (res.ok) await refreshAgentRequests();
+        });
+      });
+      root.querySelectorAll("[data-agent-apply]").forEach(button => {
+        if (button.dataset.bound === "true") return;
+        button.dataset.bound = "true";
+        button.addEventListener("click", () => applyAgentResponseToNotes(button.getAttribute("data-agent-apply")));
+      });
+      root.querySelectorAll("[data-agent-mark-issue]").forEach(button => {
+        if (button.dataset.bound === "true") return;
+        button.dataset.bound = "true";
+        button.addEventListener("click", () => markAgentRequestIssue(button.getAttribute("data-agent-mark-issue")));
+      });
+    }
+    function applyAgentResponseToNotes(id) {
+      const req = findAgentRequest(id);
+      if (!req?.response || !req.source?.pageId || !req.source?.cardId) return;
+      const key = cardKey(req.source.pageId, req.source.cardId, "notes");
+      const current = getPath(answers, key) || "";
+      const addition = `Agent ${req.id} (${req.completedAt || req.updatedAt || ""}):\n${req.response}`;
+      setPath(answers, key, current ? `${current}\n\n${addition}` : addition);
+      saveAnswers();
+      const targetId = activeWorkflowTarget() || `${req.source.pageId}-workflow`;
+      renderWorkflowPage(req.source.pageId, targetId);
+    }
+    function markAgentRequestIssue(id) {
+      const req = findAgentRequest(id);
+      if (!req?.source?.pageId || !req.source?.cardId) return;
+      setPath(answers, cardKey(req.source.pageId, req.source.cardId, "status"), "Issue");
+      saveAnswers();
+      const targetId = activeWorkflowTarget() || `${req.source.pageId}-workflow`;
+      renderWorkflowPage(req.source.pageId, targetId);
+    }
+    async function refreshAgentRequests() {
+      if (!DATA.serverMode) return;
+      try {
+        const res = await fetch("/api/agent-requests");
+        if (!res.ok) return;
+        agentRequests = await res.json();
+        rerenderAgentSurfaces();
+      } catch {}
+    }
+    function connectAgentEvents() {
+      if (!DATA.serverMode || !window.EventSource || agentEventSource) return;
+      agentEventSource = new EventSource("/api/agent-events");
+      agentEventSource.addEventListener("agent-requests", event => {
+        try {
+          agentRequests = JSON.parse(event.data);
+          rerenderAgentSurfaces();
+        } catch {}
+      });
+      agentEventSource.addEventListener("error", () => {
+        if (!agentRefreshTimer) agentRefreshTimer = setInterval(refreshAgentRequests, 5000);
+      });
+    }
+    async function createAgentRequest(prompt, payload = {}) {
+      if (!DATA.serverMode) {
+        alert("Agent requests require the localhost review app. Launch with serve_review_app.mjs.");
+        return null;
+      }
+      const res = await fetch("/api/agent-requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt, ...payload })
+      });
+      if (!res.ok) {
+        alert("Could not save request.");
+        return null;
+      }
+      const request = await res.json();
+      agentRequests = [...agentRequests.filter(req => req.id !== request.id), request];
+      rerenderAgentSurfaces();
+      return request;
+    }
+    document.getElementById("agent-request").addEventListener("click", async () => {
+      const input = document.getElementById("agent-prompt");
+      const prompt = input.value.trim();
+      if (!prompt) return;
+      const payload = pendingAgentContext || { source: { pageId: "agent", title: "Manual request" }, context: {} };
+      const request = await createAgentRequest(prompt, payload);
+      if (!request) return;
+      input.value = "";
+      pendingAgentContext = null;
+      setAgentContextText();
+    });
+    document.getElementById("import-json-button").addEventListener("click", () => {
+      document.getElementById("import-json").click();
+    });
+    document.getElementById("import-json").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          const importedMatterId = imported.matter?.matterId || imported.matterId || imported.matter?.matterPath || imported.matterPath || "";
+          const currentMatterId = DATA.matterId || DATA.matterPath || "";
+          const differentMatter = importedMatterId && currentMatterId && importedMatterId !== currentMatterId;
+          if (differentMatter && !confirm("This backup appears to be for a different matter. Import it anyway?")) return;
+          if (!confirm("Import this backup and replace the current saved answers?")) return;
+          answers = imported.answers || imported;
+          agentRequests = imported.agentRequests || agentRequests;
+          saveAnswers();
+          location.reload();
+        } catch (err) {
+          alert("Could not import JSON: " + err.message);
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    });
+    renderSections();
+    bindInputs();
+    updateCounts();
+    connectAgentEvents();
+    refreshAgentRequests();
+  </script>
+</body>
+</html>

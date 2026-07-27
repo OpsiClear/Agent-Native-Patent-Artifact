@@ -1,4 +1,6 @@
+%% AUTO-GENERATED from skills/registry.yaml and skill.yaml files; do not edit by hand.
 flowchart TD
+  apa_review_form["/apa-review-form<br/>review"]
   apa_autoprep["/apa-autoprep<br/>orchestration"]
   apa_claims["/apa-claims<br/>drafting"]
   apa_compile["/apa-compile<br/>capture"]
@@ -17,6 +19,8 @@ flowchart TD
   apa_license["/apa-license<br/>governance"]
   apa_software_patent["/apa-software-patent<br/>domain-review"]
   apa_spec["/apa-spec<br/>drafting"]
+  apa_tldraw_drawings["/apa-tldraw-drawings<br/>drafting"]
+  apa_review_form -. hook:assembly.preflight .-> assembly_preflight
   apa_autoprep --> apa_disclose
   apa_autoprep --> apa_compile
   apa_autoprep --> apa_priorart
@@ -44,14 +48,22 @@ flowchart TD
   apa_figures --> apa_assemble
   apa_drawing_quality --> apa_assemble
   apa_svg_upgrader --> apa_drawing_quality
+  apa_svg_upgrader -. hook:figures.review .-> figures_review
   apa_analyze --> apa_claims
   apa_analyze --> apa_examiner
   apa_priorart --> apa_analyze
   apa_priorart --> apa_rigor
   apa_rigor --> apa_assemble
   apa_software_patent --> apa_rigor
+  apa_software_patent -. hook:claims.seed .-> claims_seed
+  apa_software_patent -. hook:analysis.domain .-> analysis_domain
+  apa_software_patent -. hook:spec.review .-> spec_review
+  apa_software_patent -. hook:rigor.domain .-> rigor_domain
   apa_spec --> apa_figures
   apa_spec --> apa_rigor
+  apa_tldraw_drawings --> apa_svg_upgrader
+  apa_tldraw_drawings --> apa_drawing_quality
+  apa_tldraw_drawings -. hook:figures.review .-> figures_review
   domain_device["domain:device<br/>active"]
   domain_device -. disclosure.enrich .-> disclosure_enrich
   domain_device -. claims.seed .-> claims_seed

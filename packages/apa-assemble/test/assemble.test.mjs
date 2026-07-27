@@ -395,7 +395,7 @@ test("buildUploadManifest hashes generated files and marks human filing acts unv
     assert.equal(manifest.forms.ids.not_search_completeness_representation, true);
     assert.equal(manifest.forms.declaration_template.unsigned_template_only, true);
     assert.equal(manifest.forms.fee_schedule.effective_date, "2025-01-19");
-    assert.equal(manifest.forms.fee_schedule.source_path, "docs/fee-schedule.2026-06-15.json");
+    assert.equal(manifest.forms.fee_schedule.source_path, "docs/fee-schedule.2026-07-26.json");
     assert.match(manifest.forms.fee_schedule.source_hash_sha256, /^[0-9a-f]{64}$/);
     assert.equal(manifest.patent_center_upload_checklist.apa_performs_filing, false);
     assert.equal(manifest.patent_center_upload_checklist.submitted_by_human, false);

@@ -15,6 +15,8 @@
     "./render": "./render.mjs",
     "./numerals": "./numerals.mjs",
     "./quality": "./quality.mjs",
+    "./svg-safety": "./svg-safety.mjs",
+    "./sheets": "./sheets.mjs",
     "./generation-report": "./generation-report.mjs",
     "./upgrade-report": "./upgrade-report.mjs",
     "./cli": "./cli.mjs"
@@ -24,6 +26,8 @@
     "render.mjs",
     "numerals.mjs",
     "quality.mjs",
+    "svg-safety.mjs",
+    "sheets.mjs",
     "generation-report.mjs",
     "upgrade-report.mjs",
     "cli.mjs",
@@ -35,6 +39,8 @@
     "render-dir": "node cli.mjs render-dir",
     "generation-report": "node cli.mjs generation-report",
     "review-dir": "node cli.mjs review-dir",
+    "sheet-html": "node cli.mjs sheet-html",
+    "sheet-review": "node cli.mjs sheet-review",
     "upgrade-report": "node cli.mjs upgrade-report",
     "legend": "node cli.mjs legend"
   },

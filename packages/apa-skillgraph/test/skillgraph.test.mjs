@@ -76,7 +76,11 @@ test("benchmark index path fields cannot escape the repository", () => {
 
 test("skill graph docs mention hooks and domain packs", () => {
   const graph = loadSkillGraph();
-  assert.match(renderSkillGraphDoc(graph), /disclosure\.enrich/);
+  const doc = renderSkillGraphDoc(graph);
+  const mermaid = renderMermaid(graph);
+  assert.match(doc, /disclosure\.enrich/);
+  assert.match(doc, /apa-review-form.*assembly\.preflight/s);
   assert.match(renderDomainPacksDoc(graph), /software/);
-  assert.match(renderMermaid(graph), /flowchart TD/);
+  assert.match(mermaid, /flowchart TD/);
+  assert.match(mermaid, /apa_review_form -. hook:assembly\.preflight .-> assembly_preflight/);
 });

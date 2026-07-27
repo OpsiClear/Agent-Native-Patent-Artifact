@@ -2,8 +2,10 @@
 /**
  * gen-skill-docs - compile skills/<name>/SKILL.md.tmpl -> SKILL.md by resolving `{{TOKEN}}` /
  * `{{TOKEN:arg}}` placeholders from scripts/resolvers (DESIGN.md §6). The generated SKILL.md is the
- * legal-procedure spec, so a multi-pass resolve hard-errors on any leftover `{{...}}`, and `--check`
- * fails CI if any on-disk SKILL.md is stale.
+ * Direct-source skills that do not have a template keep their committed Claude SKILL.md and are
+ * copied/transformed into non-Claude dist/ host outputs with their scripts/assets. The generated
+ * SKILL.md is the legal-procedure spec, so a multi-pass resolve hard-errors on any leftover
+ * `{{...}}`, and `--check` fails CI if any on-disk templated SKILL.md is stale.
  *
  * Per-host generation (DESIGN.md §11.6): the canonical Claude output lives in skills/<name>/SKILL.md;
  * other hosts apply their HostConfig (frontmatter rewrite + non-safety resolver suppression) and write
@@ -16,7 +18,7 @@
  * Node >=21, ESM, zero dependencies.
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { RESOLVERS } from "./resolvers/index.mjs";
@@ -111,6 +113,17 @@ function discoverTemplates() {
   return out;
 }
 
+export function discoverDirectSkills() {
+  if (!existsSync(SKILLS_DIR)) return [];
+  const out = [];
+  for (const name of readdirSync(SKILLS_DIR).sort()) {
+    const skill = join(SKILLS_DIR, name, "SKILL.md");
+    const tmpl = join(SKILLS_DIR, name, "SKILL.md.tmpl");
+    if (existsSync(skill) && !existsSync(tmpl)) out.push({ name, skill, dir: join(SKILLS_DIR, name) });
+  }
+  return out;
+}
+
 // Canonical Claude output is committed in-tree; other hosts are build artifacts under dist/.
 function outPath(name, hostId) {
   return hostId === "claude"
@@ -125,6 +138,17 @@ function referenceOutPath(name, hostId, relPath) {
   return join(base, ...relPath.split("/"));
 }
 
+function copyDirectSkillSupportFiles(srcDir, dstDir) {
+  for (const entry of readdirSync(srcDir, { withFileTypes: true })) {
+    if (entry.name === "SKILL.md") continue;
+    const src = join(srcDir, entry.name);
+    const dst = join(dstDir, entry.name);
+    if (entry.isDirectory()) cpSync(src, dst, { recursive: true });
+    else if (entry.isFile()) cpSync(src, dst);
+    else throw new Error(`refusing unsupported direct-skill entry: ${relName(src)}`);
+  }
+}
+
 function main(argv) {
   const check = argv.includes("--check");
   const allHosts = argv.includes("--all-hosts");
@@ -132,7 +156,8 @@ function main(argv) {
   const hostIds = allHosts ? ALL_HOSTS.map((h) => h.id) : [argv.includes("--host") && hostArg ? hostArg : "claude"];
 
   const templates = discoverTemplates();
-  if (templates.length === 0) { console.error("no skills/*/SKILL.md.tmpl found"); process.exit(2); }
+  const directSkills = discoverDirectSkills();
+  if (templates.length + directSkills.length === 0) { console.error("no skills/*/SKILL.md or SKILL.md.tmpl found"); process.exit(2); }
   let drift = 0;
   for (const hostId of hostIds) {
     for (const t of templates) {
@@ -170,6 +195,27 @@ function main(argv) {
           mkdirSync(dirname(refOut), { recursive: true });
           writeFileSync(refOut, ref.content);
         }
+      }
+    }
+    if (hostId !== "claude") {
+      for (const s of directSkills) {
+        let rendered;
+        try { rendered = renderSkill(s.skill, hostId); }
+        catch (e) { console.error(`FAIL ${hostId}/${s.name}: ${e.message}`); process.exit(2); }
+        const out = outPath(s.name, hostId);
+        if (check) {
+          console.error(
+            `NOTE ${hostId}/${s.name}: direct-source skills are copied to dist/${hostId}/ during generation; ` +
+              `--check validates committed Claude/template outputs only.`,
+          );
+          continue;
+        }
+        const outDir = dirname(out);
+        rmSync(outDir, { recursive: true, force: true });
+        mkdirSync(outDir, { recursive: true });
+        copyDirectSkillSupportFiles(s.dir, outDir);
+        writeFileSync(out, rendered);
+        console.log(`wrote ${relName(out)} (${rendered.length} bytes, direct-source skill)`);
       }
     }
   }
