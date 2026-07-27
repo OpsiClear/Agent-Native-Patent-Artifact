@@ -5,11 +5,23 @@
  * compute hashes, and validate existing JSONL on demand. They never rewrite previous entries.
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, relative, resolve } from "node:path";
 
-export const RUNLOG_SCHEMA = "apa-runlog-v1";
+export const RUNLOG_SCHEMA = "apa-runlog-v2";
+export const LEGACY_RUNLOG_SCHEMA = "apa-runlog-v1";
+export const RUNLOG_HEAD_SCHEMA = "apa-runlog-head-v1";
+const GENESIS_HASH = "0".repeat(64);
 
 export function sha256(data) {
   return createHash("sha256").update(data).digest("hex");
@@ -101,33 +113,133 @@ export function runlogPath(matterDir) {
   return join(matterDir, "trace", "runlog.jsonl");
 }
 
+export function runlogHeadPath(matterDir) {
+  return join(matterDir, "trace", "runlog.head.json");
+}
+
+function entryHash(entry) {
+  const copy = structuredClone(entry);
+  if (copy.chain && typeof copy.chain === "object") delete copy.chain.entry_sha256;
+  return sha256(JSON.stringify(copy));
+}
+
+function writeHead(matterDir, entries, digest) {
+  const path = runlogHeadPath(matterDir);
+  const temp = `${path}.${process.pid}.tmp`;
+  const value = {
+    schema: RUNLOG_HEAD_SCHEMA,
+    entries,
+    sha256: digest,
+  };
+  try {
+    writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+    renameSync(temp, path);
+  } finally {
+    rmSync(temp, { force: true });
+  }
+}
+
 export function appendRunlog(matterDir, entry) {
   const path = runlogPath(matterDir);
   mkdirSync(dirname(path), { recursive: true });
-  appendFileSync(path, JSON.stringify(entry) + "\n");
+  const current = validateRunlog(matterDir);
+  if (!current.ok) {
+    throw new Error(`refusing to append to an invalid runlog: ${current.errors.map((e) => `line ${e.line}: ${e.message}`).join("; ")}`);
+  }
+  const previous = current.entries.at(-1);
+  const previousDigest = previous
+    ? (previous.chain?.entry_sha256 || previous._legacy_line_sha256)
+    : GENESIS_HASH;
+  const chained = {
+    ...entry,
+    schema: RUNLOG_SCHEMA,
+    chain: {
+      sequence: current.entries.length + 1,
+      previous_sha256: previousDigest,
+    },
+  };
+  chained.chain.entry_sha256 = entryHash(chained);
+  appendFileSync(path, `${JSON.stringify(chained)}\n`);
+  writeHead(matterDir, chained.chain.sequence, chained.chain.entry_sha256);
   return path;
 }
 
 export function validateRunlog(pathOrMatterDir) {
-  const path = pathOrMatterDir.endsWith(".jsonl") ? pathOrMatterDir : runlogPath(pathOrMatterDir);
-  if (!existsSync(path)) return { ok: true, entries: [], errors: [] };
+  const directPath = pathOrMatterDir.endsWith(".jsonl");
+  const path = directPath ? pathOrMatterDir : runlogPath(pathOrMatterDir);
+  const matterDir = directPath ? resolve(dirname(path), "..") : resolve(pathOrMatterDir);
+  const headPath = runlogHeadPath(matterDir);
+  if (!existsSync(path)) {
+    return existsSync(headPath)
+      ? {
+          ok: false,
+          entries: [],
+          errors: [{ line: 0, message: "runlog ledger is missing while its head still exists" }],
+        }
+      : { ok: true, entries: [], errors: [] };
+  }
   const text = readFileSync(path, "utf8");
   const entries = [];
   const errors = [];
+  let previousDigest = GENESIS_HASH;
+  let chainedEntries = 0;
+  let sawChainedEntry = false;
   const lines = text.split(/\r?\n/);
   lines.forEach((line, idx) => {
     const lineNo = idx + 1;
     if (!line.trim()) return;
     try {
       const parsed = JSON.parse(line);
-      if (parsed.schema !== RUNLOG_SCHEMA) {
-        errors.push({ line: lineNo, message: `schema must be ${RUNLOG_SCHEMA}` });
+      if (parsed.schema !== RUNLOG_SCHEMA && parsed.schema !== LEGACY_RUNLOG_SCHEMA) {
+        errors.push({ line: lineNo, message: `schema must be ${RUNLOG_SCHEMA} or legacy ${LEGACY_RUNLOG_SCHEMA}` });
+      }
+      if (parsed.schema === RUNLOG_SCHEMA) {
+        sawChainedEntry = true;
+        chainedEntries += 1;
+        const chain = parsed.chain;
+        if (!chain || typeof chain !== "object") {
+          errors.push({ line: lineNo, message: "v2 entry requires a chain record" });
+        } else {
+          if (chain.sequence !== entries.length + 1) {
+            errors.push({ line: lineNo, message: `chain sequence must be ${entries.length + 1}` });
+          }
+          if (chain.previous_sha256 !== previousDigest) {
+            errors.push({ line: lineNo, message: "chain previous_sha256 does not match the preceding entry" });
+          }
+          const computed = entryHash(parsed);
+          if (chain.entry_sha256 !== computed) {
+            errors.push({ line: lineNo, message: "chain entry_sha256 does not match the entry payload" });
+          }
+          previousDigest = chain.entry_sha256 || computed;
+        }
+      } else {
+        if (parsed.schema === LEGACY_RUNLOG_SCHEMA && sawChainedEntry) {
+          errors.push({ line: lineNo, message: "legacy v1 entries may not follow a chained v2 entry" });
+        }
+        previousDigest = sha256(line);
+        Object.defineProperty(parsed, "_legacy_line_sha256", {
+          value: previousDigest,
+          enumerable: false,
+        });
       }
       entries.push(parsed);
     } catch (e) {
       errors.push({ line: lineNo, message: e.message });
     }
   });
+
+  if (chainedEntries > 0 && !existsSync(headPath)) {
+    errors.push({ line: 0, message: "runlog head is missing; suffix truncation cannot be ruled out" });
+  } else if (existsSync(headPath)) {
+    try {
+      const head = JSON.parse(readFileSync(headPath, "utf8"));
+      if (head.schema !== RUNLOG_HEAD_SCHEMA) errors.push({ line: 0, message: `runlog head schema must be ${RUNLOG_HEAD_SCHEMA}` });
+      if (head.entries !== entries.length) errors.push({ line: 0, message: `runlog head expects ${head.entries} entries but ledger has ${entries.length}` });
+      if (head.sha256 !== previousDigest) errors.push({ line: 0, message: "runlog head digest does not match the ledger tail" });
+    } catch (e) {
+      errors.push({ line: 0, message: `invalid runlog head: ${e.message}` });
+    }
+  }
   return { ok: errors.length === 0, entries, errors };
 }
 

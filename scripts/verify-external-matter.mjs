@@ -31,10 +31,68 @@ function normalizedGoNoGo(value) {
   return String(value || "").startsWith("NO-GO") ? "NO-GO" : "GO";
 }
 
+function stableObject(value) {
+  return Object.fromEntries(
+    Object.entries(value && typeof value === "object" && !Array.isArray(value) ? value : {})
+      .sort(([a], [b]) => a.localeCompare(b)),
+  );
+}
+
+function stableStrings(value) {
+  return [...new Set(Array.isArray(value) ? value.map(String) : [])].sort();
+}
+
+export function checkAggregateOracle(result, oracle, canonicalInputSha256) {
+  if (!oracle || typeof oracle !== "object" || Array.isArray(oracle)) {
+    throw new Error("aggregate oracle must be a JSON object");
+  }
+  if (oracle.schema !== "apa-external-matter-oracle-v1") {
+    throw new Error("aggregate oracle schema must be apa-external-matter-oracle-v1");
+  }
+  if (!/^[0-9a-f]{64}$/i.test(String(oracle.canonical_input_sha256 || ""))) {
+    throw new Error("aggregate oracle canonical_input_sha256 must be a SHA-256 digest");
+  }
+  if (!oracle.valid_dossiers || typeof oracle.valid_dossiers !== "object") {
+    throw new Error("aggregate oracle valid_dossiers must contain rigor and ids counts");
+  }
+  if (!Array.isArray(oracle.blocked_gates)) {
+    throw new Error("aggregate oracle blocked_gates must be an array");
+  }
+
+  const mismatches = [];
+  if (oracle.evaluated_at !== result.evaluated_at) mismatches.push("evaluated_at differs");
+  if (String(oracle.canonical_input_sha256).toLowerCase() !== canonicalInputSha256) {
+    mismatches.push("canonical input digest differs");
+  }
+  if (JSON.stringify(stableObject(oracle.mechanical_error_codes)) !== JSON.stringify(result.mechanical.error_codes)) {
+    mismatches.push("mechanical error-code histogram differs");
+  }
+  if (JSON.stringify(stableObject(oracle.mechanical_warning_codes)) !== JSON.stringify(result.mechanical.warning_codes)) {
+    mismatches.push("mechanical warning-code histogram differs");
+  }
+  if (Number(oracle.valid_dossiers.rigor) !== result.rigor.valid_dossiers) {
+    mismatches.push("rigor valid-dossier count differs");
+  }
+  if (Number(oracle.valid_dossiers.ids) !== result.ids.valid_dossiers) {
+    mismatches.push("IDS valid-dossier count differs");
+  }
+  if (JSON.stringify(stableStrings(oracle.blocked_gates)) !== JSON.stringify(stableStrings(result.filing.blocked_gates))) {
+    mismatches.push("blocked-gate set differs");
+  }
+  return {
+    schema: "apa-external-matter-oracle-check-v1",
+    checked: true,
+    ok: mismatches.length === 0,
+    mismatches,
+    canonical_digest_emitted: false,
+  };
+}
+
 export function verifyExternalMatter(matterDir, {
   now = new Date().toISOString(),
   domains = [],
   supports = [],
+  oracle = null,
 } = {}) {
   if (!matterDir || !existsSync(join(matterDir, "PATENT.md"))) {
     throw new Error("external matter directory is missing or has no PATENT.md");
@@ -78,8 +136,8 @@ export function verifyExternalMatter(matterDir, {
     }
   }
 
-  return {
-    schema: "apa-external-matter-verification-v1",
+  const result = {
+    schema: "apa-external-matter-verification-v2",
     evaluated_at: evaluatedAt.toISOString(),
     mechanical: {
       errors: validation.errors.length,
@@ -142,6 +200,16 @@ export function verifyExternalMatter(matterDir, {
       pending_required_checkpoints: runStatus.pending_checkpoints.length,
     },
   };
+  result.oracle = oracle
+    ? checkAggregateOracle(result, oracle, fingerprint.sha256)
+    : {
+        schema: "apa-external-matter-oracle-check-v1",
+        checked: false,
+        ok: null,
+        mismatches: [],
+        canonical_digest_emitted: false,
+      };
+  return result;
 }
 
 function parseArgs(argv) {
@@ -153,6 +221,7 @@ function parseArgs(argv) {
     else if (arg === "--expect") args.expect = String(argv[++i] || "").toLowerCase();
     else if (arg === "--domain") args.domains.push(String(argv[++i] || ""));
     else if (arg === "--support") args.supports.push(String(argv[++i] || ""));
+    else if (arg === "--oracle") args.oracle = String(argv[++i] || "");
     else if (arg === "--json") args.json = true;
     else if (arg === "--require") args.require = true;
     else if (arg === "-h" || arg === "--help") args.help = true;
@@ -164,6 +233,14 @@ function parseArgs(argv) {
   return args;
 }
 
+function readAggregateOracle(path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    throw new Error("aggregate oracle could not be read as JSON");
+  }
+}
+
 function humanSummary(result, expectation, ok) {
   const lines = [
     `external matter verification: ${ok ? "MATCH" : "MISMATCH"} (expected ${expectation}; actual ${result.filing.go_no_go})`,
@@ -173,6 +250,7 @@ function humanSummary(result, expectation, ok) {
     `  IDS: ${result.ids.references} reference(s), ${result.ids.unverified} unverified`,
     `  filing: ${result.filing.go_no_go}; blocked gates=${result.filing.blocked_gates.join(", ") || "none"}`,
     `  orchestration: ${result.orchestration.steps} step(s); ${result.orchestration.pending} pending; ${result.orchestration.stale} stale`,
+    `  oracle: ${result.oracle.checked ? result.oracle.ok ? "matched" : `mismatch (${result.oracle.mismatches.join("; ")})` : "not configured"}`,
     `  privacy: aggregate-only; ${result.privacy.canonical_input_files} canonical input file(s); unsafe links=${result.privacy.unsafe_linked_input_paths}`,
   ];
   return lines.join("\n");
@@ -187,8 +265,8 @@ export function main(argv = process.argv.slice(2), env = process.env) {
     return 2;
   }
   if (args.help) {
-    console.log("usage: node scripts/verify-external-matter.mjs [--matter <dir>] [--now <iso>] [--expect any|go|no-go] [--domain <id>] [--support <id>] [--json] [--require]");
-    console.log("       path may instead be supplied in APA_EXTERNAL_MATTER; output is aggregate-only and read-only");
+    console.log("usage: node scripts/verify-external-matter.mjs [--matter <dir>] [--now <iso>] [--expect any|go|no-go] [--domain <id>] [--support <id>] [--oracle <json>] [--json] [--require]");
+    console.log("       paths may instead be supplied in APA_EXTERNAL_MATTER and APA_EXTERNAL_ORACLE; output is aggregate-only and read-only");
     return 0;
   }
 
@@ -198,22 +276,26 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       console.error("error: external matter path required via --matter or APA_EXTERNAL_MATTER");
       return 2;
     }
-    const skipped = { schema: "apa-external-matter-verification-v1", skipped: true, reason: "no external matter configured" };
+    const skipped = { schema: "apa-external-matter-verification-v2", skipped: true, reason: "no external matter configured" };
     if (args.json) console.log(JSON.stringify(skipped, null, 2));
     else console.log("external matter verification: SKIPPED (set APA_EXTERNAL_MATTER or pass --matter)");
     return 0;
   }
 
   try {
+    const oraclePath = args.oracle || env.APA_EXTERNAL_ORACLE;
+    const oracle = oraclePath ? readAggregateOracle(oraclePath) : null;
     const result = verifyExternalMatter(matter, {
       now: args.now || new Date().toISOString(),
       domains: args.domains.filter(Boolean),
       supports: args.supports.filter(Boolean),
+      oracle,
     });
     const expected = args.expect === "any" ? null : args.expect === "go" ? "GO" : "NO-GO";
     const expectationMatches = expected === null || result.filing.go_no_go === expected;
     const privacySafe = result.privacy.unsafe_linked_input_paths === 0;
-    const ok = expectationMatches && privacySafe;
+    const oracleMatches = !result.oracle.checked || result.oracle.ok;
+    const ok = expectationMatches && privacySafe && oracleMatches;
     const output = { ...result, expectation: args.expect, ok };
     if (args.json) console.log(JSON.stringify(output, null, 2));
     else console.log(humanSummary(result, args.expect, ok));

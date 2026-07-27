@@ -181,3 +181,80 @@ test("a TERM misfiled under supported_by includes a defined_by migration hint", 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("apa_version 0.2 accepts two declared contributors on an adopted limitation", () => {
+  const dir = clone();
+  try {
+    edit(dir, "PATENT.md", (text) => text
+      .replace('apa_version: "0.1"', 'apa_version: "0.2"')
+      .replace(
+        '  - id: "AINVENTOR"\n    name: "Alex Example"',
+        '  - id: "AINVENTOR"\n    name: "Alex Example"\n  - id: "COINVENTOR"\n    name: "Casey Example"',
+      ));
+    edit(dir, "logic/claims.md", (text) => text.replaceAll(
+      "    provenance: inventor:AINVENTOR\n    source:",
+      "    provenance: inventor:AINVENTOR\n    contributors: [AINVENTOR, COINVENTOR]\n    source:",
+    ));
+    const report = validateMatter(dir);
+    assert.equal(report.meta.apa_version, "0.2");
+    assert.ok(
+      !report.errors.some((finding) => finding.code.startsWith("CONTRIBUTOR")),
+      JSON.stringify(report.errors),
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("apa_version 0.2 fails loud on missing, empty, unknown, and duplicate contributors", () => {
+  const cases = [
+    {
+      code: "CONTRIBUTORS_MISSING",
+      mutate: (text) => text,
+    },
+    {
+      code: "CONTRIBUTORS_EMPTY",
+      mutate: (text) => text.replace(
+        "    provenance: inventor:AINVENTOR\n    source:",
+        "    provenance: inventor:AINVENTOR\n    contributors: []\n    source:",
+      ),
+    },
+    {
+      code: "CONTRIBUTOR_UNKNOWN",
+      mutate: (text) => text.replace(
+        "    provenance: inventor:AINVENTOR\n    source:",
+        "    provenance: inventor:AINVENTOR\n    contributors: [NOT_DECLARED]\n    source:",
+      ),
+    },
+    {
+      code: "CONTRIBUTOR_DUPLICATE",
+      mutate: (text) => text.replace(
+        "    provenance: inventor:AINVENTOR\n    source:",
+        "    provenance: inventor:AINVENTOR\n    contributors: [AINVENTOR, AINVENTOR]\n    source:",
+      ),
+    },
+  ];
+
+  for (const fixture of cases) {
+    const dir = clone();
+    try {
+      edit(dir, "PATENT.md", (text) => text.replace('apa_version: "0.1"', 'apa_version: "0.2"'));
+      edit(dir, "logic/claims.md", fixture.mutate);
+      const report = validateMatter(dir);
+      assert.ok(errorCodes(report).includes(fixture.code), `${fixture.code}: ${JSON.stringify(report.errors)}`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("unknown future apa_version fails loud", () => {
+  const dir = clone();
+  try {
+    edit(dir, "PATENT.md", (text) => text.replace('apa_version: "0.1"', 'apa_version: "99.0"'));
+    const report = validateMatter(dir);
+    assert.ok(errorCodes(report).includes("APA_VERSION_UNSUPPORTED"), JSON.stringify(report.errors));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

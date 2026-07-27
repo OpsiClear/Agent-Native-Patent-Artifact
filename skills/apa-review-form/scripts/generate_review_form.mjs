@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { atomicWriteFile } from "./review_io.mjs";
+import { buildReviewTargetFingerprint } from "./review_fingerprint.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APA_KIT = resolve(SCRIPT_DIR, "..", "..", "..");
@@ -283,7 +284,8 @@ function question(id, category, prompt, choices, opts = {}) {
     choices: choices.map(([value, label, effect]) => ({ value, label, effect })),
     why: opts.why || "",
     notePrompt: opts.notePrompt || "Optional notes, dates, URLs, file paths, or evidence:",
-    source: opts.source || ""
+    source: opts.source || "",
+    requiredForReadiness: ["disclosures", "dates"].includes(category)
   };
 }
 
@@ -591,6 +593,7 @@ function main() {
       version: GENERATOR_VERSION
     },
     generatedAt: new Date().toISOString(),
+    reviewTargetFingerprint: buildReviewTargetFingerprint(args.matter),
     claims,
     references,
     figures,

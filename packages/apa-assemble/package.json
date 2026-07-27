@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Filing-assembly helpers for the Agent-Native-Patent-Artifact project. Includes a DATA-DRIVEN USPTO fee worksheet engine that reads a dated fee schedule (docs/fee-schedule.<date>.json), counts claims via the shared parser, and emits an itemized, entity-adjusted ESTIMATE to verify. Never hardcodes amounts; never asserts micro-entity status. Plain ESM, Node >=21, zero dependencies.",
   "type": "module",
+  "private": true,
   "license": "MIT",
   "engines": {
     "node": ">=21"

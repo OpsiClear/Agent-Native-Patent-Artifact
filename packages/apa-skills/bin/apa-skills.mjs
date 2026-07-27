@@ -63,11 +63,16 @@ function resolveSkillsDir() {
   if (isApaRepoRoot(repoRoot) && hasSkills(repoSkills)) return repoSkills;
 
   const bundled = path.join(PKG_ROOT, "skills");
-  if (hasSkills(bundled)) return bundled;
+  if (hasSkills(bundled) || ALL_HOSTS.every((host) => hasSkills(path.join(bundled, host.id)))) return bundled;
   throw new Error(
     `Could not locate a skills directory. Looked in:\n  ${repoSkills}\n  ${bundled}\n` +
       `Run scripts/bundle-skills.mjs to populate the bundled copy.`
   );
+}
+
+function skillsForHost(skillsRoot, hostId) {
+  const hostDir = path.join(skillsRoot, hostId);
+  return hasSkills(hostDir) ? hostDir : skillsRoot;
 }
 
 function isApaRepoRoot(dir) {
@@ -120,7 +125,7 @@ function main(argv) {
   const prefix = args.prefix || "apa-";
 
   if (cmd === "list") {
-    const skills = discoverSkills(skillsDir);
+    const skills = discoverSkills(skillsForHost(skillsDir, "claude"));
     const detected = detectHosts(home);
     console.log(`APA skills (${skills.length}) — from ${skillsDir}\n`);
     for (const s of skills) {

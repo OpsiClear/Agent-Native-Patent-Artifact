@@ -11,6 +11,7 @@
  * Node >=21, ESM, zero dependencies.
  */
 
+import { createHash } from "node:crypto";
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +29,7 @@ import {
 } from "../apa-redact/confidential-workflow.mjs";
 
 const SUPPORTED_TYPES = new Set(["provisional", "utility", "design"]);
+const SUPPORTED_APA_VERSIONS = new Set(["0.1", "0.2"]);
 const UNSUPPORTED_TYPES = new Set(["plant", "pct", "cip"]);
 const SUPPORTED_USER_ROLES = new Set(["registered_practitioner", "pro_se", "unknown"]);
 const FIXED_PROVENANCE_VALUES = new Set(["attorney", "ai-suggested", "ai-executed", "human-revised"]);
@@ -71,6 +73,7 @@ function loadMatter(dir) {
     claims: [],      // { id, heading, binding }
     terms: [],       // { id, binding }
     priorArt: [],    // { id, binding }
+    priorArtEvidence: [], // { id, path }
     specs: [],       // { id, binding }
     figures: [],     // { id, binding }
     prosecution: null,
@@ -83,7 +86,12 @@ function loadMatter(dir) {
     const t = readOrNull(join(dir, rel));
     if (t === null) return null;
     m.present.add(rel);
-    return iterEntitySections(t).map((s) => ({ id: s.id, heading: s.heading, binding: extractBindingBlocks(s.body)[0] || {} }));
+    return iterEntitySections(t).map((s) => ({
+      id: s.id,
+      heading: s.heading,
+      body: s.body,
+      binding: extractBindingBlocks(s.body)[0] || {},
+    }));
   };
 
   m.claims = sections("logic/claims.md") || [];
@@ -103,6 +111,11 @@ function loadMatter(dir) {
     for (const s of iterEntitySections(t)) m.figures.push({ id: s.id, heading: s.heading, binding: extractBindingBlocks(s.body)[0] || {} });
   }
   m.priorArtRefFiles = listFiles(join(dir, "evidence", "prior_art")).filter((f) => f.endsWith(".md"));
+  for (const file of m.priorArtRefFiles) {
+    const text = readOrNull(join(dir, "evidence", "prior_art", file)) || "";
+    const match = text.match(/^#{1,3}\s+(PA\d+)\b/m);
+    if (match) m.priorArtEvidence.push({ id: match[1], path: `evidence/prior_art/${file}` });
+  }
   m.drawingFiles = listFiles(join(dir, "evidence", "drawings")).filter((f) => f.endsWith(".md"));
   // Scan EVERY loaded matter body for the ST.26 sequence gate - a biotech sequence is most naturally
   // recited in the claims, not just problem.md/embodiments.md (which the gate previously missed).
@@ -265,7 +278,7 @@ export function validateMatter(dir) {
     for (const c of m.claims) {
       for (const f of ["limitations", "distinguished_over", "scope_set_at"]) badField(c.id, c.binding, f);
       for (const lim of asArray(c.binding.limitations).filter(Boolean)) {
-        for (const f of ["supported_by", "defined_by", "illustrated_by", "practiced_by", "antecedent_of", "references"]) badField(`${c.id}.${lim.id}`, lim, f);
+        for (const f of ["supported_by", "defined_by", "illustrated_by", "practiced_by", "antecedent_of", "references", "contributors"]) badField(`${c.id}.${lim.id}`, lim, f);
       }
     }
     for (const s of m.specs) badField(s.id, s.binding, "defines_numerals");
@@ -273,6 +286,10 @@ export function validateMatter(dir) {
   }
 
   // --- application_type (fail loud on unsupported) ---
+  if (!fm.apa_version) W("APA_VERSION_MISSING", "PATENT.md has no apa_version; migration-aware semantics cannot be selected.");
+  else if (!SUPPORTED_APA_VERSIONS.has(String(fm.apa_version))) {
+    E("APA_VERSION_UNSUPPORTED", `apa_version '${fm.apa_version}' is unsupported (known: ${[...SUPPORTED_APA_VERSIONS].join(", ")}).`);
+  }
   if (!type) E("TYPE_MISSING", "PATENT.md frontmatter has no application_type.");
   else if (UNSUPPORTED_TYPES.has(type)) E("TYPE_UNSUPPORTED", `application_type '${type}' is not supported in this version - route to counsel/tooling.`);
   else if (!SUPPORTED_TYPES.has(type)) E("TYPE_UNKNOWN", `application_type '${type}' is unknown (supported: provisional, utility, design).`);
@@ -314,6 +331,19 @@ export function validateMatter(dir) {
     if (m.drawingFiles.length === 0) W("NO_DRAWINGS", "utility matter has no evidence/drawings/*.md (drawings are usually required).");
   }
   if (type === "provisional" && m.claims.length > 0) info.push({ code: "PROV_HAS_CLAIMS", msg: "provisional includes claims (not required, but allowed)." });
+
+  const activePriorArtIds = new Set(m.priorArt.map((item) => item.id));
+  const evidencePriorArtIds = new Set(m.priorArtEvidence.map((item) => item.id));
+  for (const evidence of m.priorArtEvidence) {
+    if (!activePriorArtIds.has(evidence.id)) {
+      W("PRIOR_ART_EVIDENCE_INACTIVE", `${evidence.path} declares ${evidence.id}, but no active logic/prior_art.md entity uses it.`);
+    }
+  }
+  for (const id of activePriorArtIds) {
+    if (!evidencePriorArtIds.has(id)) {
+      W("PRIOR_ART_EVIDENCE_MISSING", `${id} is active in logic/prior_art.md but has no evidence/prior_art record.`);
+    }
+  }
 
   // --- inventors ---
   const inventors = Array.isArray(fm.inventors) ? fm.inventors : [];
@@ -357,6 +387,33 @@ export function validateMatter(dir) {
     }
   }
 
+  // Versioned limitation-level contributor contract. Version 0.2 makes the list mandatory for
+  // adopted limitations, enabling joint contribution without overloading the single provenance tag.
+  for (const c of m.claims) {
+    for (const lim of asArray(c.binding.limitations).filter(Boolean)) {
+      const adopted = (lim.provenance || "ai-suggested") !== "ai-suggested";
+      const contributors = lim.contributors;
+      if (String(fm.apa_version) === "0.2" && adopted && contributors === undefined) {
+        E("CONTRIBUTORS_MISSING", `${c.id}.${lim.id} is adopted under apa_version 0.2 but has no contributors list.`);
+      }
+      if (contributors === undefined) continue;
+      if (!Array.isArray(contributors)) {
+        E("CONTRIBUTORS_MALFORMED", `${c.id}.${lim.id} contributors must be a list of inventor ids.`);
+        continue;
+      }
+      if (adopted && contributors.length === 0) {
+        E("CONTRIBUTORS_EMPTY", `${c.id}.${lim.id} contributors must name at least one inventor for an adopted limitation.`);
+      }
+      const seen = new Set();
+      for (const contributor of contributors) {
+        const id = String(contributor || "");
+        if (!inventorIds.has(id)) E("CONTRIBUTOR_UNKNOWN", `${c.id}.${lim.id} contributor '${id}' is not declared in PATENT.md.`);
+        if (seen.has(id)) E("CONTRIBUTOR_DUPLICATE", `${c.id}.${lim.id} contributor '${id}' is duplicated.`);
+        seen.add(id);
+      }
+    }
+  }
+
   // --- design: exactly one claim ---
   if (type === "design" && m.claims.length !== 1) E("DESIGN_CLAIMS", `a design application must have exactly one claim; found ${m.claims.length}.`);
 
@@ -382,6 +439,52 @@ export function validateMatter(dir) {
       if (seen.has(cur)) { E("DEP_CYCLE", `claim dependency cycle involving ${c.id}.`); break; }
       seen.add(cur);
       cur = reg.claimById[cur].depends_on || null;
+    }
+  }
+
+  // Warning-level prose/binding drift and minimum graph-evidence expectations. These are mechanical
+  // parity signals only; they do not decide claim scope, patentability, or written-description merit.
+  const normalizeText = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const digestText = (value) => createHash("sha256").update(normalizeText(value)).digest("hex");
+  const parityStopWords = new Set([
+    "a", "an", "the", "of", "to", "for", "and", "or",
+    "as", "at", "between", "by", "from", "in", "into", "on", "over", "through", "under", "with", "within",
+  ]);
+  const parityStem = (word) => {
+    if (word.length > 5 && word.endsWith("ing")) return word.slice(0, -3);
+    if (word.length > 4 && word.endsWith("ed")) return word.slice(0, -2);
+    if (word.length > 4 && word.endsWith("es")) return word.slice(0, -2);
+    if (word.length > 3 && word.endsWith("s")) return word.slice(0, -1);
+    return word;
+  };
+  const parityTerms = (value) => normalizeText(value)
+    .split(" ")
+    .filter((word) => word && !parityStopWords.has(word))
+    .map(parityStem);
+  for (const c of m.claims) {
+    const prose = String(c.body || "").split("```binding")[0];
+    const limitationTexts = asArray(c.binding.limitations).filter(Boolean).map((lim) => lim.text || "");
+    const proseTerms = new Set(parityTerms(prose));
+    const missingFromProse = limitationTexts.filter((text) => {
+      const terms = parityTerms(text);
+      return terms.length > 0 && terms.some((term) => !proseTerms.has(term));
+    });
+    if (missingFromProse.length) {
+      W("CLAIM_BINDING_PROSE_DRIFT", `${c.id} has ${missingFromProse.length} binding limitation text(s) absent from claim prose.`);
+    }
+    info.push({
+      code: "CLAIM_PARITY_HASH",
+      msg: `${c.id} prose_sha256=${digestText(prose)} binding_sha256=${digestText(limitationTexts.join("\n"))}`,
+    });
+    if (c.binding.type === "claim-independent" && m.priorArt.length > 0 && asArray(c.binding.distinguished_over).length === 0) {
+      W("DISTINGUISHED_OVER_MISSING", `${c.id} is independent and the matter has prior art, but distinguished_over is empty.`);
+    }
+    if (
+      c.binding.type === "claim-independent"
+      && m.figures.length > 0
+      && !asArray(c.binding.limitations).filter(Boolean).some((lim) => asArray(lim.illustrated_by).length > 0)
+    ) {
+      W("ILLUSTRATION_EVIDENCE_MISSING", `${c.id} is independent and the matter has figures, but no limitation has illustrated_by evidence.`);
     }
   }
 
@@ -431,7 +534,11 @@ export function validateMatter(dir) {
       // provenance: an ai-suggested claim limitation is an assembly blocker. A MISSING provenance is
       // the protocol default 'ai-suggested' (protocol §2.4) - treat it as the blocker, not as clean.
       if ((lim.provenance || "ai-suggested") === "ai-suggested") W("AI_SUGGESTED_LIMITATION", `${c.id}.${lim.id} is provenance 'ai-suggested'${lim.provenance ? "" : " (missing -> protocol default)"} (assembly blocker; a human must adopt it).`);
-      else for (const finding of sourceSpanFindings(lim, `${c.id}.${lim.id}`, { requireComplete: requireSourceSpan })) sourceSpanFinding(finding.code, finding.msg);
+      else for (const finding of sourceSpanFindings(lim, `${c.id}.${lim.id}`, {
+        requireComplete: requireSourceSpan,
+        strict: sourceSpanPolicy === "strict",
+        matterDir: dir,
+      })) sourceSpanFinding(finding.code, finding.msg);
     }
   }
 
@@ -459,7 +566,11 @@ export function validateMatter(dir) {
   // Warning-only: this surfaces weak provenance without deciding written-description sufficiency.
   for (const s of m.specs) {
     if ((s.binding.provenance || "ai-suggested") === "ai-suggested") continue;
-    for (const finding of sourceSpanFindings(s.binding, s.id, { requireComplete: requireSourceSpan })) sourceSpanFinding(finding.code, finding.msg);
+    for (const finding of sourceSpanFindings(s.binding, s.id, {
+      requireComplete: requireSourceSpan,
+      strict: sourceSpanPolicy === "strict",
+      matterDir: dir,
+    })) sourceSpanFinding(finding.code, finding.msg);
   }
 
   // --- figure numeral consistency ---
@@ -523,7 +634,7 @@ export function validateMatter(dir) {
   info.push({ code: "PROVENANCE_LIMITATIONS", msg: `claim-limitation provenance counts: ${JSON.stringify(counts)}` });
 
   const meta = {
-    title: fm.title, application_type: type, jurisdiction: rulePackState.jurisdiction, status: fm.status,
+    title: fm.title, apa_version: fm.apa_version || "", application_type: type, jurisdiction: rulePackState.jurisdiction, status: fm.status,
     confidential_workflow_mode: workflowMode.mode,
     rules_effective_date: fm.rules_effective_date, claims: m.claims.length,
     rule_pack: rulePackState.rule_pack,

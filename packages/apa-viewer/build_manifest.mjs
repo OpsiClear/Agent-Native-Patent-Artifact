@@ -43,6 +43,7 @@ const EDGE_TARGET_KINDS = Object.freeze({
   distinguished_over: "prior-art-reference",
   scope_set_at: "prosecution-node",
   contributed_to: "claim",
+  contributed_to_limitation: "claim-limitation",
 });
 const FIXED_PROVENANCE_VALUES = new Set(["attorney", "ai-suggested", "ai-executed", "human-revised"]);
 
@@ -194,6 +195,7 @@ export function build(matterRoot) {
         provenance: lim.provenance || "",
       });
       // typed edges from each limitation; `from` is the qualified CLM##.LIM## for legibility.
+      for (const inventor of asArray(lim.contributors)) addEdge(inventor, limId, "contributed_to_limitation");
       for (const spec of asArray(lim.supported_by)) addEdge(qualified, spec, "supported_by");
       for (const term of asArray(lim.defined_by)) addEdge(qualified, term, "defined_by");
       for (const fig of asArray(lim.illustrated_by)) addEdge(qualified, fig, "illustrated_by");
@@ -347,6 +349,7 @@ export function build(matterRoot) {
   return {
     meta: {
       title,
+      apa_version: fm.apa_version || "",
       application_type: fm.application_type || "",
       status: fm.status || "",
       rules_effective_date: fm.rules_effective_date || "",

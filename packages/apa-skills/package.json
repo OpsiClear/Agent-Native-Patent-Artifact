@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node bin/apa-skills.mjs",
-    "prepack": "node scripts/bundle-skills.mjs",
+    "prepack": "node ../../scripts/gen-skill-docs.mjs --all-hosts && node scripts/bundle-skills.mjs",
     "test": "node --test"
   },
   "files": [

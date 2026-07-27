@@ -1,14 +1,20 @@
-import { existsSync, realpathSync, statSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { spawnSync } from "node:child_process";
+import { existsSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   appendRunlog,
   buildRunlogEntry,
+  commandRecord,
+  existingFileRecords,
   humanCheckpoint,
   sha256File,
   validateRunlog,
 } from "../apa-trace/runlog.mjs";
 import { loadSkillGraph } from "../apa-skillgraph/skillgraph.mjs";
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 function asArray(v) {
   return Array.isArray(v) ? v : [];
@@ -192,6 +198,7 @@ function coreStep(skill) {
     outputs: asArray(skill.outputs),
     gates_after: asArray(skill.gates_after),
     human_checkpoints: asArray(skill.human_checkpoints),
+    runner: skill.runner || "",
     source: "skill.yaml",
   };
 }
@@ -359,7 +366,10 @@ function expectedOutputReasons(matterDir, step, outputRecords) {
 
 function checkpointEvidence(step, entries) {
   const states = new Map();
-  const required = new Set(asArray(step.human_checkpoints).map(String).filter(Boolean));
+  const required = new Set([
+    ...asArray(step.human_checkpoints).map(String).filter(Boolean),
+    ...asArray(step.gates_after).map((id) => `gate:${id}`).filter((id) => id !== "gate:"),
+  ]);
   for (const entry of entries) {
     for (const checkpoint of asArray(entry?.human_checkpoints)) {
       const id = String(checkpoint?.id || "").trim();
@@ -382,7 +392,7 @@ function completionForStep(matterDir, step, allEntries) {
       status: "pending",
       completed: false,
       reasons: [reason("RUNLOG_ENTRY_MISSING", "no runlog evidence exists for this step")],
-      pending_checkpoints: asArray(step.human_checkpoints).map((id) => ({ id, required: true })),
+      pending_checkpoints: stepBoundaryIds(step).map((id) => ({ id, required: true })),
       evidence_entries: 0,
     };
   }
@@ -472,4 +482,369 @@ export function appendPlanRunlog({ matter, plan, domains = [], supports = [] } =
     ],
   });
   return appendRunlog(resolve(matter), entry);
+}
+
+function splitRunnerCommand(command) {
+  const input = String(command || "").trim();
+  if (!input) throw new Error("step has no declared runner");
+  const tokens = [];
+  let token = "";
+  let quote = "";
+  let escaped = false;
+  for (const char of input) {
+    if (escaped) {
+      token += char;
+      escaped = false;
+    } else if (char === "\\" && quote) {
+      escaped = true;
+    } else if (quote) {
+      if (char === quote) quote = "";
+      else token += char;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (/\s/.test(char)) {
+      if (token) {
+        tokens.push(token);
+        token = "";
+      }
+    } else if (/[&|;<>`]/.test(char)) {
+      throw new Error("declared runner contains a forbidden shell metacharacter");
+    } else {
+      token += char;
+    }
+  }
+  if (quote || escaped) throw new Error("declared runner has an unterminated quoted token");
+  if (token) tokens.push(token);
+  if (!tokens.length) throw new Error("step has no declared runner");
+  return tokens;
+}
+
+function resolveDeclaredRunner(step, runnerRoot) {
+  const tokens = splitRunnerCommand(step.runner);
+  if (tokens[0] !== "node" && resolve(tokens[0]) !== resolve(process.execPath)) {
+    throw new Error(`declared runner executable '${tokens[0]}' is not allowed; only Node runners are supported`);
+  }
+  if (!tokens[1]) throw new Error("declared Node runner has no script path");
+  if (tokens.slice(2).some((token) => token === "--matter" || token.startsWith("--matter="))) {
+    throw new Error("declared runner must not override the orchestrator-controlled --matter path");
+  }
+  const script = resolve(runnerRoot, tokens[1]);
+  if (!isWithin(runnerRoot, script) || !existsSync(script) || !statSync(script).isFile()) {
+    throw new Error("declared runner script is missing or outside the runner root");
+  }
+  if (!isWithin(realpathSync(runnerRoot), realpathSync(script))) {
+    throw new Error("declared runner script resolves outside the runner root");
+  }
+  return {
+    executable: process.execPath,
+    args: [script, ...tokens.slice(2)],
+  };
+}
+
+function walkFiles(root, dir, out) {
+  for (const name of readdirSync(dir).sort()) {
+    const path = join(dir, name);
+    if (!isWithin(realpathSync(root), realpathSync(path))) {
+      throw new Error("declared evidence path resolves outside the matter");
+    }
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      if (!isWithin(realpathSync(root), realpathSync(path))) {
+        throw new Error("declared evidence directory resolves outside the matter");
+      }
+      walkFiles(root, path, out);
+    } else if (stat.isFile()) {
+      out.push(path);
+    }
+  }
+}
+
+function declaredEvidenceFiles(matterDir, paths, { skipRunlog = false } = {}) {
+  const files = [];
+  for (const recordPath of asArray(paths)) {
+    if (!recordPath || /source-document|package-manifests|source-tree|prosecution\/oa-NN/.test(recordPath)) continue;
+    const normalized = normalizedRecordPath(recordPath);
+    if (skipRunlog && normalized === "trace/runlog.jsonl") continue;
+    const target = safeRecordedFile(matterDir, normalized);
+    if (!target || !existsSync(target.abs)) continue;
+    const stat = statSync(target.abs);
+    if (stat.isFile()) files.push(target.abs);
+    else if (stat.isDirectory()) walkFiles(matterDir, target.abs, files);
+  }
+  return [...new Set(files)];
+}
+
+function stepBoundaryIds(step) {
+  return [...new Set([
+    ...asArray(step.human_checkpoints).map(String).filter(Boolean),
+    ...asArray(step.gates_after).map((id) => `gate:${id}`).filter((id) => id !== "gate:"),
+  ])];
+}
+
+function continuationId(stepId) {
+  return `orchestrator-continue-after:${stepId}`;
+}
+
+function hasContinuation(entries, stepId) {
+  const id = continuationId(stepId);
+  let latestStepEntry = -1;
+  entries.forEach((entry, index) => {
+    if (entry?.skill === stepId) latestStepEntry = index;
+  });
+  return entries.some((entry, index) => (
+    index > latestStepEntry
+    && entry?.skill === "apa-run"
+    && asArray(entry.human_checkpoints).some((checkpoint) => checkpoint?.id === id && checkpoint.satisfied)
+  ));
+}
+
+function appendContinuation(matterDir, stepId) {
+  return appendRunlog(matterDir, buildRunlogEntry({
+    skill: "apa-run",
+    ruleVersion: "apa-run-execution-v1",
+    commands: [commandRecord({
+      argv: ["apa-run", "run", "--continue-after", stepId],
+      exitCode: 0,
+    })],
+    humanCheckpoints: [
+      humanCheckpoint({
+        id: continuationId(stepId),
+        required: true,
+        satisfied: true,
+        timestamp: new Date().toISOString(),
+      }),
+    ],
+    notes: [`explicit continuation recorded after ${stepId}`],
+  }));
+}
+
+function appendRunnerAttempt({
+  matterDir,
+  step,
+  argv,
+  cwd,
+  exitCode,
+  startedAt,
+  endedAt,
+  inputFiles,
+  outputFiles,
+  failureMessage = "",
+}) {
+  const checkpoints = stepBoundaryIds(step).map((id) => humanCheckpoint({
+    id,
+    required: true,
+    satisfied: false,
+  }));
+  return appendRunlog(matterDir, buildRunlogEntry({
+    skill: step.id,
+    ruleVersion: "apa-run-execution-v1",
+    inputs: existingFileRecords(matterDir, inputFiles),
+    outputs: exitCode === 0 ? existingFileRecords(matterDir, outputFiles) : [],
+    commands: [commandRecord({ argv, cwd, exitCode, startedAt, endedAt })],
+    humanCheckpoints: checkpoints,
+    notes: failureMessage ? [`runner failed: ${failureMessage}`] : [],
+  }));
+}
+
+function executionResult(plan, status, extra = {}) {
+  return {
+    schema: "apa-run-execution-v1",
+    matter: plan.matter,
+    status,
+    ...extra,
+  };
+}
+
+function isCheckpointOnly(completion) {
+  const reasons = asArray(completion?.reasons);
+  return (
+    asArray(completion?.pending_checkpoints).length > 0
+    && reasons.length > 0
+    && reasons.every((item) => item?.code === "CHECKPOINT_PENDING")
+  );
+}
+
+export function executePipeline({
+  matter,
+  domains = [],
+  supports = [],
+  graph = loadSkillGraph(),
+  continueAfter = [],
+  runnerRoot = REPO_ROOT,
+} = {}) {
+  const matterDir = resolve(matter || ".");
+  const root = resolve(runnerRoot);
+  const plan = planPipeline({ matter: matterDir, domains, supports, graph });
+  const continueSet = new Set(asArray(continueAfter).map(String).filter(Boolean));
+  const executed = [];
+  const ledger = validateRunlog(matterDir);
+  if (!ledger.ok) {
+    return executionResult(plan, "failed", {
+      executed,
+      exit_code: 2,
+      error: "runlog is invalid; repair or restore the ledger before executing runners",
+      runlog_errors: ledger.errors,
+    });
+  }
+
+  for (const step of plan.steps) {
+    let status = statusForMatter({
+      matter: matterDir,
+      domains: plan.domains,
+      supports: plan.supports,
+      graph,
+    });
+    let current = status.steps.find((candidate) => candidate.id === step.id);
+    if (!current) continue;
+
+    if (current.completed) {
+      if (stepBoundaryIds(step).length && !hasContinuation(validateRunlog(matterDir).entries, step.id)) {
+        if (!continueSet.has(step.id)) {
+          return executionResult(plan, "awaiting-continuation", {
+            executed,
+            step,
+            message: `pass --continue-after ${step.id} after reviewing its satisfied checkpoints`,
+          });
+        }
+        appendContinuation(matterDir, step.id);
+      }
+      continue;
+    }
+
+    if (isCheckpointOnly(current.completion)) {
+      return executionResult(plan, "awaiting-checkpoint", {
+        executed,
+        step,
+        pending_checkpoints: current.completion.pending_checkpoints,
+      });
+    }
+
+    if (!step.runner) {
+      return executionResult(plan, "awaiting-agent", {
+        executed,
+        step,
+        message: "step has no declared deterministic runner; execute the named agent skill and record its evidence",
+      });
+    }
+
+    const startedAt = new Date().toISOString();
+    let inputFiles = [];
+    let declared;
+    try {
+      inputFiles = declaredEvidenceFiles(matterDir, step.inputs, { skipRunlog: true });
+      declared = resolveDeclaredRunner(step, root);
+    } catch (error) {
+      const endedAt = new Date().toISOString();
+      appendRunnerAttempt({
+        matterDir,
+        step,
+        argv: [String(step.runner)],
+        cwd: root,
+        exitCode: 2,
+        startedAt,
+        endedAt,
+        inputFiles,
+        outputFiles: [],
+        failureMessage: error.message,
+      });
+      return executionResult(plan, "failed", {
+        executed,
+        step,
+        exit_code: 2,
+        error: error.message,
+      });
+    }
+    const runnerArgs = [...declared.args, "--matter", matterDir];
+    const commandArgv = [declared.executable, ...runnerArgs];
+    const result = spawnSync(declared.executable, runnerArgs, {
+      cwd: root,
+      encoding: "utf8",
+      shell: false,
+      windowsHide: true,
+    });
+    const exitCode = Number.isInteger(result.status) ? result.status : 1;
+    const endedAt = new Date().toISOString();
+    let outputFiles = [];
+    let outputEvidenceError = "";
+    if (exitCode === 0) {
+      try {
+        outputFiles = declaredEvidenceFiles(matterDir, step.outputs, { skipRunlog: true });
+      } catch (error) {
+        outputEvidenceError = error.message;
+      }
+    }
+    appendRunnerAttempt({
+      matterDir,
+      step,
+      argv: commandArgv,
+      cwd: root,
+      exitCode,
+      startedAt,
+      endedAt,
+      inputFiles,
+      outputFiles,
+      failureMessage: (
+        result.error?.message
+        || outputEvidenceError
+        || (exitCode === 0 ? "" : String(result.stderr || "").trim().slice(0, 500))
+      ),
+    });
+    executed.push({
+      id: step.id,
+      exit_code: exitCode,
+      outputs: exitCode === 0 ? outputFiles.length : 0,
+    });
+    if (exitCode !== 0) {
+      return executionResult(plan, "failed", {
+        executed,
+        step,
+        exit_code: exitCode,
+      });
+    }
+    if (outputEvidenceError) {
+      return executionResult(plan, "failed", {
+        executed,
+        step,
+        exit_code: 2,
+        error: `runner exited successfully but output evidence could not be verified: ${outputEvidenceError}`,
+      });
+    }
+
+    status = statusForMatter({
+      matter: matterDir,
+      domains: plan.domains,
+      supports: plan.supports,
+      graph,
+    });
+    current = status.steps.find((candidate) => candidate.id === step.id);
+    const incompleteReasons = asArray(current?.completion?.reasons)
+      .filter((item) => item?.code !== "CHECKPOINT_PENDING");
+    if (!current?.completed && incompleteReasons.length > 0) {
+      return executionResult(plan, "failed", {
+        executed,
+        step,
+        exit_code: 1,
+        error: "runner exited successfully but its declared evidence is incomplete",
+        reasons: current?.completion.reasons || [],
+      });
+    }
+    if (current?.completion.pending_checkpoints.length) {
+      return executionResult(plan, "awaiting-checkpoint", {
+        executed,
+        step,
+        pending_checkpoints: current.completion.pending_checkpoints,
+      });
+    }
+    if (!current?.completed) {
+      return executionResult(plan, "failed", {
+        executed,
+        step,
+        exit_code: 1,
+        error: "runner exited successfully but its declared evidence is incomplete",
+        reasons: current?.completion.reasons || [],
+      });
+    }
+  }
+
+  return executionResult(plan, "complete", { executed });
 }

@@ -1,18 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { planPipeline, statusForMatter } from "../runner.mjs";
+import { executePipeline, planPipeline, statusForMatter } from "../runner.mjs";
 import {
   appendRunlog,
   buildRunlogEntry,
   commandRecord,
   existingFileRecords,
   humanCheckpoint,
+  validateRunlog,
 } from "../../apa-trace/runlog.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -156,6 +157,21 @@ function appendSuccessfulEvidence(matter, { checkpoint = true, exitCode = 0 } = 
   }));
 }
 
+test("apa-run status exposes gate checkpoints before any step evidence exists", () => {
+  const graph = graphWithEvidenceStep();
+  graph.skills[0].gates_after = ["validation-clean"];
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-gate-status-"));
+  try {
+    const status = statusForMatter({ matter, graph });
+    assert.deepEqual(status.steps[0].completion.pending_checkpoints, [
+      { id: "human-review", required: true },
+      { id: "gate:validation-clean", required: true },
+    ]);
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
 test("apa-run completion requires command, current hashes, expected outputs, and human checkpoints", () => {
   const matter = mkdtempSync(join(tmpdir(), "apa-run-evidence-"));
   try {
@@ -238,6 +254,290 @@ test("apa-run rejects a name-only runlog entry as completion evidence", () => {
     assert.ok(step.completion.reasons.some((item) => item.code === "COMMAND_EVIDENCE_MISSING"));
     assert.ok(step.completion.reasons.some((item) => item.code === "OUTPUT_EVIDENCE_MISSING"));
     assert.ok(step.completion.reasons.some((item) => item.code === "CHECKPOINT_PENDING"));
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+function executableLifecycleGraph() {
+  return {
+    skills: [
+      {
+        id: "apa-disclose",
+        command: "/apa-disclose",
+        phase: "capture",
+        kind: "core",
+        inputs: ["staging/disclosure.txt"],
+        outputs: ["logic/problem.md"],
+        gates_after: [],
+        human_checkpoints: [],
+        runner: "node runner-fixture.mjs disclose",
+      },
+      {
+        id: "apa-claims",
+        command: "/apa-claims",
+        phase: "drafting",
+        kind: "core",
+        inputs: ["logic/problem.md"],
+        outputs: ["logic/claims.md"],
+        gates_after: [],
+        human_checkpoints: ["claim-adoption"],
+        runner: "node runner-fixture.mjs claims",
+      },
+      {
+        id: "apa-spec",
+        command: "/apa-spec",
+        phase: "drafting",
+        kind: "core",
+        inputs: ["logic/claims.md"],
+        outputs: ["src/embodiments.md"],
+        gates_after: [],
+        human_checkpoints: [],
+        runner: "node runner-fixture.mjs spec",
+      },
+    ],
+    domains: [],
+    registry: {
+      optional: [],
+      hooks: [],
+      pipeline: { order: ["apa-disclose", "apa-claims", "apa-spec"] },
+    },
+  };
+}
+
+function writeLifecycleRunner(matter) {
+  writeFileSync(join(matter, "runner-fixture.mjs"), `
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+const stage = process.argv[2];
+const matter = process.argv[process.argv.indexOf("--matter") + 1];
+if (stage === "fail") process.exit(7);
+if (stage === "disclose") {
+  const disclosure = readFileSync(join(matter, "staging", "disclosure.txt"), "utf8").trim();
+  mkdirSync(join(matter, "logic"), { recursive: true });
+  writeFileSync(join(matter, "logic", "problem.md"), "# Problem\\n\\n" + disclosure + "\\n");
+} else if (stage === "claims") {
+  const problem = readFileSync(join(matter, "logic", "problem.md"), "utf8").trim();
+  writeFileSync(join(matter, "logic", "claims.md"), "# Claims\\n\\n" + problem + "\\n");
+} else if (stage === "spec") {
+  const claims = readFileSync(join(matter, "logic", "claims.md"), "utf8").trim();
+  mkdirSync(join(matter, "src"), { recursive: true });
+  writeFileSync(join(matter, "src", "embodiments.md"), "# Specification\\n\\n" + claims + "\\n");
+} else if (stage === "noop") {
+  // Intentionally successful without writing output; used to verify evidence fail-closed behavior.
+} else {
+  process.exit(9);
+}
+`, "utf8");
+}
+
+test("apa-run executes declared runners from disclosure through claims and specification with checkpoint continuation", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-lifecycle-"));
+  try {
+    mkdirSync(join(matter, "staging"), { recursive: true });
+    writeFileSync(join(matter, "staging", "disclosure.txt"), "A source-backed disclosure.");
+    writeLifecycleRunner(matter);
+    const graph = executableLifecycleGraph();
+
+    const first = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(first.status, "awaiting-checkpoint", JSON.stringify(first, null, 2));
+    assert.deepEqual(first.executed.map((step) => step.id), ["apa-disclose", "apa-claims"]);
+    assert.deepEqual(first.pending_checkpoints, [{ id: "claim-adoption", required: true }]);
+    assert.equal(existsSync(join(matter, "logic", "problem.md")), true);
+    assert.equal(existsSync(join(matter, "logic", "claims.md")), true);
+    assert.equal(existsSync(join(matter, "src", "embodiments.md")), false);
+
+    appendRunlog(matter, buildRunlogEntry({
+      skill: "apa-claims",
+      humanCheckpoints: [
+        humanCheckpoint({
+          id: "claim-adoption",
+          required: true,
+          satisfied: true,
+          reviewer: "fixture-human",
+          timestamp: "2026-07-27T12:00:00.000Z",
+        }),
+      ],
+    }));
+    const stopped = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(stopped.status, "awaiting-continuation", JSON.stringify(stopped, null, 2));
+    assert.equal(stopped.step.id, "apa-claims");
+
+    const resumed = executePipeline({
+      matter,
+      graph,
+      runnerRoot: matter,
+      continueAfter: ["apa-claims"],
+    });
+    assert.equal(resumed.status, "complete", JSON.stringify(resumed, null, 2));
+    assert.deepEqual(resumed.executed.map((step) => step.id), ["apa-spec"]);
+    assert.match(readFileSync(join(matter, "src", "embodiments.md"), "utf8"), /source-backed disclosure/i);
+    assert.equal(validateRunlog(matter).ok, true);
+
+    writeFileSync(join(matter, "staging", "disclosure.txt"), "A revised source-backed disclosure.");
+    const rerun = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(rerun.status, "awaiting-checkpoint", JSON.stringify(rerun, null, 2));
+    assert.deepEqual(rerun.executed.map((step) => step.id), ["apa-disclose", "apa-claims"]);
+    appendRunlog(matter, buildRunlogEntry({
+      skill: "apa-claims",
+      humanCheckpoints: [
+        humanCheckpoint({
+          id: "claim-adoption",
+          required: true,
+          satisfied: true,
+          reviewer: "fixture-human",
+          timestamp: "2026-07-27T13:00:00.000Z",
+        }),
+      ],
+    }));
+    const freshStop = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(freshStop.status, "awaiting-continuation", JSON.stringify(freshStop, null, 2));
+    assert.equal(freshStop.step.id, "apa-claims");
+    const freshResume = executePipeline({
+      matter,
+      graph,
+      runnerRoot: matter,
+      continueAfter: ["apa-claims"],
+    });
+    assert.equal(freshResume.status, "complete", JSON.stringify(freshResume, null, 2));
+    assert.deepEqual(freshResume.executed.map((step) => step.id), ["apa-spec"]);
+    assert.match(readFileSync(join(matter, "src", "embodiments.md"), "utf8"), /revised source-backed disclosure/i);
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("apa-run records failed attempts with no claimed outputs", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-failure-"));
+  try {
+    writeLifecycleRunner(matter);
+    const graph = {
+      skills: [{
+        id: "apa-failing-runner",
+        command: "/apa-failing-runner",
+        phase: "capture",
+        kind: "core",
+        inputs: [],
+        outputs: ["logic/should-not-exist.md"],
+        gates_after: [],
+        human_checkpoints: [],
+        runner: "node runner-fixture.mjs fail",
+      }],
+      domains: [],
+      registry: {
+        optional: [],
+        hooks: [],
+        pipeline: { order: ["apa-failing-runner"] },
+      },
+    };
+    const result = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(result.status, "failed", JSON.stringify(result, null, 2));
+    assert.equal(result.exit_code, 7);
+    const entries = validateRunlog(matter).entries.filter((entry) => entry.skill === "apa-failing-runner");
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].commands[0].exit_code, 7);
+    assert.deepEqual(entries[0].outputs, []);
+    assert.equal(existsSync(join(matter, "logic", "should-not-exist.md")), false);
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("apa-run retries a failed checkpointed runner instead of waiting for human review", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-failure-retry-"));
+  try {
+    writeLifecycleRunner(matter);
+    const graph = {
+      skills: [{
+        id: "apa-failing-runner",
+        command: "/apa-failing-runner",
+        phase: "capture",
+        kind: "core",
+        inputs: [],
+        outputs: [],
+        gates_after: ["runner-success"],
+        human_checkpoints: ["human-review"],
+        runner: "node runner-fixture.mjs fail",
+      }],
+      domains: [],
+      registry: {
+        optional: [],
+        hooks: [],
+        pipeline: { order: ["apa-failing-runner"] },
+      },
+    };
+    const first = executePipeline({ matter, graph, runnerRoot: matter });
+    const second = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(first.status, "failed");
+    assert.equal(second.status, "failed");
+    assert.equal(second.exit_code, 7);
+    const entries = validateRunlog(matter).entries.filter((entry) => entry.skill === "apa-failing-runner");
+    assert.equal(entries.length, 2, "the second call must execute and record a second attempt");
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("apa-run fails incomplete successful evidence before exposing checkpoints", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-incomplete-output-"));
+  try {
+    writeLifecycleRunner(matter);
+    const graph = {
+      skills: [{
+        id: "apa-incomplete-runner",
+        command: "/apa-incomplete-runner",
+        phase: "capture",
+        kind: "core",
+        inputs: [],
+        outputs: ["logic/missing-output.md"],
+        gates_after: ["output-complete"],
+        human_checkpoints: ["human-review"],
+        runner: "node runner-fixture.mjs noop",
+      }],
+      domains: [],
+      registry: {
+        optional: [],
+        hooks: [],
+        pipeline: { order: ["apa-incomplete-runner"] },
+      },
+    };
+    const result = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(result.status, "failed", JSON.stringify(result, null, 2));
+    assert.match(result.error, /declared evidence is incomplete/);
+    assert.ok(result.reasons.some((item) => item.code === "OUTPUT_EVIDENCE_MISSING"));
+    assert.ok(result.reasons.some((item) => item.code === "CHECKPOINT_PENDING"));
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("apa-run rejects a declared runner that overrides the selected matter", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-matter-override-"));
+  try {
+    writeLifecycleRunner(matter);
+    const graph = {
+      skills: [{
+        id: "apa-override-runner",
+        command: "/apa-override-runner",
+        phase: "capture",
+        kind: "core",
+        inputs: [],
+        outputs: [],
+        gates_after: [],
+        human_checkpoints: [],
+        runner: "node runner-fixture.mjs noop --matter elsewhere",
+      }],
+      domains: [],
+      registry: {
+        optional: [],
+        hooks: [],
+        pipeline: { order: ["apa-override-runner"] },
+      },
+    };
+    const result = executePipeline({ matter, graph, runnerRoot: matter });
+    assert.equal(result.status, "failed");
+    assert.equal(result.exit_code, 2);
+    assert.match(result.error, /must not override.*--matter/);
   } finally {
     rmSync(matter, { recursive: true, force: true });
   }

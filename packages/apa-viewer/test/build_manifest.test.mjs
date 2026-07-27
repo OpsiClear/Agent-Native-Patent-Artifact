@@ -71,6 +71,36 @@ test("emits depends_on CLM02 -> CLM01 and contributed_to AINVENTOR -> CLM01", ()
   );
 });
 
+test("emits limitation-level contributor edges for apa_version 0.2", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-viewer-contributors-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    edit(dir, "PATENT.md", (text) => text
+      .replace('apa_version: "0.1"', 'apa_version: "0.2"')
+      .replace(
+        '  - id: "AINVENTOR"\n    name: "Alex Example"',
+        '  - id: "AINVENTOR"\n    name: "Alex Example"\n  - id: "COINVENTOR"\n    name: "Casey Example"',
+      ));
+    edit(dir, "logic/claims.md", (text) => text.replace(
+      "    provenance: inventor:AINVENTOR\n    source: inventor-confirmation",
+      "    provenance: inventor:AINVENTOR\n    contributors: [AINVENTOR, COINVENTOR]\n    source: inventor-confirmation",
+    ));
+    const manifest = build(dir);
+    assert.equal(manifest.meta.apa_version, "0.2");
+    for (const inventor of ["AINVENTOR", "COINVENTOR"]) {
+      const edge = manifest.edges.find((candidate) => (
+        candidate.kind === "contributed_to_limitation"
+        && candidate.from === inventor
+        && candidate.to === "LIM01"
+      ));
+      assert.ok(edge, `${inventor} contribution edge exists`);
+      assert.equal(edge.resolved, true);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("the clean example produces zero unresolved edges", () => {
   const m = build(EXAMPLE);
   const unresolved = m.edges.filter((e) => e.resolved === false);

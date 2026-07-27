@@ -30,6 +30,16 @@ const SKIP_PREFIXES = [
   ".git/",
   ".autotune/",
 ];
+const COVERAGE_EXCLUSIONS = new Map([
+  ["packages/apa-viewer/viewer.js", "browser-only; exercised by test/viewer-browser.test.mjs in Chrome/Edge/Chromium"],
+  ["scripts/check-package-isolation.mjs", "test/build controller that recursively launches package probes"],
+  ["scripts/check-syntax.mjs", "build controller"],
+  ["scripts/coverage-summary.mjs", "coverage controller cannot measure itself"],
+  ["scripts/setup.mjs", "interactive workspace setup entrypoint"],
+  ["scripts/smoke.mjs", "build controller exercised separately by npm run smoke"],
+]);
+const MIN_FILE_LOAD_PERCENT = 95;
+const MIN_FUNCTION_PERCENT = 90;
 
 function fwd(p) {
   return String(p).split("\\").join("/");
@@ -38,6 +48,7 @@ function fwd(p) {
 function isFirstPartyFile(file) {
   const rel = fwd(relative(ROOT, file));
   if (rel.startsWith("..") || rel === "") return false;
+  if (COVERAGE_EXCLUSIONS.has(rel)) return false;
   if (![".js", ".mjs"].includes(extname(file))) return false;
   if (rel.endsWith(".test.mjs") || rel.endsWith(".test.js") || rel.startsWith("test/") || rel.includes("/test/")) return false;
   return !SKIP_PREFIXES.some((prefix) => rel.startsWith(prefix));
@@ -120,7 +131,7 @@ function percent(covered, total) {
   return total ? Math.round((covered / total) * 1000) / 10 : 100;
 }
 
-function render({ entries, loadedFiles }, firstPartyFiles) {
+function summarize({ entries, loadedFiles }, firstPartyFiles) {
   const total = entries.reduce((n, e) => n + e.total, 0);
   const covered = entries.reduce((n, e) => n + e.covered, 0);
   const loaded = new Set(loadedFiles);
@@ -130,15 +141,37 @@ function render({ entries, loadedFiles }, firstPartyFiles) {
     .slice()
     .sort((a, b) => percent(a.covered, a.total) - percent(b.covered, b.total) || b.total - a.total)
     .slice(0, 12);
+  return {
+    total,
+    covered,
+    loadedFirstParty,
+    unloaded,
+    weakest,
+    fileLoadPercent: percent(loadedFirstParty.length, firstPartyFiles.length),
+    functionPercent: percent(covered, total),
+  };
+}
+
+function render(summary, firstPartyFiles) {
+  const {
+    total,
+    covered,
+    loadedFirstParty,
+    unloaded,
+    weakest,
+    fileLoadPercent,
+    functionPercent,
+  } = summary;
   const lines = [];
   lines.push(`# APA Coverage Summary`);
   lines.push("");
-  lines.push(`First-party files loaded by tests: ${loadedFirstParty.length}/${firstPartyFiles.length} (${percent(loadedFirstParty.length, firstPartyFiles.length)}%).`);
-  lines.push(`Function coverage among loaded files with functions: ${covered}/${total} (${percent(covered, total)}%) across ${entries.length} file(s).`);
+  lines.push(`First-party files loaded by tests: ${loadedFirstParty.length}/${firstPartyFiles.length} (${fileLoadPercent}%; blocking floor ${MIN_FILE_LOAD_PERCENT}%).`);
+  lines.push(`Function coverage among loaded files with functions: ${covered}/${total} (${functionPercent}%; blocking floor ${MIN_FUNCTION_PERCENT}%).`);
   if (unloaded.length) {
     const shown = unloaded.slice(0, 12).map((file) => `\`${file}\``).join(", ");
     lines.push(`Unloaded production files (${unloaded.length}): ${shown}${unloaded.length > 12 ? ", ..." : ""}.`);
   }
+  lines.push(`Intentional exclusions (${COVERAGE_EXCLUSIONS.size}): ${[...COVERAGE_EXCLUSIONS.entries()].map(([file, reason]) => `\`${file}\` (${reason})`).join("; ")}.`);
   lines.push("");
   lines.push(`| File | Functions | Covered |`);
   lines.push(`|---|---:|---:|`);
@@ -157,9 +190,18 @@ try {
     env: { ...process.env, NODE_V8_COVERAGE: coverageDir },
   });
   if (res.status !== 0) process.exit(res.status || 1);
-  const summary = render(mergeCoverage(coverageDir), listFirstPartyFiles());
-  console.log(`\n${summary}`);
-  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+  const firstPartyFiles = listFirstPartyFiles();
+  const summary = summarize(mergeCoverage(coverageDir), firstPartyFiles);
+  const rendered = render(summary, firstPartyFiles);
+  console.log(`\n${rendered}`);
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${rendered}\n`);
+  if (summary.fileLoadPercent < MIN_FILE_LOAD_PERCENT || summary.functionPercent < MIN_FUNCTION_PERCENT) {
+    console.error(
+      `coverage floor failed: file-load ${summary.fileLoadPercent}% (min ${MIN_FILE_LOAD_PERCENT}%), ` +
+      `functions ${summary.functionPercent}% (min ${MIN_FUNCTION_PERCENT}%)`,
+    );
+    process.exitCode = 1;
+  }
 } finally {
   rmSync(coverageDir, { recursive: true, force: true });
 }

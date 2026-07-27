@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import {
   checkSkillGraph,
@@ -8,6 +10,8 @@ import {
   renderMermaid,
   renderSkillGraphDoc,
 } from "../skillgraph.mjs";
+
+const CLI = fileURLToPath(new URL("../cli.mjs", import.meta.url));
 
 test("skill graph metadata validates", () => {
   const result = checkSkillGraph(loadSkillGraph());
@@ -83,4 +87,11 @@ test("skill graph docs mention hooks and domain packs", () => {
   assert.match(renderDomainPacksDoc(graph), /software/);
   assert.match(mermaid, /flowchart TD/);
   assert.match(mermaid, /apa_review_form -. hook:assembly\.preflight .-> assembly_preflight/);
+});
+
+test("skillgraph CLI check and docs freshness entrypoints execute", () => {
+  const checked = spawnSync(process.execPath, [CLI, "check"], { encoding: "utf8" });
+  assert.equal(checked.status, 0, checked.stderr || checked.stdout);
+  const docs = spawnSync(process.execPath, [CLI, "docs", "--check"], { encoding: "utf8" });
+  assert.equal(docs.status, 0, docs.stderr || docs.stdout);
 });

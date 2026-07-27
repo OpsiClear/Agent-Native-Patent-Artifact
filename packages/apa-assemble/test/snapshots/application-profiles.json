@@ -1,0 +1,86 @@
+{
+  "utility": {
+    "profile": {
+      "id": "us-utility-v1",
+      "implementation_status": "implemented",
+      "review_status": "repository-reviewed",
+      "claims_required": true
+    },
+    "markdown_headings": [
+      "CROSS-REFERENCE TO RELATED APPLICATIONS",
+      "FIELD OF THE INVENTION",
+      "BACKGROUND",
+      "BRIEF SUMMARY",
+      "BRIEF DESCRIPTION OF THE DRAWINGS",
+      "DETAILED DESCRIPTION",
+      "CLAIMS",
+      "ABSTRACT"
+    ],
+    "html_headings": [
+      "Cross-Reference to Related Applications",
+      "Field of the Invention",
+      "Background",
+      "Brief Summary",
+      "Brief Description of the Drawings",
+      "Detailed Description",
+      "Claims",
+      "Abstract"
+    ],
+    "has_candidate_banner": false,
+    "has_claims_heading": true,
+    "has_single_claim_heading": false,
+    "has_abstract_heading": true
+  },
+  "provisional": {
+    "profile": {
+      "id": "us-provisional-candidate-v1",
+      "implementation_status": "candidate",
+      "review_status": "human-legal-and-visual-review-required",
+      "claims_required": false
+    },
+    "markdown_headings": [
+      "CROSS-REFERENCE TO RELATED APPLICATIONS",
+      "FIELD",
+      "BACKGROUND",
+      "SUMMARY",
+      "BRIEF DESCRIPTION OF THE DRAWINGS",
+      "DETAILED DESCRIPTION"
+    ],
+    "html_headings": [
+      "Cross-Reference to Related Applications",
+      "Field",
+      "Background",
+      "Summary",
+      "Brief Description of the Drawings",
+      "Detailed Description"
+    ],
+    "has_candidate_banner": true,
+    "has_claims_heading": false,
+    "has_single_claim_heading": false,
+    "has_abstract_heading": false
+  },
+  "design": {
+    "profile": {
+      "id": "us-design-candidate-v1",
+      "implementation_status": "candidate",
+      "review_status": "human-legal-and-visual-review-required",
+      "claims_required": true
+    },
+    "markdown_headings": [
+      "CROSS-REFERENCE TO RELATED APPLICATIONS",
+      "FIGURE DESCRIPTIONS",
+      "DESCRIPTION",
+      "CLAIM"
+    ],
+    "html_headings": [
+      "Cross-Reference to Related Applications",
+      "Figure Descriptions",
+      "Description",
+      "Claim"
+    ],
+    "has_candidate_banner": true,
+    "has_claims_heading": false,
+    "has_single_claim_heading": true,
+    "has_abstract_heading": false
+  }
+}

@@ -9,6 +9,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { parseFrontmatter, iterEntitySections } from "../../lib/apa-parse.mjs";
+import { assemblyProfile } from "./profiles.mjs";
 
 function read(p) { try { return readFileSync(p, "utf8"); } catch { return ""; } }
 function prose(body) { return body.split("```binding")[0].trim(); }
@@ -64,6 +65,7 @@ function neutralDoc(p) {
 
 export function assembleMatter(matterDir, { legend } = {}) {
   const fm = parseFrontmatter(read(join(matterDir, "PATENT.md")));
+  const profile = assemblyProfile(fm.application_type);
   const problem = read(join(matterDir, "logic", "problem.md"));
   const claimsSecs = iterEntitySections(read(join(matterDir, "logic", "claims.md")));
   const specSecs = iterEntitySections(read(join(matterDir, "src", "embodiments.md")));
@@ -104,7 +106,58 @@ export function assembleMatter(matterDir, { legend } = {}) {
     abstract: fm.abstract || MISSING("/apa-spec"),
   };
 
-  return { sections, markdown: toMarkdown(sections), html: toHtml(sections, fm), warnings };
+  if (profile.application_type === "provisional") {
+    return {
+      profile,
+      sections,
+      markdown: toProvisionalMarkdown(sections),
+      html: toProvisionalHtml(sections),
+      warnings,
+    };
+  }
+  if (profile.application_type === "design") {
+    if (claims.length !== 1) warnings.push(`design profile requires exactly one claim; found ${claims.length}.`);
+    return {
+      profile,
+      sections,
+      markdown: toDesignMarkdown(sections),
+      html: toDesignHtml(sections),
+      warnings,
+    };
+  }
+  return { profile, sections, markdown: toMarkdown(sections), html: toHtml(sections, fm), warnings };
+}
+
+function candidateBanner(profileName) {
+  return `> ${profileName} assembly candidate only. Human legal-rule and rendered-document review are required; APA does not authorize filing.`;
+}
+
+function toProvisionalMarkdown(s) {
+  return [
+    `# ${s.title}`,
+    "",
+    candidateBanner("Provisional"),
+    "",
+    "## CROSS-REFERENCE TO RELATED APPLICATIONS", s.crossReference || "Not applicable.", "",
+    "## FIELD", s.field, "",
+    "## BACKGROUND", s.background, "",
+    "## SUMMARY", s.summary, "",
+    "## BRIEF DESCRIPTION OF THE DRAWINGS", s.briefDescription, "",
+    "## DETAILED DESCRIPTION", s.detailedDescription, "",
+  ].join("\n");
+}
+
+function toDesignMarkdown(s) {
+  return [
+    `# ${s.title}`,
+    "",
+    candidateBanner("Design"),
+    "",
+    "## CROSS-REFERENCE TO RELATED APPLICATIONS", s.crossReference || "Not applicable.", "",
+    "## FIGURE DESCRIPTIONS", s.briefDescription, "",
+    "## DESCRIPTION", s.detailedDescription, "",
+    "## CLAIM", s.claims[0] || "*[Not drafted - run /apa-claims]*", "",
+  ].join("\n");
 }
 
 function toMarkdown(s) {
@@ -205,4 +258,40 @@ function toHtml(s, fm) {
 <div class="claims"><h2>Claims</h2><p>What is claimed is:</p>${claimsHtml}</div>
 <div class="abstract"><h2>Abstract</h2>${para(s.abstract)}</div>
 </body></html>`;
+}
+
+function candidateHtml(title, body) {
+  const esc = (value) => String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const sections = body.map(([heading, text]) => (
+    `<h2>${esc(heading)}</h2><p>${esc(text).replace(/\n{2,}/g, "</p><p>").replace(/\n/g, "<br>")}</p>`
+  )).join("\n");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>${usptoPrintCss()}</style></head><body>
+<h1>${esc(title)}</h1>
+<p><strong>${esc(candidateBanner("Application-type").replace(/^>\s*/, ""))}</strong></p>
+${sections}
+</body></html>`;
+}
+
+function toProvisionalHtml(s) {
+  return candidateHtml(s.title, [
+    ["Cross-Reference to Related Applications", s.crossReference || "Not applicable."],
+    ["Field", s.field],
+    ["Background", s.background],
+    ["Summary", s.summary],
+    ["Brief Description of the Drawings", s.briefDescription],
+    ["Detailed Description", s.detailedDescription],
+  ]);
+}
+
+function toDesignHtml(s) {
+  return candidateHtml(s.title, [
+    ["Cross-Reference to Related Applications", s.crossReference || "Not applicable."],
+    ["Figure Descriptions", s.briefDescription],
+    ["Description", s.detailedDescription],
+    ["Claim", s.claims[0] || "*[Not drafted - run /apa-claims]*"],
+  ]);
 }

@@ -1,8 +1,10 @@
-# The Patent Artifact Protocol (v0.1, MVP)
+# The Patent Artifact Protocol (v0.1/v0.2, MVP)
 
 > The on-disk, machine-executable format for a patent matter. This is the **canonical contract**:
 > the validator (`packages/apa-validate`), the viewer (`packages/apa-viewer`), and every skill read
-> and write this format. See `../DESIGN.md` §2 and §11 for the rationale. **USPTO scope.**
+> and write this format. The validator reads legacy `apa_version: "0.1"` matters and current
+> `apa_version: "0.2"` matters; unknown/future versions fail loud. See `../DESIGN.md` §2 and §11
+> for the rationale. **USPTO scope.**
 
 A patent **matter** is a directory `<matter>/` holding a `PATENT.md` manifest plus four layers
 (`logic/` `src/` `trace/` `evidence/`) and a `staging/` capture buffer. The layers split the matter
@@ -41,7 +43,7 @@ YAML frontmatter (the ~200-token L1 relevance gate) followed by Layer Index tabl
 
 ```yaml
 ---
-apa_version: "0.1"
+apa_version: "0.2"
 title: "<invention title; also the application title, <=500 chars>"
 application_type: "utility"        # provisional | utility | design | plant | pct | cip
 jurisdiction: "USPTO"                 # only active jurisdiction in v0.1; other values fail loud
@@ -70,6 +72,17 @@ confidentiality: "UNFILED - CONFIDENTIAL. Do not externally disclose."
 
 **Progressive disclosure:** L1 = `PATENT.md` only; L2 = a layer file (`claims.md`, `prior_art.md`,
 `evidence/README.md`); L3 = a detail (one claim's support, one reference's chart, one figure).
+
+### Protocol version contract
+
+- `0.1` remains readable for existing matters. Limitation-level `contributors` is optional.
+- `0.2` is the current authoring contract. Every adopted claim limitation must carry a non-empty,
+  duplicate-free `contributors: [<inventor-id>, ...]` list whose IDs resolve to `inventors`.
+- Unknown or future versions are validation errors. Tools must not guess migration semantics.
+
+`provenance` records how text was authored or adopted; `contributors` records the natural people
+identified as having contributed to the limitation. They answer different questions and neither is
+a legal inventorship conclusion.
 
 ### Rule Pack Contract
 
@@ -140,23 +153,38 @@ type: claim-independent
 | `depends_on` | CLM -> CLM | dependent-claim base | **error** |
 | `distinguished_over` | CLM -> PA | the reference it must read past (102/103) | warning |
 | `scope_set_at` | CLM -> PH | the decision node where breadth was chosen | warning |
-| `contributed_to` | INV -> CLM | which inventor conceived which claim (35 USC 116) | error |
+| `contributed_to` | INV -> CLM | claim-level attestation from `inventorship_matrix` (35 USC 116) | error |
+| `contributed_to_limitation` | INV -> LIM | limitation-level contribution from v0.2 `contributors` | error |
 
 **Provenance** tags (every limitation, embodiment, prior-art characterization, decision):
 `inventor:<id>` · `attorney` · `ai-suggested` (default) · `ai-executed` · `human-revised`.
 Never auto-upgrades. A claim limitation tagged `ai-suggested` is an **assembly blocker** (human must
-adopt it). See DESIGN §2.4 / §11.1.
+adopt it). Under v0.2, adoption also requires `contributors`. See DESIGN §2.4 / §11.1.
 
-**Source-span metadata** should accompany promoted facts where available: `source`
-(`transcript|upload|inventor-confirmation|attorney-note|figure-reconstruction|source-extracted|inferred-from-document|not-recoverable`),
-`source_span`, optional `speaker` / `timestamp`, and `source_sha256`. In the default
-`source_span_policy: "warning"` mode, the validator warns when adopted claim limitations or adopted
-`SPEC####` paragraphs lack `source`, `source_span`, and `source_sha256`. Use
-`source_span_policy: "strict"` to make those source-span findings validation errors before assembly.
-Use `source_span_policy: "relaxed"` for compiled public patents or imports where conception/source
-spans cannot honestly be reconstructed; invalid source-span values still warn. Use
-`source: not-recoverable` only when the source cannot be recovered without pretending conception
-evidence.
+**Source-span metadata** accompanies promoted facts where available. `source` is one of
+`transcript|upload|inventor-confirmation|attorney-note|figure-reconstruction|source-extracted|
+inferred-from-document|not-recoverable`.
+
+The default `source_span_policy: "warning"` contract uses scalar `source_span` and `source_sha256`
+metadata and warns when an adopted limitation or `SPEC####` paragraph lacks it. `relaxed` permits
+missing source metadata for compiled/public imports but still warns on invalid values.
+
+Strict mode uses verifiable records:
+
+```yaml
+source: inventor-confirmation
+source_spans:
+  - path: evidence/interview-transcript.txt
+    locator: "lines:42-45"
+    sha256: "<SHA-256 of the exact source-file bytes>"
+```
+
+Each strict record must contain a matter-relative `path`, a non-empty `locator`, and a 64-character
+SHA-256 digest. Paths must remain under `staging/`, `evidence/`, `src/`, `logic/`, or `source/`;
+absolute paths, `..`, missing/non-file targets, symlink escapes, and hash mismatches are validation
+errors. Multiple records are permitted and every record is verified. Use `source: not-recoverable`
+only when the source genuinely cannot be recovered; it explicitly records that limitation instead
+of fabricating provenance and still requires human review.
 
 ---
 
@@ -179,12 +207,14 @@ limitations:
     defined_by: [TERM01]     # optional lexicographic link; supported_by remains LIM -> SPEC
     illustrated_by: [FIG01#10]
     provenance: inventor:AINVENTOR
+    contributors: [AINVENTOR] # required for adopted limitations in apa_version 0.2
   - id: LIM02
     text: "a fastener coupled to the frame"
     references: ["frame"]    # noun phrases referenced as 'the/said ...' -> need antecedent
     antecedent_of: [LIM01]   # resolves each 'references' to an earlier introducing limitation
     supported_by: [SPEC0003]
     provenance: inventor:AINVENTOR
+    contributors: [AINVENTOR]
 ```
 
 ### `logic/concepts.md`
@@ -220,6 +250,9 @@ One `### SPEC#### - <gist>` section per support paragraph; binding:
 grounding: transcribed | reconstructed     # transcribed = inventor-sourced; reconstructed = drafted-from-figures
 defines_numerals: ["FIG01#10"]             # numerals this paragraph defines
 provenance: inventor:AINVENTOR
+source: inventor-confirmation
+source_spans:                               # required for adopted paragraphs in strict mode
+  - { path: "evidence/interview-transcript.txt", locator: "lines:42-45", sha256: "<64 hex chars>" }
 ```
 Any gap is written literally as **"Not specified in disclosure"** (new-matter guard) — never invented.
 
@@ -255,13 +288,13 @@ nodes:
 `trace/` and `staging/` are **append-only / immutable**; `logic/` is the mutable clean current draft.
 
 ### `trace/runlog.jsonl`
-Append-only execution ledger for agent/tool runs. It is optional in the MVP validator so static
-imported/public matters can still validate, but APA commands that write files, call an external sink,
-or create a human checkpoint should append it. One JSON object per line:
+Append-only, hash-chained execution ledger for agent/tool runs. It is optional in the MVP validator
+so static imported/public matters can still validate, but APA commands that write files, call an
+external sink, or create a human checkpoint should append it. One JSON object per line:
 
 ```json
 {
-  "schema": "apa-runlog-v1",
+  "schema": "apa-runlog-v2",
   "timestamp": "2026-06-20T00:00:00.000Z",
   "skill": "apa-priorart",
   "rule_version": "2026-06-15",
@@ -271,12 +304,42 @@ or create a human checkpoint should append it. One JSON object per line:
   "external_sinks": [{ "kind": "prior-art-query", "bytes_sha256": "...", "human_approved": true }],
   "human_checkpoints": [{ "id": "closest-art-selection", "required": true, "satisfied": false }],
   "adopted_changes": [],
-  "rejected_changes": []
+  "rejected_changes": [],
+  "chain": {
+    "sequence": 1,
+    "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "entry_sha256": "..."
+  }
 }
 ```
 
+The companion `trace/runlog.head.json` contains
+`{"schema":"apa-runlog-head-v1","entries":<count>,"sha256":"<tail digest>"}`. Before appending, tools
+validate the entire ledger and head. Payload mutation, reordering, broken predecessor links, and
+suffix/full-ledger truncation fail closed while the companion head remains. Legacy
+`apa-runlog-v1` lines remain readable only as a contiguous prefix; the first v2 entry chains to the
+SHA-256 of the preceding raw legacy line, and a later downgrade to v1 is rejected. Because the
+ledger is optional for static/imported matters, deletion of both the ledger and its head cannot be
+distinguished locally from a matter that never had a ledger; adversarial deletion requires an
+external immutable anchor.
+
 Runlog entries do not make a legal conclusion. They exist so a reviewer can tell what was run, what
 bytes left the machine, which outputs were produced, and which human checks remain open.
+
+### Executable lifecycle runner
+
+`node packages/apa-run/cli.mjs run --matter <matter> [--domain <id>] [--support <id>]` executes only
+the `node <repo-relative-script>` runners declared in skill/domain metadata. It does not invoke a
+shell, rejects metacharacters, runner-root escapes, and declared overrides of the selected matter,
+hashes declared inputs and successful outputs, and appends an attempt record even when a runner
+fails (failed attempts record no outputs).
+
+Steps without a deterministic runner stop as `awaiting-agent`. Gates and human checkpoints stop as
+`awaiting-checkpoint`. After the checkpoint evidence is satisfied, the operator must explicitly
+resume with `--continue-after <step-id>`; that continuation is itself recorded and must postdate the
+most recent step evidence. Failed checkpointed runners remain retryable. An invalid chained ledger
+or a nominally successful runner with incomplete declared output evidence fails before checkpoint
+review is exposed.
 
 ---
 
@@ -358,7 +421,12 @@ LLM-judge **flags for the attorney**, never a clearance. Exit codes: `0` clean �
 - An AI-named inventor, or zero `inventors`, in `PATENT.md`.
 - An **unsupported matter type or feature** (fail loud — e.g. `application_type` not in the supported
   set; a detected nucleotide/amino-acid sequence with no ST.26 listing -> "not supported, route to counsel").
+- An unsupported or future `apa_version`.
 - Unknown `source_span_policy`.
+- Under strict source-span policy, a missing strict record, unsafe/missing/non-file source path, or
+  SHA-256 mismatch.
+- Under v0.2, an adopted limitation with a missing/empty/malformed `contributors` list, an unknown
+  inventor ID, or a duplicate contributor.
 
 **Warnings (exit 1):**
 - An unresolved `supported_by` / `defined_by` / `illustrated_by` / `practiced_by` / `distinguished_over` /
@@ -369,6 +437,9 @@ LLM-judge **flags for the attorney**, never a clearance. Exit codes: `0` clean �
 - An independent claim with no `contributed_to` from any inventor (inventorship not attested).
 - A defined `TERM##` flagged `objective_bound: false` (112(b) term-of-degree risk).
 - More or fewer than one `representative: true` figure.
+- Prior-art evidence with no active `PA##`, or an active `PA##` with no evidence record.
+- Claim prose/binding drift, or an independent claim lacking expected `distinguished_over` /
+  `illustrated_by` graph evidence when prior art / figures exist.
 
 The validator emits `validation_report.json` (machine) + a human summary, and stamps it with
 `rules_effective_date`.
@@ -387,6 +458,14 @@ The validator emits `validation_report.json` (machine) + a human summary, and st
 If `application_type` is missing or outside `{provisional, utility, design}`, the validator fails loud
 rather than guessing. Silent mis-validation (e.g. flagging a provisional's correctly-absent claims as a
 missing-core error) is the more dangerous failure mode and is explicitly forbidden.
+
+Validation support is broader than filing-assembly authorization. The deterministic assembler has:
+
+- a repository-reviewed `us-utility-v1` profile enabled for gated assembly;
+- checked-in `us-provisional-candidate-v1` and `us-design-candidate-v1` collation snapshots.
+
+The provisional and design profiles are **review candidates**, not filing-enabled profiles.
+Preflight blocks them until authorized humans complete legal-rule and rendered-document review.
 
 ---
 
@@ -416,6 +495,22 @@ Preflight recomputes the fingerprint whenever it assesses an existing package:
 The manifest is an audit record, not evidence that a filing act occurred and not a legal-readiness
 conclusion. Human-produced PDFs, signatures, form completion, and Patent Center activity remain
 separate deferred actions.
+
+### Rigor and human-review freshness
+
+`patent_rigor_report.json` carries an `apa-rigor-input-fingerprint-v1` over the canonical claims,
+specification, drawing, dossier, and matter inputs it evaluated (excluding the report itself).
+Preflight recomputes it; any changed, added, removed, or unsafe linked input makes rigor stale and
+blocks assembly.
+
+Human-review state and questionnaires bind to
+`apa-human-review-target-fingerprint-v1`, covering claims, IDS/evidence counts, drawing artifacts,
+assembly review targets, and every assembled PDF/DOCX hash. The dynamic app persists
+`apa-human-review-state-v2`; questionnaire queues and answers use
+`apa-agent-question-queue-v2` / `apa-agent-question-answers-v2`. Changed targets make existing
+review evidence stale. Unanswered/unresolved readiness-required factual questions, affirmative
+answers without supporting notes, or a claimed final-PDF approval with no bound PDF/DOCX block
+preflight. These are evidence-freshness controls, not legal conclusions.
 
 ---
 

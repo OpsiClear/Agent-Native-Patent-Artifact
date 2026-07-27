@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { bundleSkills } from "../scripts/bundle-skills.mjs";
+import { bundleHostSkills, bundleSkills } from "../scripts/bundle-skills.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = path.resolve(HERE, "..");
@@ -49,7 +49,10 @@ test("bundle script produces fresh copies of repo-root installable skills", () =
 
 test("npm pack dry-run includes generated skill bundle after running the prepack bundler", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, "package.json"), "utf8"));
-  assert.equal(packageJson.scripts?.prepack, "node scripts/bundle-skills.mjs");
+  assert.equal(
+    packageJson.scripts?.prepack,
+    "node ../../scripts/gen-skill-docs.mjs --all-hosts && node scripts/bundle-skills.mjs",
+  );
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "apa-skill-pack-"));
   const tempPackage = path.join(temp, "package");
   try {
@@ -111,6 +114,58 @@ test("bundle replacement is contained to packageRoot/skills and refuses overlap"
     assert.throws(
       () => bundleSkills({ src: source, dst: path.join(source, "skills"), packageRoot: source }),
       /must not overlap/,
+    );
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test("host bundling packages independent Claude, Codex, and Cursor variants", () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "apa-skill-host-bundle-"));
+  try {
+    const sources = {};
+    for (const host of ["claude", "codex", "cursor"]) {
+      const source = path.join(temp, `source-${host}`);
+      const skill = path.join(source, "sample");
+      fs.mkdirSync(skill, { recursive: true });
+      fs.writeFileSync(
+        path.join(skill, "SKILL.md"),
+        `---\nname: sample\ndescription: ${host} variant\n---\n\n# ${host}\n`,
+      );
+      sources[host] = source;
+    }
+    const packageRoot = path.join(temp, "package");
+    fs.mkdirSync(packageRoot, { recursive: true });
+    const result = bundleHostSkills({
+      hostSources: sources,
+      dst: path.join(packageRoot, "skills"),
+      packageRoot,
+    });
+    assert.deepEqual(result.counts, { claude: 1, codex: 1, cursor: 1 });
+    for (const host of Object.keys(sources)) {
+      assert.match(
+        fs.readFileSync(path.join(packageRoot, "skills", host, "sample", "SKILL.md"), "utf8"),
+        new RegExp(`# ${host}`),
+      );
+    }
+    fs.rmSync(path.join(sources.cursor, "sample"), { recursive: true, force: true });
+    fs.mkdirSync(path.join(sources.cursor, "different"), { recursive: true });
+    fs.writeFileSync(
+      path.join(sources.cursor, "different", "SKILL.md"),
+      "---\nname: different\ndescription: mismatched variant\n---\n",
+    );
+    assert.throws(
+      () => bundleHostSkills({
+        hostSources: sources,
+        dst: path.join(packageRoot, "skills"),
+        packageRoot,
+      }),
+      /incomplete or inconsistent skill sets/,
+    );
+    assert.match(
+      fs.readFileSync(path.join(packageRoot, "skills", "cursor", "sample", "SKILL.md"), "utf8"),
+      /# cursor/,
+      "a rejected replacement must preserve the prior complete bundle",
     );
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });

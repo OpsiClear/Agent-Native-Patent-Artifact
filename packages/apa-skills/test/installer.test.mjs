@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { claude } from "../src/hosts.mjs";
+import { claude, codex, cursor } from "../src/hosts.mjs";
 import { install, uninstall } from "../src/installer.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -237,6 +237,58 @@ test("install refuses a bundled skill name that could escape the host skill root
       /unsafe installed skill directory name/,
     );
     assert.equal(fs.existsSync(path.join(home, ".claude", "skills")), false);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+    fs.rmSync(source, { recursive: true, force: true });
+  }
+});
+
+test("installer selects the matching packaged host variant", () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "apa-skills-host-home-"));
+  const source = fs.mkdtempSync(path.join(os.tmpdir(), "apa-skills-host-source-"));
+  try {
+    for (const host of [claude, codex, cursor]) {
+      const skill = path.join(source, host.id, "sample");
+      fs.mkdirSync(skill, { recursive: true });
+      fs.writeFileSync(
+        path.join(skill, "SKILL.md"),
+        `---\nname: sample\ndescription: ${host.id}\n---\n\n# ${host.id}\n`,
+      );
+    }
+    const result = install({
+      home,
+      hosts: [claude, codex, cursor],
+      skillsDir: source,
+      stamp: "host-variants",
+    });
+    assert.equal(result.skillCount, 1);
+    for (const host of [claude, codex, cursor]) {
+      const installed = fs.readFileSync(
+        path.join(home, host.skillRoot, "apa-sample", "SKILL.md"),
+        "utf8",
+      );
+      assert.match(installed, new RegExp(`# ${host.id}`));
+    }
+    fs.rmSync(path.join(source, cursor.id, "sample"), { recursive: true, force: true });
+    fs.mkdirSync(path.join(source, cursor.id, "different"), { recursive: true });
+    fs.writeFileSync(
+      path.join(source, cursor.id, "different", "SKILL.md"),
+      "---\nname: different\ndescription: mismatched variant\n---\n",
+    );
+    assert.throws(
+      () => install({
+        home,
+        hosts: [claude, codex, cursor],
+        skillsDir: source,
+        stamp: "mismatch",
+      }),
+      /inconsistent skill sets/,
+    );
+    assert.match(
+      fs.readFileSync(path.join(home, cursor.skillRoot, "apa-sample", "SKILL.md"), "utf8"),
+      /# cursor/,
+      "a rejected cross-host mismatch must not change the prior installation",
+    );
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
     fs.rmSync(source, { recursive: true, force: true });

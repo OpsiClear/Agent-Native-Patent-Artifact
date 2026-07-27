@@ -31,10 +31,13 @@ must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the 
 ## Procedure
 1. For each claim limitation, ensure a `SPEC####` paragraph teaches and enables it; add/extend paragraphs
    in `src/embodiments.md` with `grounding: transcribed` (inventor-sourced) or `reconstructed`
-   (drafted from figures), and `defines_numerals` for any numbered element. Preserve source-span
-   metadata where available (`source`, `source_span`, `speaker`, `timestamp`, `source_sha256`) so a
-   reviewer can trace each paragraph to inventor disclosure, figure reconstruction, attorney authorship,
-   or human adoption.
+   (drafted from figures), and `defines_numerals` for any numbered element. Preserve `source`,
+   `speaker`, and `timestamp` so a reviewer can trace each paragraph to inventor disclosure, figure
+   reconstruction, attorney authorship, or human adoption. Under `source_span_policy: strict`, use
+   `source_spans: [{path, locator, sha256}]`; paths must be matter-relative under `staging/`,
+   `evidence/`, `src/`, `logic/`, or `source/`, and SHA-256 must match the exact source-file bytes.
+   Warning/relaxed matters may retain scalar `source_span` + `source_sha256`. Use
+   `source: not-recoverable` only when recovery is genuinely impossible.
 2. **Grounding discipline / new-matter guard:** never state a limitation, advantage, or figure detail
    not grounded in the disclosure. Write any gap literally as **"Not specified in disclosure"** for the
    human - do not fill it.

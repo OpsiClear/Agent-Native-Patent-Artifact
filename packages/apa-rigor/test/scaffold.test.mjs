@@ -51,6 +51,8 @@ test("scaffoldReport: clean example -> Level-1 passed, mechanical dims prefilled
   assert.equal(s.dimensions.P3.score, 5);     // clean antecedent basis
   assert.equal(s.dimensions.P4.score, 5);     // links resolve
   assert.equal(s.dimensions.P1.score, null);  // judgment - left for the skill
+  assert.equal(s.input_fingerprint.schema, "apa-rigor-input-fingerprint-v1");
+  assert.match(s.input_fingerprint.sha256, /^[0-9a-f]{64}$/);
   assert.equal(s.dimensions.P5.score, null);
   assert.equal(s.prior_art_state.dossiers_found, 0);
   assert.equal(s.prior_art_state.cap_required, true);

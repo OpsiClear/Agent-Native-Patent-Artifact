@@ -74,14 +74,101 @@ export function bundleSkills({ src, dst, packageRoot } = {}) {
   }
 }
 
+export function bundleHostSkills({ hostSources, dst, packageRoot } = {}) {
+  if (!hostSources || typeof hostSources !== "object" || !dst || !packageRoot) {
+    throw new Error("bundleHostSkills requires hostSources, dst, and packageRoot");
+  }
+  const destination = path.resolve(dst);
+  const root = path.resolve(packageRoot);
+  if (path.dirname(destination) !== root || path.basename(destination) !== "skills") {
+    throw new Error(`bundle destination must be the direct "skills" child of packageRoot: ${root}`);
+  }
+  const sources = Object.entries(hostSources)
+    .map(([host, source]) => [host, path.resolve(source)])
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (!sources.length) throw new Error("bundleHostSkills requires at least one host source");
+  for (const [host, source] of sources) {
+    if (!/^[a-z][a-z0-9-]*$/.test(host)) throw new Error(`invalid host id: ${host}`);
+    if (!fs.existsSync(source)) throw new Error(`host source not found for ${host}: ${source}`);
+    if (
+      source === destination
+      || source.startsWith(`${destination}${path.sep}`)
+      || destination.startsWith(`${source}${path.sep}`)
+    ) {
+      throw new Error(`bundle source and destination must not overlap (${host})`);
+    }
+  }
+
+  fs.mkdirSync(root, { recursive: true });
+  const transactionRoot = fs.mkdtempSync(path.join(root, ".apa-skill-bundle-"));
+  const staged = path.join(transactionRoot, "skills");
+  const backup = path.join(transactionRoot, "previous");
+  const counts = {};
+  const skillNames = {};
+  let hadPrevious = false;
+  let installed = false;
+  try {
+    for (const [host, source] of sources) {
+      const hostDst = path.join(staged, host);
+      fs.mkdirSync(hostDst, { recursive: true });
+      counts[host] = 0;
+      skillNames[host] = [];
+      for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const skillMd = path.join(source, entry.name, "SKILL.md");
+        if (!fs.existsSync(skillMd)) continue;
+        copyDir(path.join(source, entry.name), path.join(hostDst, entry.name));
+        counts[host] += 1;
+        skillNames[host].push(entry.name);
+      }
+      skillNames[host].sort();
+    }
+    const hostEntries = Object.entries(skillNames);
+    const expectedNames = JSON.stringify(hostEntries[0]?.[1] || []);
+    if (
+      expectedNames === "[]"
+      || hostEntries.some(([, names]) => JSON.stringify(names) !== expectedNames)
+    ) {
+      throw new Error(`host skill bundles have incomplete or inconsistent skill sets: ${JSON.stringify(skillNames)}`);
+    }
+    if (fs.existsSync(destination)) {
+      fs.renameSync(destination, backup);
+      hadPrevious = true;
+    }
+    fs.renameSync(staged, destination);
+    installed = true;
+    if (hadPrevious) fs.rmSync(backup, { recursive: true, force: true });
+    return { counts, dst: destination };
+  } catch (error) {
+    if (installed && fs.existsSync(destination)) {
+      fs.rmSync(destination, { recursive: true, force: true });
+    }
+    if (hadPrevious && fs.existsSync(backup)) {
+      fs.renameSync(backup, destination);
+    }
+    throw error;
+  } finally {
+    fs.rmSync(transactionRoot, { recursive: true, force: true });
+  }
+}
+
 function main() {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const pkgRoot = path.resolve(here, "..");
-  const src = path.resolve(pkgRoot, "..", "..", "skills");
+  const repoRoot = path.resolve(pkgRoot, "..", "..");
+  const src = path.join(repoRoot, "skills");
   const dst = path.join(pkgRoot, "skills");
   try {
-    const result = bundleSkills({ src, dst, packageRoot: pkgRoot });
-    console.log(`[apa-skills:bundle] bundled ${result.count} skill(s) from ${result.src} -> ${result.dst}`);
+    const result = bundleHostSkills({
+      hostSources: {
+        claude: src,
+        codex: path.join(repoRoot, "dist", "codex"),
+        cursor: path.join(repoRoot, "dist", "cursor"),
+      },
+      dst,
+      packageRoot: pkgRoot,
+    });
+    console.log(`[apa-skills:bundle] bundled host variants ${JSON.stringify(result.counts)} -> ${result.dst}`);
   } catch (err) {
     console.error(`[apa-skills:bundle] ${err?.message || err}`);
     process.exit(1);

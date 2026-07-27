@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateRunlog } from "../../apa-trace/runlog.mjs";
+import { buildRigorInputFingerprint } from "../../apa-rigor/input-fingerprint.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "cli.mjs");
@@ -19,6 +20,7 @@ function writeFileReadyRigor(matterDir) {
   for (const id of ["P1", "P2", "P3", "P4", "P5", "P6"]) dimensions[id] = { score: 5, weaknesses: [] };
   const generatedAt = new Date().toISOString();
   writeFileSync(join(matterDir, "patent_rigor_report.json"), JSON.stringify({
+    input_fingerprint: buildRigorInputFingerprint(matterDir),
     dimensions,
     prior_art_state: {
       evaluated_at: generatedAt,

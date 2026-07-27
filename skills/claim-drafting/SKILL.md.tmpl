@@ -31,11 +31,20 @@ do not select scope or apply narrowing edits.
    globally unique), `text`, `introduces` (the `a/an` noun phrase), `references` + `antecedent_of` (the
    earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, optional
    `defined_by: [TERM##]` lexicographic links, and `provenance`. Never put a `TERM##` in
-   `supported_by`; definition links do not replace specification support.
+   `supported_by`; definition links do not replace specification support. For v0.2 adopted
+   limitations, also write `contributors: [<inventor-id>, ...]`.
 3. **Provenance.** Default every drafted limitation to `ai-suggested` - it is an **assembly blocker**
    until a human (inventor verbatim -> `inventor:<id>`; attorney -> `attorney`; paraphrase accepted ->
-   `human-revised`) adopts it. When a limitation is adopted, preserve source metadata where available:
-   `source`, `source_span`, `speaker`, `timestamp`, and `source_sha256`. Never name AI as an inventor.
+   `human-revised`) adopts it. Under `apa_version: "0.2"`, every adopted limitation also requires a
+   non-empty `contributors: [<inventor-id>, ...]` list; use multiple declared IDs for joint
+   contribution. `provenance` records authorship/adoption and `contributors` records attributed
+   natural-person contribution; neither is a legal conclusion. When a limitation is adopted,
+   preserve `source`, `speaker`, and `timestamp` where available. Under
+   `source_span_policy: strict`, use `source_spans: [{path, locator, sha256}]` with exact-file hashes
+   and matter-relative paths under `staging/`, `evidence/`, `src/`, `logic/`, or `source/`.
+   Warning/relaxed matters may retain scalar `source_span` + `source_sha256`; use
+   `source: not-recoverable` only when recovery is genuinely impossible. Never name AI as an
+   inventor.
 4. **Seed `concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
    objective bound.
 5. **Report + check.** Emit `logic/claims_report.json` using the shared report envelope

@@ -27,8 +27,10 @@ injection, bounded parser recursion). Node-only, zero-dependency.
   a validated artifact, view it, guard confidentiality.
 - **Phase 2 — prior-art search**: API-first (PatentsView PatentSearch API); every query scanned at the sink first.
 - **Phase 3 — drafting**: claims, spec, figures, patentability skills + a claim legal-form lint + an SVG figure generator.
-- **Phase 4 — filing assembly**: 1.77 spec (HTML print-to-PDF), ADS, SB/08 IDS, unsigned declaration,
-  dated-schedule fee estimate, and a pre-filing go/no-go gate that **stops at the submit boundary**.
+- **Phase 4 — filing assembly**: repository-reviewed utility profile; provisional/design collation
+  candidates remain blocked pending human legal-rule and rendered-document approval. Produces the
+  utility 1.77 spec (HTML print-to-PDF), ADS, SB/08 IDS, unsigned declaration, dated-schedule fee
+  estimate, and a pre-filing go/no-go gate that **stops at the submit boundary**.
 - **Phase 5 — rigor review**: a six-dimension Level-2 audit with a deterministic File-Ready..Do-Not-File
   verdict (a single weak dimension caps it), an adversarial examiner-critique loop, and the verdict wired
   back into the filing gate.
@@ -44,22 +46,22 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `docs/rule-packs/` + `packages/apa-rules/` | Dated rule-pack metadata; USPTO is the only active v0.1 jurisdiction and non-USPTO matters fail loud | ✅ tested |
 | `docs/source-registry.md` | Prior-art source IDs, access modes, and human-verification requirements | ✅ |
 | `examples/minimal-patent-artifact/` | A worked (fictional) artifact that exercises the protocol | ✅ |
-| `packages/apa-validate/` | Level-1 **mechanical** validator (antecedent basis, claim deps, edge resolution, type-aware core) | ✅ tested |
+| `packages/apa-validate/` | Level-1 **mechanical** validator (v0.1/v0.2 semantics, strict source hashes, joint contributors, graph/evidence drift, type-aware core) | ✅ tested |
 | `packages/apa-viewer/` | Static, claims-first viewer + manifest builder with read-only review panels (unresolved §112-support edges shown, never dropped) | ✅ tested |
 | `packages/apa-redact/` | Scan-at-sink confidentiality/PII guard (3-tier, patent-extended) | ✅ tested |
 | `packages/apa-safe/` | Guarded external-sink wrappers (`send`, `fetch`, `npx`): exact-byte scan, MEDIUM approval, runlog sink hashes, untrusted fetch envelope | ✅ tested |
 | `packages/apa-reports/` | Shared semantic report schemas for claims, patentability, examiner-adversary, and office-action reports | ✅ tested |
-| `packages/apa-trace/` | Runlog and autoprep-state helpers for audit logs, resumable stages, checkpoint records, and examiner-loop caps | ✅ tested |
+| `packages/apa-trace/` | Hash-chained runlog + head and autoprep-state helpers for auditable attempts, resumable stages, checkpoints, and examiner-loop caps | ✅ tested |
 | `packages/apa-skillgraph/` | Machine-readable skill/domain registry checker + generated skill graph/domain-pack documentation | ✅ tested |
-| `packages/apa-run/` | Graph-derived pipeline planner/status CLI for core skills plus enabled domain/support hook insertions | ✅ tested |
+| `packages/apa-run/` | Graph-derived planner/status/executor: runs contained declared Node runners, hashes evidence, and stops for agent/human continuation | ✅ tested |
 | `packages/apa-bench/software-patent-sim.mjs` | Offline scenario simulator for `/apa-software-patent`: thin SaaS, codec, AI/ML, UI, CRM, and math-only traps | ✅ tested |
 | `packages/apa-search/` | **(Phase 2)** API-first prior-art search (PatentsView PatentSearch API); scan-at-sink, dedupe/rank, files PA## + reference matrix | ✅ tested |
 | `packages/apa-draft/` | **(Phase 3)** claim legal-form lint (single-sentence, transitional phrase, numbering, multi-dependent, 112(f) nonce) | ✅ tested |
 | `packages/apa-figure/` | **(Phase 3)** zero-dep SVG patent-figure generator (numbered parts, lead lines, arrows) + numeral reconciliation | ✅ tested |
-| `packages/apa-assemble/` | **(Phase 4)** collate 1.77 spec (HTML print-to-PDF) + ADS + SB/08 IDS + unsigned declaration + fee worksheet + pre-filing gate; manifest v2 binds saved packages to canonical input hashes | ✅ tested |
+| `packages/apa-assemble/` | **(Phase 4)** utility filing collation + preflight; provisional/design review-candidate profiles and snapshots remain fail-closed; rigor/review/package freshness is hash-bound | ✅ tested |
 | `docs/fee-schedule.2026-07-26.json` | **(Phase 4)** dated USPTO fee schedule (2025 amounts; verify currency) driving the fee estimate | ✅ |
 | `packages/apa-rigor/` | **(Phase 5)** six-dimension rubric + **deterministic** verdict engine (mean + per-dimension floor; Do-Not-File cap) + report scaffold/schema | ✅ tested |
-| `packages/apa-skills/` | npx installer (`@apa/patent-skills`) — bundles the skills, detects hosts (claude/codex/cursor), installs `apa-*` with a lockfile + uninstall | ✅ tested |
+| `packages/apa-skills/` | Public npx installer (`@apa/patent-skills`) — bundles independent Claude/Codex/Cursor variants, selects by host, installs `apa-*` with ownership lockfile + uninstall | ✅ isolation-tested |
 | `packages/apa-eval/` | LLM-judge eval harness (raw-`fetch` Anthropic client, forced-tool verdicts, deterministic pre-pass, budget-regression gate; `--mock` offline) | ✅ tested |
 | `packages/apa-prosecute/` | **(post-filing extension)** parse an Office Action, compute response deadlines (estimate), scaffold a response — never files | ✅ tested |
 | `benchmarks/` + `packages/apa-bench/` | Offline deterministic benchmark fixtures for public-patent compile, public Office Action, and synthetic disclosure-to-assembly regressions | ✅ tested |
@@ -95,11 +97,15 @@ node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --o
 # then open packages/apa-viewer/index.html (it loads a sibling manifest.json, or ?manifest=<path>)
 node --test "packages/**/*.test.mjs" "lib/**/*.test.mjs" "scripts/**/*.test.mjs" "hosts/**/*.test.mjs" "test/**/*.test.mjs"   # the whole suite (or just: bash build.sh)
 npm run syntax                                                   # parse-check first-party JS/MJS
-npm run coverage                                                 # V8 first-party function coverage summary
+npm run coverage                                                 # blocking floors: 95% file load, 90% loaded-function coverage
+npm run distribution:check                                      # pack/install/execute every public package in empty projects
 npm run smoke                                                    # cross-package CLI smoke checks
 node packages/apa-skillgraph/cli.mjs check                       # validate skill.yaml/domain.yaml/registry.yaml
 node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --domain software
 node packages/apa-run/cli.mjs plan --matter examples/minimal-patent-artifact --support apa-tldraw-drawings --support apa-svg-upgrader
+# On a writable matter, execute declared runners and stop at agent/checkpoint boundaries:
+node packages/apa-run/cli.mjs run --matter <matter> --domain software
+node packages/apa-run/cli.mjs run --matter <matter> --domain software --continue-after <step-id>
 node packages/apa-bench/cli.mjs --mock                           # deterministic benchmark suite
 node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim   # /apa-software-patent simulation
 node scripts/gen-skill-docs.mjs && node packages/apa-skillgraph/cli.mjs check   # includes /apa-public-patent-benchmark metadata
@@ -132,9 +138,23 @@ Remove-Item Env:APA_EXTERNAL_MATTER
 ```
 
 Use `--require` when an absent local matter should fail instead of skip. Do not add a private matter
-to `benchmarks/`, test fixtures, package output, or Git. See
+to `benchmarks/`, test fixtures, package output, or Git. An optional private
+`apa-external-matter-oracle-v1` may be supplied with `--oracle` or `APA_EXTERNAL_ORACLE`; it checks
+the fixed time, exact finding histograms, dossier counts, blocked-gate set, and private canonical
+digest without emitting that digest. See
 [the aggregate validation report](docs/external-patent-validation-2026-07-26.md) for the
 evidence-backed hardening example.
+
+## Distribution boundary
+
+Only `apa-redact` and `@apa/patent-skills` are public packages. Repository-coupled packages such as
+assembly, evaluation, figures, and prosecution are explicitly private. The blocking isolation
+matrix packs each public package, installs it into an empty temporary project, imports/executes its
+public surface, and verifies all three host-specific skill bundles before release.
+
+The coverage command has separate blocking floors for first-party file loading (95%) and functions
+in loaded files (90%). Browser-only viewer code and build/controller entrypoints are documented as
+intentional exclusions in the emitted report and are exercised by dedicated browser/build checks.
 
 ## Use it in your own project (zero-install drop-in)
 

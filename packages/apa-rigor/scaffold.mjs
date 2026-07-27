@@ -10,6 +10,7 @@ import { lintClaims } from "../apa-draft/claim-lint.mjs";
 import { validateSearchDossier } from "../apa-search/dossier-schema.mjs";
 import { DIMENSIONS } from "./dimensions.mjs";
 import { evaluatePriorArtState } from "./verdict.mjs";
+import { buildRigorInputFingerprint } from "./input-fingerprint.mjs";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -60,7 +61,7 @@ export function scaffoldReport(matterDir, opts = {}) {
   }
 
   return {
-    apa_rigor_version: "0.1",
+    apa_rigor_version: "0.2",
     note: "ARA Seal Level 2 (semantic). Assumes Level 1 (mechanical) passed. READ-ONLY. Every finding is a flag/question for a registered practitioner - NEVER a patentability conclusion or §112 clearance. The verdict is computed deterministically from the scores (apa-rigor check), not chosen.",
     rule_pack: v.meta.rule_pack,
     level1: {
@@ -72,6 +73,7 @@ export function scaffoldReport(matterDir, opts = {}) {
       claimFormFindings: lint.findings.map((f) => f.code),
     },
     prior_art_state: buildPriorArtState(matterDir, opts),
+    input_fingerprint: buildRigorInputFingerprint(matterDir),
     dimensions,
     findings: [],                 // [{ dimension, severity: critical|major|minor|suggestion, evidence_span, weakness, amendment }]
     questions_for_inventor: [],

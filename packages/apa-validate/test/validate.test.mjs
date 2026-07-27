@@ -9,6 +9,7 @@ import { validateMatter } from "../validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
+const FULL_EXAMPLE = join(HERE, "..", "..", "..", "examples", "full-lifecycle-artifact");
 
 function clone() {
   const dir = mkdtempSync(join(tmpdir(), "apa-fixture-"));
@@ -301,4 +302,57 @@ test("unknown source_span_policy fails loud", () => {
     const r = validateMatter(d);
     assert.ok(codes(r.errors).includes("SOURCE_SPAN_POLICY_UNKNOWN"), JSON.stringify(r.errors));
   } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("orphan and missing prior-art evidence produce stable inventory warnings", () => {
+  const orphan = clone();
+  try {
+    edit(orphan, "evidence/prior_art/pa01.md", (text) => text.replace("# PA01", "# PA99"));
+    const r = validateMatter(orphan);
+    assert.ok(codes(r.warnings).includes("PRIOR_ART_EVIDENCE_INACTIVE"), JSON.stringify(r.warnings));
+    assert.ok(codes(r.warnings).includes("PRIOR_ART_EVIDENCE_MISSING"), JSON.stringify(r.warnings));
+  } finally {
+    rmSync(orphan, { recursive: true, force: true });
+  }
+});
+
+test("claim prose/binding drift produces a parity warning and deterministic hashes", () => {
+  const d = clone();
+  try {
+    edit(d, "logic/claims.md", (text) => text.replace(
+      '    text: "a reservoir configured to hold water"',
+      '    text: "a reservoir configured to hold water and report telemetry"',
+    ));
+    const first = validateMatter(d);
+    const second = validateMatter(d);
+    assert.ok(codes(first.warnings).includes("CLAIM_BINDING_PROSE_DRIFT"), JSON.stringify(first.warnings));
+    assert.deepEqual(
+      first.info.filter((finding) => finding.code === "CLAIM_PARITY_HASH"),
+      second.info.filter((finding) => finding.code === "CLAIM_PARITY_HASH"),
+    );
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("claim parity tolerates equivalent word order and inflection in the full lifecycle example", () => {
+  const result = validateMatter(FULL_EXAMPLE);
+  assert.ok(
+    !codes(result.warnings).includes("CLAIM_BINDING_PROSE_DRIFT"),
+    JSON.stringify(result.warnings),
+  );
+});
+
+test("missing distinguished-over and illustration evidence warn without deciding sufficiency", () => {
+  const d = clone();
+  try {
+    edit(d, "logic/claims.md", (text) => text
+      .replace("distinguished_over: [PA01]", "distinguished_over: []")
+      .replaceAll(/    illustrated_by: \[[^\]]+\]\n/g, ""));
+    const r = validateMatter(d);
+    assert.ok(codes(r.warnings).includes("DISTINGUISHED_OVER_MISSING"), JSON.stringify(r.warnings));
+    assert.ok(codes(r.warnings).includes("ILLUSTRATION_EVIDENCE_MISSING"), JSON.stringify(r.warnings));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });

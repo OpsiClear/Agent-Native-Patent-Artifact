@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { atomicWriteFile, atomicWriteJson, readJsonFile } from "./review_io.mjs";
+import { buildReviewTargetFingerprint } from "./review_fingerprint.mjs";
 
 function usage() {
   console.error([
@@ -96,7 +97,8 @@ function question(id, category, prompt, choices, opts = {}) {
     choices,
     why: opts.why || "",
     notePrompt: opts.notePrompt || "Optional notes, dates, URLs, file paths, or evidence:",
-    source: opts.source || ""
+    source: opts.source || "",
+    requiredForReadiness: ["disclosures", "dates"].includes(category)
   };
 }
 
@@ -255,12 +257,13 @@ function buildQueue(args) {
     : groups[args.topic];
   if (args.limit) questions = questions.slice(0, args.limit);
   return {
-    schema: "apa-agent-question-queue-v1",
+    schema: "apa-agent-question-queue-v2",
     generatedAt: new Date().toISOString(),
     matterId: manifest.docket || manifest.title,
     title: manifest.title,
     docket: manifest.docket,
     topic: args.topic,
+    targetFingerprint: buildReviewTargetFingerprint(args.matter),
     questionCount: questions.length,
     questions
   };
@@ -327,16 +330,39 @@ function renderAgentQuestion(queue, answerDoc) {
 
 function loadAnswers(path, queue) {
   const existing = readJsonFile(path, null);
-  if (existing?.schema === "apa-agent-question-answers-v1" && Array.isArray(existing.answers)) {
+  if (
+    existing?.schema === "apa-agent-question-answers-v2"
+    && Array.isArray(existing.answers)
+  ) {
+    if (
+      existing.answers.length > 0
+      && existing.targetFingerprint?.sha256 !== queue.targetFingerprint.sha256
+    ) {
+      throw new Error(
+        "existing questionnaire answers are stale for the current review targets; archive or clear the answers file before recording new answers",
+      );
+    }
     existing.matterId = existing.matterId || queue.matterId;
+    existing.queueGeneratedAt = queue.generatedAt;
+    existing.targetFingerprint = queue.targetFingerprint;
     delete existing.matterPath;
     existing._answersPath = path;
     return existing;
   }
+  if (
+    existing?.schema === "apa-agent-question-answers-v1"
+    && Array.isArray(existing.answers)
+    && existing.answers.length > 0
+  ) {
+    throw new Error(
+      "legacy questionnaire answers have no target fingerprint; archive or clear the answers file before recording new answers",
+    );
+  }
   const answerDoc = {
-    schema: "apa-agent-question-answers-v1",
+    schema: "apa-agent-question-answers-v2",
     matterId: queue.matterId,
     queueGeneratedAt: queue.generatedAt,
+    targetFingerprint: queue.targetFingerprint,
     updatedAt: new Date().toISOString(),
     answers: []
   };

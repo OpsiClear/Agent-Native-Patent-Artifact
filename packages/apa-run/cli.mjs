@@ -1,8 +1,13 @@
 #!/usr/bin/env node
-import { planPipeline, statusForMatter, appendPlanRunlog } from "./runner.mjs";
+import {
+  planPipeline,
+  statusForMatter,
+  appendPlanRunlog,
+  executePipeline,
+} from "./runner.mjs";
 
 function parseArgs(argv) {
-  const out = { _: [], domains: [], supports: [] };
+  const out = { _: [], domains: [], supports: [], continueAfter: [] };
   const valueAfter = (i, flag) => {
     const value = argv[i + 1];
     if (!value || value.startsWith("--")) throw new Error(`${flag} requires a value`);
@@ -13,6 +18,7 @@ function parseArgs(argv) {
     if (a === "--matter") out.matter = valueAfter(i++, a);
     else if (a === "--domain") out.domains.push(valueAfter(i++, a));
     else if (a === "--support") out.supports.push(valueAfter(i++, a));
+    else if (a === "--continue-after") out.continueAfter.push(valueAfter(i++, a));
     else if (a === "--json") out.json = true;
     else if (a === "--write-runlog") out.writeRunlog = true;
     else if (a === "--dry-run") out.dryRun = true;
@@ -29,7 +35,11 @@ function usage() {
     "  plan          print the graph-derived execution plan",
     "  status        show completed/pending steps from trace/runlog.jsonl",
     "  next          show the first incomplete step",
-    "  run           dry-run the plan; with --write-runlog append an orchestrator planning record",
+    "  run           execute declared deterministic runners; stop for agent steps, gates, and human checkpoints",
+    "",
+    "Run options:",
+    "  --dry-run                 print the plan without executing",
+    "  --continue-after <step>    explicitly continue after satisfied checkpoints for a step",
   ].join("\n");
 }
 
@@ -85,10 +95,27 @@ function main(argv) {
       const path = appendPlanRunlog({ matter: args.matter, plan, domains: plan.domains, supports: plan.supports });
       console.log(`appended orchestrator planning record to ${path}`);
     }
-    if (args.json) console.log(JSON.stringify(plan, null, 2));
-    else printPlan(plan);
-    console.log("run mode is an orchestrator handoff: execute agent skills in order and enforce gates; use --dry-run for planning-only semantics.");
-    return 0;
+    if (args.dryRun) {
+      if (args.json) console.log(JSON.stringify(plan, null, 2));
+      else printPlan(plan);
+      return 0;
+    }
+    const execution = executePipeline({
+      matter: args.matter,
+      domains: args.domains,
+      supports: args.supports,
+      continueAfter: args.continueAfter,
+    });
+    if (args.json) console.log(JSON.stringify(execution, null, 2));
+    else {
+      console.log(`APA run: ${execution.status}`);
+      for (const item of execution.executed || []) {
+        console.log(`  ${item.exit_code === 0 ? "done" : "failed"} ${item.id} (outputs ${item.outputs})`);
+      }
+      if (execution.step) console.log(`  stopped at ${execution.step.id}: ${execution.message || execution.status}`);
+      for (const checkpoint of execution.pending_checkpoints || []) console.log(`  pending checkpoint: ${checkpoint.id}`);
+    }
+    return execution.status === "failed" ? 1 : 0;
   }
   console.error(`unknown command: ${cmd}\n${usage()}`);
   return 2;

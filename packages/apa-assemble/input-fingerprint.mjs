@@ -7,8 +7,8 @@
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
-import { join, relative } from "node:path";
+import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { isAbsolute, join, relative, sep } from "node:path";
 
 export const ASSEMBLY_INPUT_CONTRACT = "apa-assembly-input-contract-v1";
 
@@ -45,10 +45,20 @@ const INPUT_TREES = [
 
 const posixRelative = (root, path) => relative(root, path).replace(/\\/g, "/");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const isWithin = (root, candidate) => {
+  const rel = relative(root, candidate);
+  return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
+};
 
-function listTreeFiles(root, relDir, include, unsafePaths) {
+function listTreeFiles(root, rootReal, relDir, include, unsafePaths) {
   const base = join(root, ...relDir.split("/"));
-  if (!existsSync(base)) return [];
+  const baseStat = lstatSync(base, { throwIfNoEntry: false });
+  if (!baseStat) return [];
+  if (baseStat.isSymbolicLink() || !isWithin(rootReal, realpathSync(base))) {
+    unsafePaths.push(relDir);
+    return [];
+  }
+  if (!baseStat.isDirectory()) return [];
   const files = [];
   const walk = (dir) => {
     const names = readdirSync(dir).sort();
@@ -70,15 +80,16 @@ function listTreeFiles(root, relDir, include, unsafePaths) {
 export function buildAssemblyInputFingerprint(matterDir) {
   const unsafePaths = [];
   const paths = [];
+  const rootReal = realpathSync(matterDir);
   for (const relPath of EXACT_INPUTS) {
     const path = join(matterDir, ...relPath.split("/"));
-    if (!existsSync(path)) continue;
-    const entry = lstatSync(path);
-    if (entry.isSymbolicLink()) unsafePaths.push(relPath);
+    const entry = lstatSync(path, { throwIfNoEntry: false });
+    if (!entry) continue;
+    if (entry.isSymbolicLink() || !isWithin(rootReal, realpathSync(path))) unsafePaths.push(relPath);
     else if (entry.isFile()) paths.push(path);
   }
   for (const tree of INPUT_TREES) {
-    paths.push(...listTreeFiles(matterDir, tree.dir, tree.include, unsafePaths));
+    paths.push(...listTreeFiles(matterDir, rootReal, tree.dir, tree.include, unsafePaths));
   }
 
   const records = [...new Set(paths)]

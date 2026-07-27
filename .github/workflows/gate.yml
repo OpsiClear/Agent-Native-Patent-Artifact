@@ -44,6 +44,9 @@ jobs:
       - name: Full test suite (offline; no API key required)
         run: npm test
 
+      - name: Distribution isolation matrix (public tarballs only)
+        run: npm run distribution:check
+
       - name: Offline benchmark suite
         run: npm run benchmark
 

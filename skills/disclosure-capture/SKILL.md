@@ -35,7 +35,8 @@ disclosure interview; it reviews the turn and writes new events into the artifac
 ## Procedure
 
 1. **Locate or scaffold the matter.** If a `<matter>/` exists, use it; else create the mandatory core
-   for the matter's `application_type` (ask once via matter config if unknown; default `utility`).
+   for the matter's `application_type` (ask once via matter config if unknown; default `utility`) and
+   use the current `apa_version: "0.2"` authoring contract.
 
 2. **Harvest events** from the session. For each, classify on two axes (ARA's model):
    - **Kind** - *journey* (a decision, an abandoned embodiment, a scope pivot, a prior-art hit) vs
@@ -53,10 +54,13 @@ disclosure interview; it reviews the turn and writes new events into the artifac
 4. **Provenance and source spans on every entry.** Default `ai-suggested`. Upgrade only on an explicit
    human act: a verbatim inventor statement -> `inventor:<id>` (conception evidence); a paraphrase the
    human accepts -> `human-revised`; attorney authorship -> `attorney`. For every promoted claim seed,
-   embodiment, or bar-date fact, include source metadata where available: `source`
-   (`transcript|upload|inventor-confirmation|attorney-note`), `source_span`, `speaker`, `timestamp`,
-   and `source_sha256`. Provenance never auto-upgrades. A claim limitation left `ai-suggested` is an
-   assembly blocker until a human adopts it.
+   embodiment, or bar-date fact, include `source`, `speaker`, and `timestamp` where available. Under
+   `source_span_policy: strict`, bind the exact source file with
+   `source_spans: [{path, locator, sha256}]`; each matter-relative path must stay under
+   `staging/`, `evidence/`, `src/`, `logic/`, or `source/`, and the digest covers the exact file
+   bytes. Warning/relaxed matters may retain scalar `source_span` + `source_sha256`. Use
+   `source: not-recoverable` only when recovery is genuinely impossible. Provenance never
+   auto-upgrades. A limitation left `ai-suggested` blocks assembly.
 
 5. **Bar-date / candor prompt (always ask).** Has the invention been offered for sale, sold, publicly
    used, demonstrated, or described in a publication? Capture each with its date as an append-only
@@ -65,16 +69,19 @@ disclosure interview; it reviews the turn and writes new events into the artifac
    bar-date/candor fact; append a correction with a new `trace_id`, `supersedes_trace_id`,
    `recorded_at`, `fact_sha256`, and `immutable: true`.
 
-6. **Inventorship.** Attribute conception to specific named natural persons at the limitation level
-   when possible; keep the `inventorship_matrix` in `PATENT.md` current (which inventor conceived
-   which claim, 35 USC 116).
+6. **Inventorship.** Attribute conception to specific named natural persons at the limitation level.
+   Under `apa_version: "0.2"`, every adopted limitation must have a non-empty
+   `contributors: [<inventor-id>, ...]` list; use multiple IDs for joint contribution. Keep the
+   claim-level `inventorship_matrix` in `PATENT.md` current. These are review records, not legal
+   inventorship conclusions.
 
 7. **Session report.** Emit `staging/disclosure_session_report.json` using the shared report schema
    (`schema: apa-disclosure-session-report-v1`, `legal_posture: flags-not-conclusions`). Record
    `promoted_observations`, `bar_date_facts`, `limitation_inventorship`, `raw_fact_boundaries`, and
    any `relaxed_import_notes`. Each promoted observation, bar-date fact, and limitation-inventorship
-   entry must carry source metadata (`source`, `source_span`, `source_sha256`) and the relevant
-   speaker/timestamp/trace id when available. Each `bar_date_facts[]` entry must also include
+   entry must carry the report schema's source metadata (`source`, `source_span`, `source_sha256`)
+   and the relevant speaker/timestamp/trace id when available; strict binding records remain in the
+   artifact entities they support. Each `bar_date_facts[]` entry must also include
    `recorded_at`, `fact_sha256`, and `immutable: true`; corrections append a new entry with
    `supersedes_trace_id` rather than replacing the earlier fact. Then run
    `node packages/apa-reports/cli.mjs check <matter>/staging/disclosure_session_report.json --kind disclosure_capture`.

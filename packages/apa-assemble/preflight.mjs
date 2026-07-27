@@ -12,8 +12,14 @@ import { validateMatter } from "../apa-validate/validate.mjs";
 import { lintClaims } from "../apa-draft/claim-lint.mjs";
 import { buildLegend } from "../apa-figure/numerals.mjs";
 import { validateReport, isFileable } from "../apa-rigor/verdict.mjs";
+import { compareRigorInputFingerprint } from "../apa-rigor/input-fingerprint.mjs";
 import { confidentialWorkflowModeOf, shareableExportPolicy } from "../apa-redact/confidential-workflow.mjs";
 import { compareAssemblyInputFingerprint } from "./input-fingerprint.mjs";
+import { assemblyProfile, profileMayAssemble } from "./profiles.mjs";
+import {
+  compareReviewTargetFingerprint,
+  unansweredRequiredQuestions,
+} from "../../skills/apa-review-form/scripts/review_fingerprint.mjs";
 
 // AI-inventor heuristic, mirroring the validator (../apa-validate/validate.mjs): case-SENSITIVE
 // acronyms (so legitimate human inventors 'Ai'/'Claude'/'Neural' are not hard-blocked) plus
@@ -52,11 +58,19 @@ export function preflight(matterDir, {
   const workflowMode = confidentialWorkflowModeOf(fm);
   const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
 
-  if (fm.application_type === "utility") {
-    add("application-type", "pass", "utility application supported by the deterministic assembler.");
-  } else {
-    const type = fm.application_type || "missing";
-    add("application-type", "block", `application_type '${type}' is not supported by filing assembly; type-aware assembly is not implemented.`);
+  try {
+    const profile = assemblyProfile(fm.application_type);
+    if (profileMayAssemble(profile.application_type)) {
+      add("application-type", "pass", `${profile.id} is implemented and repository-reviewed for deterministic assembly.`);
+    } else {
+      add(
+        "application-type",
+        "block",
+        `${profile.id} collation is implemented as a review candidate, but human legal-rule and rendered-document approval remain required before filing assembly can be enabled.`,
+      );
+    }
+  } catch (error) {
+    add("application-type", "block", error.message);
   }
 
   if (fm.user_role === "registered_practitioner") {
@@ -167,13 +181,91 @@ export function preflight(matterDir, {
     }
   }
 
+  // Human-review state is authoritative only for the exact claim/IDS/drawing/PDF targets reviewed.
+  // Missing review artifacts are warnings because the review-form support skill is optional. Once a
+  // state or questionnaire exists, stale or incomplete evidence fails closed rather than carrying a
+  // readiness label across changed matter inputs.
+  const reviewDir = assembledDir || join(matterDir, "assembled");
+  const reviewStatePath = join(reviewDir, "human_review_state.json");
+  const questionQueuePath = join(reviewDir, "agent_question_queue.json");
+  const questionAnswersPath = join(reviewDir, "agent_question_answers.json");
+  if (existsSync(reviewStatePath)) {
+    try {
+      const state = JSON.parse(readFileSync(reviewStatePath, "utf8"));
+      const freshness = compareReviewTargetFingerprint(state.targetFingerprint, matterDir);
+      if (!freshness.ok) {
+        add("human-review-freshness", "block", `human review state is STALE: ${freshness.reasons.join("; ")}.`);
+      } else {
+        add(
+          "human-review-freshness",
+          "pass",
+          `human review state matches ${freshness.current.file_count} target file(s), including ${freshness.current.counts.ids_references} IDS reference(s) and ${freshness.current.counts.pdf_docx_files} PDF/DOCX file(s).`,
+        );
+      }
+      const finalPdfStatus = (
+        state.answers?.reviewPages?.filing?.["final-pdf"]?.status
+        || state.answers?.sections?.filing?.["final-pdf"]?.status
+        || ""
+      );
+      if (finalPdfStatus === "OK" && Number(state.targetFingerprint?.counts?.pdf_docx_files) === 0) {
+        add("human-pdf-review", "block", "final PDF/DOCX review is marked OK, but the bound review target contains no PDF or DOCX file.");
+      }
+    } catch (error) {
+      add("human-review-freshness", "block", `cannot verify human review state: ${error.message}`);
+    }
+  } else {
+    add("human-review-freshness", "warn", "no fingerprint-bound human review state found; complete local review before treating the package as ready.");
+  }
+
+  if (existsSync(questionQueuePath)) {
+    try {
+      const queue = JSON.parse(readFileSync(questionQueuePath, "utf8"));
+      const queueFreshness = compareReviewTargetFingerprint(queue.targetFingerprint, matterDir);
+      if (!queueFreshness.ok) {
+        add("human-questionnaire", "block", `human questionnaire is STALE: ${queueFreshness.reasons.join("; ")}.`);
+      } else if (!existsSync(questionAnswersPath)) {
+        const pending = unansweredRequiredQuestions(queue, null);
+        if (pending.length) add("human-questionnaire", "block", `${pending.length} required factual question(s) are unanswered.`);
+        else add("human-questionnaire", "pass", "questionnaire has no readiness-required factual questions.");
+      } else {
+        const answers = JSON.parse(readFileSync(questionAnswersPath, "utf8"));
+        const answersFreshness = compareReviewTargetFingerprint(answers.targetFingerprint, matterDir);
+        const pending = unansweredRequiredQuestions(queue, answers);
+        const unresolved = asArray(answers.answers).filter((answer) => (
+          queue.questions?.some((question) => question?.id === answer?.id && question.requiredForReadiness === true)
+          && /(?:uncertain|unknown|not_confirmed)/i.test(String(answer?.choice || ""))
+        ));
+        const evidenceMissing = asArray(answers.answers).filter((answer) => (
+          queue.questions?.some((question) => question?.id === answer?.id && question.requiredForReadiness === true)
+          && /^(?:yes_|provide_|possible_|some_)/i.test(String(answer?.choice || ""))
+          && !String(answer?.note || "").trim()
+        ));
+        if (!answersFreshness.ok) {
+          add("human-questionnaire", "block", `human questionnaire answers are STALE: ${answersFreshness.reasons.join("; ")}.`);
+        } else if (pending.length || unresolved.length || evidenceMissing.length) {
+          add(
+            "human-questionnaire",
+            "block",
+            `${pending.length} required factual question(s) unanswered; ${unresolved.length} unresolved; ${evidenceMissing.length} affirmative answer(s) missing supporting notes.`,
+          );
+        } else {
+          add("human-questionnaire", "pass", "all readiness-required factual questions are answered for the current review targets.");
+        }
+      }
+    } catch (error) {
+      add("human-questionnaire", "block", `cannot verify human questionnaire: ${error.message}`);
+    }
+  }
+
   // Rigor review (Phase 5): read patent_rigor_report.json if present and enforce its computed verdict.
   const rigorPath = join(matterDir, "patent_rigor_report.json");
   if (existsSync(rigorPath)) {
     try {
       const report = JSON.parse(readFileSync(rigorPath, "utf8"));
       const { ok, errors, computed } = validateReport(report, { now });
+      const freshness = compareRigorInputFingerprint(report.input_fingerprint, matterDir);
       if (!ok) add("rigor-review", "block", `patent_rigor_report.json invalid: ${errors.slice(0, 3).join("; ")}`);
+      else if (!freshness.ok) add("rigor-review", "block", `rigor report is STALE: ${freshness.reasons.join("; ")}.`);
       else if (computed.verdict === "Incomplete") add("rigor-review", "block", "rigor report incomplete - all six dimensions must be scored.");
       else if (isFileable(computed.verdict)) add("rigor-review", "pass", `rigor verdict ${computed.display || computed.verdict} [${computed.verdict}] (mean ${computed.mean}).`);
       else add("rigor-review", "block", `rigor verdict ${computed.display || computed.verdict} [${computed.verdict}] - resolve findings before assembly.`);

@@ -54,6 +54,15 @@ Remove-Item Env:APA_EXTERNAL_MATTER
 | Stale-package prevention | `apa-upload-manifest-v2` embeds an `apa-assembly-input-fingerprint-v1`; preflight recomputes it and blocks missing or mismatched historical manifests. | `packages/apa-assemble/test/assemble.test.mjs` |
 | Local private-corpus verifier | `scripts/verify-external-matter.mjs` composes read-only APIs and emits aggregate counts/status only; absence skips unless `--require` is set. | `scripts/verify-external-matter.test.mjs` |
 | Evidence-based orchestration status | `apa-run-status-v2` checks the latest command result, current recorded input/output hashes, declared output evidence, safe matter-local paths, and required human checkpoints before setting `completed: true`. | `packages/apa-run/test/runner.test.mjs` |
+| Strict source identity | Strict source spans are verified as allowed-root `{path, locator, sha256}` records, including multiple sources, missing/changed files, path escape, symlink escape, and explicit `not-recoverable`. | `packages/apa-validate/test/source-spans.test.mjs` |
+| Versioned joint contribution | The validator accepts v0.1/v0.2, rejects future versions, and requires valid limitation-level contributor lists for adopted v0.2 limitations; the viewer retains contribution edges. | validator/viewer graph-integrity tests |
+| Rigor input identity | The saved rigor review is bound to canonical claims/specification/drawing/dossier inputs independently of upload-package freshness. | rigor scaffold and assembly preflight tests |
+| Exact private aggregate oracle | An optional private oracle binds fixed time, exact error/warning histograms, valid-dossier counts, blocked gates, and the canonical input digest; verifier v2 never emits the digest. | `scripts/verify-external-matter.test.mjs` |
+| Chained execution evidence | Runlog v2 plus its independent head detect mutation, reordering, retained-head truncation, full ledger removal, and v2-to-v1 downgrade. `apa-run run` confines runners and matter paths, retries failed checkpointed attempts, rejects incomplete evidence before review, and requires continuation newer than rerun evidence. | runlog/runner tests |
+| Graph-completeness signals | Inactive/missing PA evidence, normalized claim prose/binding drift, and missing illustration/distinction evidence now produce stable mechanical warnings. | validator regressions |
+| Review-target freshness | Human review state, questionnaires, and answers bind claims/IDS/drawings/PDFs by digest and count; stale or unresolved required review blocks preflight. | review-fingerprint/questionnaire/preflight tests |
+| Application profiles | Utility is repository-reviewed; provisional/design have distinct candidate snapshots and remain blocked pending authorized rule/visual review. | application-profile snapshots and preflight tests |
+| Distribution/UI/coverage release gates | Only two packages are public and both pass empty-project isolation; host variants are independent with exact skill-set parity; a real browser verifies the viewer; 95%/90% coverage floors block regressions. | distribution script, viewer browser test, coverage command, CI |
 
 ## Historical post-fix aggregate result
 
@@ -87,65 +96,71 @@ freshness evidence correctly keep the matter at `NO-GO`.
 
 | Surface | Current aggregate result |
 |---|---|
-| Mechanical validation | 0 errors; 0 warnings |
+| Mechanical validation | 0 errors; 3 warnings (`DISTINGUISHED_OVER_MISSING` x3) |
 | Parsed scope | 20 claims; 2 inventors; 6 figures; 18 active prior-art references |
-| Viewer graph | 223 nodes; 306 edges; 0 unresolved/wrong-kind edges; 0 provenance blockers |
+| Viewer graph | 223 nodes; 357 edges; 0 unresolved/wrong-kind edges; 0 provenance blockers |
 | Rigor | Level 1 passed; P3 = 5; P4 = 5; one valid dossier; prior-art cap still required because closest art is not human-verified; saved verdict `Major-Rework`, mean 3.67 |
 | IDS | 18 references; 18 unverified; one valid dossier |
 | Drawings | 6 figures; 52 numerals; no legend flags |
-| Filing gate | `NO-GO`; blocked on rigor review and stale assembled-package authority; user-role warning remains |
+| Filing gate | `NO-GO`; blocked on stale human-review state, stale/incomplete questionnaire evidence, rigor review, and stale assembled-package authority; user-role and mechanical warnings remain |
 | Input/privacy check | 100 canonical input files; zero unsafe linked paths; aggregate-only output |
-| Orchestration status v2 | 19 total steps; 14 pending; 5 stale; 0 falsely completed; 33 pending required checkpoints |
+| Orchestration status v2 | 19 total steps; 14 pending; 5 stale; 0 completed or failed; 56 pending required checkpoints (human checkpoints plus declared gates) |
 
 Before status v2, the same ledger named prior-art search, rigor, and assembly as completed. After the
 fix, prior-art search reports input/output hash drift plus a pending checkpoint; rigor reports output
 hash drift plus pending checkpoints; and assembly reports input drift plus pending checkpoints.
 No private content is needed to explain any of those state transitions.
 
-## Three-agent post-fix scores
+The three distinction warnings do not represent a software regression: they are the new
+graph-completeness signal on three independent claims whose `distinguished_over` evidence is empty.
+Selecting closest art is a human-controlled factual/legal checkpoint, so the verifier surfaces the
+condition and preserves `NO-GO` rather than editing the confidential matter.
 
-| Review lane | Post-fix evidence | Overall |
-|---|---|---:|
-| Benchmark harness | Clean fingerprint is frozen once; failed or missing-key runs cannot become baselines; evidence remains available for failed runs. | 9.0/10 PASS |
-| Corpus integrity | Aggregate verifier exposes no private paths; review/date boundaries fail closed; bundle replacement is transactional and confined to `packageRoot/skills`. | 9.2/10 PASS |
-| Patent fidelity | Multi-root SVG payload is rejected; 11 gallery artifacts are hash-bound; tldraw safe/unsafe fixtures exercise the export boundary. | 9.2/10 PASS |
-| **Combined control score** | Mean of the three independent lane scores | **9.1/10 PASS** |
+## Three-agent baseline scores and closure disposition
 
-The corpus lane initially blocked release packaging because the newly reviewed skill, fixtures,
-tests, and reports were untracked. This release change includes those files, satisfying that
-condition. The remaining deductions reflect the documented `apa-run run` handoff debt, the
-intentionally untracked confidential corpus, source-span hashes that are shape-checked rather than
-dereferenced, and the lack of limitation-granular joint-inventor contribution modeling.
+| Review lane | Baseline evidence | Baseline score | Closure disposition |
+|---|---|---:|---|
+| Benchmark harness | Clean fingerprint is frozen once; failed or missing-key runs cannot become baselines; evidence remains available for failed runs. | 9.0/10 PASS | Exact private oracle, executable runner, isolation matrix, and coverage floors close the identified software deductions. |
+| Corpus integrity | Aggregate verifier exposes no private paths; review/date boundaries fail closed; bundle replacement is transactional and confined to `packageRoot/skills`. | 9.2/10 PASS | Strict dereferenced spans, versioned contributors, chained ledger/head, and review fingerprints close the identified software deductions. |
+| Patent fidelity | Multi-root SVG payload is rejected; 11 gallery artifacts are hash-bound; tldraw safe/unsafe fixtures exercise the export boundary. | 9.2/10 PASS | Rigor input binding, graph-completeness warnings, browser parity, and type-specific profile snapshots close the identified software deductions. |
+| **Combined control score** | Mean of the three independent baseline scores | **9.1/10 PASS** | **No scoped software gap remains open; human authority boundaries remain fail-closed.** |
+
+The corpus lane initially blocked release packaging because reviewed files were untracked. This
+release includes them. The later closure pass also resolves the runner handoff, strict source
+dereference, and limitation-level joint-contributor deductions. The confidential corpus remains
+intentionally outside Git, and the matter/profile decisions listed below remain human-controlled.
 
 ## Verification performed
 
-- External-verifier privacy/read-only tests: 2/2 passed.
-- Runner/ledger focused regressions: 18/18 passed.
-- Two pinned external-verifier runs produced byte-identical JSON.
-- Aggregate output contained no absolute/home path, email address, URL, or matter text.
-- External matter changes after review: zero.
-- `npm test`: 494/494 passed.
-- `npm run build`: generation/freshness, skill graph, syntax, skill/source checks, tests, and smoke
-  passed.
+- Full build: 530/530 tests plus generation/freshness, skill graph, syntax, skill/source checks,
+  public-package isolation, and smoke passed.
+- External-verifier regressions cover read-only/privacy behavior, absent/required/invalid paths,
+  fixed-time oracle identity/drift, and unsafe links.
+- Two fixed-time CLI runs with the software domain and all three support hooks produced byte-identical
+  aggregate v2 JSON and matched expected `NO-GO`.
+- An in-memory private oracle matched twice; its canonical digest was not emitted.
+- Aggregate output contained no absolute/home path, email address, URL, matter text, or private digest.
+- External Git HEAD and exact status digest were identical before and after; status was clean both times.
+- Playwright CLI + Edge rendered the review/support panels, loaded `manifest.json` with HTTP 200, and
+  reported zero console errors/warnings after the favicon fix; the dedicated wrong-kind/collision
+  browser regression also passed.
+- `npm run distribution:check`: both public packages packed, installed, and executed in empty projects.
 - `npm run benchmark`: 8/8 offline cases passed.
 - `npm run score:prior-art-search`: recall@20 1.00, recall@5 1.00, MRR 0.75, zero blocking failures.
 - `npm run score:real-software-patents`: 3/3 cases, score 1.00, zero blocking failures.
-- `npm run coverage`: 101/110 first-party worktree files loaded; 1712/1876 functions covered among
-  loaded files (91.3%).
+- `npm run coverage`: 108/108 included first-party files loaded (100%; floor 95%); 1875/2061
+  functions covered among loaded files (91%; floor 90%).
 - `git diff --check`: passed.
 
-## Prioritized remaining improvement plan
+## Retained human authority boundaries
 
-| Priority | Work | Acceptance evidence |
+All software items in the prior improvement table are implemented and regression-tested. Two
+categories remain intentionally `NO-GO`:
+
+| Boundary | Why software cannot close it | Required human evidence |
 |---|---|---|
-| P0 — complete human review before regeneration | The structural migration is mechanically clear, but 18 IDS references remain unverified, closest art is not human-verified, the saved rigor verdict remains `Major-Rework`, user role is not affirmative, and the assembled package is stale. | Authorized humans complete the required factual/review checkpoints; rigor is rerun against current inputs; assembly is regenerated only after every filing gate passes. |
-| P1 — strict source-span verification | Replace hash-shape checks with an allowed-root, per-artifact `{path, locator, sha256}` contract; block missing, escaped, or mismatched sources under strict mode. | Regressions for changed, missing, outside-root, multi-source, and `not-recoverable` inputs. |
-| P1 — joint-inventor/version contract | Add an explicit list-valued contributor/adoption relation and validate `apa_version` so breaking provenance and edge semantics are migration-aware. | Two declared contributors pass; empty/unknown contributors and unknown future versions fail loud. |
-| P1 — bind rigor to evaluated inputs | Record canonical claims/specification/drawing/dossier hashes inside the rigor report and recompute them during preflight. | Any covered source change makes rigor stale independently of upload-manifest freshness. |
-| P1 — exact private regression contract | Add an optional local aggregate oracle for the verifier: exact code histogram, valid-dossier count, required blocked-gate set, and non-emitted canonical digest. Do not commit a confidential matter digest. | Fixed-time identity, `--require`, invalid-path, unsafe-link, and contract-drift tests using public/synthetic fixtures. |
-| P2 — runlog state-chain hardening | Status v2 now verifies hashes, command exits, output evidence, safe paths, and checkpoints, but the append-only ledger is not cryptographically chained and `apa-run run` remains a handoff. | Chain records to their predecessor, test truncation/reordering, execute only declared runners, and append failed attempts without claiming outputs. |
-| P2 — graph completeness and drift | Inventory inactive prior-art evidence; add warning-level claim-prose/binding parity hashes; define minimum `illustrated_by`/`distinguished_over` evidence expectations. | Prose-only/binding-only mutations and orphan evidence produce stable machine findings without pretending to decide legal sufficiency. |
-| P2 — freshness-bind human review | Bind review cards, questionnaires, and human-produced PDF checks to target hashes/counts. | A review state for a different IDS count or changed PDF becomes stale; unanswered factual questions block a readiness label without drawing legal conclusions. |
+| External matter factual/legal/filing review | The verifier can prove structure and freshness, but cannot verify facts, choose legal positions, sign, or file. | Authorized reviewers verify IDS references and closest art, confirm role, resolve rigor findings, review rendered PDFs/DOCX, complete forms/signatures, and perform any filing act. |
+| Provisional/design profile authorization | Deterministic snapshots prove stable collation, not correctness under current legal rules or rendered-document quality. | Authorized legal-rule and visual reviewers approve each candidate profile before its preflight block can be removed. |
 
 The external matter itself remains unchanged. Its current result is intentionally `NO-GO`; the value
 of this pass is that APA now explains and preserves that state consistently instead of allowing

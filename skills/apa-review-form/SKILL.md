@@ -83,6 +83,22 @@ node skills/apa-review-form/scripts/test_agent_bridge_e2e.mjs --matter C:/path/t
 7. Use the form's `Export JSON` button to save the review record next to the matter or attach it to
    a filing/practitioner handoff.
 
+## Freshness Contract
+
+The generator embeds `apa-human-review-target-fingerprint-v1`. It hashes the current claims,
+assembly review files, IDS/evidence index, drawing artifacts, and every assembled PDF/DOCX, and
+records claim, IDS-reference, figure, and PDF/DOCX counts. The served app persists that binding in
+`apa-human-review-state-v2`. Questionnaire queues and answers use
+`apa-agent-question-queue-v2` and `apa-agent-question-answers-v2`.
+
+Regenerate the form and questionnaire whenever a bound target changes. Do not carry answers forward
+silently: answered legacy v1 files and v2 answers for a different fingerprint are rejected so they
+can be archived and reviewed deliberately. Assembly preflight blocks stale state/queues/answers,
+unanswered or unresolved readiness-required disclosure/date questions, affirmative factual answers
+without supporting notes, and a final-PDF approval bound to zero PDF/DOCX files. These checks prove
+review-target identity and question completion only; they do not decide legal sufficiency or filing
+readiness.
+
 ## Options
 
 | Option | Purpose |
@@ -147,7 +163,8 @@ Dynamic local review app:
 | `--host <host>` | Bind host. Defaults to `127.0.0.1`. |
 
 The app serves `assembled/human_review_form.html`, injects `serverMode`, persists answers to
-`assembled/human_review_state.json`, and stores agent requests in `assembled/agent_requests.json`.
+`assembled/human_review_state.json` using the form's target fingerprint, and stores agent requests
+in `assembled/agent_requests.json`.
 It exposes `GET /api/agent-events` for Server-Sent Events, so the browser can update request status
 when a local worker changes the queue file. `Ask Agent` requests are human-review aids: responses are
 draft notes until the reviewer explicitly applies them to a card.

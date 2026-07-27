@@ -117,6 +117,34 @@ function loadState(args) {
   return safeState;
 }
 
+function loadFormTargetFingerprint(args) {
+  const html = readFileSync(args.form, "utf8");
+  const match = html.match(/<script type="application\/json" id="review-data">([\s\S]*?)<\/script>/);
+  if (!match) throw new Error("review form has no embedded review-data payload");
+  const data = JSON.parse(match[1]);
+  const fingerprint = data.reviewTargetFingerprint;
+  if (
+    !isRecord(fingerprint)
+    || fingerprint.schema !== "apa-human-review-target-fingerprint-v1"
+    || !/^[0-9a-f]{64}$/i.test(String(fingerprint.sha256 || ""))
+  ) {
+    throw new Error("review form has no valid target fingerprint; regenerate the form");
+  }
+  return fingerprint;
+}
+
+function hasReviewAnswers(answers) {
+  if (!isRecord(answers)) return false;
+  return Object.entries(answers).some(([key, value]) => (
+    key !== "ui"
+    && (
+      (isRecord(value) && Object.keys(value).length > 0)
+      || (Array.isArray(value) && value.length > 0)
+      || (!isRecord(value) && !Array.isArray(value) && value !== "" && value !== null && value !== undefined)
+    )
+  ));
+}
+
 function loadAgentRequests(args) {
   const value = readJsonFile(args.agentRequests, []);
   if (!Array.isArray(value)) throw new Error("agent_requests.json must contain a JSON array");
@@ -345,6 +373,7 @@ async function handleApi(req, res, args, pathname) {
     }
     let state;
     let revisionConflict = false;
+    const formTargetFingerprint = loadFormTargetFingerprint(args);
     await updateJsonFile(args.state, {}, currentValue => {
       if (!isRecord(currentValue)) throw new Error("human_review_state.json must contain a JSON object");
       const current = currentValue;
@@ -355,10 +384,16 @@ async function handleApi(req, res, args, pathname) {
         state = current;
         return current;
       }
+      const preservePriorTarget = (
+        hasReviewAnswers(body.answers)
+        && isRecord(current.targetFingerprint)
+        && current.targetFingerprint.sha256 !== formTargetFingerprint.sha256
+      );
       state = {
-        schema: "apa-human-review-state-v1",
+        schema: "apa-human-review-state-v2",
         revision: requestedRevision,
         updatedAt: new Date().toISOString(),
+        targetFingerprint: preservePriorTarget ? current.targetFingerprint : formTargetFingerprint,
         answers: body.answers || {}
       };
       return state;

@@ -63,6 +63,7 @@ const EDGE_GROUP = {
   distinguished_over: { out: "distinguished over", in: "distinguished by claims" },
   scope_set_at: { out: "scope set at", in: "set scope of claims" },
   contributed_to: { out: "conceived by", in: "conceived" },
+  contributed_to_limitation: { out: "contributed to limitation", in: "conceived by" },
 };
 
 const state = {

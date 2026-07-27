@@ -30,10 +30,12 @@ version: 0.1
 Collates the matter's drafted artifacts into an **assembly package draft** and runs the pre-filing gate. It
 **collates**, it does not author (use the drafting skills first). Run:
 `node packages/apa-assemble/cli.mjs --matter <matter> --write`.
-The deterministic assembler currently supports **utility applications only**. It fails closed for
-provisional, design, and other matters until type-aware assembly exists. Preflight runs before any filing
-artifact is written: on **NO-GO**, `--write` appends a blocked-attempt runlog entry but creates or modifies
-no files under `<matter>/assembled/`.
+The `us-utility-v1` profile is implemented and repository-reviewed for gated assembly.
+`us-provisional-candidate-v1` and `us-design-candidate-v1` are implemented collation **review
+candidates** with checked-in snapshots, but preflight keeps them **NO-GO** until authorized humans
+approve their legal-rule and rendered-document profiles. Other matter types fail closed. Preflight
+runs before any filing artifact is written: on **NO-GO**, `--write` appends a blocked-attempt
+runlog entry but creates or modifies no files under `<matter>/assembled/`.
 
 It produces, under `<matter>/assembled/`:
 - `specification.md` + `specification.html` - the 37 CFR 1.77 document. **PDF is the filing-faithful
@@ -62,6 +64,8 @@ It produces, under `<matter>/assembled/`:
 - As of Jan 2025 there is a size-based IDS fee; surface it from the dated fee schedule, do not hardcode.
 
 ## Hard gates (the tool enforces; do not override)
+- **Application profile:** utility is enabled; provisional/design remain blocked review candidates
+  pending human legal-rule and rendered-document approval.
 - **Inventorship-integrity gate:** assembly is **NO-GO** while any claim limitation is `ai-suggested` -
   a human must adopt each (-> `inventor`/`attorney`/`human-revised`) first.
 - **>= 1 natural-person inventor**, none AI-named.
@@ -70,8 +74,11 @@ It produces, under `<matter>/assembled/`:
 - **Mechanical validation** must pass (no errors); claim-form + numeral findings are surfaced.
 - **Saved-package freshness:** an existing manifest without a matching canonical-input fingerprint is
   historical/stale and cannot carry forward its prior `GO`.
+- **Human-review freshness:** existing review state/questionnaires must match current claim, IDS,
+  drawing, and PDF/DOCX hashes/counts; stale or unresolved required factual review blocks.
 - **Rigor review** (/apa-rigor, Phase 5) is required; a missing report is **NO-GO**, and its computed
-  verdict must reach File-Ready / File-With-Revisions before assembly.
+  verdict must reach File-Ready / File-With-Revisions. Its input fingerprint must also match the
+  current claims/specification/drawings/dossiers.
 
 ### Scan-at-sink before sending (sink: filing)
 Confidentiality of an unfiled invention is load-bearing. Before this content leaves the machine:

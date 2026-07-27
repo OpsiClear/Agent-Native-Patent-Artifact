@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +17,9 @@ import { assembleAds } from "../ads.mjs";
 import { assembleIds } from "../ids.mjs";
 import { preflight } from "../preflight.mjs";
 import { buildUploadManifest } from "../upload-manifest.mjs";
-import { compareAssemblyInputFingerprint } from "../input-fingerprint.mjs";
+import { buildAssemblyInputFingerprint, compareAssemblyInputFingerprint } from "../input-fingerprint.mjs";
+import { buildRigorInputFingerprint } from "../../apa-rigor/input-fingerprint.mjs";
+import { buildReviewTargetFingerprint } from "../../../skills/apa-review-form/scripts/review_fingerprint.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
@@ -95,12 +105,20 @@ test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-Fil
     newest_dossier: { path: "evidence/prior_art/search-dossier-current.json", generated_at: "2026-06-01T00:00:00.000Z" },
     closest_art: { human_verified: true, selected_pa_ids: ["PA01"], verified_at: "2026-06-02T00:00:00.000Z" },
   };
-  const mk = (dims) => ({ dimensions: dims, prior_art_state: priorArtState, findings: [], questions_for_attorney: [], questions_for_inventor: [], read_order: ["logic/claims.md"] });
+  const mk = (matter, dims) => ({
+    dimensions: dims,
+    prior_art_state: priorArtState,
+    input_fingerprint: buildRigorInputFingerprint(matter),
+    findings: [],
+    questions_for_attorney: [],
+    questions_for_inventor: [],
+    read_order: ["logic/claims.md"],
+  });
 
   const d1 = clone();
   try {
     setUserRole(d1, "registered_practitioner");
-    writeFileSync(join(d1, "patent_rigor_report.json"), JSON.stringify(mk(okDims(5))));
+    writeFileSync(join(d1, "patent_rigor_report.json"), JSON.stringify(mk(d1, okDims(5))));
     const pf = preflight(d1, { now: "2026-06-20T00:00:00.000Z" });
     assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "pass"), JSON.stringify(pf.gates));
     assert.equal(pf.blocked, false);
@@ -110,11 +128,48 @@ test("preflight: a File-Ready rigor report makes the rigor gate PASS; Do-Not-Fil
   try {
     setUserRole(d2, "registered_practitioner");
     const dims = okDims(5); dims.P5.score = 1;           // a single 1 -> Do-Not-File
-    writeFileSync(join(d2, "patent_rigor_report.json"), JSON.stringify(mk(dims)));
+    writeFileSync(join(d2, "patent_rigor_report.json"), JSON.stringify(mk(d2, dims)));
     const pf = preflight(d2, { now: "2026-06-20T00:00:00.000Z" });
     assert.ok(pf.gates.some((g) => g.name === "rigor-review" && g.status === "block"));
     assert.equal(pf.blocked, true);
   } finally { rmSync(d2, { recursive: true, force: true }); }
+});
+
+test("preflight makes a rigor report stale when any evaluated input changes", () => {
+  const d = clone();
+  try {
+    setUserRole(d, "registered_practitioner");
+    const dimensions = {};
+    for (const id of ["P1", "P2", "P3", "P4", "P5", "P6"]) dimensions[id] = { score: 5, weaknesses: [] };
+    const generatedAt = "2026-06-20T00:00:00.000Z";
+    const report = {
+      apa_rigor_version: "0.2",
+      input_fingerprint: buildRigorInputFingerprint(d),
+      dimensions,
+      prior_art_state: {
+        evaluated_at: generatedAt,
+        staleness_max_days: 180,
+        dossiers_found: 1,
+        newest_dossier: { path: "evidence/prior_art/search-dossier-current.json", generated_at: generatedAt },
+        closest_art: { human_verified: true, selected_pa_ids: ["PA01"], verified_at: generatedAt },
+      },
+      findings: [],
+      questions_for_attorney: [],
+      questions_for_inventor: [],
+      read_order: ["logic/claims.md"],
+    };
+    writeFileSync(join(d, "patent_rigor_report.json"), JSON.stringify(report));
+    let gate = preflight(d, { now: generatedAt }).gates.find((item) => item.name === "rigor-review");
+    assert.equal(gate.status, "pass", JSON.stringify(gate));
+
+    const claims = join(d, "logic", "claims.md");
+    writeFileSync(claims, `${readFileSync(claims, "utf8")}\n<!-- post-review change -->\n`);
+    gate = preflight(d, { now: generatedAt }).gates.find((item) => item.name === "rigor-review");
+    assert.equal(gate.status, "block", JSON.stringify(gate));
+    assert.match(gate.msg, /STALE.*rigor input file.*changed/i);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
 });
 
 test("preflight: unknown user role blocks, while pro-se is neutral-only", () => {
@@ -170,7 +225,7 @@ test("preflight: invalid legacy inventor provenance is an explicit inventorship-
   }
 });
 
-test("preflight: non-utility matters fail closed until type-aware assembly exists", () => {
+test("preflight: provisional and design candidates stay blocked pending human rule/visual approval", () => {
   for (const type of ["provisional", "design"]) {
     const d = clone();
     try {
@@ -180,7 +235,8 @@ test("preflight: non-utility matters fail closed until type-aware assembly exist
       const pf = preflight(d, {});
       const gate = pf.gates.find((g) => g.name === "application-type");
       assert.equal(gate.status, "block", JSON.stringify(pf.gates));
-      assert.match(gate.msg, /type-aware assembly is not implemented/);
+      assert.match(gate.msg, /collation is implemented as a review candidate/);
+      assert.match(gate.msg, /human legal-rule and rendered-document approval/);
       assert.equal(pf.goNoGo, "NO-GO");
     } finally { rmSync(d, { recursive: true, force: true }); }
   }
@@ -428,6 +484,84 @@ test("preflight treats a historical upload manifest without input hashes as stal
     assert.equal(gate.status, "block", JSON.stringify(pf.gates));
     assert.match(gate.msg, /STALE/);
     assert.match(gate.msg, /no input fingerprint/);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("assembly fingerprints reject a symlinked canonical-input ancestor", (t) => {
+  const d = clone();
+  const outside = mkdtempSync(join(tmpdir(), "apa-assembly-link-target-"));
+  try {
+    writeFileSync(join(outside, "claims.md"), "### CLM99\noutside private claim\n");
+    rmSync(join(d, "logic"), { recursive: true, force: true });
+    try {
+      symlinkSync(outside, join(d, "logic"), "junction");
+    } catch (error) {
+      t.skip(`junction creation unavailable: ${error.code || error.message}`);
+      return;
+    }
+    const fingerprint = buildAssemblyInputFingerprint(d);
+    assert.ok(fingerprint.unsafe_paths.includes("logic/claims.md"), JSON.stringify(fingerprint));
+    assert.equal(fingerprint.files.some((file) => file.path === "logic/claims.md"), false);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("preflight makes human PDF review stale when the reviewed PDF changes", () => {
+  const d = clone();
+  try {
+    const assembled = join(d, "assembled");
+    mkdirSync(assembled, { recursive: true });
+    writeFileSync(join(assembled, "specification.pdf"), "%PDF-1.4\nreviewed");
+    writeFileSync(join(assembled, "human_review_state.json"), JSON.stringify({
+      schema: "apa-human-review-state-v2",
+      revision: 1,
+      targetFingerprint: buildReviewTargetFingerprint(d),
+      answers: {
+        reviewPages: {
+          filing: {
+            "final-pdf": { status: "OK" },
+          },
+        },
+      },
+    }));
+    let gate = preflight(d, { assembledDir: assembled }).gates.find((item) => item.name === "human-review-freshness");
+    assert.equal(gate.status, "pass", JSON.stringify(gate));
+
+    writeFileSync(join(assembled, "specification.pdf"), "%PDF-1.4\nchanged-after-review");
+    gate = preflight(d, { assembledDir: assembled }).gates.find((item) => item.name === "human-review-freshness");
+    assert.equal(gate.status, "block", JSON.stringify(gate));
+    assert.match(gate.msg, /STALE.*review target digest differs/i);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("preflight blocks unanswered factual questionnaire items for a current target", () => {
+  const d = clone();
+  try {
+    const assembled = join(d, "assembled");
+    mkdirSync(assembled, { recursive: true });
+    const targetFingerprint = buildReviewTargetFingerprint(d);
+    writeFileSync(join(assembled, "agent_question_queue.json"), JSON.stringify({
+      schema: "apa-agent-question-queue-v2",
+      targetFingerprint,
+      questions: [
+        { id: "DISC-001", requiredForReadiness: true },
+        { id: "IDS-PA01", requiredForReadiness: false },
+      ],
+    }));
+    writeFileSync(join(assembled, "agent_question_answers.json"), JSON.stringify({
+      schema: "apa-agent-question-answers-v2",
+      targetFingerprint,
+      answers: [{ id: "IDS-PA01", choice: "include_candidate" }],
+    }));
+    const gate = preflight(d, { assembledDir: assembled }).gates.find((item) => item.name === "human-questionnaire");
+    assert.equal(gate.status, "block", JSON.stringify(gate));
+    assert.match(gate.msg, /1 required factual question\(s\) unanswered/);
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

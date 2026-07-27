@@ -158,8 +158,14 @@ export function install({
   stamp = "",
   version = "0.0.0",
 }) {
-  const skills = discoverSkills(skillsDir);
+  const skillsForHost = (host) => {
+    const hostDir = path.join(skillsDir, host.id);
+    return discoverSkills(
+      fs.existsSync(hostDir) && fs.statSync(hostDir).isDirectory() ? hostDir : skillsDir,
+    );
+  };
   const plans = hosts.map((host) => {
+    const skills = skillsForHost(host);
     const root = path.join(home, host.skillRoot);
     const lockPath = path.join(root, LOCK_FILE);
     const lockExists = fs.existsSync(lockPath);
@@ -198,6 +204,14 @@ export function install({
     return { host, root, lockPath, installed, staleOwned };
   });
 
+  const skillSets = plans.map((plan) => ({
+    host: plan.host.id,
+    names: plan.installed.map((skill) => skill.name).sort(),
+  }));
+  const expectedSkillSet = JSON.stringify(skillSets[0]?.names || []);
+  if (skillSets.some(({ names }) => JSON.stringify(names) !== expectedSkillSet)) {
+    throw new Error(`host skill variants contain inconsistent skill sets: ${JSON.stringify(skillSets)}`);
+  }
   const hostSummaries = [];
   for (const plan of plans) {
     if (!dryRun) installPlan(plan, { prefix, stamp, version });
@@ -211,7 +225,13 @@ export function install({
     });
   }
 
-  return { action: "install", dryRun, prefix, skillCount: skills.length, hosts: hostSummaries };
+  return {
+    action: "install",
+    dryRun,
+    prefix,
+    skillCount: plans[0]?.installed.length || 0,
+    hosts: hostSummaries,
+  };
 }
 
 /**
