@@ -1,6 +1,7 @@
 ---
 name: autoprep
 description: "Run the full patent-prep lifecycle end to end - capture/compile -> prior-art search -> patentability -> claims -> spec -> figures -> rigor -> filing assembly - invoking each phase skill and enforcing the gates between them. Stops at human checkpoints and the submit boundary. Invoke as /apa-autoprep."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

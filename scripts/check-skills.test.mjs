@@ -74,6 +74,7 @@ test("host-rendered frontmatter keeps concise descriptions and invocation trigge
 test("direct-source skills are discoverable for non-Claude host generation", () => {
   const direct = discoverDirectSkills();
   assert.ok(direct.some((s) => s.name === "apa-review-form"), "apa-review-form should be carried into non-Claude dist outputs");
+  assert.ok(direct.some((s) => s.name === "apa-form-fill"), "apa-form-fill should be carried into non-Claude dist outputs");
   const reviewForm = direct.find((s) => s.name === "apa-review-form");
   const out = renderSkill(reviewForm.skill, "codex");
   const fm = parseFrontmatter(out);
@@ -82,6 +83,17 @@ test("direct-source skills are discoverable for non-Claude host generation", () 
   assert.match(fm.description, /Invoke as \/apa-review-form/);
   assert.doesNotMatch(out, /^allowed-tools:/m);
   assert.match(out, /scripts\/generate_review_form\.mjs/);
+
+  const formFill = direct.find((s) => s.name === "apa-form-fill");
+  for (const host of ["claude", "codex", "cursor"]) {
+    const rendered = renderSkill(formFill.skill, host);
+    const renderedFm = parseFrontmatter(rendered);
+    assert.equal(renderedFm.name, "apa-form-fill");
+    assert.ok(renderedFm.compatibility);
+    assert.match(rendered, /\/apa-form-fill/);
+    assert.match(rendered, /\$apa-form-fill/);
+    assert.match(rendered, /@apa-form-fill/);
+  }
 });
 
 function skillDirs() {

@@ -87,13 +87,19 @@ export function loadSkillDefinitions(skillsDir = SKILLS_DIR) {
 export function scorePrompt(prompt, skill) {
   const lower = String(prompt || "").toLowerCase();
   const trigger = skill.triggerTests || {};
-  const command = String(trigger.command || "").toLowerCase();
+  const commands = [...new Set([
+    trigger.command,
+    ...Object.values(trigger.native_invocations || {}),
+  ].map((value) => String(value || "").toLowerCase()).filter(Boolean))];
   const keywords = Array.isArray(trigger.keywords) ? trigger.keywords : [];
   let score = 0;
   const matched = [];
-  if (command && lower.includes(command)) {
-    score += 100;
-    matched.push(command);
+  for (const command of commands) {
+    if (lower.includes(command)) {
+      score += 100;
+      matched.push(command);
+      break;
+    }
   }
   for (const raw of keywords) {
     const kw = String(raw || "").trim().toLowerCase();
@@ -117,6 +123,9 @@ export function validateSkillDescriptions(skills) {
   const errors = [];
   for (const skill of skills) {
     const desc = skill.description;
+    if (skill.name !== skill.dirName) {
+      errors.push(`${skill.dirName}: frontmatter name must match its parent directory`);
+    }
     if (!desc) errors.push(`${skill.dirName}: missing frontmatter description`);
     if (desc.length > DESCRIPTION_MAX_CHARS) {
       errors.push(`${skill.dirName}: description is ${desc.length} chars; max ${DESCRIPTION_MAX_CHARS}`);
@@ -141,6 +150,24 @@ export function validateTriggerFixtures(skills) {
     }
     if (!/^\/apa-[a-z0-9-]+$/.test(String(tt.command || ""))) {
       errors.push(`${skill.dirName}: trigger-tests.json command must be /apa-*`);
+    }
+    if (tt.native_invocations !== undefined) {
+      const native = tt.native_invocations;
+      const expected = {
+        claude: tt.command,
+        cursor: tt.command,
+        codex: `$${skill.name}`,
+        chatgpt: `@${skill.name}`,
+      };
+      if (!native || typeof native !== "object" || Array.isArray(native)) {
+        errors.push(`${skill.dirName}: native_invocations must be an object`);
+      } else {
+        for (const [host, invocation] of Object.entries(expected)) {
+          if (native[host] !== invocation) {
+            errors.push(`${skill.dirName}: native_invocations.${host} must be ${invocation}`);
+          }
+        }
+      }
     }
     if (!Array.isArray(tt.keywords) || tt.keywords.length < 3) {
       errors.push(`${skill.dirName}: trigger-tests.json needs at least 3 keywords`);

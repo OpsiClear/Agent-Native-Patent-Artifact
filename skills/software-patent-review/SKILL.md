@@ -1,6 +1,7 @@
 ---
 name: software-patent-review
 description: "Review, draft, and harden software or computer-implemented patent matter with emphasis on 101 eligibility, technical improvement framing, algorithm/support disclosure, non-transitory CRM claims, data-structure claims, and 112 risks. Use for software patents, SaaS/AI/data-processing inventions, and computer-implemented claim strategy. Invoke as /apa-software-patent."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

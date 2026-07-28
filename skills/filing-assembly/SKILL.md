@@ -1,6 +1,7 @@
 ---
 name: filing-assembly
 description: "Collate a matter into an assembly package draft - 1.77 specification (HTML print-to-PDF), ADS draft, SB/08 IDS seed, unsigned declaration, fee estimate, and a pre-filing go/no-go checklist. Enforces the inventorship-integrity gate and STOPS at the submit boundary (never signs or files). Invoke as /apa-assemble."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
@@ -56,6 +57,11 @@ It produces, under `<matter>/assembled/`:
   workflow mode and shareable-export exclusions for sensitive critique artifacts; and
   `human_verified: false` / `completed: false` flags for ADS completion, IDS verification,
   declaration signatures, fee/entity checks, PDF export, and Patent Center upload.
+
+After a human selects a supported ordinary AcroForm route, use `/apa-form-fill` to collect and
+confirm allowlisted text and create a local draft. It refuses AIA/14 and other XFA forms, all
+selections, signer fields, entity/fee/payment fields, and filing. Keep its review manifest separate
+from `upload_manifest.json`; neither manifest proves filing readiness.
 
 ### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
 - Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/

@@ -87,7 +87,15 @@ function makeSkillsPackage(tempRoot) {
   const source = join(PACKAGES, "apa-skills");
   const copy = join(tempRoot, "apa-skills-package");
   mkdirSync(copy, { recursive: true });
-  for (const entry of ["package.json", "README.md", "bin", "src", "scripts"]) {
+  for (const entry of [
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "bin",
+    "src",
+    "scripts",
+  ]) {
     cpSync(join(source, entry), join(copy, entry), { recursive: true });
   }
   bundleHostSkills({
@@ -151,6 +159,11 @@ function checkRedact(projectDir) {
 
 function checkSkills(projectDir) {
   const packageRoot = join(projectDir, "node_modules", "@apa", "patent-skills");
+  assert.ok(existsSync(join(packageRoot, "LICENSE")), "installed package license missing");
+  assert.ok(
+    existsSync(join(packageRoot, "THIRD_PARTY_NOTICES.md")),
+    "installed package third-party notices missing",
+  );
   const cli = join(packageRoot, "bin", "apa-skills.mjs");
   const listed = run(process.execPath, [cli, "list"], { cwd: projectDir });
   assert.equal(listed.status, 0, listed.stderr);

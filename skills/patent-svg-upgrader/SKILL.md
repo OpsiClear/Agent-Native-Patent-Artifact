@@ -1,6 +1,7 @@
 ---
 name: patent-svg-upgrader
 description: "Upgrade rough generated SVG patent figures into professional utility-patent drawing candidates. Use when APA-generated, AI-generated, Graphviz/Mermaid, draw.io, CAD-exported, or hand-authored SVGs look amateur, crowded, noncompliant, or not filing-polished. Do not use for final legal compliance certification or design-patent ornamental views. Invoke as /apa-svg-upgrader."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

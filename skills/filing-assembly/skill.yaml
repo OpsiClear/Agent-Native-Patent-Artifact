@@ -8,7 +8,7 @@ description: "Assemble package drafts and upload manifests while stopping at the
 inputs: [PATENT.md, logic/claims.md, src/embodiments.md, evidence/, patent_rigor_report.json]
 outputs: [assembled/, trace/runlog.jsonl]
 upstream: [apa-rigor, apa-drawing-quality]
-downstream: []
+downstream: [apa-form-fill]
 gates_after: [submit-boundary]
 human_checkpoints: [signature-review, entity-status-review, patent-center-upload]
 domain_hooks: [assembly.preflight]

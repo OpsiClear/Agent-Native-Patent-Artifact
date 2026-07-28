@@ -1,6 +1,7 @@
 ---
 name: examiner-adversary
 description: "Role-play a USPTO examiner against a matter: enumerate the strongest likely 101/102/103/112 rejections, and for each pair the critique with a concrete fix, recording the critique->fix rationale. Hardens the application before the real examiner. Invoke as /apa-examiner."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

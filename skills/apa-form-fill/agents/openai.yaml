@@ -1,0 +1,4 @@
+interface:
+  display_name: "Patent Form Fill"
+  short_description: "Prompt-driven local USPTO PDF draft filling"
+  default_prompt: "Use $apa-form-fill in Codex or @apa-form-fill after ChatGPT import to collect and confirm my patent form facts, then create a local draft only when command execution is available."

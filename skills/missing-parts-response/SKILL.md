@@ -1,6 +1,7 @@
 ---
 name: missing-parts-response
 description: "Prepare blocked documentation checklists for USPTO Notices to File Missing Parts in provisional and utility nonprovisional applications. Use when a human-verified correspondence record exists and response papers, deadline and fee verification, signer authority, PDF review, or Patent Center checkpoints must be organized. Invoke as /apa-missing-parts. Do not use for Office Actions, legal-response selection, signatures, payments, or filing."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
@@ -71,9 +72,12 @@ Release copies are convenience artifacts; verify the current official USPTO form
    - late provisional filing fee or cover sheet: 37 CFR 1.16(g).
 7. Open official forms in the required viewer. Patent Center auto-load SB/16, AIA/14, and SB/08 are
    XFA forms and may show only a `Please wait` placeholder in browsers or generic PDF previews.
-8. A human completes fields, determines signer authority, signs, verifies entity status, inspects
-   every final PDF page, uploads, certifies, pays, and submits through Patent Center.
-9. Save the confirmation and updated filing receipt privately, run `/apa-correspondence`
+8. After the human selects a manual AcroForm route, `/apa-form-fill` may collect, confirm, and
+   populate only its hash-profiled text fields. It must refuse XFA, choices, signatures,
+   certifications, entity status, fee/payment fields, and filing.
+9. A human completes all remaining fields, determines signer authority, signs, verifies entity
+   status, inspects every final PDF page, uploads, certifies, pays, and submits through Patent Center.
+10. Save the confirmation and updated filing receipt privately, run `/apa-correspondence`
    `receipt-audit`, and resolve each discrepancy with human review.
 
 ## Example

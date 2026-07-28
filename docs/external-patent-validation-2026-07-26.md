@@ -62,7 +62,7 @@ Remove-Item Env:APA_EXTERNAL_MATTER
 | Graph-completeness signals | Inactive/missing PA evidence, normalized claim prose/binding drift, and missing illustration/distinction evidence now produce stable mechanical warnings. | validator regressions |
 | Review-target freshness | Human review state, questionnaires, and answers bind claims/IDS/drawings/PDFs by digest and count; stale or unresolved required review blocks preflight. | review-fingerprint/questionnaire/preflight tests |
 | Application profiles | Utility is repository-reviewed; provisional/design have distinct candidate snapshots and remain blocked pending authorized rule/visual review. | application-profile snapshots and preflight tests |
-| Distribution/UI/coverage release gates | Only two packages are public and both pass empty-project isolation; host variants are independent with exact skill-set parity; a real browser verifies the viewer; 95%/90% coverage floors block regressions. | distribution script, viewer browser test, coverage command, CI |
+| Distribution/UI/coverage release gates | Only two packages are public and both package CLIs pass empty-project isolation; host variants have exact skill-set parity; lifecycle skills declare their APA-checkout dependency; the self-contained form-fill runtime is packed and smoke-tested separately; a real browser verifies the viewer; 95%/90% coverage floors block regressions. | distribution script, viewer browser test, coverage command, CI |
 
 ## Historical post-fix aggregate result
 

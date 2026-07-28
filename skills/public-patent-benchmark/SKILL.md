@@ -1,6 +1,7 @@
 ---
 name: public-patent-benchmark
 description: "Create and run real public patent reproduction benchmarks for APA skills. Use when converting a public patent or publication into a plain-text fixture, building an expected oracle, comparing a target skill against the public record, or producing a benchmark gap report. Do not use for sustained skill auto-tune, drafting patent matter, reviewing a patent matter, or giving patentability advice. Invoke as /apa-public-patent-benchmark."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

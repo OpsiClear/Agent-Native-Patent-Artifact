@@ -1,6 +1,7 @@
 ---
 name: apa-review-form
 description: Generate minimal local HTML review forms and public-date verification reports for Agent-Native Patent Artifact matters. Use when creating human-review checklists, correspondence or missing-parts review cards, filing-receipt audits, IDS/citation/date verification forms, claim review forms, drawing/PDF review forms, or filing-readiness forms for APA patent folders. Do not use for legal opinions, Patent Center filing, generic frontend apps, or non-APA documents. Invoke as /apa-review-form.
+compatibility: Requires Node.js 21+; APA CLI enrichment and safe metadata fetches require an Agent-Native-Patent-Artifact checkout.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

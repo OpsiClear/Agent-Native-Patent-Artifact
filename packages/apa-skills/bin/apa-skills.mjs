@@ -2,7 +2,7 @@
 // apa-skills — installer for the Agent-Native Patent Artifact (APA) skills.
 // Standalone, zero-dependency, Node built-ins only. Non-interactive.
 //
-//   apa-skills install   [--host <id>] [--prefix <p>] [--dry-run]
+//   apa-skills install   [--host <id>] [--dry-run]
 //   apa-skills uninstall [--host <id>] [--prefix <p>] [--dry-run]
 //   apa-skills list
 
@@ -20,11 +20,13 @@ const PKG_ROOT = path.resolve(HERE, "..");
 
 const DISCLAIMER =
   "APA is assistive, not legal advice; a human signs and files.";
+const RUNTIME_NOTE =
+  "Runtime scope: apa-form-fill carries its offline runtime; other lifecycle CLI gates require an Agent-Native-Patent-Artifact checkout.";
 
 const HELP = `apa-skills — install Agent-Native Patent Artifact (APA) skills
 
 Usage:
-  npx @apa/patent-skills install   [--host <id>] [--prefix <p>] [--dry-run]
+  npx @apa/patent-skills install   [--host <id>] [--dry-run]
   npx @apa/patent-skills uninstall [--host <id>] [--prefix <p>] [--dry-run]
   npx @apa/patent-skills list
 
@@ -36,10 +38,11 @@ Commands:
 
 Options:
   --host <id>     Target one host: ${ALL_HOSTS.map((h) => h.id).join(", ")} (repeatable)
-  --prefix <p>    Skill directory prefix (default: apa-)
+  --prefix <p>    Legacy uninstall prefix; install identities remain canonical apa-* names
   --dry-run       Report what would change without touching disk
   -h, --help      Show this help
 
+${RUNTIME_NOTE}
 ${DISCLAIMER}`;
 
 function parseArgs(argv) {
@@ -56,14 +59,18 @@ function parseArgs(argv) {
   return out;
 }
 
-/** Locate skills: prefer the repo-root source in monorepo dev, else the bundled package copy. */
+/** Locate skills: prefer packaged host variants, then fall back to repo-root sources in development. */
 function resolveSkillsDir() {
+  const bundled = path.join(PKG_ROOT, "skills");
+  const hasBundledHostVariants = ALL_HOSTS.every((host) =>
+    hasSkills(path.join(bundled, host.id))
+  );
+  if (hasBundledHostVariants || hasSkills(bundled)) return bundled;
+
   const repoRoot = path.resolve(PKG_ROOT, "..", "..");
   const repoSkills = path.join(repoRoot, "skills");
   if (isApaRepoRoot(repoRoot) && hasSkills(repoSkills)) return repoSkills;
 
-  const bundled = path.join(PKG_ROOT, "skills");
-  if (hasSkills(bundled) || ALL_HOSTS.every((host) => hasSkills(path.join(bundled, host.id)))) return bundled;
   throw new Error(
     `Could not locate a skills directory. Looked in:\n  ${repoSkills}\n  ${bundled}\n` +
       `Run scripts/bundle-skills.mjs to populate the bundled copy.`
@@ -72,7 +79,18 @@ function resolveSkillsDir() {
 
 function skillsForHost(skillsRoot, hostId) {
   const hostDir = path.join(skillsRoot, hostId);
-  return hasSkills(hostDir) ? hostDir : skillsRoot;
+  if (hasSkills(hostDir)) return hostDir;
+  const repoRoot = path.dirname(skillsRoot);
+  if (isApaRepoRoot(repoRoot)) {
+    if (hostId === "claude") return skillsRoot;
+    const generated = path.join(repoRoot, "dist", hostId);
+    if (hasSkills(generated)) return generated;
+    throw new Error(
+      `Generated ${hostId} skill variants are missing at ${generated}. ` +
+      "Run node scripts/gen-skill-docs.mjs --all-hosts before a development install.",
+    );
+  }
+  return skillsRoot;
 }
 
 function isApaRepoRoot(dir) {
@@ -122,7 +140,7 @@ function main(argv) {
   const cmd = args._[0];
   const home = os.homedir();
   const skillsDir = resolveSkillsDir();
-  const prefix = args.prefix || "apa-";
+  const prefix = args.prefix ?? "apa-";
 
   if (cmd === "list") {
     const skills = discoverSkills(skillsForHost(skillsDir, "claude"));
@@ -130,7 +148,9 @@ function main(argv) {
     console.log(`APA skills (${skills.length}) — from ${skillsDir}\n`);
     for (const s of skills) {
       const desc = s.description ? s.description.slice(0, 100) : "(no description)";
-      console.log(`  ${s.name}`);
+      const identity = s.identity || (s.name.startsWith("apa-") ? s.name : `apa-${s.name}`);
+      const sourceNote = identity === s.name ? "" : ` (source: ${s.name})`;
+      console.log(`  ${identity}${sourceNote}`);
       console.log(`    ${desc}`);
     }
     console.log(`\nHosts:`);
@@ -138,7 +158,8 @@ function main(argv) {
       const tag = detected.some((d) => d.id === h.id) ? "detected" : "not detected";
       console.log(`  ${h.id.padEnd(8)} ${h.skillRoot.padEnd(16)} [${tag}]`);
     }
-    console.log(`\n${DISCLAIMER}`);
+    console.log(`\n${RUNTIME_NOTE}`);
+    console.log(DISCLAIMER);
     return 0;
   }
 
@@ -166,9 +187,24 @@ function main(argv) {
     for (const h of summary.hosts) {
       console.log(`  ${h.host} -> ${h.root}`);
       for (const s of h.installed) console.log(`    + ${s.dir}`);
+      for (const s of h.staleOwned) {
+        console.log(`    - ${args.dryRun ? "would remove stale" : "removed stale"} ${s.dest}`);
+      }
+      for (const legacy of h.migratedLegacy) {
+        for (const dir of legacy.owned) {
+          console.log(
+            `    - ${args.dryRun ? "would remove legacy-owned" : "removed legacy-owned"} ` +
+            path.join(legacy.root, dir),
+          );
+        }
+        console.log(
+          `    - ${args.dryRun ? "would remove legacy lock" : "removed legacy lock"} ${legacy.lockPath}`,
+        );
+      }
       if (!args.dryRun) console.log(`    lockfile: ${h.lockPath}`);
     }
-    console.log(`\n${DISCLAIMER}`);
+    console.log(`\n${RUNTIME_NOTE}`);
+    console.log(DISCLAIMER);
     return 0;
   }
 
@@ -183,10 +219,10 @@ function main(argv) {
       if (h.removed.length === 0 && !h.lockRemoved) continue;
       console.log(`  ${h.host} -> ${h.root}`);
       for (const s of h.removed) {
-        console.log(`    - ${s.dir}`);
+        console.log(`    - ${s.dest}`);
         total++;
       }
-      if (h.lockRemoved) console.log(`    - ${path.basename(h.lockPath)}`);
+      for (const lockPath of h.removedLockPaths) console.log(`    - ${lockPath}`);
     }
     console.log(`\n${verb} ${total} lockfile-owned skill dir(s) for prefix "${prefix}".`);
     console.log(`\n${DISCLAIMER}`);

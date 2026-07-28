@@ -6,6 +6,8 @@
  * @typedef {Object} HostConfig
  * @property {string} id                 short host id ("claude")
  * @property {string} skillRoot          install root under the user's home (e.g. ".claude/skills")
+ * @property {string} [configRoot]        host config directory used for detection
+ * @property {string[]} [legacySkillRoots] prior installer roots eligible for lock-owned migration
  * @property {(fm: object) => object} [frontmatterTransform]  per-host frontmatter rewrite
  * @property {string[]} [suppressedResolvers]  non-safety resolver tokens to omit for this host
  */
@@ -22,6 +24,7 @@ const dropAllowedTools = (fm) => { const { "allowed-tools": _omit, ...rest } = f
 export const claude = {
   id: "claude",
   skillRoot: ".claude/skills",
+  configRoot: ".claude",
   frontmatterTransform: (fm) => fm,
   suppressedResolvers: [],
 };
@@ -29,17 +32,20 @@ export const claude = {
 /** @type {HostConfig} — Codex: its skill frontmatter does not use `allowed-tools`, so drop it. */
 export const codex = {
   id: "codex",
-  skillRoot: ".codex/skills",
+  skillRoot: ".agents/skills",
+  configRoot: ".codex",
+  legacySkillRoots: [".codex/skills"],
   frontmatterTransform: (fm) => dropAllowedTools(fm),
   suppressedResolvers: [],
 };
 
-/** @type {HostConfig} — Cursor rules: no `allowed-tools`, add `alwaysApply: false`, and its terser
- *  rule format omits the long claim-ladder guide (a non-safety resolver). */
+/** @type {HostConfig} — Cursor Agent Skills omit Claude's `allowed-tools`; the terser
+ *  variant also omits the long claim-ladder guide (a non-safety resolver). */
 export const cursor = {
   id: "cursor",
   skillRoot: ".cursor/skills",
-  frontmatterTransform: (fm) => ({ ...dropAllowedTools(fm), alwaysApply: false }),
+  configRoot: ".cursor",
+  frontmatterTransform: (fm) => dropAllowedTools(fm),
   suppressedResolvers: ["CLAIM_LADDER_GUIDE"],
 };
 

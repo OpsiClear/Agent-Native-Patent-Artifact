@@ -52,6 +52,9 @@ hooks:
   - id: assembly.preflight
     before: [apa-assemble]
     blocking_default: true
+  - id: assembly.postdraft
+    after: [apa-assemble]
+    blocking_default: true
 pipeline:
   alternatives:
     intake: [apa-disclose, apa-compile]
@@ -70,6 +73,7 @@ optional:
   - apa-review-form
   - apa-correspondence
   - apa-missing-parts
+  - apa-form-fill
   - apa-tldraw-drawings
   - apa-svg-upgrader
   - apa-office-action

@@ -1,7 +1,7 @@
 {
   "name": "@apa/patent-skills",
   "version": "0.1.0",
-  "description": "Install Agent-Native Patent Artifact (APA) agent skills into Claude Code, Codex, and Cursor. Standalone, zero-dependency.",
+  "description": "Zero-dependency installer for APA agent skills; form filling is self-contained, while lifecycle CLI gates require an APA checkout.",
   "type": "module",
   "bin": {
     "apa-skills": "bin/apa-skills.mjs"
@@ -15,7 +15,9 @@
     "bin",
     "src",
     "skills",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "keywords": [
     "apa",

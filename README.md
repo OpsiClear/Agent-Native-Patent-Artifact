@@ -72,6 +72,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/office-action/` | **(post-filing)** `/apa-office-action` — map rejections to claims, deadlines, response scaffold (flags, not conclusions) | ✅ |
 | `skills/patent-correspondence-triage/` | **(post-filing)** `/apa-correspondence` — classify notices, verify procedural facts, estimate notice dates, and audit filing receipts | ✅ |
 | `skills/missing-parts-response/` | **(post-filing)** `/apa-missing-parts` — organize provisional/nonprovisional missing-parts papers and human filing gates without selecting or filing a response | ✅ |
+| `skills/apa-form-fill/` | `apa-form-fill` (`/` in Claude/Cursor, `$` in Codex, `@` in ChatGPT after import) — collect and confirm form facts, then locally populate hash-pinned AcroForm drafts when filesystem/command execution is available, while refusing XFA, signatures, certifications, entity status, fees, payment, and filing | ✅ tested |
 | `skills/disclosure-capture/` | `/apa-disclose` — capture a disclosure into the artifact (file-I/O only) | ✅ |
 | `skills/compiler/` | `/apa-compile <path>` — lift an existing patent/publication into a validated artifact | ✅ |
 | `skills/prior-art-search/` | **(Phase 2)** `/apa-priorart` — search prior-art DBs, file references + a reference matrix | ✅ |
@@ -117,7 +118,7 @@ node scripts/gen-skill-docs.mjs && node packages/apa-skillgraph/cli.mjs check   
 node packages/apa-search/cli.mjs --query "self-watering planter float valve" --source mock   # offline prior-art demo
 node packages/apa-safe/cli.mjs npx @shibayama/pdgkit@0.1.0 --dry-run -- --help   # guarded network-tool demo
 node packages/apa-reports/cli.mjs scaffold claims --matter examples/minimal-patent-artifact   # semantic report schema demo
-node scripts/setup.mjs --install                                  # optional: copy skills into ~/.claude/skills/apa-*
+node scripts/setup.mjs --install                                  # optional: install transformed skills for detected Claude/Codex/Cursor hosts
 node packages/apa-skills/bin/apa-skills.mjs list                  # the npx installer (also: install [--host] / uninstall)
 node packages/apa-eval/cli.mjs --matter examples/minimal-patent-artifact --mock   # LLM-judge eval, offline
 node scripts/gen-skill-docs.mjs --all-hosts                       # generate per-host skills into dist/ (claude/codex/cursor)

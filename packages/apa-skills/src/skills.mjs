@@ -40,10 +40,12 @@ function parseFrontmatter(src) {
 
 /**
  * discoverSkills(bundledSkillsDir): list each immediate sub-directory that
- * contains a SKILL.md. Returns [{ name, dir, description }] sorted by name.
+ * contains a SKILL.md. Returns [{ name, identity, dir, description }] sorted by name.
  *
  * `name` comes from the SKILL.md frontmatter `name:` (falls back to the
- * directory name). `dir` is the absolute path to the skill source directory.
+ * directory name). `identity` comes from the APA `skill.yaml` id when present,
+ * because it is also the advertised slash-command name. `dir` is the absolute
+ * path to the skill source directory.
  */
 export function discoverSkills(bundledSkillsDir) {
   if (!fs.existsSync(bundledSkillsDir)) {
@@ -59,7 +61,21 @@ export function discoverSkills(bundledSkillsDir) {
     const fm = parseFrontmatter(fs.readFileSync(skillMd, "utf8"));
     const name = fm.name || entry.name;
     const description = (fm.description || "").replace(/\s+/g, " ").trim();
-    out.push({ name, dir, description });
+    const metadataPath = path.join(dir, "skill.yaml");
+    let identity = null;
+    if (fs.existsSync(metadataPath)) {
+      const metadata = fs.readFileSync(metadataPath, "utf8");
+      const ids = [...metadata.matchAll(/^id:\s*([a-z0-9]+(?:-[a-z0-9]+)*)\s*$/gm)];
+      const commands = [...metadata.matchAll(/^command:\s*(\/[a-z0-9]+(?:-[a-z0-9]+)*)\s*$/gm)];
+      if (ids.length !== 1 || commands.length !== 1) {
+        throw new Error(`skill metadata must declare exactly one simple id and command: ${metadataPath}`);
+      }
+      identity = ids[0][1];
+      if (commands[0][1] !== `/${identity}`) {
+        throw new Error(`skill metadata command must match id for ${metadataPath}`);
+      }
+    }
+    out.push({ name, identity, dir, description });
   }
   out.sort((a, b) => a.name.localeCompare(b.name));
   return out;

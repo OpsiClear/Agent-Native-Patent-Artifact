@@ -1,6 +1,7 @@
 ---
 name: figure-generation
 description: "Author and render numbered patent figures for a matter from its method claims and embodiments, then reconcile every reference numeral against the spec. Renders deterministic B&W SVG line-art (numbered parts, lead lines, arrows). Invoke as /apa-figures."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

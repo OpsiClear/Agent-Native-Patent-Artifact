@@ -28,6 +28,7 @@ The current repository keeps the original flat core skill layout for installer c
 | Skill | Command | Phase | Hook Points | Description |
 |---|---|---|---|---|
 | `apa-software-patent` | `/apa-software-patent` | domain-review | `claims.seed`, `analysis.domain`, `spec.review`, `rigor.domain` | Review software patent matter for technical-improvement, 101, CRM, and software 112 risks. |
+| `apa-form-fill` | `/apa-form-fill` | filing | `assembly.postdraft` | Collect confirmed patent-form facts through agent chat and populate hash-pinned local AcroForm draft PDFs. |
 | `apa-review-form` | `/apa-review-form` | review | `assembly.preflight` | Generate local human-review forms, questionnaires, date checks, and agent-request queues for APA matters. |
 | `apa-missing-parts` | `/apa-missing-parts` | correspondence | - | Prepare blocked, human-owned response checklists for supported provisional and nonprovisional missing-parts notices. |
 | `apa-correspondence` | `/apa-correspondence` | correspondence | - | Triage USPTO correspondence into privacy-minimized records, tentative date estimates, and filing-receipt discrepancy audits. |
@@ -49,12 +50,14 @@ The current repository keeps the original flat core skill layout for installer c
 | `spec.review` | after: apa-spec; before: - | false |
 | `rigor.domain` | after: -; before: apa-rigor | false |
 | `assembly.preflight` | after: -; before: apa-assemble | true |
+| `assembly.postdraft` | after: apa-assemble; before: - | true |
 
 ## Mermaid
 
 ```mermaid
 %% AUTO-GENERATED from skills/registry.yaml and skill.yaml files; do not edit by hand.
 flowchart TD
+  apa_form_fill["/apa-form-fill<br/>filing"]
   apa_review_form["/apa-review-form<br/>review"]
   apa_autoprep["/apa-autoprep<br/>orchestration"]
   apa_claims["/apa-claims<br/>drafting"]
@@ -77,6 +80,7 @@ flowchart TD
   apa_software_patent["/apa-software-patent<br/>domain-review"]
   apa_spec["/apa-spec<br/>drafting"]
   apa_tldraw_drawings["/apa-tldraw-drawings<br/>drafting"]
+  apa_form_fill -. hook:assembly.postdraft .-> assembly_postdraft
   apa_review_form -. hook:assembly.preflight .-> assembly_preflight
   apa_autoprep --> apa_disclose
   apa_autoprep --> apa_compile
@@ -103,6 +107,8 @@ flowchart TD
   apa_examiner --> apa_rigor
   apa_figures --> apa_drawing_quality
   apa_figures --> apa_assemble
+  apa_assemble --> apa_form_fill
+  apa_missing_parts --> apa_form_fill
   apa_correspondence --> apa_missing_parts
   apa_drawing_quality --> apa_assemble
   apa_svg_upgrader --> apa_drawing_quality
@@ -146,4 +152,5 @@ flowchart TD
   spec_review(("hook:spec.review"))
   rigor_domain(("hook:rigor.domain"))
   assembly_preflight(("hook:assembly.preflight"))
+  assembly_postdraft(("hook:assembly.postdraft"))
 ```

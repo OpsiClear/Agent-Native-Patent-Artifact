@@ -8,7 +8,7 @@ description: "Prepare blocked, human-owned response checklists for supported pro
 inputs: [PATENT.md, correspondence/notice-NN.json, docs/uspto-forms.json]
 outputs: [correspondence/response-NN.json, correspondence/response-NN.md, trace/runlog.jsonl]
 upstream: [apa-correspondence]
-downstream: []
+downstream: [apa-form-fill]
 gates_after: [deadline-human-verification, signer-authority-review, pdf-visual-review, submit-boundary]
 human_checkpoints: [document-route-selection, fee-entity-status-review, signer-authority-review, patent-center-human-submission]
 domain_hooks: []

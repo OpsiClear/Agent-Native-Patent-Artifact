@@ -1,6 +1,7 @@
 ---
 name: claim-drafting
 description: "Draft independent + dependent claims for a matter: build the dual-lens claim ladder (examiner-survival + portfolio-protection), enforce single-sentence form and antecedent basis, seed defined terms, and bind each limitation to its spec support and the closest prior art. Invoke as /apa-claims."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

@@ -15,7 +15,14 @@ test("dropin writes the pointer block into CLAUDE.md AND AGENTS.md (creating the
     for (const f of ["CLAUDE.md", "AGENTS.md"]) {
       const txt = readFileSync(join(d, f), "utf8");
       assert.ok(txt.includes(START) && txt.includes(END), `${f} has the markers`);
-      assert.ok(txt.includes("APA") && txt.includes("disclosure-capture") && txt.includes("autoprep"), `${f} names the skills`);
+      assert.ok(
+        txt.includes("APA")
+          && txt.includes("disclosure-capture")
+          && txt.includes("apa-form-fill")
+          && txt.includes("autoprep"),
+        `${f} names the skills`,
+      );
+      assert.match(txt, /skills\/apa-form-fill\/SKILL\.md/, `${f} routes to the zero-install form skill`);
       assert.ok(/never sign, file/.test(txt), `${f} carries the guardrails`);
     }
   } finally { rmSync(d, { recursive: true, force: true }); }

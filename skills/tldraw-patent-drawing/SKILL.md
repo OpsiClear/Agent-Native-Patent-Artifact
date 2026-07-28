@@ -1,6 +1,7 @@
 ---
 name: tldraw-patent-drawing
 description: "Prepare tldraw-based utility-patent drawing candidates for controlled review and SVG normalization. Use when comparing tldraw with APA JSON/SVG, importing hand-drawn layouts, or using tldraw as a manual patent figure sketch surface. Do not use for final legal compliance certification, unchecked raster screenshots, or canonical filing output without SVG/PDF preflight. Invoke as /apa-tldraw-drawings."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

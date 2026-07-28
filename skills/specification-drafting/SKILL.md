@@ -1,6 +1,7 @@
 ---
 name: specification-drafting
 description: "Draft the 37 CFR 1.77 specification sections for a matter from its embodiments and claims, keeping reference numerals and defined terms consistent, grounding every statement in the disclosure, and scoring against the writing rubric. Invoke as /apa-spec."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

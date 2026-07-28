@@ -1,6 +1,7 @@
 ---
 name: software-license-review
 description: "Review software license posture for repositories, dependencies, vendored code, notices, SPDX metadata, patent-license clauses, and third-party provenance. Use when asked about open-source license compatibility, commercial release risk, attribution, copyleft, NOTICE files, or inbound/outbound licensing. Invoke as /apa-license."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

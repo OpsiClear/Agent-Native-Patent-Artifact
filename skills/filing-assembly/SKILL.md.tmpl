@@ -42,6 +42,11 @@ It produces, under `<matter>/assembled/`:
   `human_verified: false` / `completed: false` flags for ADS completion, IDS verification,
   declaration signatures, fee/entity checks, PDF export, and Patent Center upload.
 
+After a human selects a supported ordinary AcroForm route, use `/apa-form-fill` to collect and
+confirm allowlisted text and create a local draft. It refuses AIA/14 and other XFA forms, all
+selections, signer fields, entity/fee/payment fields, and filing. Keep its review manifest separate
+from `upload_manifest.json`; neither manifest proves filing readiness.
+
 {{IDS_REQUIREMENTS}}
 
 ## Hard gates (the tool enforces; do not override)

@@ -17,16 +17,34 @@ import path from "node:path";
  * @property {string} id         short host id ("claude")
  * @property {string} skillRoot  install root under the user's home (e.g. ".claude/skills")
  * @property {string} label      human-readable name
+ * @property {string} [configRoot] config directory used to detect the host
+ * @property {string[]} [legacySkillRoots] prior installer roots eligible for lock-owned migration
  */
 
 /** @type {Host} */
-export const claude = { id: "claude", skillRoot: ".claude/skills", label: "Claude Code" };
+export const claude = {
+  id: "claude",
+  skillRoot: ".claude/skills",
+  configRoot: ".claude",
+  label: "Claude Code",
+};
 
 /** @type {Host} */
-export const codex = { id: "codex", skillRoot: ".codex/skills", label: "Codex CLI" };
+export const codex = {
+  id: "codex",
+  skillRoot: ".agents/skills",
+  configRoot: ".codex",
+  legacySkillRoots: [".codex/skills"],
+  label: "Codex CLI",
+};
 
 /** @type {Host} */
-export const cursor = { id: "cursor", skillRoot: ".cursor/skills", label: "Cursor" };
+export const cursor = {
+  id: "cursor",
+  skillRoot: ".cursor/skills",
+  configRoot: ".cursor",
+  label: "Cursor",
+};
 
 /** @type {Host[]} */
 export const ALL_HOSTS = [claude, codex, cursor];
@@ -47,8 +65,7 @@ export function getHost(id) {
  * e.g. host { skillRoot: ".claude/skills" } -> ".claude".
  */
 function configDir(host) {
-  // First path segment of skillRoot (handles both "/" and "\" separators).
-  return host.skillRoot.split(/[\\/]/)[0];
+  return host.configRoot || host.skillRoot.split(/[\\/]/)[0];
 }
 
 /**

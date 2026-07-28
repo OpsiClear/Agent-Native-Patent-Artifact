@@ -1,6 +1,7 @@
 ---
 name: patent-correspondence-triage
 description: "Triage USPTO post-filing correspondence into privacy-minimized records, notice-specific date estimates, and filing-receipt discrepancy audits. Use when reviewing a missing-parts notice, corrected-paper notice, omitted-item notice, Office Action routing question, or filing receipt. Invoke as /apa-correspondence. Do not use to choose a legal response, calculate an authoritative deadline, sign, pay, or file."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

@@ -1,6 +1,7 @@
 ---
 name: prior-art-search
 description: "Search prior-art databases for references bearing on a matter's claims, file them as PA## blocks + raw evidence records, and seed a reference matrix. API-backed sources only (for example source id patentsview: PatentsView PatentSearch API); UI-only sources are human-handoff. Every query is scanned at the sink before egress. Invoke as /apa-priorart."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

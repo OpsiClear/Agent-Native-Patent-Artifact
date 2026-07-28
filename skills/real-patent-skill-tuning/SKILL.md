@@ -1,6 +1,7 @@
 ---
 name: real-patent-skill-tuning
 description: "Tune APA skills against real public patent simulations with fresh generated reports, oracle isolation, fixed scoring, holdout fixtures, and auto-tune guardrails. Use when improving /apa-software-patent or another APA skill from existing real-patent benchmark gaps or running skill auto-tune. Do not use for creating public patent fixtures/oracles, drafting patent matter, reviewing a patent matter, or giving patentability advice. Invoke as /apa-real-patent-skill-tune."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

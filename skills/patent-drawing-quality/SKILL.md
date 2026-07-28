@@ -1,6 +1,7 @@
 ---
 name: patent-drawing-quality
 description: "Review utility-patent drawings for professional draftsperson quality and USPTO formal-risk precheck: line art, margins, FIG labels, sheet numbering, text/reference-numeral size, lead lines, crowding, claim/spec feature coverage under 37 CFR 1.83, and HTML/SVG/PDF rendering choices. Use when asked whether drawings look professional, filing-polished, or ready for patent filing. Invoke as /apa-drawing-quality."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---

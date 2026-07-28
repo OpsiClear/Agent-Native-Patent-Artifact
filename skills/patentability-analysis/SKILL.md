@@ -1,6 +1,7 @@
 ---
 name: patentability-analysis
 description: "Build element-by-element claim charts mapping prior-art references to claim limitations and flag 101/102/103/112 issues as questions for a registered practitioner - never a conclusion. Includes an interview-driven statutory-bar screen and a 112(f) screen. Invoke as /apa-analyze."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep
 version: 0.1
 ---

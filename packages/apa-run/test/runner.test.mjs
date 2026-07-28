@@ -93,6 +93,66 @@ test("apa-run inserts the review form support before assembly", () => {
   assert.equal(plan.steps[reviewForm].hook, "assembly.preflight");
 });
 
+test("apa-run inserts form filling after the assembly draft", () => {
+  const plan = planPipeline({
+    matter: "examples/minimal-patent-artifact",
+    supports: ["form-fill"],
+  });
+  const assemble = plan.steps.findIndex((step) => step.id === "apa-assemble");
+  const formFill = plan.steps.findIndex((step) => step.id === "apa-form-fill");
+  assert.deepEqual(plan.supports, ["apa-form-fill"]);
+  assert.ok(assemble >= 0);
+  assert.ok(formFill > assemble);
+  assert.equal(plan.steps[formFill].hook, "assembly.postdraft");
+  assert.deepEqual(plan.steps[formFill].inputs, ["PATENT.md"]);
+  assert.deepEqual(plan.steps[formFill].outputs, ["assembled/forms/"]);
+  assert.equal(plan.steps.filter((step) => step.id === "apa-form-fill").length, 1);
+});
+
+test("apa-run can satisfy form-fill evidence through the assembled forms directory", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-run-form-fill-"));
+  try {
+    writeFileSync(join(matter, "PATENT.md"), "# Synthetic matter\n");
+    const forms = join(matter, "assembled", "forms");
+    mkdirSync(forms, { recursive: true });
+    const draft = join(forms, "sb16_DRAFT.pdf");
+    const manifest = join(forms, "sb16_DRAFT.review.json");
+    writeFileSync(draft, "%PDF-1.7\n");
+    writeFileSync(manifest, "{}\n");
+    appendRunlog(matter, buildRunlogEntry({
+      timestamp: "2026-07-28T12:00:00.000Z",
+      skill: "apa-form-fill",
+      inputs: existingFileRecords(matter, [join(matter, "PATENT.md")]),
+      outputs: existingFileRecords(matter, [draft, manifest]),
+      commands: [commandRecord({ argv: ["node", "patent_form_fill.mjs", "verify"], exitCode: 0 })],
+    }));
+    const graph = {
+      skills: [{
+        id: "apa-form-fill",
+        command: "/apa-form-fill",
+        phase: "filing",
+        kind: "support",
+        inputs: ["PATENT.md"],
+        outputs: ["assembled/forms/"],
+        gates_after: [],
+        human_checkpoints: [],
+      }],
+      domains: [],
+      registry: {
+        optional: ["apa-form-fill"],
+        hooks: [{ id: "assembly.postdraft", after: ["apa-form-fill"] }],
+        pipeline: { order: ["apa-form-fill"] },
+      },
+    };
+    const status = statusForMatter({ matter, graph });
+    assert.equal(status.steps[0].inputs.length, 1);
+    assert.equal(status.steps[0].input_status[0].status, "present");
+    assert.equal(status.steps[0].completed, true, JSON.stringify(status.steps[0].completion));
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
 test("apa-run fails loud on unknown domains or support skills", () => {
   assert.throws(
     () => planPipeline({ matter: "examples/minimal-patent-artifact", domains: ["not-a-domain"] }),

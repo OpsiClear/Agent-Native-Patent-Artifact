@@ -31,6 +31,21 @@ Keep this file current when adding copied, ported, or closely adapted material.
 - Notice handling: upstream license and copyright notices remain in the submodule.
   Files that are ports or close adaptations should also say so in their file header.
 
+## pdf-lib
+
+- Source: <https://github.com/Hopding/pdf-lib>
+- Version: 1.17.1
+- License: MIT License, copyright Andrew Dillon.
+- Original distribution path: `dist/pdf-lib.min.js`.
+- Repository role: the unmodified UMD distribution is vendored as
+  `skills/apa-form-fill/scripts/vendor/pdf-lib-1.17.1.cjs` so the local form-fill
+  skill remains install-free and works offline.
+- APA usage: inspect, populate, save, and reopen ordinary AcroForm PDFs. APA refuses
+  XFA before passing a document to this engine.
+- Notice handling: the complete upstream license is preserved at
+  `skills/apa-form-fill/scripts/vendor/PDF-LIB-LICENSE.md`; the vendored bytes are
+  pinned and checked at runtime by SHA-256.
+
 ## USPTO And U.S. Government Reference Material
 
 - Source role: public legal/rules reference material checked into

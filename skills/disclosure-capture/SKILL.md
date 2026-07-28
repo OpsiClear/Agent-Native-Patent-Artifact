@@ -1,6 +1,7 @@
 ---
 name: disclosure-capture
 description: "Capture an invention disclosure into a Patent Artifact as you interview the inventor - decisions, embodiments, alternatives, prior-art hits, and bar dates - via progressive crystallization. Invoke as /apa-disclose at the end of a disclosure session. File-I/O only; no external sinks."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep
 version: 0.1
 ---

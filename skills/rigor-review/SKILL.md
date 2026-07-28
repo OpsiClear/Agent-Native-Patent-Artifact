@@ -1,6 +1,7 @@
 ---
 name: rigor-review
 description: "Audit a matter's epistemic rigor across six patent dimensions (101 eligibility, 112 WD/enablement/definiteness, antecedent basis, claim-spec-drawing support, prior-art distinction, prosecution integrity) and emit patent_rigor_report.json with a deterministic File-Ready..Do-Not-File verdict. Read-only, artifact-only, report-only. Invoke as /apa-rigor."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Glob, Grep, Bash, Write
 version: 0.1
 ---

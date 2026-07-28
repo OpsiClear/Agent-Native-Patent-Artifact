@@ -29,6 +29,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = join(ROOT, "skills");
 const MAX_PASSES = 6;
 const TOKEN_RE = /\{\{([A-Z0-9_]+)(?::([^}]*))?\}\}/g;
+const DEFAULT_CHECKOUT_COMPATIBILITY =
+  "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates.";
 
 function parseTemplate(text) {
   const m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n([\s\S]*)$/.exec(text);
@@ -78,8 +80,12 @@ export function renderSkill(tmplPath, hostId) {
     "---",
     `name: ${fm.name}`,
     fm.description ? `description: ${JSON.stringify(fm.description)}` : null,
+    fm.license ? `license: ${JSON.stringify(fm.license)}` : null,
+    `compatibility: ${JSON.stringify(fm.compatibility || DEFAULT_CHECKOUT_COMPATIBILITY)}`,
     fm["allowed-tools"] ? `allowed-tools: ${fm["allowed-tools"]}` : null,
-    "alwaysApply" in fm ? `alwaysApply: ${fm.alwaysApply}` : null,
+    "disable-model-invocation" in fm
+      ? `disable-model-invocation: ${fm["disable-model-invocation"]}`
+      : null,
     `version: ${fm.version || "0.1"}`,
     "---",
     "",
@@ -138,15 +144,37 @@ function referenceOutPath(name, hostId, relPath) {
   return join(base, ...relPath.split("/"));
 }
 
-function copyDirectSkillSupportFiles(srcDir, dstDir) {
+function copySkillSupportFiles(srcDir, dstDir, excludedNames) {
   for (const entry of readdirSync(srcDir, { withFileTypes: true })) {
-    if (entry.name === "SKILL.md") continue;
+    if (excludedNames.has(entry.name)) continue;
     const src = join(srcDir, entry.name);
     const dst = join(dstDir, entry.name);
     if (entry.isDirectory()) cpSync(src, dst, { recursive: true });
     else if (entry.isFile()) cpSync(src, dst);
     else throw new Error(`refusing unsupported direct-skill entry: ${relName(src)}`);
   }
+}
+
+export function prepareTemplatedHostDirectory(srcDir, dstDir) {
+  rmSync(dstDir, { recursive: true, force: true });
+  mkdirSync(dstDir, { recursive: true });
+  copySkillSupportFiles(srcDir, dstDir, new Set(["SKILL.md", "SKILL.md.tmpl"]));
+}
+
+function copyDirectSkillSupportFiles(srcDir, dstDir) {
+  copySkillSupportFiles(srcDir, dstDir, new Set(["SKILL.md"]));
+}
+
+export function prepareHostOutputRoot(hostId, root = ROOT) {
+  getHost(hostId);
+  const distRoot = join(root, "dist");
+  const hostRoot = join(distRoot, hostId);
+  if (dirname(hostRoot) !== distRoot) {
+    throw new Error(`refusing unsafe host output root: ${hostRoot}`);
+  }
+  rmSync(hostRoot, { recursive: true, force: true });
+  mkdirSync(hostRoot, { recursive: true });
+  return hostRoot;
 }
 
 function main(argv) {
@@ -160,6 +188,7 @@ function main(argv) {
   if (templates.length + directSkills.length === 0) { console.error("no skills/*/SKILL.md or SKILL.md.tmpl found"); process.exit(2); }
   let drift = 0;
   for (const hostId of hostIds) {
+    if (!check && hostId !== "claude") prepareHostOutputRoot(hostId);
     for (const t of templates) {
       let rendered;
       try { rendered = renderSkill(t.tmpl, hostId); }
@@ -187,7 +216,11 @@ function main(argv) {
           else console.log(`FRESH ${relName(refOut)}`);
         }
       } else {
-        mkdirSync(dirname(out), { recursive: true });
+        if (hostId === "claude") {
+          mkdirSync(dirname(out), { recursive: true });
+        } else {
+          prepareTemplatedHostDirectory(dirname(t.tmpl), dirname(out));
+        }
         writeFileSync(out, rendered);
         console.log(`wrote ${relName(out)} (${rendered.length} bytes)`);
         for (const ref of refs) {

@@ -1,6 +1,7 @@
 ---
 name: office-action
 description: "OPTIONAL post-filing extension: capture an examiner's Office Action into prosecution/oa-NN.md, parse it, ESTIMATE the 37 CFR 1.136(a) response period (estimate - verify), and scaffold a flags-and-questions response under the new-matter guard. Deeper UPL territory: a registered practitioner argues and files; APA never files. Invoke as /apa-office-action."
+compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
