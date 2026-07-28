@@ -68,6 +68,8 @@ pipeline:
     - apa-assemble
 optional:
   - apa-review-form
+  - apa-correspondence
+  - apa-missing-parts
   - apa-tldraw-drawings
   - apa-svg-upgrader
   - apa-office-action

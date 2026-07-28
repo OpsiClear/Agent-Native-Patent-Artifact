@@ -29,6 +29,8 @@ The current repository keeps the original flat core skill layout for installer c
 |---|---|---|---|---|
 | `apa-software-patent` | `/apa-software-patent` | domain-review | `claims.seed`, `analysis.domain`, `spec.review`, `rigor.domain` | Review software patent matter for technical-improvement, 101, CRM, and software 112 risks. |
 | `apa-review-form` | `/apa-review-form` | review | `assembly.preflight` | Generate local human-review forms, questionnaires, date checks, and agent-request queues for APA matters. |
+| `apa-missing-parts` | `/apa-missing-parts` | correspondence | - | Prepare blocked, human-owned response checklists for supported provisional and nonprovisional missing-parts notices. |
+| `apa-correspondence` | `/apa-correspondence` | correspondence | - | Triage USPTO correspondence into privacy-minimized records, tentative date estimates, and filing-receipt discrepancy audits. |
 | `apa-svg-upgrader` | `/apa-svg-upgrader` | drafting | `figures.review` | Normalize rough SVG figures into patent drawing candidates without adding visual new matter. |
 | `apa-public-patent-benchmark` | `/apa-public-patent-benchmark` | benchmarking | - | Create and score real public patent reproduction benchmarks for APA skills. |
 | `apa-real-patent-skill-tune` | `/apa-real-patent-skill-tune` | benchmarking | - | Tune APA skills against real public patent fixtures using fresh generated reports, oracle isolation, scorer floors, and auto-tune guardrails. |
@@ -61,7 +63,9 @@ flowchart TD
   apa_examiner["/apa-examiner<br/>review"]
   apa_figures["/apa-figures<br/>drafting"]
   apa_assemble["/apa-assemble<br/>assembly"]
+  apa_missing_parts["/apa-missing-parts<br/>correspondence"]
   apa_office_action["/apa-office-action<br/>prosecution"]
+  apa_correspondence["/apa-correspondence<br/>correspondence"]
   apa_drawing_quality["/apa-drawing-quality<br/>drafting"]
   apa_svg_upgrader["/apa-svg-upgrader<br/>drafting"]
   apa_analyze["/apa-analyze<br/>analysis"]
@@ -99,6 +103,7 @@ flowchart TD
   apa_examiner --> apa_rigor
   apa_figures --> apa_drawing_quality
   apa_figures --> apa_assemble
+  apa_correspondence --> apa_missing_parts
   apa_drawing_quality --> apa_assemble
   apa_svg_upgrader --> apa_drawing_quality
   apa_svg_upgrader -. hook:figures.review .-> figures_review

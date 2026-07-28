@@ -1,0 +1,70 @@
+name: Release verified USPTO forms
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing or new release tag"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate correspondence and bundle code
+        run: |
+          node --test "packages/apa-correspondence/test/*.test.mjs" "scripts/build-uspto-form-bundle.test.mjs"
+          node packages/apa-correspondence/cli.mjs forms --json > /dev/null
+
+      - name: Fetch and verify official forms
+        run: node scripts/build-uspto-form-bundle.mjs --output dist/uspto-forms
+
+      - name: Reverify built bundle
+        run: node scripts/build-uspto-form-bundle.mjs --verify dist/uspto-forms
+
+      - name: Audit public release privacy
+        run: |
+          node scripts/audit-patent-release-privacy.mjs \
+            --path packages/apa-correspondence \
+            --path skills/patent-correspondence-triage \
+            --path skills/missing-parts-response \
+            --path docs/uspto-forms.json \
+            --path dist/uspto-forms
+
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_TAG - verified USPTO forms" \
+              --notes-file dist/uspto-forms/README.md
+          fi
+          gh release upload "$RELEASE_TAG" --clobber dist/uspto-forms/*

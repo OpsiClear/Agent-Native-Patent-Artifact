@@ -1,0 +1,45 @@
+{
+  "name": "apa-correspondence",
+  "version": "0.2.0",
+  "description": "Privacy-minimized USPTO correspondence triage, notice-specific deadline estimates, missing-parts response checklists, filing-receipt audits, and official-form registry access. Never signs, files, pays, or computes authoritative deadlines.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=21"
+  },
+  "bin": {
+    "apa-correspondence": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./parse.mjs",
+    "./taxonomy": "./taxonomy.mjs",
+    "./deadlines": "./deadlines.mjs",
+    "./response": "./response.mjs",
+    "./receipt-audit": "./receipt-audit.mjs",
+    "./forms": "./forms.mjs"
+  },
+  "files": [
+    "cli.mjs",
+    "parse.mjs",
+    "taxonomy.mjs",
+    "deadlines.mjs",
+    "response.mjs",
+    "receipt-audit.mjs",
+    "forms.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {},
+  "keywords": [
+    "patent",
+    "uspto",
+    "correspondence",
+    "missing-parts",
+    "filing-receipt",
+    "provisional",
+    "apa"
+  ]
+}

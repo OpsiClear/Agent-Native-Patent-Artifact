@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-correspondence
+kind: support
+phase: correspondence
+command: /apa-correspondence
+version: "0.1"
+description: "Triage USPTO correspondence into privacy-minimized records, tentative date estimates, and filing-receipt discrepancy audits."
+inputs: [private-local-correspondence, PATENT.md, correspondence/]
+outputs: [correspondence/notice-NN.json, correspondence/filing-receipt-audit.json, trace/runlog.jsonl]
+upstream: []
+downstream: [apa-missing-parts]
+gates_after: [notice-human-verification, authoritative-deadline-boundary, submit-boundary]
+human_checkpoints: [notice-page-review, notice-date-review, notice-issue-review, filing-receipt-review]
+domain_hooks: []
+external_sinks: []
+safety: { legal_conclusion: false, authoritative_deadline: false, may_sign: false, may_pay: false, may_file: false }

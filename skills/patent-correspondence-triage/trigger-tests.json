@@ -1,0 +1,19 @@
+{
+  "command": "/apa-correspondence",
+  "keywords": [
+    "missing-parts notice triage",
+    "correspondence record",
+    "filing receipt audit",
+    "notice mailing date"
+  ],
+  "should_trigger": [
+    "Use /apa-correspondence for missing-parts notice triage and create a privacy-minimized correspondence record.",
+    "Run a filing receipt audit against PATENT.md and flag ADS-controlled differences.",
+    "Verify the notice mailing date and route this USPTO correspondence without choosing a response."
+  ],
+  "should_not_trigger": [
+    "Draft claims for a new utility patent application.",
+    "Prepare an argument to a non-final Office Action.",
+    "Deploy the local review website."
+  ]
+}

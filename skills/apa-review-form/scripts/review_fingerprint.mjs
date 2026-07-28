@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { isAbsolute, join, relative, sep } from "node:path";
 
-export const REVIEW_TARGET_CONTRACT = "apa-human-review-target-contract-v1";
+export const REVIEW_TARGET_CONTRACT = "apa-human-review-target-contract-v2";
 
 const EXACT_TARGETS = [
   "PATENT.md",
@@ -25,6 +25,10 @@ const TARGET_TREES = [
   {
     dir: "assembled",
     include: (name) => /\.(?:pdf|docx)$/i.test(name),
+  },
+  {
+    dir: "correspondence",
+    include: (name) => /\.(?:json|md|pdf)$/i.test(name),
   },
 ];
 
@@ -112,6 +116,8 @@ export function buildReviewTargetFingerprint(matterDir) {
     ids_references: countMatches(ids, /^\d+\.\s+\[PA\d+\](?:\s|$)/gm),
     figures: countMatches(evidenceIndex, /^\|\s*FIG\d+\s*\|/gm),
     pdf_docx_files: records.filter((record) => /\.(?:pdf|docx)$/i.test(record.path)).length,
+    correspondence_files: records.filter((record) => record.path.startsWith("correspondence/")).length,
+    missing_parts_responses: records.filter((record) => /^correspondence\/response-\d+\.json$/i.test(record.path)).length,
   };
   const pdfTargets = records
     .filter((record) => /\.(?:pdf|docx)$/i.test(record.path))

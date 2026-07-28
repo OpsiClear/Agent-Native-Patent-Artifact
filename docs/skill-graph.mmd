@@ -8,7 +8,9 @@ flowchart TD
   apa_examiner["/apa-examiner<br/>review"]
   apa_figures["/apa-figures<br/>drafting"]
   apa_assemble["/apa-assemble<br/>assembly"]
+  apa_missing_parts["/apa-missing-parts<br/>correspondence"]
   apa_office_action["/apa-office-action<br/>prosecution"]
+  apa_correspondence["/apa-correspondence<br/>correspondence"]
   apa_drawing_quality["/apa-drawing-quality<br/>drafting"]
   apa_svg_upgrader["/apa-svg-upgrader<br/>drafting"]
   apa_analyze["/apa-analyze<br/>analysis"]
@@ -46,6 +48,7 @@ flowchart TD
   apa_examiner --> apa_rigor
   apa_figures --> apa_drawing_quality
   apa_figures --> apa_assemble
+  apa_correspondence --> apa_missing_parts
   apa_drawing_quality --> apa_assemble
   apa_svg_upgrader --> apa_drawing_quality
   apa_svg_upgrader -. hook:figures.review .-> figures_review

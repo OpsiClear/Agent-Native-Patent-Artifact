@@ -1,0 +1,19 @@
+{
+  "command": "/apa-missing-parts",
+  "keywords": [
+    "prepare missing-parts response",
+    "response checklist",
+    "cover-sheet deficiency",
+    "BLOCKED-HUMAN-ACTIONS"
+  ],
+  "should_trigger": [
+    "Use /apa-missing-parts to prepare missing-parts response documentation from this verified record.",
+    "Generate a response checklist for the provisional cover-sheet deficiency without choosing the form route.",
+    "Keep the package BLOCKED-HUMAN-ACTIONS while organizing the notice items, forms, fees, and human submission gates."
+  ],
+  "should_not_trigger": [
+    "Summarize an unknown USPTO letter before classifying it.",
+    "Draft substantive arguments responding to a Section 103 rejection.",
+    "Calculate maintenance fees for an issued patent."
+  ]
+}

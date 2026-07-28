@@ -19,12 +19,71 @@
     "applicationSizePer50SheetsOver100": 450,
     "nonDocxSurcharge": 430
   },
+  "provisional": {
+    "basicFiling": 325,
+    "lateFilingOrCoverSheetSurcharge": 65,
+    "extensions": { "1": 50, "2": 100, "3": 200, "4": 400, "5": 800 },
+    "extensionCodes": { "1": "1261", "2": "1262", "3": "1263", "4": "1264", "5": "1265" },
+    "_model": "Large-entity amounts from 37 CFR 1.16(d), 1.16(g), and 1.17(u). Apply the dated entity multiplier only after a human verifies entity status. Extension fees are total-extension tiers, not additive monthly charges."
+  },
   "_sourceEvidence": {
     "utility.basicFilingElectronicSmall": {
       "feeCode": "4011",
       "regulation": "37 CFR 1.16(a)",
       "officialDescription": "Basic filing fee - Utility (electronic filing for small entities)",
       "smallEntityAmount": 70,
+      "effectiveDate": "2025-01-19",
+      "retrievedDate": "2026-07-26",
+      "sourcePageLastUpdated": "2026-07-01",
+      "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+      "sourceSnapshotSha256": "220ac86593a412b29971872e5444b768a8ee3f6e1bc6ecdca18df4465e73bd03"
+    },
+    "provisional.basicFiling": {
+      "feeCodes": ["1005", "2005", "3005"],
+      "regulation": "37 CFR 1.16(d)",
+      "officialDescription": "Provisional application filing fee",
+      "largeEntityAmount": 325,
+      "smallEntityAmount": 130,
+      "microEntityAmount": 65,
+      "effectiveDate": "2025-01-19",
+      "retrievedDate": "2026-07-26",
+      "sourcePageLastUpdated": "2026-07-01",
+      "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+      "sourceSnapshotSha256": "220ac86593a412b29971872e5444b768a8ee3f6e1bc6ecdca18df4465e73bd03"
+    },
+    "provisional.lateFilingOrCoverSheetSurcharge": {
+      "feeCodes": ["1052", "2052", "3052"],
+      "regulation": "37 CFR 1.16(g)",
+      "officialDescription": "Surcharge - Late provisional filing fee or cover sheet",
+      "largeEntityAmount": 65,
+      "smallEntityAmount": 26,
+      "microEntityAmount": 13,
+      "effectiveDate": "2025-01-19",
+      "retrievedDate": "2026-07-26",
+      "sourcePageLastUpdated": "2026-07-01",
+      "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+      "sourceSnapshotSha256": "220ac86593a412b29971872e5444b768a8ee3f6e1bc6ecdca18df4465e73bd03"
+    },
+    "provisional.extensions": {
+      "feeCodes": ["1261", "1262", "1263", "1264", "1265"],
+      "regulation": "37 CFR 1.17(u)",
+      "officialDescription": "Extension for response in a provisional application",
+      "largeEntityAmounts": [50, 100, 200, 400, 800],
+      "smallEntityAmounts": [20, 40, 80, 160, 320],
+      "microEntityAmounts": [10, 20, 40, 80, 160],
+      "effectiveDate": "2025-01-19",
+      "retrievedDate": "2026-07-26",
+      "sourcePageLastUpdated": "2026-07-01",
+      "source": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+      "sourceSnapshotSha256": "220ac86593a412b29971872e5444b768a8ee3f6e1bc6ecdca18df4465e73bd03"
+    },
+    "prosecution.extensions": {
+      "feeCodes": ["1251", "1252", "1253", "1254", "1255"],
+      "regulation": "37 CFR 1.17(a)",
+      "officialDescription": "Extension of time under 37 CFR 1.136(a)",
+      "largeEntityAmounts": [235, 690, 1590, 2495, 3395],
+      "smallEntityAmounts": [94, 276, 636, 998, 1358],
+      "microEntityAmounts": [47, 138, 318, 499, 679],
       "effectiveDate": "2025-01-19",
       "retrievedDate": "2026-07-26",
       "sourcePageLastUpdated": "2026-07-01",
@@ -48,5 +107,5 @@
   "_unverified": [
     "ids.tiers"
   ],
-  "_note": "ESTIMATE; verify against the live USPTO fee schedule (37 CFR 1.16/1.17). Amounts are LARGE-entity; multiply by entityMultipliers. IMPORTANT MULTIPLIER CORRECTION: the originally-templated multipliers of small=0.50/micro=0.25 are OUT OF DATE. The Unleashing American Innovators Act of 2022 raised the discounts to small=60%/micro=80%, so a small entity now pays 0.40 and a micro entity 0.20 of the large-entity fee (effective 2025-01-19). These corrected multipliers (0.40/0.20) are confirmed against the fetched USPTO fee reference (third_party/uspto-references/uspto-filing-and-fees.md, 37 CFR 1.16/1.17) and are no longer flagged unverified; statute/regulation still governs - verify currency before relying. The IDS size-based fee (37 CFR 1.17(v)) is a cumulative, one-time fee keyed to total items cited and is provided as a reference table only; APA does not compute or assert it automatically. APA never asserts micro-entity status (37 CFR 1.29 is a human certification, not an APA determination)."
+  "_note": "ESTIMATE; verify against the live USPTO fee schedule (37 CFR 1.16/1.17). Amounts are LARGE-entity unless an evidence row states all three amounts; multiply by entityMultipliers only after a human verifies entity status. Small=0.40 and micro=0.20 reflect the 60%/80% discounts effective 2025-01-19. The provisional 1.17(u) table is separate from the ordinary 1.17(a) prosecution table. The IDS size-based fee (37 CFR 1.17(v)) is cumulative and is provided as a reference table only. APA never asserts micro-entity status or treats a fee estimate as a payable balance."
 }

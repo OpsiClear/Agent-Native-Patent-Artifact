@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
@@ -8,7 +8,7 @@ import { buildReviewTargetFingerprint } from "./review_fingerprint.mjs";
 
 function usage() {
   console.error([
-    "usage: node ask_review_questions.mjs --matter <matter_dir> [--topic disclosures|ids|dates|figures|all] [--mode interactive|markdown|json|agent] [--limit N] [--queue <json>] [--answers <json>] [--prompt <md>] [--record <answer_text>]",
+    "usage: node ask_review_questions.mjs --matter <matter_dir> [--topic disclosures|ids|dates|figures|correspondence|missing-parts|all] [--mode interactive|markdown|json|agent] [--limit N] [--queue <json>] [--answers <json>] [--prompt <md>] [--record <answer_text>]",
     "",
     "Creates or runs numbered human-review questions for Codex, Claude CLI, or a normal terminal."
   ].join("\n"));
@@ -30,8 +30,8 @@ function parseArgs(argv) {
     else throw new Error(`unknown argument: ${a}`);
   }
   if (!args.matter) throw new Error("--matter is required");
-  if (!["disclosures", "ids", "dates", "figures", "all"].includes(args.topic)) {
-    throw new Error("--topic must be disclosures, ids, dates, figures, or all");
+  if (!["disclosures", "ids", "dates", "figures", "correspondence", "missing-parts", "all"].includes(args.topic)) {
+    throw new Error("--topic must be disclosures, ids, dates, figures, correspondence, missing-parts, or all");
   }
   if (!["interactive", "markdown", "json", "agent"].includes(args.mode)) {
     throw new Error("--mode must be interactive, markdown, json, or agent");
@@ -89,6 +89,35 @@ function parseFigures(text) {
   return figures;
 }
 
+function loadCorrespondenceDocuments(matter) {
+  const dir = join(matter, "correspondence");
+  try {
+    if (lstatSync(dir).isSymbolicLink()) return [];
+  } catch {
+    return [];
+  }
+  const documents = [];
+  for (const name of readdirSync(dir).filter((entry) => entry.endsWith(".json")).sort()) {
+    const path = join(dir, name);
+    try {
+      const stat = lstatSync(path);
+      if (!stat.isFile() || stat.isSymbolicLink()) continue;
+      const value = JSON.parse(readFileSync(path, "utf8"));
+      const kind = value.schema === "apa-correspondence-record-v1"
+        ? "notice"
+        : value.schema === "apa-missing-parts-response-v1"
+          ? "missing-parts-response"
+          : value.schema === "apa-filing-receipt-audit-v1"
+            ? "filing-receipt-audit"
+            : null;
+      if (kind) documents.push({ kind, source: `correspondence/${name}`, value });
+    } catch {
+      // Malformed files remain fingerprinted but cannot create questions.
+    }
+  }
+  return documents;
+}
+
 function question(id, category, prompt, choices, opts = {}) {
   return {
     id,
@@ -98,7 +127,7 @@ function question(id, category, prompt, choices, opts = {}) {
     why: opts.why || "",
     notePrompt: opts.notePrompt || "Optional notes, dates, URLs, file paths, or evidence:",
     source: opts.source || "",
-    requiredForReadiness: ["disclosures", "dates"].includes(category)
+    requiredForReadiness: opts.requiredForReadiness ?? ["disclosures", "dates"].includes(category)
   };
 }
 
@@ -241,19 +270,92 @@ function figureQuestions(figures) {
   ));
 }
 
+function correspondenceQuestions(documents) {
+  return documents.flatMap((document, index) => {
+    const stem = `CORR-${String(index + 1).padStart(2, "0")}`;
+    if (document.kind === "notice") {
+      return [question(
+        `${stem}-SOURCE`,
+        "correspondence",
+        `Was ${document.source} compared against every page of the original notice for classification, mailing date, stated period, issues, fees, response channel, and consequences?`,
+        choices([
+          ["notice_source_verified", "Yes, source-verified", "Record reviewer and source-page evidence."],
+          ["notice_source_not_verified", "Not yet", "Keep deadline and response preparation blocked."],
+          ["notice_source_uncertain", "Uncertain", "Escalate classification or source-quality concerns."],
+        ]),
+        { requiredForReadiness: true, notePrompt: "Reviewer, page coverage, corrections, and evidence:" },
+      )];
+    }
+    if (document.kind === "filing-receipt-audit") {
+      return [question(
+        `${stem}-RECEIPT`,
+        "correspondence",
+        `Were all discrepancies in ${document.source} reviewed against the official filing receipt and current Patent Center record?`,
+        choices([
+          ["receipt_discrepancies_reviewed", "Yes, reviewed", "Record resolution evidence and any practitioner decision."],
+          ["receipt_discrepancies_pending", "Pending", "Keep corrected-ADS and priority questions unresolved."],
+          ["receipt_discrepancies_uncertain", "Uncertain", "Escalate receipt interpretation."],
+        ]),
+        { requiredForReadiness: true, notePrompt: "Discrepancy resolutions, evidence paths, and Patent Center recheck:" },
+      )];
+    }
+    return [];
+  });
+}
+
+function missingPartsQuestions(documents) {
+  return documents.filter((document) => document.kind === "missing-parts-response").flatMap((document, index) => {
+    const stem = `MISS-${String(index + 1).padStart(2, "0")}`;
+    return [
+      question(
+        `${stem}-DATE`,
+        "missing-parts",
+        `Was the tentative response date in ${document.source} verified against the original notice and Patent Center, including any extension language?`,
+        choices([
+          ["response_date_verified", "Yes, independently verified", "Record the verified date and source."],
+          ["response_date_pending", "Not yet", "Keep the package blocked."],
+          ["response_date_uncertain", "Uncertain", "Escalate to docketing/practitioner review."],
+        ]),
+        { requiredForReadiness: true, notePrompt: "Verified date, notice page, Patent Center evidence, and closure check:" },
+      ),
+      question(
+        `${stem}-ACTIONS`,
+        "missing-parts",
+        "Were the document route, current form version, signer authority, entity status, live fee, final PDF pages, human submission, and confirmation receipt each reviewed?",
+        choices([
+          ["human_actions_evidenced", "Yes, all evidenced", "Record matter-local evidence for every human action."],
+          ["human_actions_pending", "One or more pending", "Keep BLOCKED-HUMAN-ACTIONS."],
+          ["human_actions_uncertain", "Uncertain", "Escalate the unresolved act."],
+        ]),
+        { requiredForReadiness: true, notePrompt: "Form route, signer, fee, PDF, submission, and confirmation evidence:" },
+      ),
+    ];
+  });
+}
+
 function buildQueue(args) {
   const manifest = parsePatentManifest(readMaybe(join(args.matter, "PATENT.md")));
   const refs = parseIds(readMaybe(join(args.matter, "assembled", "IDS_SB08.md")));
   const figures = parseFigures(readMaybe(join(args.matter, "evidence", "README.md")));
   const dateReport = readJsonMaybe(join(args.matter, "assembled", "date_verification.json"));
+  const correspondence = loadCorrespondenceDocuments(args.matter);
   const groups = {
     disclosures: disclosureQuestions(),
     ids: idsQuestions(refs),
     dates: dateQuestions(dateReport),
-    figures: figureQuestions(figures)
+    figures: figureQuestions(figures),
+    correspondence: correspondenceQuestions(correspondence),
+    "missing-parts": missingPartsQuestions(correspondence),
   };
   let questions = args.topic === "all"
-    ? [...groups.disclosures, ...groups.dates, ...groups.ids, ...groups.figures]
+    ? [
+        ...groups.disclosures,
+        ...groups.dates,
+        ...groups.ids,
+        ...groups.figures,
+        ...groups.correspondence,
+        ...groups["missing-parts"],
+      ]
     : groups[args.topic];
   if (args.limit) questions = questions.slice(0, args.limit);
   return {

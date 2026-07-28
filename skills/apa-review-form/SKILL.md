@@ -1,6 +1,6 @@
 ---
 name: apa-review-form
-description: Generate minimal local HTML review forms and public-date verification reports for Agent-Native Patent Artifact matters. Use when creating human-review checklists, IDS/citation/date verification forms, claim review forms, drawing/PDF review forms, or filing-readiness forms for APA patent folders. Do not use for legal opinions, Patent Center filing, generic frontend apps, or non-APA documents. Invoke as /apa-review-form.
+description: Generate minimal local HTML review forms and public-date verification reports for Agent-Native Patent Artifact matters. Use when creating human-review checklists, correspondence or missing-parts review cards, filing-receipt audits, IDS/citation/date verification forms, claim review forms, drawing/PDF review forms, or filing-readiness forms for APA patent folders. Do not use for legal opinions, Patent Center filing, generic frontend apps, or non-APA documents. Invoke as /apa-review-form.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
@@ -85,9 +85,11 @@ node skills/apa-review-form/scripts/test_agent_bridge_e2e.mjs --matter C:/path/t
 
 ## Freshness Contract
 
-The generator embeds `apa-human-review-target-fingerprint-v1`. It hashes the current claims,
-assembly review files, IDS/evidence index, drawing artifacts, and every assembled PDF/DOCX, and
-records claim, IDS-reference, figure, and PDF/DOCX counts. The served app persists that binding in
+The generator embeds `apa-human-review-target-fingerprint-v1` under target contract
+`apa-human-review-target-contract-v2`. It hashes the current claims, assembly review files,
+IDS/evidence index, drawing artifacts, every assembled PDF/DOCX, and every supported JSON/Markdown/
+PDF file under `correspondence/`. It records claim, IDS-reference, figure, PDF/DOCX, correspondence,
+and missing-parts-response counts. The served app persists that binding in
 `apa-human-review-state-v2`. Questionnaire queues and answers use
 `apa-agent-question-queue-v2` and `apa-agent-question-answers-v2`.
 
@@ -126,7 +128,7 @@ Agent questionnaire:
 | Option | Purpose |
 |---|---|
 | `--matter <dir>` | Required APA matter directory. |
-| `--topic disclosures\|ids\|dates\|figures\|all` | Question category. Defaults to `disclosures`. |
+| `--topic disclosures\|ids\|dates\|figures\|correspondence\|missing-parts\|all` | Question category. Defaults to `disclosures`. Correspondence and missing-parts questions are readiness-required when those records exist. |
 | `--mode interactive\|markdown\|json\|agent` | `interactive` asks in terminal; `markdown` prints a Codex/Claude-friendly prompt; `json` emits a queue; `agent` emits the next unanswered question and records prior answers. |
 | `--limit N` | Ask or print only the first N questions. |
 | `--queue <json>` | Optional queue path. Defaults to `assembled/agent_question_queue.json`. |
@@ -168,9 +170,10 @@ in `assembled/agent_requests.json`.
 It exposes `GET /api/agent-events` for Server-Sent Events, so the browser can update request status
 when a local worker changes the queue file. `Ask Agent` requests are human-review aids: responses are
 draft notes until the reviewer explicitly applies them to a card.
-The app should expose guided pages for Start, Disclosures, Claims, IDS & Dates, Figures, Filing,
-Agent, and Full Checklist. Prefer those guided pages for human review because claim, IDS, and figure
-cards display the exact source text being reviewed. The server permits loopback binding only; it
+The app should expose guided pages for Start, Disclosures, Claims, IDS & Dates, Figures,
+Correspondence, Filing, Agent, and Full Checklist. Prefer those guided pages for human review
+because claim, IDS, figure, privacy-minimized notice, missing-parts response, and filing-receipt
+cards display the exact review record being checked. The server permits loopback binding only; it
 serves only the generated form and its API, not arbitrary files from `assembled/`. A stale tab gets
 an explicit revision conflict and rebases its pending answers before retrying.
 
@@ -180,6 +183,12 @@ an explicit revision conflict and rebases its pending answers before retrying.
 - Preserve unverified citation warnings. The form should make IDS verification easier, not imply that
   references are verified.
 - Keep outputs local by default because unfiled patent matter may be confidential.
+- Keep original notices, filing receipts, confirmations, application identifiers, and applicant data
+  private. Review cards may read privacy-minimized matter-local records but must never copy those
+  records into public fixtures, releases, or external requests.
+- Treat correspondence dates and fee rows as estimates and source facts to verify, not authoritative
+  docketing instructions or payable balances. Keep every response document route, signature, fee,
+  and Patent Center action human-owned.
 - Keep date verification offline unless the reviewer explicitly opts into `--network` after confirming
   that the public citation identifiers and URLs are safe to disclose to the allowlisted metadata hosts.
 - Do not embed absolute matter, toolkit, script, or template paths in portable HTML/JSON reports.
@@ -208,5 +217,6 @@ wrote C:/path/to/matter/assembled/human_review_form.html
 ```
 
 The generated page includes local save state, print support, import/export JSON, guided workflow
-pages, exact-text review cards for claims/IDS/figures, and review sections for claims, prior art,
-IDS, drawings, statutory-bar questions, filing readiness, and code consistency.
+pages, exact-text review cards for claims/IDS/figures/correspondence, and review sections for claims,
+prior art, IDS, drawings, notices, missing-parts responses, filing receipts, statutory-bar questions,
+filing readiness, and code consistency.

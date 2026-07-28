@@ -65,6 +65,31 @@ test("required questionnaire answers are counted without interpreting legal cons
   assert.deepEqual(unansweredRequiredQuestions(queue, answers), ["DATE-OWN-001"]);
 });
 
+test("review fingerprints bind correspondence and missing-parts response hashes", () => {
+  const matter = mkdtempSync(join(tmpdir(), "apa-review-correspondence-"));
+  try {
+    cpSync(EXAMPLE, matter, { recursive: true });
+    mkdirSync(join(matter, "correspondence"), { recursive: true });
+    writeFileSync(join(matter, "correspondence", "notice-01.json"), '{"schema":"apa-correspondence-record-v1"}\n');
+    writeFileSync(join(matter, "correspondence", "response-01.json"), '{"schema":"apa-missing-parts-response-v1"}\n');
+    const stored = buildReviewTargetFingerprint(matter);
+    assert.equal(stored.contract, "apa-human-review-target-contract-v2");
+    assert.equal(stored.counts.correspondence_files, 2);
+    assert.equal(stored.counts.missing_parts_responses, 1);
+    assert.equal(compareReviewTargetFingerprint(stored, matter).ok, true);
+
+    writeFileSync(
+      join(matter, "correspondence", "response-01.json"),
+      '{"schema":"apa-missing-parts-response-v1","status":"changed"}\n',
+    );
+    const freshness = compareReviewTargetFingerprint(stored, matter);
+    assert.equal(freshness.ok, false);
+    assert.ok(freshness.reasons.includes("review target digest differs"));
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
 test("review fingerprints reject a symlinked ancestor without reading outside targets", (t) => {
   const matter = mkdtempSync(join(tmpdir(), "apa-review-link-matter-"));
   const outside = mkdtempSync(join(tmpdir(), "apa-review-link-target-"));

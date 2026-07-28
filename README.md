@@ -30,7 +30,8 @@ injection, bounded parser recursion). Node-only, zero-dependency.
 - **Phase 4 — filing assembly**: repository-reviewed utility profile; provisional/design collation
   candidates remain blocked pending human legal-rule and rendered-document approval. Produces the
   utility 1.77 spec (HTML print-to-PDF), ADS, SB/08 IDS, unsigned declaration, dated-schedule fee
-  estimate, and a pre-filing go/no-go gate that **stops at the submit boundary**.
+  estimate, and a pre-filing go/no-go gate that **stops at the submit boundary**. Application-specific
+  profiles prevent provisional/utility form leakage.
 - **Phase 5 — rigor review**: a six-dimension Level-2 audit with a deterministic File-Ready..Do-Not-File
   verdict (a single weak dimension caps it), an adversarial examiner-critique loop, and the verdict wired
   back into the filing gate.
@@ -64,9 +65,13 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `packages/apa-skills/` | Public npx installer (`@apa/patent-skills`) — bundles independent Claude/Codex/Cursor variants, selects by host, installs `apa-*` with ownership lockfile + uninstall | ✅ isolation-tested |
 | `packages/apa-eval/` | LLM-judge eval harness (raw-`fetch` Anthropic client, forced-tool verdicts, deterministic pre-pass, budget-regression gate; `--mock` offline) | ✅ tested |
 | `packages/apa-prosecute/` | **(post-filing extension)** parse an Office Action, compute response deadlines (estimate), scaffold a response — never files | ✅ tested |
+| `packages/apa-correspondence/` | **(post-filing formalities)** privacy-minimized notice triage, verified notice-date estimates, blocked missing-parts checklists, filing-receipt discrepancy audit, and official-form registry — never signs, pays, or files | ✅ tested |
+| `docs/uspto-forms.json` + `scripts/build-uspto-form-bundle.mjs` | Hash-pinned official USPTO forms, bounded official-host fetcher, deterministic ZIP/checksums, XFA viewer warnings, and direct-release assets | ✅ tested + visually reviewed |
 | `benchmarks/` + `packages/apa-bench/` | Offline deterministic benchmark fixtures for public-patent compile, public Office Action, and synthetic disclosure-to-assembly regressions | ✅ tested |
 | `scripts/verify-external-matter.mjs` | Opt-in, read-only, aggregate-only regression check for a local confidential matter; never a committed benchmark fixture | ✅ tested |
 | `skills/office-action/` | **(post-filing)** `/apa-office-action` — map rejections to claims, deadlines, response scaffold (flags, not conclusions) | ✅ |
+| `skills/patent-correspondence-triage/` | **(post-filing)** `/apa-correspondence` — classify notices, verify procedural facts, estimate notice dates, and audit filing receipts | ✅ |
+| `skills/missing-parts-response/` | **(post-filing)** `/apa-missing-parts` — organize provisional/nonprovisional missing-parts papers and human filing gates without selecting or filing a response | ✅ |
 | `skills/disclosure-capture/` | `/apa-disclose` — capture a disclosure into the artifact (file-I/O only) | ✅ |
 | `skills/compiler/` | `/apa-compile <path>` — lift an existing patent/publication into a validated artifact | ✅ |
 | `skills/prior-art-search/` | **(Phase 2)** `/apa-priorart` — search prior-art DBs, file references + a reference matrix | ✅ |

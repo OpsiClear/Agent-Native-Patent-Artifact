@@ -20,7 +20,8 @@
     "apa-bench": "packages/apa-bench/cli.mjs",
     "apa-domain-software": "packages/apa-domain-software/cli.mjs",
     "apa-domain-device": "packages/apa-domain-device/cli.mjs",
-    "apa-domain-formulation": "packages/apa-domain-formulation/cli.mjs"
+    "apa-domain-formulation": "packages/apa-domain-formulation/cli.mjs",
+    "apa-correspondence": "packages/apa-correspondence/cli.mjs"
   },
   "scripts": {
     "gen:skill-docs": "node scripts/gen-skill-docs.mjs",
@@ -38,6 +39,9 @@
     "score:prior-art-search": "node packages/apa-bench/cli.mjs --mock --prior-art-recall",
     "score:real-software-patents": "node packages/apa-bench/cli.mjs --mock --real-software-patents",
     "verify:external-matter": "node scripts/verify-external-matter.mjs",
+    "forms:build": "node scripts/build-uspto-form-bundle.mjs --output dist/uspto-forms",
+    "forms:verify": "node scripts/build-uspto-form-bundle.mjs --verify dist/uspto-forms",
+    "privacy:patent-release": "node scripts/audit-patent-release-privacy.mjs",
     "tune:software-patent": "node packages/apa-bench/cli.mjs --mock --real-software-patents --fresh",
     "simulate:software-patent": "node packages/apa-bench/cli.mjs --mock --case software-patent-skill-sim",
     "coverage": "node scripts/coverage-summary.mjs",

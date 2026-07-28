@@ -1,0 +1,16 @@
+schema: apa-skill-v1
+id: apa-missing-parts
+kind: support
+phase: correspondence
+command: /apa-missing-parts
+version: "0.1"
+description: "Prepare blocked, human-owned response checklists for supported provisional and nonprovisional missing-parts notices."
+inputs: [PATENT.md, correspondence/notice-NN.json, docs/uspto-forms.json]
+outputs: [correspondence/response-NN.json, correspondence/response-NN.md, trace/runlog.jsonl]
+upstream: [apa-correspondence]
+downstream: []
+gates_after: [deadline-human-verification, signer-authority-review, pdf-visual-review, submit-boundary]
+human_checkpoints: [document-route-selection, fee-entity-status-review, signer-authority-review, patent-center-human-submission]
+domain_hooks: []
+external_sinks: []
+safety: { legal_conclusion: false, authoritative_deadline: false, may_sign: false, may_pay: false, may_file: false }

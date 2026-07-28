@@ -14,16 +14,34 @@ import { loadSchedule } from "./fees.mjs";
 import { buildAssemblyInputFingerprint } from "./input-fingerprint.mjs";
 import { confidentialWorkflowModeOf, shareableExportPolicy } from "../apa-redact/confidential-workflow.mjs";
 
-const GENERATED_FILES = [
-  "specification.md",
-  "specification.html",
-  "ADS.md",
-  "IDS_SB08.md",
-  "declaration_UNSIGNED.md",
-  "FEE_WORKSHEET.md",
-  "PREFLIGHT.md",
-  "upload_set/MANIFEST.txt",
-];
+const GENERATED_FILES_BY_TYPE = Object.freeze({
+  utility: [
+    "specification.md",
+    "specification.html",
+    "ADS.md",
+    "IDS_SB08.md",
+    "declaration_UNSIGNED.md",
+    "FEE_WORKSHEET.md",
+    "PREFLIGHT.md",
+    "upload_set/MANIFEST.txt",
+  ],
+  provisional: [
+    "specification.md",
+    "specification.html",
+    "FEE_WORKSHEET.md",
+    "PREFLIGHT.md",
+    "upload_set/MANIFEST.txt",
+  ],
+  design: [
+    "specification.md",
+    "specification.html",
+    "ADS.md",
+    "declaration_UNSIGNED.md",
+    "FEE_WORKSHEET.md",
+    "PREFLIGHT.md",
+    "upload_set/MANIFEST.txt",
+  ],
+});
 
 const UPLOAD_DOCUMENTS = [
   {
@@ -66,6 +84,30 @@ const UPLOAD_DOCUMENTS = [
     status: "human IDS verification and PDF conversion required",
     actions: ["verify-ids-references", "export-ids-pdf", "pdf-render-review"],
   },
+  {
+    id: "provisional-specification-pdf",
+    document: "provisional-specification.pdf  (export/review from specification.html)",
+    source: "assembled/specification.html",
+    source_path: "assembled/specification.html",
+    status: "provisional specification export and visual review required",
+    actions: ["export-specification-pdf", "pdf-render-review"],
+  },
+  {
+    id: "provisional-cover-route-pdf",
+    document: "SB16-or-ADS.pdf  (human-selected current provisional cover-sheet or qualifying ADS route)",
+    source: "human-completed current official USPTO form",
+    source_path: "",
+    status: "human route selection, completion, signature-authority review, and PDF inspection required",
+    actions: ["complete-provisional-cover-route", "export-provisional-cover-route", "pdf-render-review"],
+  },
+  {
+    id: "design-application-pdf",
+    document: "design-application.pdf  (export/review from specification.html)",
+    source: "assembled/specification.html",
+    source_path: "assembled/specification.html",
+    status: "design application export and visual review required",
+    actions: ["export-specification-pdf", "pdf-render-review"],
+  },
 ];
 
 const UPLOAD_BY_PREFIX = new Map(UPLOAD_DOCUMENTS.map((entry) => [
@@ -101,6 +143,20 @@ const ACTION_DEFS = [
     kind: "pdf-export",
     linked_manifest_fields: ["intended_upload_set.ads-pdf", "forms.ads.local_source"],
     evidence_expected: "human-produced ADS.pdf",
+  },
+  {
+    id: "complete-provisional-cover-route",
+    label: "Select and complete the current provisional cover-sheet or qualifying ADS route",
+    kind: "form-completion",
+    linked_manifest_fields: ["forms.provisional_cover_route", "intended_upload_set.provisional-cover-route-pdf"],
+    evidence_expected: "human-selected and completed current official USPTO form",
+  },
+  {
+    id: "export-provisional-cover-route",
+    label: "Export and inspect the selected provisional cover-sheet or qualifying ADS PDF",
+    kind: "pdf-export",
+    linked_manifest_fields: ["forms.provisional_cover_route", "intended_upload_set.provisional-cover-route-pdf"],
+    evidence_expected: "human-produced SB16-or-ADS.pdf opened and visually checked",
   },
   {
     id: "execute-inventor-declaration",
@@ -154,6 +210,42 @@ const ACTION_DEFS = [
 ];
 
 const rel = (from, to) => relative(from, to).replace(/\\/g, "/");
+
+const ACTION_IDS_BY_TYPE = Object.freeze({
+  utility: new Set([
+    "export-specification-pdf",
+    "export-drawings-pdf",
+    "complete-ads",
+    "export-ads-pdf",
+    "execute-inventor-declaration",
+    "export-declaration-pdf",
+    "verify-ids-references",
+    "export-ids-pdf",
+    "pdf-render-review",
+    "fee-entity-status-verification",
+    "patent-center-human-upload",
+  ]),
+  provisional: new Set([
+    "export-specification-pdf",
+    "export-drawings-pdf",
+    "complete-provisional-cover-route",
+    "export-provisional-cover-route",
+    "pdf-render-review",
+    "fee-entity-status-verification",
+    "patent-center-human-upload",
+  ]),
+  design: new Set([
+    "export-specification-pdf",
+    "export-drawings-pdf",
+    "complete-ads",
+    "export-ads-pdf",
+    "execute-inventor-declaration",
+    "export-declaration-pdf",
+    "pdf-render-review",
+    "fee-entity-status-verification",
+    "patent-center-human-upload",
+  ]),
+});
 
 function sha256File(path) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
@@ -243,17 +335,31 @@ function feeScheduleMetadata(generatedAt) {
   }
 }
 
-function formMetadata(generatedAt) {
-  return {
+function formMetadata(generatedAt, applicationType) {
+  const forms = {
     generated_at: generatedAt,
-    ads: {
+    application_type: applicationType,
+    fee_schedule: feeScheduleMetadata(generatedAt),
+  };
+  if (applicationType === "utility" || applicationType === "design") {
+    forms.ads = {
       local_source: "assembled/ADS.md",
       expected_form: "Application Data Sheet (37 CFR 1.76; current USPTO ADS form to be verified by human)",
       form_version_status: "human-verify-current-version",
       human_completed: false,
       human_verified: false,
-    },
-    ids: {
+    };
+    forms.declaration_template = {
+      local_source: "assembled/declaration_UNSIGNED.md",
+      expected_form: "Inventor oath/declaration under 37 CFR 1.63; current USPTO declaration form to be verified by human",
+      form_version_status: "human-verify-current-version",
+      unsigned_template_only: true,
+      executed_by_inventor: false,
+      human_verified: false,
+    };
+  }
+  if (applicationType === "utility") {
+    forms.ids = {
       local_source: "assembled/IDS_SB08.md",
       expected_form: "Information Disclosure Statement (37 CFR 1.97/1.98; SB/08 or current USPTO equivalent to be verified by human)",
       form_version_status: "human-verify-current-version",
@@ -261,40 +367,51 @@ function formMetadata(generatedAt) {
       not_search_completeness_representation: true,
       human_verified_references: false,
       human_verified: false,
-    },
-    declaration_template: {
-      local_source: "assembled/declaration_UNSIGNED.md",
-      expected_form: "Inventor oath/declaration under 37 CFR 1.63; current USPTO declaration form to be verified by human",
+    };
+  }
+  if (applicationType === "provisional") {
+    forms.provisional_cover_route = {
+      local_source: "",
+      expected_forms: ["SB/16", "AIA/14 when legally appropriate"],
+      route_selected_by_human: false,
+      signer_authority_verified: false,
       form_version_status: "human-verify-current-version",
-      unsigned_template_only: true,
-      executed_by_inventor: false,
+      human_completed: false,
       human_verified: false,
-    },
-    fee_schedule: feeScheduleMetadata(generatedAt),
-  };
+    };
+  }
+  return forms;
 }
 
-function patentCenterChecklist() {
+function patentCenterChecklist(applicationType) {
+  const items = [
+    { id: "patent-center-account", label: "Identity-verified Patent Center account available", human_verified: false },
+    { id: "application-data-review", label: "Application data, benefit, priority, applicant, and correspondence fields reviewed", human_verified: false },
+    { id: "pdf-render-review", label: "All PDFs opened after export and visually checked against source documents", human_verified: false },
+    { id: "upload-documents-match-manifest", label: "Uploaded documents match this manifest and generated-file hashes where applicable", human_verified: false },
+    { id: "ids-verification", label: "IDS references verified; filing is not treated as an admission of materiality or search completeness", human_verified: false },
+    { id: "declaration-signatures", label: "Inventor declarations executed by the named inventor(s)", human_verified: false },
+    { id: "provisional-cover-route", label: "Current provisional cover-sheet or qualifying ADS route selected, completed, and signer authority verified", human_verified: false },
+    { id: "fee-entity-status", label: "Fee amounts, entity status, and any discounts verified against current USPTO sources", human_verified: false },
+    { id: "human-submit-boundary", label: "A human performs any Patent Center submission, certification, and fee payment", human_verified: false },
+  ].filter((item) => {
+    if (item.id === "ids-verification") return applicationType === "utility";
+    if (item.id === "declaration-signatures") return applicationType === "utility" || applicationType === "design";
+    if (item.id === "provisional-cover-route") return applicationType === "provisional";
+    return true;
+  });
   return {
     apa_performs_filing: false,
     submitted_by_human: false,
     submitted_at: null,
     confirmation_receipt_saved: false,
-    items: [
-      { id: "patent-center-account", label: "Identity-verified Patent Center account available", human_verified: false },
-      { id: "application-data-review", label: "Application data, benefit, priority, applicant, and correspondence fields reviewed", human_verified: false },
-      { id: "pdf-render-review", label: "All PDFs opened after export and visually checked against source documents", human_verified: false },
-      { id: "upload-documents-match-manifest", label: "Uploaded documents match this manifest and generated-file hashes where applicable", human_verified: false },
-      { id: "ids-verification", label: "IDS references verified; filing is not treated as an admission of materiality or search completeness", human_verified: false },
-      { id: "declaration-signatures", label: "Inventor declarations executed by the named inventor(s)", human_verified: false },
-      { id: "fee-entity-status", label: "Fee amounts, entity status, and any discounts verified against current USPTO sources", human_verified: false },
-      { id: "human-submit-boundary", label: "A human performs any Patent Center submission, certification, and fee payment", human_verified: false },
-    ],
+    items,
   };
 }
 
-function deferredHumanActions() {
-  return ACTION_DEFS.map((action) => ({
+function deferredHumanActions(applicationType) {
+  const ids = ACTION_IDS_BY_TYPE[applicationType] || new Set();
+  return ACTION_DEFS.filter((action) => ids.has(action.id)).map((action) => ({
     ...action,
     required: true,
     completed: false,
@@ -313,17 +430,48 @@ function frontmatterOf(matterDir) {
   }
 }
 
+function humanVerificationRequirements(applicationType) {
+  const common = [
+    "Export generated HTML/SVG sources to filing-faithful PDF/DOCX as applicable and inspect the rendered output.",
+    "Verify current fees, entity status, and Patent Center upload state before any filing act.",
+  ];
+  if (applicationType === "provisional") {
+    return [
+      ...common,
+      "Select and complete the current provisional cover-sheet or qualifying ADS route; verify every inventor, residence, correspondence, and government-interest field.",
+      "Confirm that claims, an inventor oath/declaration, and an IDS were not introduced as ordinary provisional requirements.",
+    ];
+  }
+  if (applicationType === "design") {
+    return [
+      ...common,
+      "Complete ADS required fields and verify inventor, applicant, benefit, and priority data.",
+      "Obtain inventor-executed declaration signatures; APA never signs or generates an executed oath.",
+    ];
+  }
+  return [
+    ...common,
+    "Complete ADS required fields and verify inventor, applicant, benefit, and priority data.",
+    "Verify every IDS reference under 37 CFR 1.97/1.98; this manifest is not an admission of materiality or search completeness.",
+    "Obtain inventor-executed declaration signatures; APA never signs or generates an executed oath.",
+  ];
+}
+
 export function buildUploadManifest(matterDir, assembledDir, preflight, { generatedAt = new Date().toISOString() } = {}) {
+  const frontmatter = frontmatterOf(matterDir);
+  const applicationType = preflight.applicationType || frontmatter.application_type || null;
   const generatedFiles = [];
-  for (const p of GENERATED_FILES) {
+  for (const p of GENERATED_FILES_BY_TYPE[applicationType] || []) {
     const abs = join(assembledDir, ...p.split("/"));
     if (existsSync(abs)) generatedFiles.push(fileRecord(matterDir, abs, generatedAt));
   }
-  const workflowMode = confidentialWorkflowModeOf(frontmatterOf(matterDir));
+  const workflowMode = confidentialWorkflowModeOf(frontmatter);
   const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
   return {
     schema: "apa-upload-manifest-v2",
     generated_at: generatedAt,
+    application_type: applicationType,
+    assembly_profile: preflight.profileId || null,
     go_no_go: preflight.goNoGo,
     submit_boundary: preflight.submitBoundary,
     input_fingerprint: buildAssemblyInputFingerprint(matterDir),
@@ -333,17 +481,11 @@ export function buildUploadManifest(matterDir, assembledDir, preflight, { genera
       label: workflowMode.label,
       shareable_export_policy: shareablePolicy,
     },
-    forms: formMetadata(generatedAt),
+    forms: formMetadata(generatedAt, applicationType),
     generated_files: generatedFiles,
     intended_upload_set: (preflight.uploadSet || []).map(intendedUploadEntry),
-    deferred_human_actions: deferredHumanActions(),
-    patent_center_upload_checklist: patentCenterChecklist(),
-    human_verification_required: [
-      "Export generated HTML/SVG sources to filing-faithful PDF/DOCX as applicable and inspect the rendered output.",
-      "Complete ADS required fields and verify inventor, applicant, benefit, and priority data.",
-      "Verify every IDS reference under 37 CFR 1.97/1.98; this manifest is not an admission of materiality or search completeness.",
-      "Obtain inventor-executed declaration signatures; APA never signs or generates an executed oath.",
-      "Verify current fees, entity status, and Patent Center upload state before any filing act.",
-    ],
+    deferred_human_actions: deferredHumanActions(applicationType),
+    patent_center_upload_checklist: patentCenterChecklist(applicationType),
+    human_verification_required: humanVerificationRequirements(applicationType),
   };
 }

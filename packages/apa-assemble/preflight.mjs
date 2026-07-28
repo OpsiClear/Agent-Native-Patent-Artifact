@@ -57,9 +57,10 @@ export function preflight(matterDir, {
   const fm = parseFrontmatter((() => { try { return readFileSync(join(matterDir, "PATENT.md"), "utf8"); } catch { return ""; } })());
   const workflowMode = confidentialWorkflowModeOf(fm);
   const shareablePolicy = shareableExportPolicy(matterDir, { mode: workflowMode.mode });
+  let profile = null;
 
   try {
-    const profile = assemblyProfile(fm.application_type);
+    profile = assemblyProfile(fm.application_type);
     if (profileMayAssemble(profile.application_type)) {
       add("application-type", "pass", `${profile.id} is implemented and repository-reviewed for deterministic assembly.`);
     } else {
@@ -304,13 +305,15 @@ export function preflight(matterDir, {
   const blocked = gates.filter((g) => g.status === "block");
   const goNoGo = blocked.length ? "NO-GO" : "GO (pending human review, filing-document export/review, and inventor signature)";
 
-  const uploadSet = [
-    "specification.pdf or DOCX  (export/review from specification.html; DOCX preferred where applicable)",
-    "drawings.pdf  (export/review from evidence/drawings/*.svg)",
-    "ADS.pdf  (from ADS.md, human-completed)",
-    "declaration.pdf  (executed/signed by the inventor - NOT generated signed)",
-    "IDS_SB08.pdf  (human-verified references)",
-  ];
+  const uploadSet = Array.isArray(profile?.upload_set) ? [...profile.upload_set] : [];
 
-  return { gates, goNoGo, blocked: blocked.length > 0, uploadSet, submitBoundary: "APA stops here. It does not sign, certify, or file. A human files via Patent Center." };
+  return {
+    gates,
+    goNoGo,
+    blocked: blocked.length > 0,
+    applicationType: profile?.application_type || fm.application_type || null,
+    profileId: profile?.id || null,
+    uploadSet,
+    submitBoundary: "APA stops here. It does not sign, certify, or file. A human files via Patent Center.",
+  };
 }

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/OpsiClear/Agent-Native-Patent-Artifact/blob/main/docs/schemas/apa-filing-receipt-input-v1.schema.json",
+  "title": "APA human-transcribed filing receipt input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "human_verified", "fields", "authoritative_legal_conclusion"],
+  "properties": {
+    "schema": { "const": "apa-filing-receipt-input-v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sha256", "source_text_stored"],
+      "properties": {
+        "filename": { "type": "string", "pattern": "^[^/\\\\]+$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "source_text_stored": { "const": false }
+      }
+    },
+    "human_verified": { "const": true },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "application_type",
+        "title",
+        "filing_date",
+        "application_number",
+        "inventors",
+        "applicant",
+        "entity_status",
+        "correspondence",
+        "related_applications"
+      ],
+      "properties": {
+        "application_type": { "type": "string" },
+        "title": { "type": "string" },
+        "filing_date": { "type": "string" },
+        "application_number": { "type": "string" },
+        "inventors": { "type": "array", "items": { "type": ["string", "object"] } },
+        "applicant": { "type": "string" },
+        "entity_status": { "type": "string" },
+        "correspondence": { "type": "string" },
+        "customer_number": { "type": "string" },
+        "related_applications": { "type": "array", "items": { "type": ["string", "object"] } }
+      }
+    },
+    "authoritative_legal_conclusion": { "const": false }
+  }
+}

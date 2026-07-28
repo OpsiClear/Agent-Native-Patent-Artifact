@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/OpsiClear/Agent-Native-Patent-Artifact/blob/main/docs/schemas/apa-filing-receipt-audit-v1.schema.json",
+  "title": "APA filing receipt discrepancy audit v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated_at",
+    "source",
+    "status",
+    "discrepancy_count",
+    "discrepancies",
+    "corrected_ads_review_required",
+    "priority_chain_review_required",
+    "completion",
+    "boundaries"
+  ],
+  "properties": {
+    "schema": { "const": "apa-filing-receipt-audit-v1" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "required": ["filename", "sha256", "source_text_stored"],
+      "properties": {
+        "filename": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "source_text_stored": { "const": false }
+      }
+    },
+    "status": {
+      "enum": [
+        "DISCREPANCIES-HUMAN-REVIEW-REQUIRED",
+        "MATCHED-HUMAN-CONFIRMATION-REQUIRED"
+      ]
+    },
+    "discrepancy_count": { "type": "integer", "minimum": 0 },
+    "discrepancies": { "type": "array" },
+    "corrected_ads_review_required": { "type": "boolean" },
+    "priority_chain_review_required": { "type": "boolean" },
+    "completion": {
+      "type": "object",
+      "additionalProperties": { "const": false }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": { "const": false }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "apa-filing-receipt-input-v1",
+  "source": {
+    "filename": "synthetic-filing-receipt.pdf",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "source_text_stored": false
+  },
+  "human_verified": true,
+  "fields": {
+    "application_type": "utility",
+    "title": "Synthetic Relay Controller - Receipt Version",
+    "filing_date": "2031-01-02",
+    "application_number": "99/999999",
+    "inventors": ["Sample Inventor"],
+    "applicant": "Example Applicant LLC",
+    "entity_status": "small",
+    "correspondence": "Example correspondence record",
+    "related_applications": ["77/777777"]
+  },
+  "authoritative_legal_conclusion": false
+}

@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/OpsiClear/Agent-Native-Patent-Artifact/blob/main/docs/schemas/apa-correspondence-record-v1.schema.json",
+  "title": "APA privacy-minimized USPTO correspondence record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source",
+    "classification",
+    "mailing_date",
+    "response_period",
+    "extension",
+    "issues",
+    "fees",
+    "response_channel",
+    "consequences",
+    "extraction",
+    "authoritative_deadline",
+    "legal_conclusion",
+    "human_filing_required"
+  ],
+  "properties": {
+    "schema": { "const": "apa-correspondence-record-v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "sha256", "bytes", "source_text_stored"],
+      "properties": {
+        "filename": { "type": "string", "minLength": 1, "pattern": "^[^/\\\\]+$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "source_text_stored": { "const": false }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "notice_type",
+        "label",
+        "application_type",
+        "confidence",
+        "supported",
+        "response_workflow",
+        "human_verified",
+        "candidate_types"
+      ],
+      "properties": {
+        "notice_type": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "application_type": { "type": ["string", "null"] },
+        "confidence": { "enum": ["high", "low", "needs-review"] },
+        "supported": { "type": "boolean" },
+        "response_workflow": { "type": "string", "minLength": 1 },
+        "human_verified": { "type": "boolean" },
+        "candidate_types": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "mailing_date": { "$ref": "#/$defs/verifiedDate" },
+    "response_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["months", "source", "confidence", "human_verified"],
+      "properties": {
+        "months": { "type": ["integer", "null"], "minimum": 1 },
+        "source": { "enum": ["notice-stated", "missing"] },
+        "confidence": { "enum": ["high", "missing", "needs-review"] },
+        "human_verified": { "type": "boolean" }
+      }
+    },
+    "extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mentioned", "rule_anchor", "maximum_additional_months", "human_verified"],
+      "properties": {
+        "mentioned": { "type": "boolean" },
+        "rule_anchor": { "type": ["string", "null"] },
+        "maximum_additional_months": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "human_verified": { "type": "boolean" }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "rule_anchor", "extraction_confidence", "human_verified", "resolution_status"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "label": { "type": "string", "minLength": 1 },
+          "rule_anchor": { "type": ["string", "null"] },
+          "extraction_confidence": { "enum": ["high", "low", "needs-review"] },
+          "human_verified": { "type": "boolean" },
+          "resolution_status": { "enum": ["unresolved", "resolved"] }
+        }
+      }
+    },
+    "fees": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "amount", "currency", "entity_status", "human_verified"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "amount": { "type": "number", "minimum": 0 },
+          "currency": { "const": "USD" },
+          "entity_status": { "const": "notice-stated" },
+          "human_verified": { "type": "boolean" }
+        }
+      }
+    },
+    "response_channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["electronic_filing_mentioned", "document_description", "human_verified"],
+      "properties": {
+        "electronic_filing_mentioned": { "type": "boolean" },
+        "document_description": { "type": ["string", "null"] },
+        "human_verified": { "type": "boolean" }
+      }
+    },
+    "consequences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "human_verified"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "human_verified": { "type": "boolean" }
+        }
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confidence", "missing_core_fields", "conflicting_fields", "ocr_or_visual_review_required"],
+      "properties": {
+        "confidence": { "enum": ["high", "needs-review"] },
+        "missing_core_fields": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "conflicting_fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "values"],
+            "properties": {
+              "field": { "type": "string" },
+              "values": { "type": "array", "minItems": 2 }
+            }
+          }
+        },
+        "ocr_or_visual_review_required": { "const": true }
+      }
+    },
+    "authoritative_deadline": { "const": false },
+    "legal_conclusion": { "const": false },
+    "human_filing_required": { "const": true }
+  },
+  "$defs": {
+    "verifiedDate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "confidence", "human_verified"],
+      "properties": {
+        "value": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "confidence": { "enum": ["high", "missing", "needs-review"] },
+        "human_verified": { "type": "boolean" }
+      }
+    }
+  }
+}

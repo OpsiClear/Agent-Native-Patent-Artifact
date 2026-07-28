@@ -14,11 +14,29 @@
     "37 CFR 1.84",
     "37 CFR 1.97",
     "37 CFR 1.98",
+    "37 CFR 1.4",
+    "37 CFR 1.7",
+    "37 CFR 1.16",
+    "37 CFR 1.17",
+    "37 CFR 1.41",
+    "37 CFR 1.51",
+    "37 CFR 1.53",
+    "37 CFR 1.55",
+    "37 CFR 1.63",
+    "37 CFR 1.76",
+    "37 CFR 1.78",
+    "37 CFR 1.136",
     "35 USC 101",
     "35 USC 102",
     "35 USC 103",
     "35 USC 112"
   ],
+  "correspondence_sources": {
+    "patent_forms": "https://www.uspto.gov/patents/apply/forms",
+    "fee_schedule": "https://www.uspto.gov/learning-and-resources/fees-and-payment/uspto-fee-schedule",
+    "rules": "https://www.ecfr.gov/current/title-37/chapter-I/subchapter-A/part-1",
+    "boundary": "Notice text, Patent Center records, current official sources, and human docketing review control over APA estimates."
+  },
   "disabled_extension_points": [
     {
       "jurisdiction": "PCT",

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -8,7 +8,7 @@ import { buildReviewTargetFingerprint } from "./review_fingerprint.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_APA_KIT = resolve(SCRIPT_DIR, "..", "..", "..");
-const GENERATOR_VERSION = "apa-review-form-2026-06-30";
+const GENERATOR_VERSION = "apa-review-form-2026-07-28";
 
 function usage() {
   console.error([
@@ -134,6 +134,112 @@ function parseDateVerification(text) {
   }
 }
 
+function loadCorrespondenceDocuments(matter) {
+  const dir = join(matter, "correspondence");
+  try {
+    if (lstatSync(dir).isSymbolicLink()) return [];
+  } catch {
+    return [];
+  }
+  const documents = [];
+  for (const name of readdirSync(dir).filter((entry) => entry.endsWith(".json")).sort()) {
+    const path = join(dir, name);
+    try {
+      const stat = lstatSync(path);
+      if (!stat.isFile() || stat.isSymbolicLink()) continue;
+      const value = JSON.parse(readFileSync(path, "utf8"));
+      const kind = value.schema === "apa-correspondence-record-v1"
+        ? "notice"
+        : value.schema === "apa-missing-parts-response-v1"
+          ? "missing-parts-response"
+          : value.schema === "apa-filing-receipt-audit-v1"
+            ? "filing-receipt-audit"
+            : null;
+      if (kind) documents.push({ kind, source: `correspondence/${name}`, value });
+    } catch {
+      // A malformed file remains fingerprinted and stale-sensitive, but cannot become a review card.
+    }
+  }
+  return documents;
+}
+
+function humanFlag(value) {
+  return value === true ? "verified" : "NOT VERIFIED";
+}
+
+function correspondenceCards(documents) {
+  return documents.map((document, index) => {
+    const { value } = document;
+    if (document.kind === "notice") {
+      const issueLines = (value.issues || []).map((issue) => (
+        `- ${issue.label || issue.id}: ${humanFlag(issue.human_verified)}; ${issue.resolution_status || "unresolved"}`
+      ));
+      return {
+        id: `notice-${index + 1}`,
+        tag: "Notice",
+        title: value.classification?.label || value.classification?.notice_type || "USPTO correspondence",
+        prompt: "Does this privacy-minimized notice record match every page of the source paper?",
+        sourceLabel: document.source,
+        exactText: [
+          `Mailing date: ${value.mailing_date?.value || "[missing]"} (${humanFlag(value.mailing_date?.human_verified)})`,
+          `Stated period: ${value.response_period?.months ?? "[missing]"} month(s) (${humanFlag(value.response_period?.human_verified)})`,
+          `Classification: ${humanFlag(value.classification?.human_verified)}`,
+          `Authoritative deadline: ${value.authoritative_deadline === false ? "no" : "INVALID"}`,
+          "Issues:",
+          ...issueLines,
+        ].join("\n"),
+        evidence: [
+          `Extension language: ${value.extension?.mentioned ? humanFlag(value.extension?.human_verified) : "not captured"}`,
+          `Response channel: ${humanFlag(value.response_channel?.human_verified)}`,
+          `Notice-stated fee rows: ${(value.fees || []).length}`,
+        ],
+        notePrompt: "Notice classification, date, issue, fee, or source-page corrections:",
+      };
+    }
+    if (document.kind === "missing-parts-response") {
+      return {
+        id: `missing-parts-${index + 1}`,
+        tag: "Missing parts",
+        title: `${value.notice_type || "Missing-parts"} response checklist`,
+        prompt: "Are all notice items represented and all legal/filing acts still human-owned?",
+        sourceLabel: document.source,
+        exactText: [
+          `Status: ${value.status || "[missing]"}`,
+          `Tentative base date: ${value.deadline_estimate?.base_due_date_tentative || "[blocked/missing]"}`,
+          `Issues: ${(value.issues || []).map((issue) => `${issue.id}=${issue.resolution_status}`).join(", ") || "[none]"}`,
+          `Document options: ${(value.document_options || []).map((item) => `${item.form_code}:${item.selected ? "SELECTED" : "unselected"}`).join(", ") || "[none]"}`,
+        ].join("\n"),
+        evidence: [
+          `Deferred human actions: ${(value.deferred_human_actions || []).length}`,
+          `Submitted by human: ${value.completion?.submitted_by_human === true ? "yes" : "no"}`,
+          `Confirmation saved: ${value.completion?.confirmation_receipt_saved === true ? "yes" : "no"}`,
+        ],
+        notePrompt: "Deadline, form route, fee, signer, PDF, submission, or confirmation notes:",
+      };
+    }
+    const discrepancyLines = (value.discrepancies || []).map((item) => (
+      `- ${item.code} (${item.field}): expected ${JSON.stringify(item.expected)}; observed ${JSON.stringify(item.observed)}`
+    ));
+    return {
+      id: `receipt-audit-${index + 1}`,
+      tag: "Receipt",
+      title: "Filing receipt discrepancy audit",
+      prompt: "Have every discrepancy and any corrected-ADS or priority-chain question been reviewed?",
+      sourceLabel: document.source,
+      exactText: [
+        `Status: ${value.status || "[missing]"}`,
+        `Discrepancies: ${value.discrepancy_count ?? discrepancyLines.length}`,
+        ...discrepancyLines,
+      ].join("\n"),
+      evidence: [
+        `Corrected ADS review required: ${value.corrected_ads_review_required ? "yes" : "no"}`,
+        `Priority-chain review required: ${value.priority_chain_review_required ? "yes" : "no"}`,
+      ],
+      notePrompt: "Receipt comparison, correction evidence, and Patent Center recheck notes:",
+    };
+  });
+}
+
 function runCommand(name, cwd, command, args) {
   const result = spawnSync(command, args, { cwd, encoding: "utf8", shell: false });
   return {
@@ -173,7 +279,7 @@ function runApaCommands(matter, apaKit) {
   }));
 }
 
-function checklistSections({ claims, references, figures, preflight, dateVerification }) {
+function checklistSections({ claims, references, figures, preflight, dateVerification, correspondence }) {
   const independentClaims = claims.filter(c => c.independent);
   const claimItems = independentClaims.length ? independentClaims : claims.slice(0, 6);
   const sections = [
@@ -207,6 +313,22 @@ function checklistSections({ claims, references, figures, preflight, dateVerific
       items: claimItems.map(c => ({ id: c.id, tag: c.id, text: `${c.title}. Verify 101/102/103/112 posture and support in src/embodiments.md.` }))
     },
   ];
+  sections.push({
+    id: "correspondence",
+    title: "Post-Filing Correspondence",
+    description: "Review notice facts, tentative dates, forms, fees, signer authority, response state, and filing-receipt evidence.",
+    items: correspondence.length
+      ? correspondence.map((card) => ({
+          id: card.id,
+          tag: card.tag,
+          text: `${card.title}. ${card.prompt}`,
+        }))
+      : [{
+          id: "no-correspondence",
+          tag: "Correspondence",
+          text: "No supported correspondence record is present. Add only privacy-minimized matter-local records after source-page review.",
+        }],
+  });
   if (dateVerification?.references?.length) {
     sections.push({
       id: "date-verification",
@@ -285,7 +407,7 @@ function question(id, category, prompt, choices, opts = {}) {
     why: opts.why || "",
     notePrompt: opts.notePrompt || "Optional notes, dates, URLs, file paths, or evidence:",
     source: opts.source || "",
-    requiredForReadiness: ["disclosures", "dates"].includes(category)
+    requiredForReadiness: opts.requiredForReadiness ?? ["disclosures", "dates"].includes(category)
   };
 }
 
@@ -420,14 +542,90 @@ function figureQuestions(figures) {
   ));
 }
 
-function buildQuestionQueues({ references, figures, dateVerification }) {
+function correspondenceQuestions(documents) {
+  return documents.flatMap((document, index) => {
+    const stem = `CORR-${String(index + 1).padStart(2, "0")}`;
+    if (document.kind === "notice") {
+      return [
+        question(
+          `${stem}-SOURCE`,
+          "correspondence",
+          `Was ${document.source} compared against every page of the original notice for classification, mailing date, stated period, issues, fees, response channel, and consequences?`,
+          [
+            ["notice_source_verified", "Yes, source-verified", "Record reviewer and source-page evidence."],
+            ["notice_source_not_verified", "Not yet", "Keep deadline and response preparation blocked."],
+            ["notice_source_uncertain", "Uncertain", "Escalate classification or source-quality concerns."],
+          ],
+          { requiredForReadiness: true, notePrompt: "Reviewer, page coverage, corrections, and evidence:" },
+        ),
+      ];
+    }
+    if (document.kind === "filing-receipt-audit") {
+      return [
+        question(
+          `${stem}-RECEIPT`,
+          "correspondence",
+          `Were all discrepancies in ${document.source} reviewed against the official filing receipt and current Patent Center record?`,
+          [
+            ["receipt_discrepancies_reviewed", "Yes, reviewed", "Record resolution evidence and any practitioner decision."],
+            ["receipt_discrepancies_pending", "Pending", "Keep corrected-ADS and priority questions unresolved."],
+            ["receipt_discrepancies_uncertain", "Uncertain", "Escalate receipt interpretation."],
+          ],
+          { requiredForReadiness: true, notePrompt: "Discrepancy resolutions, evidence paths, and Patent Center recheck:" },
+        ),
+      ];
+    }
+    return [];
+  });
+}
+
+function missingPartsQuestions(documents) {
+  return documents.filter((document) => document.kind === "missing-parts-response").flatMap((document, index) => {
+    const stem = `MISS-${String(index + 1).padStart(2, "0")}`;
+    return [
+      question(
+        `${stem}-DATE`,
+        "missing-parts",
+        `Was the tentative response date in ${document.source} verified against the original notice and Patent Center, including any extension language?`,
+        [
+          ["response_date_verified", "Yes, independently verified", "Record the verified date and source."],
+          ["response_date_pending", "Not yet", "Keep the package blocked."],
+          ["response_date_uncertain", "Uncertain", "Escalate to docketing/practitioner review."],
+        ],
+        { requiredForReadiness: true, notePrompt: "Verified date, notice page, Patent Center evidence, and closure check:" },
+      ),
+      question(
+        `${stem}-ACTIONS`,
+        "missing-parts",
+        "Were the document route, current form version, signer authority, entity status, live fee, final PDF pages, human submission, and confirmation receipt each reviewed?",
+        [
+          ["human_actions_evidenced", "Yes, all evidenced", "Record matter-local evidence for every human action."],
+          ["human_actions_pending", "One or more pending", "Keep BLOCKED-HUMAN-ACTIONS."],
+          ["human_actions_uncertain", "Uncertain", "Escalate the unresolved act."],
+        ],
+        { requiredForReadiness: true, notePrompt: "Form route, signer, fee, PDF, submission, and confirmation evidence:" },
+      ),
+    ];
+  });
+}
+
+function buildQuestionQueues({ references, figures, dateVerification, correspondenceDocuments }) {
   const queues = {
     disclosures: disclosureQuestions(),
     dates: dateQuestions(dateVerification),
     ids: idsQuestions(references),
-    figures: figureQuestions(figures)
+    figures: figureQuestions(figures),
+    correspondence: correspondenceQuestions(correspondenceDocuments),
+    "missing-parts": missingPartsQuestions(correspondenceDocuments),
   };
-  queues.all = [...queues.disclosures, ...queues.dates, ...queues.ids, ...queues.figures];
+  queues.all = [
+    ...queues.disclosures,
+    ...queues.dates,
+    ...queues.ids,
+    ...queues.figures,
+    ...queues.correspondence,
+    ...queues["missing-parts"],
+  ];
   return queues;
 }
 
@@ -445,7 +643,7 @@ function dateEvidenceFor(ref, dateVerification) {
   return evidence;
 }
 
-function buildReviewPages({ claims, references, figures, preflight, dateVerification }) {
+function buildReviewPages({ claims, references, figures, preflight, dateVerification, correspondence }) {
   const independentClaims = claims.filter(c => c.independent);
   return [
     {
@@ -511,6 +709,12 @@ function buildReviewPages({ claims, references, figures, preflight, dateVerifica
         ],
         notePrompt: "Drawing/transcription issue notes:"
       }))
+    },
+    {
+      id: "correspondence",
+      title: "Correspondence",
+      description: "Review privacy-minimized notices, tentative deadlines, missing-parts response gates, and filing-receipt discrepancies.",
+      cards: correspondence,
     },
     {
       id: "filing",
@@ -579,6 +783,8 @@ function main() {
   const figures = parseFigures(readMaybe(join(args.matter, "evidence", "README.md")), args.matter);
   const preflight = parsePreflight(readMaybe(join(args.matter, "assembled", "PREFLIGHT.md")));
   const dateVerification = parseDateVerification(readMaybe(join(args.matter, "assembled", "date_verification.json")));
+  const correspondenceDocuments = loadCorrespondenceDocuments(args.matter);
+  const correspondence = correspondenceCards(correspondenceDocuments);
   const apaCommands = args.runApa ? runApaCommands(args.matter, args.apaKit) : [];
 
   const data = {
@@ -599,9 +805,10 @@ function main() {
     figures,
     preflight,
     dateVerification,
-    questionQueues: buildQuestionQueues({ references, figures, dateVerification }),
-    reviewPages: buildReviewPages({ claims, references, figures, preflight, dateVerification }),
-    sections: checklistSections({ claims, references, figures, preflight, dateVerification }),
+    correspondence,
+    questionQueues: buildQuestionQueues({ references, figures, dateVerification, correspondenceDocuments }),
+    reviewPages: buildReviewPages({ claims, references, figures, preflight, dateVerification, correspondence }),
+    sections: checklistSections({ claims, references, figures, preflight, dateVerification, correspondence }),
     apaCommands
   };
 

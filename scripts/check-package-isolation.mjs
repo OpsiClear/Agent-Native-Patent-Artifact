@@ -76,11 +76,6 @@ function packageManifests() {
 }
 
 function ensureHostOutputs() {
-  const needed = ["codex", "cursor"].every((host) => (
-    existsSync(join(ROOT, "dist", host))
-    && readdirSync(join(ROOT, "dist", host)).some((name) => existsSync(join(ROOT, "dist", host, name, "SKILL.md")))
-  ));
-  if (needed) return;
   const generated = run(process.execPath, [join(ROOT, "scripts", "gen-skill-docs.mjs"), "--all-hosts"], {
     cwd: ROOT,
   });

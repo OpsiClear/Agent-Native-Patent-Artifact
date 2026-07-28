@@ -504,8 +504,10 @@ Preflight recomputes it; any changed, added, removed, or unsafe linked input mak
 blocks assembly.
 
 Human-review state and questionnaires bind to
-`apa-human-review-target-fingerprint-v1`, covering claims, IDS/evidence counts, drawing artifacts,
-assembly review targets, and every assembled PDF/DOCX hash. The dynamic app persists
+`apa-human-review-target-fingerprint-v1` under
+`apa-human-review-target-contract-v2`, covering claims, IDS/evidence counts, drawing artifacts,
+assembly review targets, every assembled PDF/DOCX hash, and every supported JSON/Markdown/PDF file
+under `correspondence/`. The dynamic app persists
 `apa-human-review-state-v2`; questionnaire queues and answers use
 `apa-agent-question-queue-v2` / `apa-agent-question-answers-v2`. Changed targets make existing
 review evidence stale. Unanswered/unresolved readiness-required factual questions, affirmative
@@ -522,7 +524,68 @@ preflight. These are evidence-freshness controls, not legal conclusions.
 
 ---
 
-## 10. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
+## 10. Post-filing correspondence and filing-receipt records
+
+The optional `correspondence/` area keeps privacy-minimized procedural records after provisional or
+nonprovisional filing:
+
+```text
+<matter>/correspondence/
+  notice-NN.json                 # apa-correspondence-record-v1
+  response-NN.json               # apa-missing-parts-response-v1
+  response-NN.md                 # blocked human-action checklist
+  filing-receipt-audit.json      # apa-filing-receipt-audit-v1
+```
+
+Original notices, filing receipts, confirmation receipts, applicant data, application numbers,
+addresses, and extracted source text remain private source evidence. `notice-NN.json` records only
+the source basename/hash/byte count and procedural facts: taxonomy, application type, mailing date,
+notice-stated response period, issues, stated fees, extension language, response channel,
+consequences, confidence, and human-verification flags. It must keep
+`authoritative_deadline: false`, `legal_conclusion: false`, and `human_filing_required: true`.
+
+The canonical schemas are:
+
+- `docs/schemas/apa-correspondence-record-v1.schema.json`;
+- `docs/schemas/apa-missing-parts-response-v1.schema.json`;
+- `docs/schemas/apa-filing-receipt-input-v1.schema.json`;
+- `docs/schemas/apa-filing-receipt-audit-v1.schema.json`.
+
+`/apa-correspondence` recognizes supported provisional and utility nonprovisional Notices to File
+Missing Parts. Corrected-application-paper and omitted-item notices are summary-only; Office Actions
+route to `/apa-office-action`; unknown, ambiguous, conflicting, or low-confidence papers generate no
+response package. PDF input fails with a local render/extraction/OCR handoff so image-only pages
+cannot silently disappear.
+
+Notice-date calculations use strict calendar-month arithmetic only after the notice classification,
+mailing date, stated period, and captured procedural facts are human-verified. They preserve the
+unadjusted date and a tentative weekend/federal-holiday adjustment. Extension rows appear only when
+the notice's extension language is verified. Provisional extension estimates use 37 CFR 1.17(u);
+ordinary nonprovisional estimates use 37 CFR 1.17(a); the late provisional filing-fee/cover-sheet
+surcharge is separately identified under 37 CFR 1.16(g). A stale or unpinned official fee source,
+unknown entity status, or mismatched fee family produces a null amount rather than a payable quote.
+
+`/apa-missing-parts` generates only `BLOCKED-HUMAN-ACTIONS` manifests. Document options start
+unselected, completion flags start false, and the manifest never supplies a signature, certification,
+entity assertion, payment, filing confirmation, or Patent Center submission. A human chooses the
+paper route, verifies dates/forms/fees/signer authority, opens every final PDF page, submits, and
+saves the confirmation.
+
+The filing-receipt audit compares human-transcribed receipt fields against `PATENT.md` for application
+type, title, filing date, application number, inventor list, applicant, entity status, correspondence,
+and related applications. It emits stable discrepancy codes plus corrected-ADS and priority-chain
+review flags, not a legal conclusion or selected correction. All receipt and confirmation evidence
+remains matter-local.
+
+`docs/uspto-forms.json` pins official HTTPS source URLs, byte counts, and SHA-256 values for the core
+SB/16, AIA/14, AIA/15, AIA/01, SB/08, and AIA/22P forms plus static SB/16 and SB/08 fallbacks. The
+release builder refuses changed bytes, non-USPTO redirects, oversized bodies, non-PDF media, or an
+invalid PDF signature. Patent Center auto-load XFA forms require Adobe Acrobat Reader; generic
+renderers may show a blank page or a `Please wait` placeholder.
+
+---
+
+## 11. Post-filing prosecution extension (optional — beyond the core pre-filing scope)
 
 The core protocol stops at filing (DESIGN §8). This **optional** extension models the post-filing
 examination round-trip. It is deeper UPL territory: everything here is a flag/question for a registered

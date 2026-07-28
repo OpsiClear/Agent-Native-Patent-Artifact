@@ -1,0 +1,93 @@
+{
+  "schema": "apa-correspondence-record-v1",
+  "source": {
+    "filename": "synthetic-provisional-missing-parts.txt",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bytes": 1024,
+    "source_text_stored": false
+  },
+  "classification": {
+    "notice_type": "provisional-missing-parts",
+    "label": "Notice to File Missing Parts of Provisional Application",
+    "application_type": "provisional",
+    "confidence": "high",
+    "supported": true,
+    "response_workflow": "missing-parts",
+    "human_verified": true,
+    "candidate_types": []
+  },
+  "mailing_date": {
+    "value": "2031-02-03",
+    "confidence": "high",
+    "human_verified": true
+  },
+  "response_period": {
+    "months": 2,
+    "source": "notice-stated",
+    "confidence": "high",
+    "human_verified": true
+  },
+  "extension": {
+    "mentioned": true,
+    "rule_anchor": "37 CFR 1.136(a)",
+    "maximum_additional_months": 5,
+    "human_verified": true
+  },
+  "issues": [
+    {
+      "id": "provisional-cover-sheet",
+      "label": "Provisional cover sheet or qualifying ADS is missing or deficient",
+      "rule_anchor": "37 CFR 1.51(c)",
+      "extraction_confidence": "high",
+      "human_verified": true,
+      "resolution_status": "unresolved"
+    },
+    {
+      "id": "ads-signature",
+      "label": "Application Data Sheet signature is deficient",
+      "rule_anchor": "37 CFR 1.4; 37 CFR 1.76",
+      "extraction_confidence": "high",
+      "human_verified": true,
+      "resolution_status": "unresolved"
+    },
+    {
+      "id": "late-provisional-surcharge",
+      "label": "Late provisional filing-fee or cover-sheet surcharge is due",
+      "rule_anchor": "37 CFR 1.16(g)",
+      "extraction_confidence": "high",
+      "human_verified": true,
+      "resolution_status": "unresolved"
+    }
+  ],
+  "fees": [
+    {
+      "id": "notice-total-balance",
+      "label": "Synthetic total fee balance stated by the fixture",
+      "amount": 17.25,
+      "currency": "USD",
+      "entity_status": "notice-stated",
+      "human_verified": true
+    }
+  ],
+  "response_channel": {
+    "electronic_filing_mentioned": true,
+    "document_description": "Miscellaneous Incoming Letter",
+    "human_verified": true
+  },
+  "consequences": [
+    {
+      "id": "abandonment-risk",
+      "label": "The synthetic notice states that an incomplete or untimely reply may result in abandonment",
+      "human_verified": true
+    }
+  ],
+  "extraction": {
+    "confidence": "high",
+    "missing_core_fields": [],
+    "conflicting_fields": [],
+    "ocr_or_visual_review_required": true
+  },
+  "authoritative_deadline": false,
+  "legal_conclusion": false,
+  "human_filing_required": true
+}
