@@ -36,6 +36,31 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function waitForChildExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(true);
+  return new Promise(resolveWait => {
+    const onExit = () => {
+      clearTimeout(timer);
+      resolveWait(true);
+    };
+    const timer = setTimeout(() => {
+      child.off("exit", onExit);
+      resolveWait(false);
+    }, timeoutMs);
+    child.once("exit", onExit);
+  });
+}
+
+async function stopChild(child) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  child.kill();
+  if (await waitForChildExit(child, 2_000)) return;
+  child.kill("SIGKILL");
+  if (!await waitForChildExit(child, 3_000)) {
+    throw new Error("review server did not exit during E2E cleanup");
+  }
+}
+
 async function waitFor(fn, label, timeoutMs = 10_000) {
   const deadline = Date.now() + timeoutMs;
   let lastError;
@@ -276,13 +301,7 @@ async function main() {
     }, null, 2));
   } finally {
     controller.abort();
-    server.kill();
-    if (server.exitCode === null) {
-      await Promise.race([
-        new Promise(resolve => server.on("exit", resolve)),
-        sleep(1000)
-      ]);
-    }
+    await stopChild(server);
     if (server.exitCode && server.exitCode !== 0 && serverLog) {
       console.error(serverLog);
     }
@@ -290,7 +309,7 @@ async function main() {
     if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) {
       throw new Error("refusing unsafe E2E sandbox cleanup");
     }
-    rmSync(sandboxRoot, { recursive: true, force: true });
+    rmSync(sandboxRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 

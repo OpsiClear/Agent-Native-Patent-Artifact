@@ -76,7 +76,7 @@ test("review-form agent bridge handles create, SSE answer, and cancellation", as
     assert.notEqual(networkBind.status, 0, "review server must refuse non-loopback binding");
     assert.match(networkBind.stderr, /only permits a loopback --host/);
   } finally {
-    rmSync(matter, { recursive: true, force: true });
+    rmSync(matter, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 

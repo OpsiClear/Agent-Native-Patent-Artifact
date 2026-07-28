@@ -27,7 +27,7 @@ npm run forms:verify
   ok: true; errors: []
 
 node scripts/audit-patent-release-privacy.mjs <public source and bundle paths>
-  479 files scanned; findings: []
+  480 files scanned; findings: []
 
 APA_EXTERNAL_MATTER=<private matter> npm run verify:external-matter -- --require --json
   aggregate-only verification passed; unsafe linked input paths: 0
@@ -42,3 +42,19 @@ Publish only after the implementation commit is pushed. Then download every GitH
 into a fresh temporary directory, compare individual PDF and metadata hashes, verify the ZIP entry
 set, rerun the privacy audit, and confirm each asset exposes a successful direct browser-download
 URL. Until that post-release audit passes, the implementation checklist remains incomplete.
+
+## Post-release audit
+
+Release [`v0.2.0`](https://github.com/OpsiClear/Agent-Native-Patent-Artifact/releases/tag/v0.2.0)
+passed the independent download audit on 2026-07-28:
+
+- tag target matched pushed implementation commit `a163a9e`;
+- all 13 expected assets downloaded from the public release;
+- every downloaded asset matched the locally verified release-candidate SHA-256;
+- the deterministic ZIP SHA-256 was
+  `944c732d67830f1d0ec8db5dc3c8ed13a40cc430aa357f828c328fed61c0060e`;
+- bundle verification found no missing, altered, or unexpected ZIP entries;
+- all 13 browser-download URLs returned successfully;
+- the downloaded assets and public workflow log produced zero privacy findings; and
+- release notes contained the official source, retrieval date, XFA viewer warning, and human filing
+  boundary.
