@@ -3,6 +3,9 @@ node_modules/
 results.tsv
 .autotune/
 .DS_Store
+# Local generated artifacts and disposable workspaces
+/output/
+/tmp/
 # Generated viewer manifests (rebuild with apa-manifest)
 **/manifest.json
 # Real patent matters are confidential - never commit a matter outside examples/
