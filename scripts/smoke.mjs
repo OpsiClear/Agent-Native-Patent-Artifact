@@ -38,6 +38,9 @@ run("eval mock", ["packages/apa-eval/cli.mjs", "--matter", minimalMatter, "--moc
 run("scaffold report schema", ["packages/apa-reports/cli.mjs", "scaffold", "claims", "--matter", minimalMatter, "--out", claimsReportOut]);
 run("check report schema", ["packages/apa-reports/cli.mjs", "check", claimsReportOut, "--kind", "claims"]);
 run("skillgraph check", ["packages/apa-skillgraph/cli.mjs", "check"]);
+run("architecture check", ["scripts/check-architecture.mjs"]);
+run("unified apa help", ["apps/cli/cli.mjs", "--help"]);
+run("APA MCP help", ["apps/mcp-server/server.mjs", "--help"]);
 run("apa-run plan", ["packages/apa-run/cli.mjs", "plan", "--matter", minimalMatter, "--domain", "software", "--json"]);
 run("apa-bench mock", ["packages/apa-bench/cli.mjs", "--mock", "--json"]);
 run("figure gallery quality", [

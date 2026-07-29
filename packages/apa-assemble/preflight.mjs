@@ -7,7 +7,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter, iterEntitySections, extractBindingBlocks, asArray } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter, iterEntitySections, extractBindingBlocks, asArray } from "../apa-core/apa-parse.mjs";
 import { validateMatter } from "../apa-validate/validate.mjs";
 import { lintClaims } from "../apa-draft/claim-lint.mjs";
 import { buildLegend } from "../apa-figure/numerals.mjs";
@@ -19,7 +19,7 @@ import { assemblyProfile, profileMayAssemble } from "./profiles.mjs";
 import {
   compareReviewTargetFingerprint,
   unansweredRequiredQuestions,
-} from "../../skills/apa-review-form/scripts/review_fingerprint.mjs";
+} from "../apa-review/review-fingerprint.mjs";
 
 // AI-inventor heuristic, mirroring the validator (../apa-validate/validate.mjs): case-SENSITIVE
 // acronyms (so legitimate human inventors 'Ai'/'Claude'/'Neural' are not hard-blocked) plus

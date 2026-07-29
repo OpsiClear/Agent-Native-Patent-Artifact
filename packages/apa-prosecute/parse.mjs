@@ -16,7 +16,7 @@ import {
   loadYaml,
   iterEntitySections,
   extractBindingBlocks,
-} from "../../lib/apa-parse.mjs";
+} from "../apa-core/apa-parse.mjs";
 import { classifyOfficeActionEvent, classifyRejectionGround } from "./taxonomy.mjs";
 
 // The file-level header block is fenced as ```oa ... ``` (distinct from the per-section ```binding).

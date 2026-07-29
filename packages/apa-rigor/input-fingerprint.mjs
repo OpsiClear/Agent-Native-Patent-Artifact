@@ -8,7 +8,7 @@
 
 import { createHash } from "node:crypto";
 
-import { buildAssemblyInputFingerprint } from "../apa-assemble/input-fingerprint.mjs";
+import { buildAssemblyInputFingerprint } from "../apa-core/assembly-fingerprint.mjs";
 
 export const RIGOR_INPUT_CONTRACT = "apa-rigor-input-contract-v1";
 

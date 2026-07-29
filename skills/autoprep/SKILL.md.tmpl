@@ -2,7 +2,7 @@
 name: autoprep
 description: "Run the full patent-prep lifecycle end to end - capture/compile -> prior-art search -> patentability -> claims -> spec -> figures -> rigor -> filing assembly - invoking each phase skill and enforcing the gates between them. Stops at human checkpoints and the submit boundary. Invoke as /apa-autoprep."
 preamble-tier: 4
-version: "0.1"
+version: "0.2"
 allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
 triggers: "autoprep, full pipeline, prep the patent end to end, /apa-autoprep, run the whole lifecycle"
 ---
@@ -16,12 +16,13 @@ Orchestrates the phase skills in order, validating between steps and **stopping 
 checkpoints**. It does not replace the individual skills - it sequences them. Run from a matter (or
 start by creating one). Each step is the corresponding skill; invoke them in turn.
 
-Maintain `<matter>/trace/runlog.jsonl` as the audit ledger whenever a step writes files, runs a
-command, touches an external sink, or reaches a human checkpoint. If resuming a long run, keep
-`<matter>/trace/autoprep_state.json` with the stage name, input hashes, output hashes, and whether the
-human checkpoint was satisfied. Use the deterministic helper in
-`packages/apa-trace/autoprep-state.mjs` for stage completion, hash-based skip checks, restarts, and
-`max_examiner_loops` enforcement; do not rely on prompt text alone for resumability.
+Treat `<matter>/trace/runlog.jsonl` as the canonical workflow ledger. Begin with `apa plan --matter
+<matter>` and resume with `apa status`, `apa next`, or `apa run`; those commands compile
+`skills/registry.yaml` into the workflow-v2 executor, proposal, gate, checkpoint, invalidation,
+alternative, and bounded-loop contract. Agent stages submit immutable proposals and wait for a human
+adoption or rejection. Use `apa loop` for an allowed examiner return; it enforces
+`max_examiner_loops` in the ledger. `trace/autoprep_state.json` is a deprecated compatibility
+projection only and must never override ledger-derived status.
 
 ## Pipeline (stop on any gate failure or checkpoint)
 1. **Matter config.** Ensure `PATENT.md` has `application_type`, `inventors` (>=1 natural person),
@@ -52,12 +53,15 @@ human checkpoint was satisfied. Use the deterministic helper in
    `/apa-svg-upgrader` when generated or imported SVGs need normalization before final QA. Then run
    `/apa-drawing-quality`; blocking drawing, sheet-review, or upgrade-parity findings stop assembly
    until a human accepts the risk or fixes the drawings.
-8. **Rigor** - `/apa-rigor` -> `patent_rigor_report.json`. If the computed verdict is **Major-Rework or
-   Do-Not-File**, run at most `max_examiner_loops` (default 2) of `/apa-examiner` -> human-approved
-   edits -> `/apa-rigor`. After the cap, stop with a residual-risk report instead of looping.
-9. **Adopt provenance.** Any claim limitation still `ai-suggested` blocks assembly - a human must adopt
+8. **Examiner adversary** - `/apa-examiner`. Any proposed return to claims or specification must use
+   a declared workflow loop (`apa-examiner` -> `apa-claims` or `apa-spec`) and is capped at
+   `max_examiner_loops` (default 2). Apply only human-approved edits.
+9. **Rigor** - `/apa-rigor` -> `patent_rigor_report.json`. If the computed verdict remains
+   **Major-Rework or Do-Not-File**, request another allowed examiner loop when its cap permits.
+   After the cap, stop with a residual-risk report instead of looping.
+10. **Adopt provenance.** Any claim limitation still `ai-suggested` blocks assembly - a human must adopt
    each (-> `inventor`/`attorney`/`human-revised`). **Checkpoint:** the inventor attests conception.
-10. **Assembly package draft** - `/apa-assemble --write`. It enforces the inventorship-integrity gate
+11. **Assembly package draft** - `/apa-assemble --write`. It enforces the inventorship-integrity gate
     and the rigor verdict, produces the package draft plus `assembled/upload_manifest.json` (print the
     HTML to PDF), and **STOPS at the submit boundary**.
 

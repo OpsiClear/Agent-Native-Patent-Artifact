@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import {
   appendRunlog,
   buildRunlogEntry,

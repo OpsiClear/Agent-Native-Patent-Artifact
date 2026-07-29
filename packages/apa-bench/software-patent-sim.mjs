@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadYaml } from "../../lib/apa-parse.mjs";
+import { loadYaml } from "../apa-core/apa-parse.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const DEFAULT_SCENARIOS = "benchmarks/fixtures/software-patent-skill-sim/scenarios.json";

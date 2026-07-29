@@ -11,7 +11,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import { scaffoldReport } from "./scaffold.mjs";
 import { validateReport, computeVerdict, isFileable } from "./verdict.mjs";
 import {

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/matter-v1",
+  "title": "APA matter manifest",
+  "type": "object",
+  "required": ["schema", "matter_id", "jurisdiction", "application_type", "user_role", "created_at"],
+  "properties": {
+    "schema": { "const": "apa-matter-v1" },
+    "matter_id": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$" },
+    "jurisdiction": { "const": "USPTO" },
+    "application_type": { "enum": ["provisional", "utility", "design"] },
+    "user_role": { "enum": ["unknown", "pro_se", "registered_practitioner"] },
+    "title": { "type": "string", "maxLength": 500 },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

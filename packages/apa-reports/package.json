@@ -1,0 +1,17 @@
+{
+  "name": "@apa/reports",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-reports": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./schemas.mjs",
+    "./validate": "./validate.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@apa/application",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "exports": {
+    ".": "./service.mjs"
+  },
+  "dependencies": {
+    "@apa/run": "0.1.0",
+    "@apa/trace": "0.1.0",
+    "@apa/workflow": "0.1.0"
+  }
+}

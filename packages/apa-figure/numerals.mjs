@@ -18,7 +18,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { extractBindingBlocks, iterEntitySections } from "../../lib/apa-parse.mjs";
+import { extractBindingBlocks, iterEntitySections } from "../apa-core/apa-parse.mjs";
 
 function readOrNull(p) {
   try {

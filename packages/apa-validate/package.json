@@ -1,0 +1,16 @@
+{
+  "name": "@apa/validate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-validate": "./validate.mjs"
+  },
+  "exports": {
+    ".": "./validate.mjs",
+    "./source-spans": "./source-spans.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

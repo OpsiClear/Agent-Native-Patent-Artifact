@@ -14,6 +14,24 @@ test harness, an installer) — re-roled onto the USPTO patent-prep lifecycle. T
 in **[DESIGN.md](DESIGN.md)** (11 sections, including a 3-critic adversarial review and features
 mined from a real worked patent package).
 
+## Patent drafting harness
+
+APA has a compatibility-preserving harness kernel in addition to its existing protocol tools:
+
+- `@apa/core` owns strict contracts, content hashes, immutable objects, and the matter writer lock;
+- `@apa/workflow` owns workflow-v2 stage contracts, proposals, human decisions, bounded loops, and
+  ledger events;
+- `@apa/application` is the shared command service used by the CLI and MCP;
+- `apa` is the unified local command for init, ingest, plan, run, propose, review, adopt/reject,
+  exact-head human checkpoints, summary, and verification;
+- `apa-mcp` exposes confined resources and narrow tools to Codex, Claude, ChatGPT, and other MCP
+  clients.
+
+The current architecture and migration plan are in
+[docs/architecture/patent-drafting-harness-plan.md](docs/architecture/patent-drafting-harness-plan.md).
+The governing rule is: **models propose; deterministic commands validate; humans adopt; the ledger
+proves what happened.** Signatures, certifications, fee payment, and filing submission are excluded.
+
 ## Status — built, hardened, and green
 
 The full lifecycle from invention disclosure through filing-prep is implemented end-to-end (the five
@@ -21,7 +39,8 @@ phases below), **plus** a post-filing office-action extension, an LLM-judge eval
 generation, CI, and an end-to-end integration test. The suite is kept green with `bash build.sh`, and
 the parser, validator, and confidentiality/injection surfaces have been through a
 multi-round adversarial hardening audit (malformed-input robustness, prototype-pollution, prior-art-content
-injection, bounded parser recursion). Node-only, zero-dependency.
+injection, bounded parser recursion). Core lifecycle tools remain Node-first; the optional MCP
+application uses the official MCP SDK and runtime schema validators.
 
 - **Phase 1 — capture & protocol** (fully local, fully confidential): capture/compile an invention into
   a validated artifact, view it, guard confidentiality.
@@ -53,6 +72,9 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `packages/apa-safe/` | Guarded external-sink wrappers (`send`, `fetch`, `npx`): exact-byte scan, MEDIUM approval, runlog sink hashes, untrusted fetch envelope | ✅ tested |
 | `packages/apa-reports/` | Shared semantic report schemas for claims, patentability, examiner-adversary, and office-action reports | ✅ tested |
 | `packages/apa-trace/` | Hash-chained runlog + head and autoprep-state helpers for auditable attempts, resumable stages, checkpoints, and examiner-loop caps | ✅ tested |
+| `packages/apa-core/` + `packages/apa-workflow/` | Strict harness contracts, immutable objects/revisions, writer lock/CAS, proposals, human decisions, and executable workflow-v2 policy | ✅ tested |
+| `packages/apa-application/` + `apps/cli/` | Shared command service and unified `apa` executable | ✅ tested |
+| `apps/mcp-server/` | Matter-confined MCP resources, prompts, and digest-bound proposal/adoption tools | ✅ protocol-tested |
 | `packages/apa-skillgraph/` | Machine-readable skill/domain registry checker + generated skill graph/domain-pack documentation | ✅ tested |
 | `packages/apa-run/` | Graph-derived planner/status/executor: runs contained declared Node runners, hashes evidence, and stops for agent/human continuation | ✅ tested |
 | `packages/apa-bench/software-patent-sim.mjs` | Offline scenario simulator for `/apa-software-patent`: thin SaaS, codec, AI/ML, UI, CRM, and math-only traps | ✅ tested |
@@ -94,9 +116,10 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/autoprep/` | `/apa-autoprep` — orchestrates the whole lifecycle, enforcing the gates and human checkpoints between phases | ✅ |
 | `scripts/` + `hosts/` | The `.tmpl → SKILL.md` generator + dated legal-rule resolvers + host config (claude / codex / cursor) | ✅ |
 
-## Quickstart (Node >= 21; no install step, zero dependencies)
+## Quickstart (Node >= 21)
 
 ```bash
+npm install                                                     # workspace links + MCP/schema dependencies
 node scripts/gen-skill-docs.mjs                                   # generate the skills from templates
 node packages/apa-validate/validate.mjs examples/minimal-patent-artifact   # mechanical validation
 node packages/apa-viewer/build_manifest.mjs examples/minimal-patent-artifact --out examples/minimal-patent-artifact/manifest.json
@@ -122,6 +145,28 @@ node scripts/setup.mjs --install                                  # optional: in
 node packages/apa-skills/bin/apa-skills.mjs list                  # the npx installer (also: install [--host] / uninstall)
 node packages/apa-eval/cli.mjs --matter examples/minimal-patent-artifact --mock   # LLM-judge eval, offline
 node scripts/gen-skill-docs.mjs --all-hosts                       # generate per-host skills into dist/ (claude/codex/cursor)
+```
+
+Create and drive a new harness matter:
+
+```bash
+apa init --matter <matter> --matter-id <stable-id> --application-type provisional \
+  --user-role pro_se --idempotency-key <stable-key>
+apa head --matter <matter>
+apa ingest --matter <matter> --file <disclosure> --actor-id <human-id> \
+  --expected-head <head> --idempotency-key <stable-key>
+apa propose --matter <matter> --artifact-id specification-main --artifact-type specification \
+  --stage apa-spec \
+  --content-file <candidate.md> --actor-id <agent-id> --expected-head <head> \
+  --idempotency-key <stable-key>
+apa review --matter <matter>
+apa adopt --matter <matter> --proposal <proposal-id> --reviewer-id <human-id> \
+  --reviewer-role inventor --expected-head <head> --idempotency-key <stable-key>
+apa checkpoint --matter <matter> --stage apa-spec --checkpoint spec-support-review \
+  --reviewer-id <human-id> --reviewer-role inventor --expected-head <head> \
+  --idempotency-key <stable-key>
+apa verify --matter <matter>
+apa-mcp --matter <matter>
 ```
 
 Live USPTO prior-art search uses source id `patentsview` (PatentsView PatentSearch API) and needs

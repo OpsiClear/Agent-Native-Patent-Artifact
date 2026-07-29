@@ -1,0 +1,12 @@
+{
+  "schema": "apa-contract-registry-v1",
+  "contracts": [
+    { "id": "apa-matter-v1", "file": "matter.schema.json" },
+    { "id": "apa-skill-v1", "file": "skill.schema.json" },
+    { "id": "apa-source-record-v1", "file": "source-record.schema.json" },
+    { "id": "apa-artifact-proposal-v1", "file": "proposal.schema.json" },
+    { "id": "apa-review-decision-v1", "file": "decision.schema.json" },
+    { "id": "apa-artifact-envelope-v1", "file": "artifact-envelope.schema.json" },
+    { "id": "apa-workflow-event-v1", "file": "workflow-event.schema.json" }
+  ]
+}

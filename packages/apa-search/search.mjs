@@ -7,7 +7,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter, extractBindingBlocks, iterEntitySections, asArray } from "../apa-core/apa-parse.mjs";
 import { scan } from "../apa-redact/redact-engine.mjs";
 import { loadSource, descriptor, listSources, sourceHealth } from "./sources/index.mjs";
 import { dedupeRefsDetailed, expandCitationNeighborhood, rankRefs } from "./lib/refs.mjs";

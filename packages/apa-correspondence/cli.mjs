@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import {
   appendRunlog,
   buildRunlogEntry,

@@ -6,7 +6,7 @@
 
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { iterEntitySections, extractBindingBlocks } from "../../lib/apa-parse.mjs";
+import { iterEntitySections, extractBindingBlocks } from "../apa-core/apa-parse.mjs";
 import { validateSearchDossier } from "../apa-search/dossier-schema.mjs";
 
 export function assembleIds(matterDir) {

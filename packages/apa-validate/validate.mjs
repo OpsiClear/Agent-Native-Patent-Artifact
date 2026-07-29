@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseFrontmatter, extractBindingBlocks, loadYaml, iterEntitySections, asArray } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter, extractBindingBlocks, loadYaml, iterEntitySections, asArray } from "../apa-core/apa-parse.mjs";
 import {
   isSourceSpanPolicy,
   sourceSpanFindings,

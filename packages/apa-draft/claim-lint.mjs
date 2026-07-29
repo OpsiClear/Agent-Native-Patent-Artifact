@@ -12,7 +12,7 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { iterEntitySections, extractBindingBlocks, asArray, parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { iterEntitySections, extractBindingBlocks, asArray, parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import { defaultReportFor } from "../apa-reports/schemas.mjs";
 import { formatErrors, validateReport } from "../apa-reports/validate.mjs";
 import { existingFileRecords } from "../apa-trace/runlog.mjs";

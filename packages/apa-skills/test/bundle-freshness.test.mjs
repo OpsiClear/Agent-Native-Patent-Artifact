@@ -93,15 +93,17 @@ test("npm pack runs the real prepack lifecycle with complete host variants and n
     const args = process.platform === "win32"
       ? ["/d", "/s", "/c", "npm pack --json"]
       : ["pack", "--json"];
-    const pathValue = `${path.dirname(process.execPath)}${path.delimiter}${process.env.Path || process.env.PATH || ""}`;
+    const pathValue = process.platform === "win32"
+      ? path.dirname(process.execPath)
+      : `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH || ""}`;
+    const childEnv = Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => !/^path$/i.test(key)),
+    );
+    childEnv[process.platform === "win32" ? "Path" : "PATH"] = pathValue;
     const result = spawnSync(command, args, {
       cwd: tempPackage,
       encoding: "utf8",
-      env: {
-        ...process.env,
-        PATH: pathValue,
-        Path: pathValue,
-      },
+      env: childEnv,
     });
     assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`);
     const packed = parseFirstJsonArray(result.stdout);

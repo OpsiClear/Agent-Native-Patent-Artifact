@@ -7,7 +7,7 @@
 
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 
 export const FILING_RECEIPT_INPUT_SCHEMA = "apa-filing-receipt-input-v1";
 export const FILING_RECEIPT_AUDIT_SCHEMA = "apa-filing-receipt-audit-v1";

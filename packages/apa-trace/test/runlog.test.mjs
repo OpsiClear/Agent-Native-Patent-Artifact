@@ -16,15 +16,18 @@ import {
   appendRunlog,
   buildRunlogEntry,
   commandRecord,
+  currentRunlogHead,
   existingFileRecords,
   externalSinkRecord,
   humanCheckpoint,
   LEGACY_RUNLOG_SCHEMA,
+  RUNLOG_GENESIS_HASH,
   runlogHeadPath,
   runlogPath,
   sha256,
   validateRunlog,
 } from "../runlog.mjs";
+import { withMatterWriteLock } from "../../apa-core/matter-lock.mjs";
 
 test("appendRunlog creates trace/runlog.jsonl and appends without rewriting prior entries", () => {
   const d = mkdtempSync(join(tmpdir(), "apa-runlog-"));
@@ -138,6 +141,37 @@ test("runlog head rejects full ledger removal and a legacy downgrade after v2", 
     checked = validateRunlog(d);
     assert.equal(checked.ok, false);
     assert.ok(checked.errors.some((error) => /ledger is missing while its head still exists/.test(error.message)));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("runlog appends are writer-locked and support expected-head compare-and-swap", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-runlog-cas-"));
+  try {
+    assert.deepEqual(currentRunlogHead(d), { entries: 0, sha256: RUNLOG_GENESIS_HASH });
+    appendRunlog(d, buildRunlogEntry({ skill: "first" }), {
+      expectedHead: RUNLOG_GENESIS_HASH,
+    });
+    const current = currentRunlogHead(d);
+    assert.equal(current.entries, 1);
+    assert.notEqual(current.sha256, RUNLOG_GENESIS_HASH);
+    assert.throws(
+      () => appendRunlog(d, buildRunlogEntry({ skill: "stale" }), {
+        expectedHead: RUNLOG_GENESIS_HASH,
+      }),
+      /stale matter head/,
+    );
+    withMatterWriteLock(d, () => {
+      assert.throws(
+        () => appendRunlog(d, buildRunlogEntry({ skill: "concurrent" })),
+        /matter write lock is held/,
+      );
+    }, { owner: "test-holder" });
+    appendRunlog(d, buildRunlogEntry({ skill: "after-lock" }), {
+      expectedHead: current.sha256,
+    });
+    assert.equal(currentRunlogHead(d).entries, 2);
   } finally {
     rmSync(d, { recursive: true, force: true });
   }

@@ -1,0 +1,16 @@
+{
+  "name": "@apa/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa": "./cli.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  },
+  "dependencies": {
+    "@apa/application": "0.1.0",
+    "@apa/core": "0.1.0"
+  }
+}

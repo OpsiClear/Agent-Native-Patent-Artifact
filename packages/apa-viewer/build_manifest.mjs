@@ -30,7 +30,7 @@ import {
   extractBindingBlocks,
   loadYaml,
   iterEntitySections,
-} from "../../lib/apa-parse.mjs";
+} from "../apa-core/apa-parse.mjs";
 import { rulePackSummary } from "../apa-rules/rule-packs.mjs";
 
 const EDGE_TARGET_KINDS = Object.freeze({

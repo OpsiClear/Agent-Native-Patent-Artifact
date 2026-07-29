@@ -20,7 +20,7 @@ import { assertPpsExportSize, buildPpsImportResult } from "./pps-import.mjs";
 import { listSources, sourceHealth } from "./sources/index.mjs";
 import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import {
   appendRunlog,
   buildRunlogEntry,

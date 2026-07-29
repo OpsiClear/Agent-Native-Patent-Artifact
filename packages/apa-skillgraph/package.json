@@ -1,0 +1,16 @@
+{
+  "name": "@apa/skillgraph",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-skillgraph": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./skillgraph.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

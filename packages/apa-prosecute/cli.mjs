@@ -17,7 +17,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, basename } from "node:path";
-import { parseFrontmatter } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
 import { computeDeadlines } from "./deadlines.mjs";
 import { scaffoldResponse, oaNumberFromFile } from "./respond.mjs";

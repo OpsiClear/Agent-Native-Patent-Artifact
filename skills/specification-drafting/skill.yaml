@@ -3,10 +3,10 @@ id: apa-spec
 kind: core
 phase: drafting
 command: /apa-spec
-version: "0.1"
-description: "Draft specification sections from source-backed embodiments and claims."
+version: "0.2"
+description: "Propose specification sections from immutable source-backed embodiments and claims."
 inputs: [PATENT.md, logic/claims.md, src/embodiments.md, evidence/drawings/]
-outputs: [src/embodiments.md, src/specification_report.json]
+outputs: [drafts/specification/embodiments.md, drafts/specification/specification_report.json]
 upstream: [apa-claims]
 downstream: [apa-figures, apa-rigor]
 gates_after: [source-span-proof, no-new-matter]

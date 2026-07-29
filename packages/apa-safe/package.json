@@ -1,0 +1,16 @@
+{
+  "name": "@apa/safe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-safe": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./sinks.mjs",
+    "./untrusted-content": "./untrusted-content.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

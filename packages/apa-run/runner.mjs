@@ -13,6 +13,7 @@ import {
   validateRunlog,
 } from "../apa-trace/runlog.mjs";
 import { loadSkillGraph } from "../apa-skillgraph/skillgraph.mjs";
+import { compileWorkflowPlan } from "../apa-workflow/definition.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -229,12 +230,16 @@ export function planPipeline({ matter = "", domains = [], supports = [], graph =
     for (const hook of afterHooks) emitHook(hook);
   }
 
-  return {
+  const plan = {
     schema: "apa-run-plan-v1",
     matter: matter || "",
     domains: enabledDomains,
     supports: enabledSupports,
     steps,
+  };
+  return {
+    ...plan,
+    workflow: compileWorkflowPlan(plan, { registry: graph.registry }),
   };
 }
 
@@ -364,42 +369,99 @@ function expectedOutputReasons(matterDir, step, outputRecords) {
   return reasons;
 }
 
-function checkpointEvidence(step, entries) {
+function entrySequence(entry) {
+  return Number(entry?.chain?.sequence || 0);
+}
+
+function checkpointEntryApplies(entry, stageId) {
+  const event = entry?.workflow_event;
+  if (!event || event.type !== "checkpoint-recorded") return true;
+  return (
+    event.actor?.kind === "human"
+    && event.payload?.stage_id === stageId
+    && event.payload?.reviewer_id === event.actor.id
+    && event.payload?.reviewed_head === event.expected_head
+    && event.payload?.satisfied === true
+  );
+}
+
+function checkpointEvidence(step, entries, evidenceSequence = 0) {
   const states = new Map();
   const required = new Set([
     ...asArray(step.human_checkpoints).map(String).filter(Boolean),
     ...asArray(step.gates_after).map((id) => `gate:${id}`).filter((id) => id !== "gate:"),
   ]);
   for (const entry of entries) {
+    if (!checkpointEntryApplies(entry, step.id)) continue;
     for (const checkpoint of asArray(entry?.human_checkpoints)) {
       const id = String(checkpoint?.id || "").trim();
       if (!id) continue;
-      states.set(id, checkpoint);
+      states.set(id, {
+        checkpoint,
+        sequence: entrySequence(entry),
+      });
       if (checkpoint.required) required.add(id);
     }
   }
+  const stale = new Set(
+    [...required].filter((id) => {
+      const state = states.get(id);
+      return state?.checkpoint?.satisfied && state.sequence <= evidenceSequence;
+    }),
+  );
   const pending = [...required]
     .sort()
-    .filter((id) => !states.get(id)?.satisfied)
+    .filter((id) => {
+      const state = states.get(id);
+      return !state?.checkpoint?.satisfied || state.sequence <= evidenceSequence;
+    })
     .map((id) => ({ id, required: true }));
-  return { pending, states };
+  return { pending, states, stale };
 }
 
-function completionForStep(matterDir, step, allEntries) {
-  const entries = allEntries.filter((entry) => entry?.skill === step.id);
-  if (!entries.length) {
+function completionForStep(matterDir, step, allEntries, { stageOrder = [] } = {}) {
+  const directEntries = allEntries.filter((entry) => entry?.skill === step.id);
+  const workflowEntries = allEntries.filter((entry) =>
+    entry?.workflow_event?.payload?.stage_id === step.id
+    && ["proposal-adopted", "checkpoint-recorded"].includes(entry.workflow_event.type)
+  );
+  const entries = [...directEntries, ...workflowEntries]
+    .sort((left, right) => entrySequence(left) - entrySequence(right));
+  const adoptionEntries = workflowEntries
+    .filter((entry) => entry.workflow_event.type === "proposal-adopted");
+  const agentStage = !step.runner;
+
+  if ((agentStage && !adoptionEntries.length) || (!agentStage && !directEntries.length)) {
     return {
       status: "pending",
       completed: false,
-      reasons: [reason("RUNLOG_ENTRY_MISSING", "no runlog evidence exists for this step")],
+      reasons: [agentStage
+        ? reason("PROPOSAL_ADOPTION_MISSING", "no adopted proposal is bound to this agent stage")
+        : reason("RUNLOG_ENTRY_MISSING", "no runlog evidence exists for this step")],
       pending_checkpoints: stepBoundaryIds(step).map((id) => ({ id, required: true })),
       evidence_entries: 0,
     };
   }
 
   const reasons = [];
-  const commandEntry = [...entries].reverse().find((entry) => asArray(entry?.commands).length > 0);
-  if (!commandEntry) {
+  const commandEntry = agentStage
+    ? null
+    : [...directEntries].reverse().find((entry) => asArray(entry?.commands).length > 0);
+  const evidenceEntry = agentStage ? adoptionEntries.at(-1) : commandEntry;
+  const evidenceSequence = entrySequence(evidenceEntry);
+
+  if (agentStage) {
+    const payload = evidenceEntry.workflow_event.payload;
+    if (
+      payload.outcome !== "adopted"
+      || !payload.proposal_id
+      || !payload.artifact_id
+      || !Number.isInteger(payload.artifact_revision)
+      || !/^[0-9a-f]{64}$/.test(String(payload.content_sha256 || ""))
+    ) {
+      reasons.push(reason("PROPOSAL_ADOPTION_INVALID", "the stage adoption event lacks hash-bound artifact evidence"));
+    }
+  } else if (!commandEntry) {
     reasons.push(reason("COMMAND_EVIDENCE_MISSING", "no executed command was recorded for this step"));
   } else {
     const exitCodes = asArray(commandEntry.commands).map((command) => Number(command?.exit_code));
@@ -408,27 +470,75 @@ function completionForStep(matterDir, step, allEntries) {
     }
   }
 
-  const inputRecords = latestRecords(entries, "inputs");
-  const outputRecords = latestRecords(entries, "outputs");
-  const recordableInputs = asArray(step.inputs)
-    .map((input) => checkInput(matterDir, input))
-    .filter((input) => input.status !== "external-or-placeholder");
-  if (recordableInputs.length && inputRecords.size === 0) {
-    reasons.push(reason("INPUT_EVIDENCE_MISSING", "no input hashes were recorded for this step"));
+  if (!agentStage) {
+    const inputRecords = latestRecords(directEntries, "inputs");
+    const outputRecords = latestRecords(directEntries, "outputs");
+    const recordableInputs = asArray(step.inputs)
+      .map((input) => checkInput(matterDir, input))
+      .filter((input) => input.status !== "external-or-placeholder");
+    if (recordableInputs.length && inputRecords.size === 0) {
+      reasons.push(reason("INPUT_EVIDENCE_MISSING", "no input hashes were recorded for this step"));
+    }
+    reasons.push(...verifyRecordedFiles(matterDir, inputRecords, "INPUT"));
+    reasons.push(...verifyRecordedFiles(matterDir, outputRecords, "OUTPUT"));
+    reasons.push(...expectedOutputReasons(matterDir, step, outputRecords));
   }
-  reasons.push(...verifyRecordedFiles(matterDir, inputRecords, "INPUT"));
-  reasons.push(...verifyRecordedFiles(matterDir, outputRecords, "OUTPUT"));
-  reasons.push(...expectedOutputReasons(matterDir, step, outputRecords));
 
-  const checkpoints = checkpointEvidence(step, entries);
+  const checkpoints = checkpointEvidence(step, entries, evidenceSequence);
   for (const checkpoint of checkpoints.pending) {
-    reasons.push(reason("CHECKPOINT_PENDING", "required human checkpoint is not satisfied", { checkpoint: checkpoint.id }));
+    reasons.push(checkpoints.stale.has(checkpoint.id)
+      ? reason("CHECKPOINT_STALE", "required human checkpoint predates the evidence revision under review", {
+          checkpoint: checkpoint.id,
+        })
+      : reason("CHECKPOINT_PENDING", "required human checkpoint is not satisfied", {
+          checkpoint: checkpoint.id,
+        }));
+  }
+  const adoptionInvalidation = [...allEntries].reverse().find((entry) => {
+    const event = entry?.workflow_event;
+    if (event?.type !== "proposal-adopted" || entrySequence(entry) <= evidenceSequence) return false;
+    if (asArray(event.payload?.invalidates).includes(step.id)) return true;
+    const fromIndex = stageOrder.indexOf(event.payload?.stage_id);
+    const toIndex = stageOrder.indexOf(step.id);
+    return fromIndex >= 0 && toIndex > fromIndex;
+  });
+  if (adoptionInvalidation) {
+    reasons.push(reason(
+      "UPSTREAM_ADOPTION_INVALIDATED",
+      "a later upstream artifact adoption invalidated this stage's evidence",
+      {
+        upstream_stage: adoptionInvalidation.workflow_event.payload?.stage_id,
+        artifact_id: adoptionInvalidation.workflow_event.payload?.artifact_id,
+        artifact_revision: adoptionInvalidation.workflow_event.payload?.artifact_revision,
+      },
+    ));
+  }
+  const loopInvalidation = [...allEntries].reverse().find((entry) =>
+    entry?.workflow_event?.type === "loop-requested"
+    && entry.workflow_event.payload?.allowed !== false
+    && entry.workflow_event.payload?.to === step.id
+    && entrySequence(entry) > evidenceSequence
+  );
+  if (loopInvalidation) {
+    reasons.push(reason(
+      "WORKFLOW_LOOP_REQUESTED",
+      "a bounded workflow loop invalidated this stage after its latest evidence",
+      {
+        from: loopInvalidation.workflow_event.payload?.from,
+        iteration: loopInvalidation.workflow_event.payload?.iteration,
+      },
+    ));
   }
 
   const completed = reasons.length === 0;
   const failed = reasons.some((item) => item.code === "COMMAND_FAILED");
   const stale = reasons.some((item) =>
-    /(?:_HASH_|_MISSING$|_PATH_UNSAFE$|_NOT_FILE$)/.test(item.code)
+    (
+      /(?:_HASH_|_MISSING$|_PATH_UNSAFE$|_NOT_FILE$)/.test(item.code)
+      || item.code === "WORKFLOW_LOOP_REQUESTED"
+      || item.code === "UPSTREAM_ADOPTION_INVALIDATED"
+      || item.code === "CHECKPOINT_STALE"
+    )
     && item.code !== "RUNLOG_ENTRY_MISSING"
     && item.code !== "COMMAND_EVIDENCE_MISSING"
   );
@@ -438,7 +548,7 @@ function completionForStep(matterDir, step, allEntries) {
     reasons,
     pending_checkpoints: checkpoints.pending,
     evidence_entries: entries.length,
-    latest_evidence_at: entries.at(-1)?.timestamp || null,
+    latest_evidence_at: evidenceEntry?.timestamp || null,
   };
 }
 
@@ -446,8 +556,9 @@ export function statusForMatter({ matter, domains = [], supports = [], graph = l
   const plan = planPipeline({ matter, domains, supports, graph });
   const matterDir = resolve(matter || ".");
   const runlog = validateRunlog(matterDir);
+  const stageOrder = plan.steps.map((step) => step.id);
   const steps = plan.steps.map((step) => {
-    const completion = completionForStep(matterDir, step, runlog.entries);
+    const completion = completionForStep(matterDir, step, runlog.entries, { stageOrder });
     return {
       ...step,
       completed: completion.completed,
@@ -589,7 +700,15 @@ function hasContinuation(entries, stepId) {
   const id = continuationId(stepId);
   let latestStepEntry = -1;
   entries.forEach((entry, index) => {
-    if (entry?.skill === stepId) latestStepEntry = index;
+    if (
+      entry?.skill === stepId
+      || (
+        entry?.workflow_event?.type === "proposal-adopted"
+        && entry.workflow_event.payload?.stage_id === stepId
+      )
+    ) {
+      latestStepEntry = index;
+    }
   });
   return entries.some((entry, index) => (
     index > latestStepEntry
@@ -646,6 +765,26 @@ function appendRunnerAttempt({
   }));
 }
 
+function appendRunnerIntent({
+  matterDir,
+  step,
+  argv,
+  cwd,
+  startedAt,
+  inputFiles,
+}) {
+  return appendRunlog(matterDir, buildRunlogEntry({
+    timestamp: startedAt,
+    skill: step.id,
+    ruleVersion: "apa-run-execution-v2",
+    inputs: existingFileRecords(matterDir, inputFiles),
+    notes: [
+      `runner intent recorded before execution: ${JSON.stringify(argv)}`,
+      `runner cwd: ${cwd}`,
+    ],
+  }));
+}
+
 function executionResult(plan, status, extra = {}) {
   return {
     schema: "apa-run-execution-v1",
@@ -660,7 +799,7 @@ function isCheckpointOnly(completion) {
   return (
     asArray(completion?.pending_checkpoints).length > 0
     && reasons.length > 0
-    && reasons.every((item) => item?.code === "CHECKPOINT_PENDING")
+    && reasons.every((item) => ["CHECKPOINT_PENDING", "CHECKPOINT_STALE"].includes(item?.code))
   );
 }
 
@@ -756,6 +895,14 @@ export function executePipeline({
     }
     const runnerArgs = [...declared.args, "--matter", matterDir];
     const commandArgv = [declared.executable, ...runnerArgs];
+    appendRunnerIntent({
+      matterDir,
+      step,
+      argv: commandArgv,
+      cwd: root,
+      startedAt,
+      inputFiles,
+    });
     const result = spawnSync(declared.executable, runnerArgs, {
       cwd: root,
       encoding: "utf8",

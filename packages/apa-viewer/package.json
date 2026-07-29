@@ -1,0 +1,15 @@
+{
+  "name": "@apa/viewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-manifest": "./build_manifest.mjs"
+  },
+  "exports": {
+    ".": "./build_manifest.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

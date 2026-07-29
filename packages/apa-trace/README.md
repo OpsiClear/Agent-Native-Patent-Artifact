@@ -14,11 +14,12 @@ The runlog is not a legal conclusion and does not mark a filing act complete. It
 can reconstruct what ran, what bytes left the machine, which artifacts changed, and which human checks
 remain open.
 
-`autoprep-state.mjs` writes and validates the resumable state file
+`autoprep-state.mjs` is a legacy compatibility helper that writes and validates the resumable projection
 `<matter>/trace/autoprep_state.json`. It records the current stage, completed-stage input/output
 hashes, last completion timestamp, next recommended stage, human checkpoints, and examiner loop
-count. It also exposes hash comparison for skip decisions, restart helpers, blocked-state reports,
-and machine enforcement of `max_examiner_loops`.
+count. New harness code derives canonical state from `runlog.jsonl` through `@apa/workflow`;
+`autoprep_state.json` must not override ledger status. The helper remains for older installed skills
+while they migrate to the unified `apa` commands.
 
 Current integrations:
 

@@ -1,0 +1,18 @@
+{
+  "name": "@apa/search",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-search": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./search.mjs",
+    "./dossier": "./dossier-schema.mjs",
+    "./writers": "./writers.mjs",
+    "./untrusted-content": "./envelope.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

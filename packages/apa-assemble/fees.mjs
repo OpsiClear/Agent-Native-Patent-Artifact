@@ -23,7 +23,7 @@ import {
   parseFrontmatter,
   extractBindingBlocks,
   iterEntitySections,
-} from "../../lib/apa-parse.mjs";
+} from "../apa-core/apa-parse.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // packages/apa-assemble -> repo root is two levels up.

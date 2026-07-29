@@ -1,0 +1,17 @@
+{
+  "name": "@apa/rigor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-rigor": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./verdict.mjs",
+    "./fingerprint": "./input-fingerprint.mjs",
+    "./scaffold": "./scaffold.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

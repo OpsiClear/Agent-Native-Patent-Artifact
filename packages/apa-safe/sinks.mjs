@@ -24,7 +24,7 @@ import {
   commandRecord,
   externalSinkRecord,
 } from "../apa-trace/runlog.mjs";
-import { wrapUntrustedContent } from "../apa-search/envelope.mjs";
+import { wrapUntrustedContent } from "./untrusted-content.mjs";
 
 export const MAX_SAFE_INPUT_BYTES = 16 * 1024 * 1024;
 export const DEFAULT_FETCH_TIMEOUT_MS = 30_000;

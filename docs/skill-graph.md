@@ -9,7 +9,7 @@ The current repository keeps the original flat core skill layout for installer c
 
 | Skill | Command | Phase | Description |
 |---|---|---|---|
-| `apa-autoprep` | `/apa-autoprep` | orchestration | Plan and run the full APA lifecycle with gates and checkpoints. |
+| `apa-autoprep` | `/apa-autoprep` | orchestration | Plan and run the ledger-canonical APA lifecycle with proposals, gates, and checkpoints. |
 | `apa-claims` | `/apa-claims` | drafting | Draft and lint source-backed claims and limitations. |
 | `apa-compile` | `/apa-compile` | capture | Lift public patent or disclosure documents into an APA artifact. |
 | `apa-disclose` | `/apa-disclose` | capture | Capture inventor disclosure facts into the APA artifact. |
@@ -21,7 +21,7 @@ The current repository keeps the original flat core skill layout for installer c
 | `apa-analyze` | `/apa-analyze` | analysis | Build claim charts and 101/102/103/112 flags as questions. |
 | `apa-priorart` | `/apa-priorart` | search | Search prior-art sources and write PA blocks plus a search dossier. |
 | `apa-rigor` | `/apa-rigor` | review | Run six-dimension rigor review and deterministic artifact-quality verdict. |
-| `apa-spec` | `/apa-spec` | drafting | Draft specification sections from source-backed embodiments and claims. |
+| `apa-spec` | `/apa-spec` | drafting | Propose specification sections from immutable source-backed embodiments and claims. |
 
 ## Domain And Support Skills
 

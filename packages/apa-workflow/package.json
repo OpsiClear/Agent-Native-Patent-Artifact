@@ -1,0 +1,20 @@
+{
+  "name": "@apa/workflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./definition": "./definition.mjs",
+    "./ledger": "./ledger.mjs",
+    "./commands": "./commands.mjs"
+  },
+  "dependencies": {
+    "@apa/core": "0.1.0",
+    "@apa/trace": "0.1.0",
+    "@apa/skillgraph": "0.1.0"
+  }
+}

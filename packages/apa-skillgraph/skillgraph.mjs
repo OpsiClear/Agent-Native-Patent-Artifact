@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { asArray, loadYaml } from "../../lib/apa-parse.mjs";
+import { asArray, loadYaml } from "../apa-core/apa-parse.mjs";
+import { validateContract } from "../apa-core/contracts.mjs";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const SKILLS_DIR = join(ROOT, "skills");
@@ -127,6 +128,16 @@ export function checkSkillGraph(graph = loadSkillGraph()) {
   const commands = new Map();
 
   for (const skill of skills) {
+    const {
+      path: _path,
+      relPath: _relPath,
+      dir: _dir,
+      ...skillMetadata
+    } = skill;
+    const contract = validateContract("apa-skill-v1", skillMetadata);
+    for (const error of contract.errors) {
+      add(errors, skill.relPath, `skill contract ${error.path}: ${error.message}`);
+    }
     validateRequiredObject(errors, skill, skill.relPath, "apa-skill-v1", [
       "id",
       "kind",

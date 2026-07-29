@@ -1,0 +1,16 @@
+{
+  "name": "@apa/trace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./runlog.mjs",
+    "./autoprep-state": "./autoprep-state.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  },
+  "dependencies": {
+    "@apa/core": "0.1.0"
+  }
+}

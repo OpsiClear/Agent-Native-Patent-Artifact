@@ -8,7 +8,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter, iterEntitySections } from "../../lib/apa-parse.mjs";
+import { parseFrontmatter, iterEntitySections } from "../apa-core/apa-parse.mjs";
 import { assemblyProfile } from "./profiles.mjs";
 
 function read(p) { try { return readFileSync(p, "utf8"); } catch { return ""; } }

@@ -1,0 +1,16 @@
+{
+  "name": "@apa/bench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-bench": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./benchmark.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

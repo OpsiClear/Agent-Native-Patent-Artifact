@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import { iterEntitySections } from "../../lib/apa-parse.mjs";
+import { iterEntitySections } from "../apa-core/apa-parse.mjs";
 import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
 import { refSummary, refToPaBlock, refToEvidence } from "./lib/refs.mjs";
 import { queryToString } from "./search.mjs";

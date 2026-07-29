@@ -1,0 +1,13 @@
+{
+  "name": "@apa/review",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "exports": {
+    ".": "./review-fingerprint.mjs",
+    "./fingerprint": "./review-fingerprint.mjs"
+  }
+}

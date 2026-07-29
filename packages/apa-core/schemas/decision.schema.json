@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/review-decision-v1",
+  "title": "APA human review decision",
+  "type": "object",
+  "required": ["schema", "decision_id", "proposal_id", "proposal_sha256", "outcome", "reviewer", "decided_at"],
+  "properties": {
+    "schema": { "const": "apa-review-decision-v1" },
+    "decision_id": { "type": "string", "pattern": "^dec_[0-9a-f]{24}$" },
+    "proposal_id": { "type": "string", "pattern": "^prop_[0-9a-f]{24}$" },
+    "proposal_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "outcome": { "enum": ["adopted", "rejected"] },
+    "reviewer": {
+      "type": "object",
+      "required": ["kind", "id", "role"],
+      "properties": {
+        "kind": { "const": "human" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "role": { "enum": ["inventor", "pro_se", "registered_practitioner", "reviewer"] }
+      },
+      "additionalProperties": false
+    },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "rationale": { "type": "string", "maxLength": 10000 }
+  },
+  "additionalProperties": false
+}

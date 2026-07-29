@@ -417,10 +417,13 @@ zero-dep, embeddable in a filing-review deliverable.
 
 ---
 
-## 5. Repo layout
+## 5. Historical repo-layout blueprint
 
-The repo currently contains only `third_party/`. Top-level layout mirrors how ARA and gstack are
-organized (skills directories at root, `packages/`, `examples/`, `docs/`, tests, installer):
+This section records the original proposed layout and is retained for design provenance. It is not a
+description of the current repository. Current structure and migration decisions live in
+`docs/architecture/patent-drafting-harness-plan.md` and `docs/adr/`.
+
+The original top-level proposal mirrored how ARA and gstack were organized:
 
 ```
 Agent-Native-Patent-Artifact/

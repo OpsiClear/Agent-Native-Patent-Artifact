@@ -1,0 +1,16 @@
+{
+  "name": "@apa/run",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apa-run": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./runner.mjs",
+    "./cli": "./cli.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

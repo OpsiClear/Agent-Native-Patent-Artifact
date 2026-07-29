@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/source-record-v1",
+  "title": "APA immutable source record",
+  "type": "object",
+  "required": ["schema", "source_id", "label", "original_name", "content", "actor", "ingested_at"],
+  "properties": {
+    "schema": { "const": "apa-source-record-v1" },
+    "source_id": { "type": "string", "pattern": "^src_[0-9a-f]{24}$" },
+    "label": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "original_name": { "type": "string", "minLength": 1, "maxLength": 255, "pattern": "^[^/\\\\]+$" },
+    "content": { "$ref": "#/$defs/content" },
+    "actor": { "$ref": "#/$defs/actor" },
+    "ingested_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "content": {
+      "type": "object",
+      "required": ["sha256", "bytes", "media_type", "object_path"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "media_type": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "object_path": { "type": "string", "pattern": "^sources/objects/[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["agent", "human", "tool"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

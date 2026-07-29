@@ -18,10 +18,12 @@ import {
 import { createHash } from "node:crypto";
 import { dirname, join, relative, resolve } from "node:path";
 
+import { withMatterWriteLock } from "../apa-core/matter-lock.mjs";
+
 export const RUNLOG_SCHEMA = "apa-runlog-v2";
 export const LEGACY_RUNLOG_SCHEMA = "apa-runlog-v1";
 export const RUNLOG_HEAD_SCHEMA = "apa-runlog-head-v1";
-const GENESIS_HASH = "0".repeat(64);
+export const RUNLOG_GENESIS_HASH = "0".repeat(64);
 
 export function sha256(data) {
   return createHash("sha256").update(data).digest("hex");
@@ -91,6 +93,7 @@ export function buildRunlogEntry({
   humanCheckpoints = [],
   adoptedChanges = [],
   rejectedChanges = [],
+  workflowEvent = null,
   notes = [],
 } = {}) {
   return {
@@ -105,6 +108,7 @@ export function buildRunlogEntry({
     human_checkpoints: humanCheckpoints,
     adopted_changes: adoptedChanges,
     rejected_changes: rejectedChanges,
+    ...(workflowEvent ? { workflow_event: workflowEvent } : {}),
     ...(notes.length ? { notes } : {}),
   };
 }
@@ -139,7 +143,32 @@ function writeHead(matterDir, entries, digest) {
   }
 }
 
-export function appendRunlog(matterDir, entry) {
+export function currentRunlogHead(matterDir) {
+  const current = validateRunlog(matterDir);
+  if (!current.ok) {
+    throw new Error(`runlog is invalid: ${current.errors.map((e) => `line ${e.line}: ${e.message}`).join("; ")}`);
+  }
+  const previous = current.entries.at(-1);
+  return {
+    entries: current.entries.length,
+    sha256: previous
+      ? (previous.chain?.entry_sha256 || previous._legacy_line_sha256)
+      : RUNLOG_GENESIS_HASH,
+  };
+}
+
+export function appendRunlog(matterDir, entry, {
+  expectedHead = "",
+  lockHeld = false,
+  owner = entry?.skill || "apa-runlog",
+} = {}) {
+  if (!lockHeld) {
+    return withMatterWriteLock(
+      matterDir,
+      () => appendRunlog(matterDir, entry, { expectedHead, lockHeld: true, owner }),
+      { owner },
+    );
+  }
   const path = runlogPath(matterDir);
   mkdirSync(dirname(path), { recursive: true });
   const current = validateRunlog(matterDir);
@@ -149,7 +178,10 @@ export function appendRunlog(matterDir, entry) {
   const previous = current.entries.at(-1);
   const previousDigest = previous
     ? (previous.chain?.entry_sha256 || previous._legacy_line_sha256)
-    : GENESIS_HASH;
+      : RUNLOG_GENESIS_HASH;
+  if (expectedHead && previousDigest !== expectedHead) {
+    throw new Error(`stale matter head: expected ${expectedHead}, current ${previousDigest}`);
+  }
   const chained = {
     ...entry,
     schema: RUNLOG_SCHEMA,
@@ -181,7 +213,7 @@ export function validateRunlog(pathOrMatterDir) {
   const text = readFileSync(path, "utf8");
   const entries = [];
   const errors = [];
-  let previousDigest = GENESIS_HASH;
+  let previousDigest = RUNLOG_GENESIS_HASH;
   let chainedEntries = 0;
   let sawChainedEntry = false;
   const lines = text.split(/\r?\n/);

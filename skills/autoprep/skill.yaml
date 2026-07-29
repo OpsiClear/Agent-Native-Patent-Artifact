@@ -3,10 +3,10 @@ id: apa-autoprep
 kind: core
 phase: orchestration
 command: /apa-autoprep
-version: "0.1"
-description: "Plan and run the full APA lifecycle with gates and checkpoints."
+version: "0.2"
+description: "Plan and run the ledger-canonical APA lifecycle with proposals, gates, and checkpoints."
 inputs: [PATENT.md, logic/, src/, evidence/, trace/]
-outputs: [trace/autoprep_state.json, trace/runlog.jsonl]
+outputs: [trace/runlog.jsonl, reviews/proposals/, drafts/records/]
 upstream: []
 downstream: [apa-disclose, apa-compile, apa-priorart, apa-analyze, apa-claims, apa-spec, apa-figures, apa-drawing-quality, apa-examiner, apa-rigor, apa-assemble]
 gates_after: [natural-person-inventor, no-unadopted-ai-limitations, validation-clean]

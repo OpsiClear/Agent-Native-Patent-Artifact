@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/workflow-event-v1",
+  "title": "APA workflow event",
+  "type": "object",
+  "required": [
+    "schema",
+    "event_id",
+    "type",
+    "timestamp",
+    "actor",
+    "idempotency_key",
+    "expected_head",
+    "payload_sha256",
+    "payload"
+  ],
+  "properties": {
+    "schema": { "const": "apa-workflow-event-v1" },
+    "event_id": { "type": "string", "pattern": "^evt_[0-9a-f]{24}$" },
+    "type": {
+      "enum": [
+        "matter-initialized",
+        "source-ingested",
+        "proposal-created",
+        "proposal-adopted",
+        "proposal-rejected",
+        "checkpoint-recorded",
+        "loop-requested",
+        "loop-blocked",
+        "artifact-exported"
+      ]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["agent", "human", "tool"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 }
+      },
+      "additionalProperties": false
+    },
+    "idempotency_key": { "type": "string", "minLength": 8, "maxLength": 200 },
+    "expected_head": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "payload_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

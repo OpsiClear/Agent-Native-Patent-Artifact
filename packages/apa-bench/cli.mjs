@@ -2,11 +2,10 @@
 /**
  * apa-bench package entrypoint.
  *
- * The deterministic benchmark implementation lives in scripts/benchmark.mjs for historical
- * compatibility. This wrapper gives the architecture a package-level command without duplicating the
- * runner.
+ * The deterministic benchmark implementation lives in this package. scripts/benchmark.mjs remains a
+ * compatibility entrypoint for existing automation.
  */
-import { main as runBenchmarkCli } from "../../scripts/benchmark.mjs";
+import { main as runBenchmarkCli } from "./benchmark.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 

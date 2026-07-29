@@ -15,6 +15,13 @@ import {
   humanCheckpoint,
   validateRunlog,
 } from "../../apa-trace/runlog.mjs";
+import {
+  decideProposal,
+  initializeHarness,
+  proposeArtifact,
+  recordCheckpoint,
+  requestLoop,
+} from "../../apa-workflow/commands.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "cli.mjs");
@@ -136,6 +143,7 @@ test("apa-run can satisfy form-fill evidence through the assembled forms directo
         outputs: ["assembled/forms/"],
         gates_after: [],
         human_checkpoints: [],
+        runner: "node patent_form_fill.mjs verify",
       }],
       domains: [],
       registry: {
@@ -196,6 +204,7 @@ function graphWithEvidenceStep() {
       outputs: ["output.json", "trace/runlog.jsonl"],
       gates_after: [],
       human_checkpoints: ["human-review"],
+      runner: "node step.mjs",
     }],
     domains: [],
     registry: {
@@ -213,8 +222,20 @@ function appendSuccessfulEvidence(matter, { checkpoint = true, exitCode = 0 } = 
     inputs: existingFileRecords(matter, [join(matter, "input.md")]),
     outputs: existingFileRecords(matter, [join(matter, "output.json")]),
     commands: [commandRecord({ argv: ["node", "step.mjs"], exitCode })],
-    humanCheckpoints: [humanCheckpoint({ id: "human-review", required: true, satisfied: checkpoint })],
+    humanCheckpoints: [humanCheckpoint({ id: "human-review", required: true, satisfied: false })],
   }));
+  if (checkpoint) {
+    appendRunlog(matter, buildRunlogEntry({
+      timestamp: "2026-07-26T12:00:01.000Z",
+      skill: "apa-evidence-step",
+      humanCheckpoints: [humanCheckpoint({
+        id: "human-review",
+        required: true,
+        satisfied: true,
+        reviewer: "fixture-human",
+      })],
+    }));
+  }
 }
 
 test("apa-run status exposes gate checkpoints before any step evidence exists", () => {
@@ -299,6 +320,163 @@ test("apa-run keeps a step pending until a later checkpoint record satisfies rev
     assert.equal(status.steps[0].completed, true, JSON.stringify(status.steps[0].completion, null, 2));
   } finally {
     rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("agent-stage adoption is evidence, later adoption invalidates downstream work, and checkpoints must be fresh", () => {
+  const root = mkdtempSync(join(tmpdir(), "apa-run-agent-evidence-"));
+  const matter = join(root, "matter");
+  const graph = {
+    skills: [
+      {
+        id: "apa-claims",
+        command: "/apa-claims",
+        phase: "drafting",
+        kind: "core",
+        inputs: [],
+        outputs: ["logic/claims.md"],
+        gates_after: [],
+        human_checkpoints: ["claim-scope-adoption"],
+      },
+      {
+        id: "apa-spec",
+        command: "/apa-spec",
+        phase: "drafting",
+        kind: "core",
+        inputs: ["logic/claims.md"],
+        outputs: ["drafts/specification/embodiments.md"],
+        gates_after: [],
+        human_checkpoints: [],
+      },
+    ],
+    domains: [],
+    registry: {
+      optional: [],
+      hooks: [],
+      allowed_loops: [{ from: "apa-examiner", to: "apa-spec", max_iterations: 2 }],
+      pipeline: { order: ["apa-claims", "apa-spec"] },
+    },
+  };
+  try {
+    const initialized = initializeHarness(matter, {
+      matterId: "agent-evidence-matter",
+      applicationType: "utility",
+      userRole: "registered_practitioner",
+      actor: { kind: "human", id: "practitioner-1" },
+      idempotencyKey: "initialize-agent-evidence",
+    });
+    const claimsV1 = proposeArtifact(matter, {
+      artifactId: "claims-main",
+      artifactType: "claims",
+      content: "1. A first candidate claim.",
+      actor: { kind: "agent", id: "draft-agent" },
+      expectedHead: initialized.head.sha256,
+      idempotencyKey: "propose-claims-version-1",
+    });
+    const adoptedClaimsV1 = decideProposal(matter, {
+      proposalId: claimsV1.proposal.proposal_id,
+      outcome: "adopted",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: claimsV1.head.sha256,
+      idempotencyKey: "adopt-claims-version-1",
+    });
+
+    let status = statusForMatter({ matter, graph });
+    let claims = status.steps.find((step) => step.id === "apa-claims");
+    assert.equal(claims.completed, false);
+    assert.ok(claims.completion.reasons.some((item) => item.code === "CHECKPOINT_PENDING"));
+
+    const claimsCheckpointV1 = recordCheckpoint(matter, {
+      stageId: "apa-claims",
+      checkpointId: "claim-scope-adoption",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: adoptedClaimsV1.head.sha256,
+      idempotencyKey: "checkpoint-claims-version-1",
+    });
+    status = statusForMatter({ matter, graph });
+    claims = status.steps.find((step) => step.id === "apa-claims");
+    assert.equal(claims.completed, true, JSON.stringify(claims.completion, null, 2));
+
+    const specV1 = proposeArtifact(matter, {
+      artifactId: "specification-main",
+      artifactType: "specification",
+      content: "# First specification candidate",
+      actor: { kind: "agent", id: "draft-agent" },
+      expectedHead: claimsCheckpointV1.head.sha256,
+      idempotencyKey: "propose-specification-version-1",
+    });
+    const adoptedSpecV1 = decideProposal(matter, {
+      proposalId: specV1.proposal.proposal_id,
+      outcome: "adopted",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: specV1.head.sha256,
+      idempotencyKey: "adopt-specification-version-1",
+    });
+    status = statusForMatter({ matter, graph });
+    assert.equal(status.steps.find((step) => step.id === "apa-spec").completed, true);
+
+    const claimsV2 = proposeArtifact(matter, {
+      artifactId: "claims-main",
+      artifactType: "claims",
+      content: "1. A revised candidate claim.",
+      actor: { kind: "agent", id: "draft-agent" },
+      expectedHead: adoptedSpecV1.head.sha256,
+      idempotencyKey: "propose-claims-version-2",
+    });
+    const adoptedClaimsV2 = decideProposal(matter, {
+      proposalId: claimsV2.proposal.proposal_id,
+      outcome: "adopted",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: claimsV2.head.sha256,
+      idempotencyKey: "adopt-claims-version-2",
+    });
+    status = statusForMatter({ matter, graph });
+    claims = status.steps.find((step) => step.id === "apa-claims");
+    const specification = status.steps.find((step) => step.id === "apa-spec");
+    assert.ok(claims.completion.reasons.some((item) => item.code === "CHECKPOINT_STALE"));
+    assert.ok(specification.completion.reasons.some((item) => item.code === "UPSTREAM_ADOPTION_INVALIDATED"));
+    assert.equal(executePipeline({ matter, graph }).status, "awaiting-checkpoint");
+
+    const claimsCheckpointV2 = recordCheckpoint(matter, {
+      stageId: "apa-claims",
+      checkpointId: "claim-scope-adoption",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: adoptedClaimsV2.head.sha256,
+      idempotencyKey: "checkpoint-claims-version-2",
+    });
+    const specV2 = proposeArtifact(matter, {
+      artifactId: "specification-main",
+      artifactType: "specification",
+      content: "# Revised specification candidate",
+      actor: { kind: "agent", id: "draft-agent" },
+      expectedHead: claimsCheckpointV2.head.sha256,
+      idempotencyKey: "propose-specification-version-2",
+    });
+    const adoptedSpecV2 = decideProposal(matter, {
+      proposalId: specV2.proposal.proposal_id,
+      outcome: "adopted",
+      reviewer: { id: "practitioner-1", role: "registered_practitioner" },
+      expectedHead: specV2.head.sha256,
+      idempotencyKey: "adopt-specification-version-2",
+    });
+    status = statusForMatter({ matter, graph });
+    assert.equal(status.steps.find((step) => step.id === "apa-spec").completed, true);
+
+    requestLoop(matter, {
+      from: "apa-examiner",
+      to: "apa-spec",
+      actor: { kind: "tool", id: "workflow-runner" },
+      expectedHead: adoptedSpecV2.head.sha256,
+      idempotencyKey: "request-specification-loop-1",
+    });
+    status = statusForMatter({ matter, graph });
+    assert.ok(
+      status.steps
+        .find((step) => step.id === "apa-spec")
+        .completion.reasons.some((item) => item.code === "WORKFLOW_LOOP_REQUESTED"),
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
@@ -494,9 +672,11 @@ test("apa-run records failed attempts with no claimed outputs", () => {
     assert.equal(result.status, "failed", JSON.stringify(result, null, 2));
     assert.equal(result.exit_code, 7);
     const entries = validateRunlog(matter).entries.filter((entry) => entry.skill === "apa-failing-runner");
-    assert.equal(entries.length, 1);
-    assert.equal(entries[0].commands[0].exit_code, 7);
-    assert.deepEqual(entries[0].outputs, []);
+    assert.equal(entries.length, 2);
+    assert.deepEqual(entries[0].commands, []);
+    assert.match(entries[0].notes.join("\n"), /runner intent recorded before execution/);
+    assert.equal(entries[1].commands[0].exit_code, 7);
+    assert.deepEqual(entries[1].outputs, []);
     assert.equal(existsSync(join(matter, "logic", "should-not-exist.md")), false);
   } finally {
     rmSync(matter, { recursive: true, force: true });
@@ -532,7 +712,9 @@ test("apa-run retries a failed checkpointed runner instead of waiting for human 
     assert.equal(second.status, "failed");
     assert.equal(second.exit_code, 7);
     const entries = validateRunlog(matter).entries.filter((entry) => entry.skill === "apa-failing-runner");
-    assert.equal(entries.length, 2, "the second call must execute and record a second attempt");
+    assert.equal(entries.length, 4, "each call must record intent before its completed attempt");
+    assert.equal(entries.filter((entry) => entry.commands.length === 0).length, 2);
+    assert.equal(entries.filter((entry) => entry.commands[0]?.exit_code === 7).length, 2);
   } finally {
     rmSync(matter, { recursive: true, force: true });
   }

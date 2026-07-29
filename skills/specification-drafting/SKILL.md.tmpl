@@ -2,7 +2,7 @@
 name: specification-drafting
 description: "Draft the 37 CFR 1.77 specification sections for a matter from its embodiments and claims, keeping reference numerals and defined terms consistent, grounding every statement in the disclosure, and scoring against the writing rubric. Invoke as /apa-spec."
 preamble-tier: 3
-version: "0.1"
+version: "0.2"
 allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
 triggers: "draft specification, write spec, detailed description, /apa-spec, abstract, background"
 ---
@@ -12,8 +12,10 @@ triggers: "draft specification, write spec, detailed description, /apa-spec, abs
 {{PATENT_PREAMBLE}}
 
 ## What this does
-Generates the specification text from `src/embodiments.md` (`SPEC####` support paragraphs) and the
-claims, in 37 CFR 1.77 order, with numeral and lexicographic consistency. Every limitation in a claim
+Generates a candidate specification from the immutable disclosure in `src/embodiments.md`
+(`SPEC####` support paragraphs) and the claims, in 37 CFR 1.77 order, with numeral and lexicographic
+consistency. The candidate is written under `drafts/specification/` and submitted as an immutable APA
+proposal; it does not overwrite the inventor-source disclosure. Every limitation in a claim
 must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the §112 spine.
 
 ## Sections (37 CFR 1.77 order; include conditionally-present ones only when warranted)
@@ -29,8 +31,9 @@ must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the 
 9. Abstract (<=150 words)
 
 ## Procedure
-1. For each claim limitation, ensure a `SPEC####` paragraph teaches and enables it; add/extend paragraphs
-   in `src/embodiments.md` with `grounding: transcribed` (inventor-sourced) or `reconstructed`
+1. For each claim limitation, identify the source `SPEC####` paragraph and draft proposed additions
+   in `drafts/specification/embodiments.md`; never edit `src/embodiments.md` during the agent step.
+   Mark candidate paragraphs with `grounding: transcribed` (inventor-sourced) or `reconstructed`
    (drafted from figures), and `defines_numerals` for any numbered element. Preserve `source`,
    `speaker`, and `timestamp` so a reviewer can trace each paragraph to inventor disclosure, figure
    reconstruction, attorney authorship, or human adoption. Under `source_span_policy: strict`, use
@@ -42,15 +45,18 @@ must trace to a `SPEC####` paragraph (the `supported_by` binding) - that is the 
    not grounded in the disclosure. Write any gap literally as **"Not specified in disclosure"** for the
    human - do not fill it.
 3. Keep numerals and defined terms consistent with `evidence/drawings/*` and `logic/concepts.md`.
-4. **Specification report.** Emit `src/specification_report.json` using the shared report schema
+4. **Specification report.** Emit `drafts/specification/specification_report.json` using the shared report schema
    (`schema: apa-specification-report-v1`, `legal_posture: flags-not-conclusions`). Record each
    conditionally-present 37 CFR 1.77 section in `conditional_sections` as `supported`,
    `not_applicable`, `unsupported`, or `human_reviewed`; record each drafted/adopted `SPEC####`
    paragraph in `spec_paragraphs` with grounding and source-span metadata; and record unsupported
    domains such as ST.26 sequence listings in `unsupported_domains` instead of drafting around them.
    Then run
-   `node packages/apa-reports/cli.mjs check <matter>/src/specification_report.json --kind specification`.
-5. Validate: `node packages/apa-validate/validate.mjs <matter>` (numeral definedness, support edges,
+   `node packages/apa-reports/cli.mjs check <matter>/drafts/specification/specification_report.json --kind specification`.
+5. Submit the candidate through `apa propose` (or MCP `apa_propose`) with
+   `artifact_type: specification`. A human reviews and adopts or rejects the exact digest. Only an
+   adopted revision may update a compatibility projection.
+6. Validate an adopted projection with `node packages/apa-validate/validate.mjs <matter>` (numeral definedness, support edges,
    term bounds). Resolve or flag warnings; do not assert §112 sufficiency - that is the human's call.
 
 {{WRITING_RUBRIC}}

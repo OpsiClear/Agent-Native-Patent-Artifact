@@ -1,0 +1,12 @@
+{
+  "name": "@apa/draft",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./claim-lint.mjs"
+  },
+  "engines": {
+    "node": ">=21"
+  }
+}

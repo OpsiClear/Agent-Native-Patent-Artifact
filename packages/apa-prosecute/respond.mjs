@@ -13,7 +13,7 @@
 
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { iterEntitySections, extractBindingBlocks } from "../../lib/apa-parse.mjs";
+import { iterEntitySections, extractBindingBlocks } from "../apa-core/apa-parse.mjs";
 import { parseOfficeActionFile } from "./parse.mjs";
 import { classifyOfficeActionEvent } from "./taxonomy.mjs";
 

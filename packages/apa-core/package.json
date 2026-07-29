@@ -1,0 +1,22 @@
+{
+  "name": "@apa/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./apa-parse": "./apa-parse.mjs",
+    "./assembly-fingerprint": "./assembly-fingerprint.mjs",
+    "./canonical": "./canonical.mjs",
+    "./contracts": "./contracts.mjs",
+    "./matter-lock": "./matter-lock.mjs",
+    "./store": "./store.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

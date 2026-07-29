@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apa.local/schemas/artifact-envelope-v1",
+  "title": "APA adopted artifact revision",
+  "type": "object",
+  "required": [
+    "schema",
+    "artifact_id",
+    "artifact_type",
+    "revision",
+    "status",
+    "content",
+    "inputs",
+    "source_proposal_id",
+    "decision_id",
+    "provenance",
+    "adopted_at"
+  ],
+  "properties": {
+    "schema": { "const": "apa-artifact-envelope-v1" },
+    "artifact_id": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{1,127}$" },
+    "artifact_type": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{1,127}$" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "status": { "const": "adopted" },
+    "content": { "$ref": "#/$defs/content" },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/input" },
+      "maxItems": 1000
+    },
+    "source_proposal_id": { "type": "string", "pattern": "^prop_[0-9a-f]{24}$" },
+    "decision_id": { "type": "string", "pattern": "^dec_[0-9a-f]{24}$" },
+    "provenance": {
+      "type": "object",
+      "required": ["actor", "proposal_sha256"],
+      "properties": {
+        "actor": { "$ref": "#/$defs/actor" },
+        "proposal_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "adopted_at": { "type": "string", "format": "date-time" },
+    "suggested_view": { "$ref": "#/$defs/relativePath" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+    },
+    "content": {
+      "type": "object",
+      "required": ["sha256", "bytes", "media_type", "object_path"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "media_type": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "object_path": { "type": "string", "pattern": "^drafts/objects/[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "required": ["ref", "sha256"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "revision": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["agent", "human", "tool"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 }
+      },
+      "additionalProperties": false
+    }
+  }
+}
