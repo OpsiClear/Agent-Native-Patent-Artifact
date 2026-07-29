@@ -15,16 +15,19 @@
     "Patent Center PDF",
     "prompt-driven patent form",
     "populate provisional cover sheet",
-    "filled draft PDF"
+    "filled draft PDF",
+    "check USPTO form boxes",
+    "populate patent PDF checkmarks"
   ],
   "should_trigger": [
     "Use /apa-form-fill to ask me for missing facts and fill a local SB/16 draft PDF.",
     "Use $apa-form-fill in Codex to collect the missing facts for a local SB/16 draft PDF.",
     "Use @apa-form-fill in ChatGPT to prepare the intake worksheet without claiming local PDF execution.",
     "Create a prompt-driven patent form intake, confirm every field, and populate the supported USPTO PDF.",
-    "Populate a nonprovisional transmittal as a filled draft PDF without touching signatures, entity status, fees, or filing.",
+    "Populate patent PDF checkmarks on a nonprovisional transmittal using my exact choices while leaving the signature blank.",
     "Help me enter confirmed bibliographic facts into AIA/15 and save a local draft.",
     "Populate my SB/16 provisional patent cover sheet from the private matter after I approve each value.",
+    "Prompt me for the exact SB/16 checkbox states, show them for confirmation, and create a local draft without signing.",
     "This Patent Center PDF only says Please wait; determine whether local automation must refuse it."
   ],
   "should_not_trigger": [

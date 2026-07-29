@@ -28,7 +28,7 @@ The current repository keeps the original flat core skill layout for installer c
 | Skill | Command | Phase | Hook Points | Description |
 |---|---|---|---|---|
 | `apa-software-patent` | `/apa-software-patent` | domain-review | `claims.seed`, `analysis.domain`, `spec.review`, `rigor.domain` | Review software patent matter for technical-improvement, 101, CRM, and software 112 risks. |
-| `apa-form-fill` | `/apa-form-fill` | filing | `assembly.postdraft` | Collect confirmed patent-form facts through agent chat and populate hash-pinned local AcroForm draft PDFs. |
+| `apa-form-fill` | `/apa-form-fill` | filing | `assembly.postdraft` | Collect confirmed patent-form text and checkbox states through agent chat and populate hash-pinned local AcroForm draft PDFs. |
 | `apa-review-form` | `/apa-review-form` | review | `assembly.preflight` | Generate local human-review forms, questionnaires, date checks, and agent-request queues for APA matters. |
 | `apa-missing-parts` | `/apa-missing-parts` | correspondence | - | Prepare blocked, human-owned response checklists for supported provisional and nonprovisional missing-parts notices. |
 | `apa-correspondence` | `/apa-correspondence` | correspondence | - | Triage USPTO correspondence into privacy-minimized records, tentative date estimates, and filing-receipt discrepancy audits. |

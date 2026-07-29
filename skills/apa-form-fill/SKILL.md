@@ -1,6 +1,6 @@
 ---
 name: apa-form-fill
-description: "Collect, verify, confirm, and locally populate draft USPTO PDF form fields through an agent chat interface. Use when filling supported provisional or utility nonprovisional cover sheets, transmittals, declarations, extension petitions, or IDS forms from an APA matter. Invoke as /apa-form-fill in Claude Code or Cursor, $apa-form-fill in Codex, or @apa-form-fill in ChatGPT after import. Do not use to choose legal responses, fill XFA forms, sign, certify, assert entity status, elect fees, pay, upload, or file."
+description: "Collect, verify, confirm, and locally populate text and checkbox fields in draft USPTO PDFs through an agent chat interface. Use when filling supported provisional or utility nonprovisional cover sheets, transmittals, declarations, extension petitions, or IDS forms from an APA matter. Invoke as /apa-form-fill in Claude Code or Cursor, $apa-form-fill in Codex, or @apa-form-fill in ChatGPT after import. Do not use to choose or recommend legal or financial responses, fill XFA forms, sign, execute payment, upload, or file."
 compatibility: Requires Node.js 21+ plus local filesystem and command execution for PDF creation; chat-only hosts can prepare intake only.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -19,14 +19,14 @@ Invoke the installed skill by its canonical name, `apa-form-fill`:
 ChatGPT or another chat-only host may prepare the intake worksheet, but it must not claim PDF creation
 or verification unless its active environment exposes this skill's local files and command execution.
 
-Collect patent-form facts in chat, require field-by-field human confirmation, and create a new local
-`*_DRAFT.pdf`. The bundled script never uses the network and never overwrites the official source.
-It mechanically verifies the written text and proves that prohibited and unselected field values did
-not change.
+Collect patent-form text and exact checkbox states in chat, require field-by-field human
+confirmation, and create a new local `*_DRAFT.pdf`. The bundled script never uses the network and
+never overwrites the official source. It mechanically verifies each written value and proves that
+signature and unselected field values did not change.
 
 APA is drafting software, not a law firm or registered practitioner. Treat every output as an
-unverified draft. A human owns form choice, legal responses, dates, signatures, certifications,
-entity status, fees, visual review, Patent Center actions, and filing.
+unverified draft. A human owns the form choice, every legal or financial response, every checkbox
+state, the signature, visual review, payment execution, Patent Center actions, and filing.
 
 ## Startup Contract
 
@@ -60,7 +60,9 @@ path.
 | Patent Center XFA form | Stop automated filling; use Adobe Acrobat Reader and human entry |
 | Unknown or revised PDF hash | Inspect only; refuse filling until the profile is independently revalidated |
 | Form route not human-selected | Explain neutral options and pause for the human/practitioner |
-| Signature, certification, entity, fee, payment, or filing field | Leave untouched for the human |
+| Hash-pinned text or checkbox field | Collect the exact value without inferring it, then use the confirmation workflow |
+| Signature field | Leave untouched for the human |
+| Push button or unsupported control | Leave untouched because it is an action, not a form value |
 
 Read [references/form-support.md](references/form-support.md) when selecting a supported form or
 handling XFA. Read [references/plan-schema.md](references/plan-schema.md) when editing provenance or
@@ -99,16 +101,19 @@ The plan is written under `assembled/forms/`. Do not move it outside the matter.
 3. Ask only for unresolved factual values. Use the host's native question UI when available;
    otherwise ask a numbered batch in ordinary chat. Keep wording neutral for pro-se or unknown-role
    users.
-4. Never ask the model to decide a checkbox, petition response, government-interest response,
-   declaration choice, signer authority, entity status, payment method, or fee election.
+4. For each relevant checkbox, ask the human for exactly `checked`, `unchecked`, or `leave
+   unchanged`. Never infer or recommend a petition response, government-interest response,
+   declaration choice, signer authority, entity status, payment method, fee election, or
+   certification. The script may transcribe the human's exact choice, but the model must not make it.
 5. Edit the matter-local plan rather than passing private values in command-line arguments.
 
-For a value supplied or confirmed in chat:
+For a text value supplied or confirmed in chat:
 
 ```json
 {
   "name": "Application Number",
   "label": "Application number",
+  "type": "text",
   "include": true,
   "value": "12/345,678",
   "provenance": {
@@ -117,6 +122,27 @@ For a value supplied or confirmed in chat:
   }
 }
 ```
+
+For a checkbox state supplied or confirmed in chat, use the JSON boolean `true` for checked or
+`false` for unchecked. Never use the strings `"true"` or `"false"`:
+
+```json
+{
+  "name": "Drawings",
+  "label": "Drawings enclosed",
+  "type": "checkbox",
+  "include": true,
+  "value": true,
+  "provenance": {
+    "kind": "human-confirmed",
+    "source": "chat"
+  }
+}
+```
+
+Keep `include: false`, `value: null`, and `provenance: null` to leave a field unchanged. Do not
+silently treat an omitted checkbox as unchecked because a private or prefilled source may already
+contain a checked state.
 
 Use `verified-matter-json` only when both the exact value and a `true` human-verification flag resolve
 from the pinned JSON source. The script rechecks the JSON hash, value pointer, and verification
@@ -130,9 +156,10 @@ Run:
 node "<skill-dir>/scripts/patent_form_fill.mjs" review --matter "<private-matter>" --plan "<matter-relative-plan.json>"
 ```
 
-Present every displayed field name, label, value, provenance, source hash, and confirmation digest
-to the user. Then **pause**. Do not create a confirmation record from implied approval, an earlier
-form choice, or the initial request. Require explicit confirmation of the displayed values.
+Present every displayed field name, label, type, value, provenance, source hash, and confirmation
+digest to the user. Explicitly call out checked and unchecked checkbox values. Then **pause**. Do not
+create a confirmation record from implied approval, an earlier form choice, or the initial request.
+Require explicit confirmation of the displayed values.
 
 If any value changes, rerun `review` and present the new digest.
 
@@ -160,8 +187,9 @@ node "<skill-dir>/scripts/patent_form_fill.mjs" verify --matter "<private-matter
 
 Render the new draft to page images with the host's PDF tooling or `pdftoppm`, inspect every page,
 and compare it with the source. Check for clipped text, wrong rows, missing glyphs, stale appearances,
-unexpected marks, changed page count, and any populated human-owned field. If local rendering is
-unavailable, require the user to open the draft in Adobe Acrobat Reader and review every page.
+unexpected or missing checkmarks, changed page count, a changed signature field, and any changed
+unselected field. If local rendering is unavailable, require the user to open the draft in Adobe
+Acrobat Reader and review every page.
 
 The review manifest intentionally remains `DRAFT-REQUIRES-HUMAN-REVIEW` and `filing_ready: false`.
 Do not change those states merely because mechanical verification passed.
@@ -173,7 +201,8 @@ Input:
 ```text
 Invoke apa-form-fill with this host's native skill syntax and fill the verified SB/16 manual cover
 sheet from this private matter.
-Ask me only for missing facts and do not touch signatures, fees, or entity status.
+Ask me for exact text and checkbox states, never choose a response for me, and leave the signature
+untouched.
 ```
 
 Expected outcome:
@@ -184,7 +213,7 @@ assembled/forms/sb16-manual_DRAFT.review.json
 ```
 
 The source hash remains unchanged, the manifest contains hashes and field names but no field values,
-and all signing, checking, payment, visual-review, and filing actions remain human-owned.
+and the signature, payment execution, visual review, and filing actions remain human-owned.
 
 ## Guardrails
 
@@ -196,11 +225,15 @@ and all signing, checking, payment, visual-review, and filing actions remain hum
   ACL.
 - Refuse a PDF larger than 64 MiB because bounded local parsing prevents accidental memory
   exhaustion and keeps the human-review workflow manageable.
-- Leave all buttons and choice controls untouched because their meaning can depend on filing posture.
-- Leave signature-block identity, date, and authority fields untouched with the signature itself;
-  partial automation can falsely imply execution.
+- Populate checkboxes only from an exact human-confirmed boolean because their meaning can change
+  legal, certification, entity, fee, payment-instruction, or filing posture.
+- Leave actual signature fields untouched. Adjacent printed-name, date, authority, and contact fields
+  may be populated only from exact confirmed values; their presence never implies execution.
+- Leave push buttons untouched because print, reset, submit, and similar actions are not data fields.
+- Treat payment-related field values as draft instructions only. The skill never executes a charge,
+  transfers funds, or submits payment credentials.
 - If the bundled font cannot represent a confirmed glyph, leave that field for human entry in Adobe;
   never silently transliterate or substitute a legal name.
 - Do not flatten the draft; the human may need to correct fields after visual review.
 - Reinspect the live official source and form instructions before relying on a bundled profile.
-- Stop at the draft boundary. Never upload, sign, certify, pay, submit, or mark the matter filed.
+- Stop at the draft boundary. Never upload, sign, execute payment, submit, or mark the matter filed.

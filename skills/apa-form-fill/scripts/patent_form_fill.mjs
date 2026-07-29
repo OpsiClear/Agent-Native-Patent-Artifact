@@ -18,8 +18,8 @@ import {
 } from "./form_fill_lib.mjs";
 
 const DISCLAIMER =
-  "Drafting aid only. A human must choose the form and legal responses, verify every value and page, " +
-  "sign, certify, determine entity status and fees, pay, upload, and file.";
+  "Drafting aid only. A human must choose and confirm every form value and checkbox, verify every page, " +
+  "sign, execute any payment, upload, and file.";
 
 function option(argv, name) {
   const index = argv.indexOf(name);
@@ -57,15 +57,15 @@ function emitJson(value) {
 function emitInspection(value) {
   process.stdout.write(`Form: ${value.profile ? `${value.profile.form_code} (${value.profile.id})` : "unrecognized revision"}\n`);
   process.stdout.write(`Source SHA-256: ${value.source.sha256}\n`);
-  process.stdout.write(`Pages: ${value.page_count}; fields: ${value.field_count}; automation-allowed text fields: ${value.allowed_field_count}\n`);
+  process.stdout.write(`Pages: ${value.page_count}; fields: ${value.field_count}; automation-allowed fields: ${value.allowed_field_count}\n`);
   process.stdout.write(`Supported for filling: ${value.supported ? "yes" : "no"}\n`);
   process.stdout.write(`\n${DISCLAIMER}\n`);
 }
 
 function emitPlanResult(result) {
   process.stdout.write(`Wrote fill plan: ${result.plan}\n`);
-  process.stdout.write(`Allowed text fields: ${result.allowed_field_count}\n`);
-  process.stdout.write("Edit only fields with include=true, a string value, and supported provenance.\n");
+  process.stdout.write(`Allowed text and checkbox fields: ${result.allowed_field_count}\n`);
+  process.stdout.write("Edit only fields with include=true, a type-appropriate value, and supported provenance.\n");
   process.stdout.write(`\n${DISCLAIMER}\n`);
 }
 
@@ -80,6 +80,7 @@ function emitReview(review) {
   process.stdout.write(`Workflow approval (JSON): ${formatReviewValue(review.workflow_approval)}\n`);
   for (const [index, field] of review.fields.entries()) {
     process.stdout.write(`${index + 1}. ${field.label} [${field.name}]\n`);
+    process.stdout.write(`   Type: ${field.type}\n`);
     process.stdout.write(`   Value (JSON): ${formatReviewValue(field.value)}\n`);
     process.stdout.write(`   Provenance (JSON): ${formatReviewValue(field.provenance)}\n`);
   }
@@ -187,7 +188,7 @@ async function cmdConfirm(argv) {
   if (argv.includes("--json")) emitJson(result);
   else {
     process.stdout.write(`Wrote confirmation record: ${result.confirmation}\n`);
-    process.stdout.write("This confirms draft field values only; it does not authorize signing, payment, or filing.\n");
+    process.stdout.write("This confirms displayed draft values only; it does not authorize signing, payment execution, or filing.\n");
   }
   return 0;
 }

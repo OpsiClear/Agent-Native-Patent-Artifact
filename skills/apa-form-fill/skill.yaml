@@ -3,14 +3,14 @@ id: apa-form-fill
 kind: support
 phase: filing
 command: /apa-form-fill
-version: "0.1"
-description: "Collect confirmed patent-form facts through agent chat and populate hash-pinned local AcroForm draft PDFs."
+version: "0.2"
+description: "Collect confirmed patent-form text and checkbox states through agent chat and populate hash-pinned local AcroForm draft PDFs."
 inputs: [PATENT.md]
 outputs: [assembled/forms/]
 upstream: [apa-assemble, apa-missing-parts]
 downstream: []
-gates_after: [field-value-human-confirmation, pdf-mechanical-verification, pdf-visual-review, submit-boundary]
-human_checkpoints: [form-route-selection, data-handling-acknowledgment, field-value-confirmation, pdf-page-review, signer-authority-review, entity-and-fee-review, patent-center-human-submission]
+gates_after: [field-value-and-checkbox-human-confirmation, pdf-mechanical-verification, pdf-visual-review, submit-boundary]
+human_checkpoints: [form-route-selection, data-handling-acknowledgment, field-value-and-checkbox-confirmation, legal-and-financial-choice-review, pdf-page-review, signature-review, patent-center-human-submission]
 domain_hooks: [assembly.postdraft]
 external_sinks: []
 safety: { legal_conclusion: false, requires_human_adoption: true, may_sign: false, may_certify: false, may_pay: false, may_file: false }

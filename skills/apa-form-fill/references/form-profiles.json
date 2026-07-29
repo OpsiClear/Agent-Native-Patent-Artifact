@@ -1,6 +1,6 @@
 {
-  "schema": "apa-pdf-form-profiles-v1",
-  "version": "1",
+  "schema": "apa-pdf-form-profiles-v2",
+  "version": "2",
   "official_source_page": "https://www.uspto.gov/patents/apply/forms",
   "retrieved_date": "2026-07-28",
   "engine": {
@@ -21,7 +21,9 @@
       "field_count": 0,
       "xfa": true,
       "fill_support": "refuse-xfa",
-      "allowed_text_fields": {}
+      "allowed_text_fields": {},
+      "allowed_checkbox_fields": {},
+      "signature_text_fields": {}
     },
     {
       "id": "aia14-application-data-sheet",
@@ -34,7 +36,9 @@
       "field_count": 0,
       "xfa": true,
       "fill_support": "refuse-xfa",
-      "allowed_text_fields": {}
+      "allowed_text_fields": {},
+      "allowed_checkbox_fields": {},
+      "signature_text_fields": {}
     },
     {
       "id": "aia15-utility-transmittal",
@@ -46,7 +50,8 @@
       "page_count": 2,
       "field_count": 55,
       "xfa": false,
-      "fill_support": "allowed-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
+      "allow_all_text_fields": true,
       "allowed_text_fields": {
         "Attorney Docket No": "Attorney docket number",
         "First Named Inventor": "First named inventor",
@@ -71,13 +76,42 @@
         "Zip Code": "Correspondence postal code",
         "Country": "Correspondence country",
         "Telephone": "Correspondence telephone",
-        "Email": "Correspondence email"
+        "Email": "Correspondence email",
+        "Date": "Signature-block date",
+        "Name PrintType": "Signer printed name",
+        "Registration No AttorneyAgent": "Attorney or agent registration number"
       },
-      "prohibited_text_fields": {
-        "Signature": "signature",
-        "Date": "signature date",
-        "Name PrintType": "signer identity",
-        "Registration No AttorneyAgent": "signer authority"
+      "allowed_checkbox_fields": {
+        "Check Box54": "Fee transmittal form enclosed",
+        "Check Box55": "Applicant asserts small entity status",
+        "Check Box56": "Applicant certifies micro entity status",
+        "Check Box57": "Specification enclosed",
+        "Check Box58": "Drawings enclosed",
+        "Check Box59": "Newly executed inventor oath or declaration enclosed",
+        "Check Box60": "Copy of inventor oath or declaration from a prior application enclosed",
+        "Check Box61": "Application Data Sheet enclosed",
+        "Check Box62": "Landscape table on CD enclosed",
+        "Check Box63": "Sequence listing computer readable form enclosed",
+        "Check Box64": "Sequence listing included in the specification",
+        "Check Box65": "Sequence listing supplied on CD-ROM or CD-R",
+        "Check Box66": "Sequence listing supplied on paper",
+        "Check Box67": "Sequence listing identity statements enclosed",
+        "Check Box68": "Assignment papers enclosed",
+        "Check Box69": "37 CFR 3.73(c) statement enclosed",
+        "Check Box70": "Power of Attorney enclosed",
+        "Check Box71": "English translation document enclosed",
+        "Check Box72": "Information Disclosure Statement enclosed",
+        "Check Box73": "Copies of citations attached",
+        "Check Box74": "Preliminary amendment enclosed",
+        "Check Box75": "Return receipt postcard enclosed",
+        "Check Box76": "Certified copy of priority documents enclosed",
+        "Check Box77": "Nonpublication request enclosed",
+        "Check Box78": "Other accompanying paper enclosed",
+        "Check Box79": "Use the address associated with the entered customer number",
+        "Check Box80": "Use the correspondence address entered below"
+      },
+      "signature_text_fields": {
+        "Signature": "Signature"
       }
     },
     {
@@ -90,16 +124,21 @@
       "page_count": 2,
       "field_count": 8,
       "xfa": false,
-      "fill_support": "allowed-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
+      "allow_all_text_fields": true,
       "allowed_text_fields": {
         "Title of Invention": "Title of invention",
         "United States application or PCT international application number": "Application or PCT application number",
-        "filed on": "Application filing date"
+        "filed on": "Application filing date",
+        "Inventor": "Legal name of inventor",
+        "Date Optional": "Declaration date (optional)"
       },
-      "prohibited_text_fields": {
-        "Inventor": "signer identity",
-        "Date Optional": "declaration signature date",
-        "Text4": "signature"
+      "allowed_checkbox_fields": {
+        "This declaration": "Declaration directed to the attached application",
+        "undefined": "Declaration directed to the identified US or PCT application"
+      },
+      "signature_text_fields": {
+        "Text4": "Inventor signature"
       }
     },
     {
@@ -113,7 +152,9 @@
       "field_count": 0,
       "xfa": true,
       "fill_support": "refuse-xfa",
-      "allowed_text_fields": {}
+      "allowed_text_fields": {},
+      "allowed_checkbox_fields": {},
+      "signature_text_fields": {}
     },
     {
       "id": "aia22p-provisional-extension",
@@ -125,27 +166,46 @@
       "page_count": 2,
       "field_count": 33,
       "xfa": false,
-      "fill_support": "allowed-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
+      "allow_all_text_fields": true,
       "allowed_text_fields": {
         "Docket Number Optional": "Attorney docket number",
         "Application Number": "Application number",
         "Filed": "Filing date",
-        "For": "Title of invention"
+        "For": "Title of invention",
+        "undefined": "One-month extension fee amount",
+        "undefined_2": "Two-month extension fee amount",
+        "undefined_3": "Three-month extension fee amount",
+        "undefined_4": "Four-month extension fee amount",
+        "undefined_5": "Five-month extension fee amount",
+        "Deposit Account Number": "Deposit account number",
+        "undefined_6": "Attorney or agent of record registration number",
+        "undefined_7": "Attorney or agent acting under 37 CFR 1.34 registration number",
+        "Date": "Signature-block date",
+        "Typed or printed name": "Signer typed or printed name",
+        "Telephone Number": "Signer telephone number",
+        "forms are submitted": "Number of extension forms submitted"
       },
-      "prohibited_text_fields": {
-        "undefined": "extension fee amount",
-        "undefined_2": "extension fee amount",
-        "undefined_3": "extension fee amount",
-        "undefined_4": "extension fee amount",
-        "undefined_5": "extension fee amount",
-        "Deposit Account Number": "payment authorization",
-        "undefined_6": "signer authority",
-        "undefined_7": "signer authority",
-        "Date": "signature date",
-        "Typed or printed name": "signer identity",
-        "Telephone Number": "signer identity",
-        "forms are submitted": "petition submission assertion",
-        "Text1": "signature"
+      "allowed_checkbox_fields": {
+        "One month 37 CFR 117u1": "Request a one-month extension",
+        "Two months 37 CFR 117u2": "Request a two-month extension",
+        "Three months 37 CFR 117u3": "Request a three-month extension",
+        "Four months 37 CFR 117u4": "Request a four-month extension",
+        "Five months 37 CFR 117u5": "Request a five-month extension",
+        "Applicant asserts small entity status See 37 CFR 127": "Applicant asserts small entity status",
+        "Applicant certifies micro entity status See 37 CFR 129": "Applicant certifies micro entity status",
+        "A check in the amount of the fee is enclosed": "Check payment enclosed",
+        "Payment by credit card Form PTO2038 is attached": "Credit-card payment form attached",
+        "The Director has already been authorized to charge fees in this application to a Deposit Account": "Deposit-account charge already authorized",
+        "The Director is hereby authorized to charge any fees which may be required or credit any overpayment to": "Authorize deposit-account charge or overpayment credit",
+        "Payment made via USPTO patent electronic filing system": "Payment made through the USPTO electronic filing system",
+        "appl": "Signer is the applicant",
+        "attorney or agent of record Registration number": "Signer is the attorney or agent of record",
+        "attorney or agent acting under 37 CFR 134 Registration number": "Signer is an attorney or agent acting under 37 CFR 1.34",
+        "Total of": "Multiple extension forms are submitted"
+      },
+      "signature_text_fields": {
+        "Text1": "Signature"
       }
     },
     {
@@ -158,7 +218,8 @@
       "page_count": 3,
       "field_count": 58,
       "xfa": false,
-      "fill_support": "allowed-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
+      "allow_all_text_fields": true,
       "allowed_text_fields": {
         "Priority Mail Express Label No": "Priority Mail Express label number",
         "Given Name first and middle if anyRow1": "Inventor 1 given and middle names",
@@ -190,26 +251,43 @@
         "CDs Number of CDs": "Number of enclosed CDs",
         "Number of Sheets": "Number of drawing sheets",
         "undefined_2": "Other enclosed application part",
-        "Number of Pages": "Specification page count"
+        "Number of Pages": "Specification page count",
+        "TOTAL FEE AMOUNT": "Total fee amount",
+        "Account Number": "Deposit account number",
+        "undefined_3": "Government agency name for an agency-made invention",
+        "The contract number is": "Government contract number",
+        "The US Government agency name is": "Government agency name for a contract-supported invention",
+        "undefined_4": "Government agency name continuation",
+        "DATE": "Signature-block date",
+        "TYPED OR PRINTED NAME": "Signer typed or printed name",
+        "REGISTRATION NO": "Attorney or agent registration number",
+        "TELEPHONE": "Signer telephone number",
+        "DOCKET NUMBER": "Attorney docket number"
+      },
+      "allowed_checkbox_fields": {
+        "The address corresponding to Customer Number": "Use the address corresponding to the entered customer number",
+        "undefined": "Use the correspondence address entered below",
+        "ADS checkbox": "Application Data Sheet enclosed",
+        "CD(s)": "CDs enclosed",
+        "Drawings": "Drawings enclosed",
+        "Other specify": "Other application part enclosed",
+        "Specification eg description of the invention": "Specification enclosed",
+        "SE": "Applicant asserts small entity status",
+        "ME": "Applicant certifies micro entity status",
+        "Check or money order": "Check or money-order payment enclosed",
+        "CC payment": "Credit-card payment form attached",
+        "DA": "Authorize deposit-account charge or overpayment credit",
+        "No": "No US Government agency or contract involvement",
+        "Yes the invention was made by an agency of the US Government The US Government agency name is": "Invention made by a US Government agency",
+        "Yes the invention was made under a contract with an agency of the US Government": "Invention made under a contract with a US Government agency"
       },
       "field_constraints": {
         "TITLE OF THE INVENTION 500 characters maxRow1": {
           "max_chars": 500
         }
       },
-      "prohibited_text_fields": {
-        "TOTAL FEE AMOUNT": "fee election",
-        "Account Number": "payment authorization",
-        "undefined_3": "government-interest assertion",
-        "The contract number is": "government-interest assertion",
-        "The US Government agency name is": "government-interest assertion",
-        "undefined_4": "government-interest assertion",
-        "DATE": "signature date",
-        "TYPED OR PRINTED NAME": "signer identity",
-        "REGISTRATION NO": "signer authority",
-        "TELEPHONE": "signer identity",
-        "DOCKET NUMBER": "signer block",
-        "signature": "signature"
+      "signature_text_fields": {
+        "signature": "Signature"
       }
     },
     {
@@ -222,10 +300,19 @@
       "page_count": 2,
       "field_count": 139,
       "xfa": false,
-      "fill_support": "ids-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
       "allow_all_text_fields": true,
       "label_scheme": "sb08a",
-      "allowed_text_fields": {}
+      "allowed_text_fields": {},
+      "allowed_checkbox_fields": {
+        "box109": "Foreign patent citation row 1: translation attached",
+        "box115": "Foreign patent citation row 2: translation attached",
+        "box21": "Foreign patent citation row 3: translation attached",
+        "box127": "Foreign patent citation row 4: translation attached",
+        "box133": "Foreign patent citation row 5: translation attached",
+        "box39": "Foreign patent citation row 6: translation attached"
+      },
+      "signature_text_fields": {}
     },
     {
       "id": "sb08b-manual",
@@ -237,10 +324,23 @@
       "page_count": 2,
       "field_count": 38,
       "xfa": false,
-      "fill_support": "ids-text-only",
+      "fill_support": "confirmed-text-and-checkboxes",
       "allow_all_text_fields": true,
       "label_scheme": "sb08b",
-      "allowed_text_fields": {}
+      "allowed_text_fields": {},
+      "allowed_checkbox_fields": {
+        "text11": "Non-patent literature row 1: translation attached",
+        "text14": "Non-patent literature row 2: translation attached",
+        "text17": "Non-patent literature row 3: translation attached",
+        "text20": "Non-patent literature row 4: translation attached",
+        "text23": "Non-patent literature row 5: translation attached",
+        "text26": "Non-patent literature row 6: translation attached",
+        "text29": "Non-patent literature row 7: translation attached",
+        "text32": "Non-patent literature row 8: translation attached",
+        "text35": "Non-patent literature row 9: translation attached",
+        "text38": "Non-patent literature row 10: translation attached"
+      },
+      "signature_text_fields": {}
     }
   ]
 }

@@ -72,7 +72,7 @@ harness** (Tier-3 drafting-quality scoring), an optional **post-filing office-ac
 | `skills/office-action/` | **(post-filing)** `/apa-office-action` — map rejections to claims, deadlines, response scaffold (flags, not conclusions) | ✅ |
 | `skills/patent-correspondence-triage/` | **(post-filing)** `/apa-correspondence` — classify notices, verify procedural facts, estimate notice dates, and audit filing receipts | ✅ |
 | `skills/missing-parts-response/` | **(post-filing)** `/apa-missing-parts` — organize provisional/nonprovisional missing-parts papers and human filing gates without selecting or filing a response | ✅ |
-| `skills/apa-form-fill/` | `apa-form-fill` (`/` in Claude/Cursor, `$` in Codex, `@` in ChatGPT after import) — collect and confirm form facts, then locally populate hash-pinned AcroForm drafts when filesystem/command execution is available, while refusing XFA, signatures, certifications, entity status, fees, payment, and filing | ✅ tested |
+| `skills/apa-form-fill/` | `apa-form-fill` (`/` in Claude/Cursor, `$` in Codex, `@` in ChatGPT after import) — collect and confirm text plus exact checkbox states, then locally populate hash-pinned AcroForm drafts when filesystem/command execution is available, while refusing XFA, signatures, payment execution, and filing | ✅ tested |
 | `skills/disclosure-capture/` | `/apa-disclose` — capture a disclosure into the artifact (file-I/O only) | ✅ |
 | `skills/compiler/` | `/apa-compile <path>` — lift an existing patent/publication into a validated artifact | ✅ |
 | `skills/prior-art-search/` | **(Phase 2)** `/apa-priorart` — search prior-art DBs, file references + a reference matrix | ✅ |

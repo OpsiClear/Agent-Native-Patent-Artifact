@@ -22,10 +22,10 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const PROFILE_SCHEMA = "apa-pdf-form-profiles-v1";
-export const PLAN_SCHEMA = "apa-pdf-fill-plan-v1";
-export const CONFIRMATION_SCHEMA = "apa-pdf-fill-confirmation-v1";
-export const REVIEW_MANIFEST_SCHEMA = "apa-pdf-fill-review-v1";
+export const PROFILE_SCHEMA = "apa-pdf-form-profiles-v2";
+export const PLAN_SCHEMA = "apa-pdf-fill-plan-v2";
+export const CONFIRMATION_SCHEMA = "apa-pdf-fill-confirmation-v2";
+export const REVIEW_MANIFEST_SCHEMA = "apa-pdf-fill-review-v2";
 export const ENGINE_VERSION = "1.17.1";
 export const MAX_JSON_BYTES = 5 * 1024 * 1024;
 export const MAX_PDF_BYTES = 64 * 1024 * 1024;
@@ -49,22 +49,18 @@ export const INTERACTION_HOSTS = Object.freeze([
   "chatgpt",
   "other",
 ]);
-const CONFIRMATION_SCOPE = "field values displayed in the plan review only";
+const CONFIRMATION_SCOPE = "text and checkbox values displayed in the plan review only";
 const CONFIRMATION_EXCLUSIONS = Object.freeze([
   "signature",
-  "certification",
-  "entity-status assertion",
-  "fee election",
-  "payment",
+  "payment execution",
   "filing",
 ]);
 const MANIFEST_BOUNDARIES = Object.freeze({
   filing_ready: false,
-  signatures_left_human_owned: true,
-  certifications_left_human_owned: true,
-  entity_status_left_human_owned: true,
-  fee_elections_left_human_owned: true,
-  payment_left_human_owned: true,
+  signatures_left_unmodified: true,
+  checkbox_values_human_confirmed: true,
+  legal_responses_not_inferred: true,
+  payment_execution: false,
   filing_confirmation: false,
 });
 const MANIFEST_PRIVACY = Object.freeze({
@@ -357,14 +353,18 @@ export function validateProfiles(registry) {
       fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} needs allowed_text_fields`);
     }
     if (
-      profile.prohibited_text_fields !== undefined
-      && (
-        !profile.prohibited_text_fields
-        || typeof profile.prohibited_text_fields !== "object"
-        || Array.isArray(profile.prohibited_text_fields)
-      )
+      !profile.allowed_checkbox_fields
+      || typeof profile.allowed_checkbox_fields !== "object"
+      || Array.isArray(profile.allowed_checkbox_fields)
     ) {
-      fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} prohibited_text_fields must be an object`);
+      fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} needs allowed_checkbox_fields`);
+    }
+    if (
+      !profile.signature_text_fields
+      || typeof profile.signature_text_fields !== "object"
+      || Array.isArray(profile.signature_text_fields)
+    ) {
+      fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} needs signature_text_fields`);
     }
     if (
       profile.allow_all_text_fields !== undefined
@@ -386,13 +386,18 @@ export function validateProfiles(registry) {
       if (!name || typeof label !== "string" || !label) {
         fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} has an invalid allowed text field`);
       }
-      if (Object.hasOwn(profile.prohibited_text_fields || {}, name)) {
-        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} both allows and prohibits field ${name}`);
+      if (Object.hasOwn(profile.signature_text_fields, name)) {
+        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} both allows and marks signature field ${name}`);
       }
     }
-    for (const [name, reason] of Object.entries(profile.prohibited_text_fields || {})) {
-      if (!name || typeof reason !== "string" || !reason) {
-        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} has an invalid prohibited text field`);
+    for (const [name, label] of Object.entries(profile.allowed_checkbox_fields)) {
+      if (!name || typeof label !== "string" || !label) {
+        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} has an invalid allowed checkbox field`);
+      }
+    }
+    for (const [name, label] of Object.entries(profile.signature_text_fields)) {
+      if (!name || typeof label !== "string" || !label) {
+        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} has an invalid signature text field`);
       }
     }
     for (const [name, constraints] of Object.entries(profile.field_constraints || {})) {
@@ -414,8 +419,8 @@ export function validateProfiles(registry) {
       ) {
         fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} constrains a field it does not allow: ${name}`);
       }
-      if (Object.hasOwn(profile.prohibited_text_fields || {}, name)) {
-        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} constrains prohibited field ${name}`);
+      if (Object.hasOwn(profile.signature_text_fields, name)) {
+        fail("PROFILE_REGISTRY_INVALID", `form profile ${profile.id} constrains signature field ${name}`);
       }
     }
     if (
@@ -423,9 +428,11 @@ export function validateProfiles(registry) {
       && (
         profile.allow_all_text_fields === true
         || Object.keys(profile.allowed_text_fields).length > 0
+        || Object.keys(profile.allowed_checkbox_fields).length > 0
+        || Object.keys(profile.signature_text_fields).length > 0
       )
     ) {
-      fail("PROFILE_REGISTRY_INVALID", `XFA profile ${profile.id} must not authorize text filling`);
+      fail("PROFILE_REGISTRY_INVALID", `XFA profile ${profile.id} must not authorize AcroForm filling`);
     }
   }
   return true;
@@ -448,7 +455,12 @@ export function loadPdfEngine({
     });
   }
   const engine = require(enginePath);
-  if (!engine?.PDFDocument || !engine?.PDFTextField || !engine?.StandardFonts) {
+  if (
+    !engine?.PDFDocument
+    || !engine?.PDFTextField
+    || !engine?.PDFCheckBox
+    || !engine?.StandardFonts
+  ) {
     fail("PDF_ENGINE_INVALID", "vendored PDF engine does not expose the required PDF APIs");
   }
   const loaded = {
@@ -530,7 +542,7 @@ function sb08aLabel(name, type) {
     const column = foreignRows[index].indexOf(n);
     if (column >= 0) return `Foreign patent citation row ${index + 1}: ${foreignLabels[column]}`;
   }
-  if (type === "checkbox") return "Translation-attached choice (human-owned)";
+  if (type === "checkbox") return "Translation-attached checkbox";
   return `SB/08A field ${name}; confirm against the rendered page`;
 }
 
@@ -552,14 +564,22 @@ function sb08bLabel(name, type) {
     const column = (n - 9) % 3;
     if (column === 0) return `Non-patent literature row ${row}: citation number`;
     if (column === 1) return `Non-patent literature row ${row}: document description`;
-    return `Non-patent literature row ${row}: translation-attached choice (human-owned)`;
+    return `Non-patent literature row ${row}: translation attached`;
   }
-  if (type === "checkbox") return "Translation-attached choice (human-owned)";
+  if (type === "checkbox") return "Translation-attached checkbox";
   return `SB/08B field ${name}; confirm against the rendered page`;
 }
 
 function profileFieldLabel(profile, name, type) {
-  if (profile?.allowed_text_fields?.[name]) return profile.allowed_text_fields[name];
+  if (type === "checkbox" && profile?.allowed_checkbox_fields?.[name]) {
+    return profile.allowed_checkbox_fields[name];
+  }
+  if (type === "text" && profile?.allowed_text_fields?.[name]) {
+    return profile.allowed_text_fields[name];
+  }
+  if (type === "text" && profile?.signature_text_fields?.[name]) {
+    return profile.signature_text_fields[name];
+  }
   if (profile?.label_scheme === "sb08a") return sb08aLabel(name, type);
   if (profile?.label_scheme === "sb08b") return sb08bLabel(name, type);
   return name;
@@ -574,28 +594,47 @@ function fieldPolicy(profile, name, type) {
       label,
     };
   }
-  if (type !== "text") {
+  if (type === "signature") {
     return {
       status: "prohibited",
-      reason: type === "signature"
-        ? "signature fields are always human-owned"
-        : "buttons and selections remain human-owned",
+      reason: "signature fields are always excluded from automated drafts",
       label,
     };
   }
-  if (Object.hasOwn(profile.prohibited_text_fields || {}, name)) {
+  if (type === "checkbox") {
+    if (Object.hasOwn(profile.allowed_checkbox_fields, name)) {
+      return {
+        status: "allowed",
+        reason: "profile-approved checkbox requiring an exact human-confirmed boolean",
+        label,
+      };
+    }
     return {
       status: "prohibited",
-      reason: profile.prohibited_text_fields[name],
+      reason: "checkbox is not allowlisted by the verified form profile",
       label,
     };
   }
-  if (profile.allow_all_text_fields === true || Object.hasOwn(profile.allowed_text_fields, name)) {
-    return { status: "allowed", reason: "profile-approved text field", label };
+  if (type === "text") {
+    if (Object.hasOwn(profile.signature_text_fields, name)) {
+      return {
+        status: "prohibited",
+        reason: "signature fields are always excluded from automated drafts",
+        label,
+      };
+    }
+    if (profile.allow_all_text_fields === true || Object.hasOwn(profile.allowed_text_fields, name)) {
+      return { status: "allowed", reason: "profile-approved text field", label };
+    }
+    return {
+      status: "prohibited",
+      reason: "text field is not allowlisted by the verified form profile",
+      label,
+    };
   }
   return {
     status: "prohibited",
-    reason: profile.prohibited_text_fields?.[name] || "field is not allowlisted by the verified form profile",
+    reason: "unsupported non-data control type",
     label,
   };
 }
@@ -749,9 +788,9 @@ export async function inspectPdf({
     boundaries: {
       source_preserved: true,
       signatures_automated: false,
-      certifications_automated: false,
-      entity_status_automated: false,
-      fee_elections_automated: false,
+      checkbox_values_supported: true,
+      legal_responses_inferred: false,
+      payment_executed: false,
       filing_automated: false,
     },
   };
@@ -792,6 +831,7 @@ export function createFillPlan(inspection, {
     .map((field) => ({
       name: field.name,
       label: field.label,
+      type: field.type,
       include: false,
       value: null,
       provenance: null,
@@ -943,12 +983,15 @@ function selectedPlanFields(plan) {
     }
     assertExactObjectKeys(
       field,
-      ["name", "label", "include", "value", "provenance"],
+      ["name", "label", "type", "include", "value", "provenance"],
       "PLAN_INVALID",
       `fill plan field ${field.name}`,
     );
     if (seen.has(field.name)) fail("PLAN_INVALID", `fill plan repeats field ${field.name}`);
     seen.add(field.name);
+    if (!["text", "checkbox"].includes(field.type)) {
+      fail("PLAN_INVALID", `field ${field.name} type must be text or checkbox`);
+    }
     if (field.include === true) selected.push(field);
     else if (field.include !== false) fail("PLAN_INVALID", `field ${field.name} include must be true or false`);
     else if (field.value !== null || field.provenance !== null) {
@@ -992,6 +1035,15 @@ function validateTextValue(planField, descriptor) {
   }
 }
 
+function validateCheckboxValue(planField) {
+  if (typeof planField.value !== "boolean") {
+    fail(
+      "FIELD_VALUE_INVALID",
+      `selected checkbox ${planField.name} needs the JSON boolean true or false`,
+    );
+  }
+}
+
 function validateVerifiedJsonProvenance(matter, provenance, value) {
   assertMatterRelativePathString(provenance.path, "provenance JSON path");
   const sourcePath = resolveMatterFile(matter, provenance.path, {
@@ -1014,7 +1066,10 @@ function validateVerifiedJsonProvenance(matter, provenance, value) {
     fail("PROVENANCE_INVALID", `provenance JSON cannot be parsed: ${error.message}`);
   }
   const sourced = jsonPointerGet(record, provenance.pointer);
-  if (sourced === null || typeof sourced === "object" || String(sourced) !== value) {
+  const valueMatches = typeof value === "string"
+    ? sourced !== null && typeof sourced !== "object" && String(sourced) === value
+    : sourced === value;
+  if (!valueMatches) {
     fail("PROVENANCE_VALUE_MISMATCH", "planned field value does not match its verified-matter JSON pointer");
   }
   if (jsonPointerGet(record, provenance.verification_pointer) !== true) {
@@ -1073,6 +1128,7 @@ function confirmationPayload(inspection, reviewedFields, workflowApproval) {
     fields: reviewedFields
       .map((field) => ({
         name: field.name,
+        type: field.type,
         value: field.value,
         provenance: field.provenance,
       }))
@@ -1124,21 +1180,27 @@ export async function validateAndReviewPlan({
   for (const planField of selected) {
     const descriptor = descriptors.get(planField.name);
     if (!descriptor) fail("UNKNOWN_FIELD", `fill plan names a field absent from the source PDF: ${planField.name}`);
-    if (descriptor.policy !== "allowed" || descriptor.type !== "text") {
+    if (descriptor.policy !== "allowed") {
       fail("PROHIBITED_FIELD", `automation is prohibited for field ${planField.name}: ${descriptor.policy_reason}`);
     }
+    if (planField.type !== descriptor.type) {
+      fail("FIELD_TYPE_CHANGED", `fill plan type changed for field ${planField.name}`);
+    }
     if (descriptor.read_only) fail("READ_ONLY_FIELD", `selected field ${planField.name} is read-only`);
-    validateTextValue(planField, descriptor);
+    if (descriptor.type === "text") validateTextValue(planField, descriptor);
+    else if (descriptor.type === "checkbox") validateCheckboxValue(planField);
+    else fail("PROHIBITED_FIELD", `unsupported selected field type for ${planField.name}`);
     const provenance = validateProvenance(matterRoot, planField);
     summary.push({
       name: planField.name,
       label: descriptor.label,
+      type: descriptor.type,
       value: planField.value,
       provenance,
     });
   }
   const selectedValueBytes = summary.reduce(
-    (total, field) => total + Buffer.byteLength(field.value, "utf8"),
+    (total, field) => total + Buffer.byteLength(canonicalJson(field.value), "utf8"),
     0,
   );
   if (selectedValueBytes > MAX_SELECTED_VALUE_BYTES) {
@@ -1158,6 +1220,9 @@ export async function validateAndReviewPlan({
   for (const planField of plan.fields) {
     if (planField.label !== descriptors.get(planField.name)?.label) {
       fail("PLAN_FIELD_SET_MISMATCH", `fill plan label changed for field ${planField.name}`);
+    }
+    if (planField.type !== descriptors.get(planField.name)?.type) {
+      fail("PLAN_FIELD_SET_MISMATCH", `fill plan type changed for field ${planField.name}`);
     }
   }
   const expectedBlocked = inspection.fields
@@ -1184,7 +1249,7 @@ export async function validateAndReviewPlan({
     field_count: summary.length,
     selected_value_bytes: selectedValueBytes,
     fields: summary,
-    confirmation_prompt: "Confirm that every displayed value should be written to this draft PDF. This does not sign, certify, pay, select entity status, or file anything.",
+    confirmation_prompt: "Confirm every displayed text and checkbox value for this draft. Checked boxes can record legal, certification, entity, fee, or payment instructions; the software does not infer them, sign, execute payment, or file anything.",
     boundaries: inspection.boundaries,
     filing_ready: false,
   };
@@ -1354,21 +1419,30 @@ function setFittedFieldFontSize(field, font, size) {
   field.acroField.setDefaultAppearance(`0 g\n/${font.name} ${size} Tf`);
 }
 
-async function applyTextValues(sourceBytes, review, engine) {
+async function applyFieldValues(sourceBytes, review, engine) {
   const document = await loadPdfDocument(sourceBytes, engine, "source PDF");
-  const form = document.getForm();
-  const fields = new Map(form.getFields().map((field) => [field.getName(), field]));
+  const fields = new Map(document.getForm().getFields().map((field) => [field.getName(), field]));
   try {
     const font = await document.embedFont(engine.api.StandardFonts.Helvetica);
     for (const item of review.fields) {
       const field = fields.get(item.name);
-      if (!(field instanceof engine.api.PDFTextField)) {
-        fail("FIELD_TYPE_CHANGED", `selected field ${item.name} is no longer a text field`);
+      if (item.type === "text") {
+        if (!(field instanceof engine.api.PDFTextField)) {
+          fail("FIELD_TYPE_CHANGED", `selected field ${item.name} is no longer a text field`);
+        }
+        field.setText(item.value);
+        setFittedFieldFontSize(field, font, fittedFontSize(field, item.value, font));
+        field.updateAppearances(font);
+      } else if (item.type === "checkbox") {
+        if (!(field instanceof engine.api.PDFCheckBox)) {
+          fail("FIELD_TYPE_CHANGED", `selected field ${item.name} is no longer a checkbox`);
+        }
+        if (item.value) field.check();
+        else field.uncheck();
+      } else {
+        fail("FIELD_TYPE_CHANGED", `selected field ${item.name} has an unsupported field type`);
       }
-      field.setText(item.value);
-      setFittedFieldFontSize(field, font, fittedFontSize(field, item.value, font));
     }
-    form.updateFieldAppearances(font);
   } catch (error) {
     if (error instanceof FormFillError) throw error;
     if (/cannot encode|encoding|winansi|glyph/i.test(String(error?.message || ""))) {
@@ -1404,7 +1478,10 @@ async function comparePdfFieldValues(sourceBytes, outputBytes, review, engine) {
   }
   const sourceMap = new Map(sourceFields.map((field) => [field.getName(), field]));
   const outputMap = new Map(outputFields.map((field) => [field.getName(), field]));
-  const selected = new Map(review.fields.map((field) => [field.name, field.value]));
+  const selected = new Map(review.fields.map((field) => [field.name, {
+    type: field.type,
+    value: field.value,
+  }]));
   for (const [name, sourceField] of sourceMap) {
     const outputField = outputMap.get(name);
     if (!outputField) fail("DRAFT_VERIFY_FAILED", `draft PDF lost form field ${name}`);
@@ -1413,7 +1490,11 @@ async function comparePdfFieldValues(sourceBytes, outputBytes, review, engine) {
     if (sourceType !== outputType) fail("DRAFT_VERIFY_FAILED", `draft PDF changed the type of field ${name}`);
     const outputValue = fieldValue(outputField, outputType);
     if (selected.has(name)) {
-      if (outputType !== "text" || outputValue !== selected.get(name)) {
+      const expected = selected.get(name);
+      if (
+        outputType !== expected.type
+        || canonicalJson(outputValue) !== canonicalJson(expected.value)
+      ) {
         fail("DRAFT_VERIFY_FAILED", `draft PDF value verification failed for field ${name}`);
       }
     } else if (canonicalJson(outputValue) !== canonicalJson(fieldValue(sourceField, sourceType))) {
@@ -1510,6 +1591,7 @@ function buildManifest({
     fields_written: review.fields.map((field) => ({
       name: field.name,
       label: field.label,
+      type: field.type,
       provenance: field.provenance.kind,
     })),
     mechanical_verification: verification,
@@ -1573,7 +1655,7 @@ export async function fillConfirmedPlan({
   if (sha256Bytes(sourceBytes) !== review.source.sha256) {
     fail("SOURCE_HASH_MISMATCH", "source PDF changed immediately before draft creation");
   }
-  const outputBytes = await applyTextValues(sourceBytes, review, engine);
+  const outputBytes = await applyFieldValues(sourceBytes, review, engine);
   const verification = await comparePdfFieldValues(sourceBytes, outputBytes, review, engine);
   verification.page_count = review.profile
     ? (registry.profiles.find((profile) => profile.id === review.profile.id)?.page_count || null)
@@ -1710,11 +1792,10 @@ export async function verifyDraft({
       manifest.boundaries,
       [
         "filing_ready",
-        "signatures_left_human_owned",
-        "certifications_left_human_owned",
-        "entity_status_left_human_owned",
-        "fee_elections_left_human_owned",
-        "payment_left_human_owned",
+        "signatures_left_unmodified",
+        "checkbox_values_human_confirmed",
+        "legal_responses_not_inferred",
+        "payment_execution",
         "filing_confirmation",
       ],
       "manifest boundaries",
@@ -1728,7 +1809,7 @@ export async function verifyDraft({
   for (const field of manifest.fields_written) {
     assertExactObjectKeys(
       field,
-      ["name", "label", "provenance"],
+      ["name", "label", "type", "provenance"],
       "MANIFEST_INVALID",
       "manifest written-field entry",
     );
@@ -1743,6 +1824,7 @@ export async function verifyDraft({
   const expectedFields = review.fields.map((field) => ({
     name: field.name,
     label: field.label,
+    type: field.type,
     provenance: field.provenance.kind,
   }));
   const expectedForm = {

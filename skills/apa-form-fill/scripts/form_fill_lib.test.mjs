@@ -73,6 +73,9 @@ async function makeMatter() {
   signature.addToPage(page, { x: 60, y: 560, width: 240, height: 24 });
   const entity = form.createCheckBox("Micro Entity");
   entity.addToPage(page, { x: 60, y: 520, width: 18, height: 18 });
+  entity.check();
+  const fee = form.createCheckBox("Fee Enclosed");
+  fee.addToPage(page, { x: 60, y: 490, width: 18, height: 18 });
   const sourceBytes = Buffer.from(await document.save({
     updateFieldAppearances: true,
     useObjectStreams: false,
@@ -87,15 +90,20 @@ async function makeMatter() {
     sha256: sha256Bytes(sourceBytes),
     expected_bytes: sourceBytes.length,
     page_count: 1,
-    field_count: 4,
+    field_count: 5,
     xfa: false,
-    fill_support: "allowed-text-only",
+    fill_support: "confirmed-text-and-checkboxes",
+    allow_all_text_fields: true,
     allowed_text_fields: {
       "Application Number": "Application number",
       Title: "Title of invention",
     },
-    prohibited_text_fields: {
-      Signature: "signature",
+    allowed_checkbox_fields: {
+      "Micro Entity": "Applicant certifies micro entity status",
+      "Fee Enclosed": "Fee is enclosed",
+    },
+    signature_text_fields: {
+      Signature: "Signature",
     },
     field_constraints: {
       Title: { max_chars: 50 },
@@ -149,9 +157,10 @@ test("vendored engine and official profiles pass pinned integrity checks", () =>
   assert.equal(profiles.profiles.length, 9);
   assert.equal(profiles.profiles.filter((profile) => profile.xfa).length, 3);
   const aia01 = profiles.profiles.find((profile) => profile.id === "aia01-inventor-declaration");
-  assert.equal(Object.keys(aia01.allowed_text_fields).length, 3);
-  assert.equal(Object.hasOwn(aia01.allowed_text_fields, "Inventor"), false);
-  assert.equal(aia01.prohibited_text_fields.Inventor, "signer identity");
+  assert.equal(Object.keys(aia01.allowed_text_fields).length, 5);
+  assert.equal(Object.hasOwn(aia01.allowed_text_fields, "Inventor"), true);
+  assert.equal(aia01.signature_text_fields.Text4, "Inventor signature");
+  assert.equal(Object.keys(aia01.allowed_checkbox_fields).length, 2);
   const sb16 = profiles.profiles.find((profile) => profile.id === "sb16-manual");
   assert.equal(
     sb16.field_constraints["TITLE OF THE INVENTION 500 characters maxRow1"].max_chars,
@@ -161,7 +170,7 @@ test("vendored engine and official profiles pass pinned integrity checks", () =>
   const contradictoryAia01 = contradictory.profiles.find(
     (profile) => profile.id === "aia01-inventor-declaration",
   );
-  contradictoryAia01.allowed_text_fields.Inventor = "Incorrectly allowed signer";
+  contradictoryAia01.allowed_text_fields.Text4 = "Incorrectly allowed signature";
   assert.throws(() => validateProfiles(contradictory), expectCode("PROFILE_REGISTRY_INVALID"));
   assert.throws(
     () => loadPdfEngine({ expectedSha256: "0".repeat(64) }),
@@ -197,7 +206,7 @@ test("canonical JSON, hashes, pointers, and XFA markers are deterministic", () =
   assert.throws(() => jsonPointerGet({}, "bad"), expectCode("PROVENANCE_POINTER_INVALID"));
 });
 
-test("inspection applies allowlists and blocks signatures and choices", async () => {
+test("inspection allows nonsignature text and allowlisted checkboxes while blocking signatures", async () => {
   const context = await makeMatter();
   try {
     const inspection = await inspectPdf({
@@ -208,11 +217,14 @@ test("inspection applies allowlists and blocks signatures and choices", async ()
     });
     assert.equal(inspection.supported, true);
     assert.equal(inspection.page_count, 1);
-    assert.equal(inspection.field_count, 4);
-    assert.equal(inspection.allowed_field_count, 2);
+    assert.equal(inspection.field_count, 5);
+    assert.equal(inspection.allowed_field_count, 4);
     assert.equal(inspection.fields.find((field) => field.name === "Application Number").policy, "allowed");
     assert.equal(inspection.fields.find((field) => field.name === "Signature").policy, "prohibited");
-    assert.equal(inspection.fields.find((field) => field.name === "Micro Entity").policy, "prohibited");
+    assert.equal(inspection.fields.find((field) => field.name === "Micro Entity").policy, "allowed");
+    assert.equal(inspection.fields.find((field) => field.name === "Micro Entity").type, "checkbox");
+    assert.equal(inspection.fields.find((field) => field.name === "Micro Entity").has_existing_value, true);
+    assert.equal(inspection.fields.find((field) => field.name === "Fee Enclosed").policy, "allowed");
     assert.equal(inspection.fields.find((field) => field.name === "Title").multiline, true);
 
     const unknownRegistry = {
@@ -372,9 +384,10 @@ test("plan initialization is draft-only and requires selected fields", async () 
     });
     assert.equal(plan.schema, PLAN_SCHEMA);
     assert.equal(plan.status, "DRAFT-INTAKE");
-    assert.equal(plan.fields.length, 2);
+    assert.equal(plan.fields.length, 4);
     assert.ok(plan.fields.every((field) => field.include === false && field.value === null));
-    assert.ok(plan.blocked_field_names.includes("Signature"));
+    assert.ok(plan.fields.every((field) => ["text", "checkbox"].includes(field.type)));
+    assert.deepEqual(plan.blocked_field_names, ["Signature"]);
     assert.equal(plan.human_confirmation.status, "pending");
     assert.deepEqual(plan.workflow_approval, {
       confidential_workflow_mode: "ordinary_local",
@@ -446,6 +459,12 @@ test("plan safety bindings, field inventory, and unselected values fail closed",
       expectCode("PLAN_INVALID"),
     );
     await assert.rejects(
+      review((plan) => {
+        plan.fields.find((field) => field.name === "Application Number").type = "checkbox";
+      }),
+      expectCode("FIELD_TYPE_CHANGED"),
+    );
+    await assert.rejects(
       review((plan) => { plan.blocked_field_names = []; }),
       expectCode("PLAN_FIELD_SET_MISMATCH"),
     );
@@ -509,6 +528,61 @@ test("human-chat values produce a stable field-by-field confirmation digest", as
   }
 });
 
+test("checkbox plans require exact booleans and bind checked and unchecked states into review", async () => {
+  const context = await makeMatter();
+  try {
+    const plan = await initializePlan({
+      matter: context.matter,
+      source: "forms/synthetic-form.pdf",
+      registry: context.registry,
+      engine: context.engine,
+    });
+    selectField(plan, "Micro Entity", false);
+    selectField(plan, "Fee Enclosed", true);
+    const review = await validateAndReviewPlan({
+      matter: context.matter,
+      plan,
+      registry: context.registry,
+      engine: context.engine,
+    });
+    assert.deepEqual(
+      review.fields.map((field) => ({
+        name: field.name,
+        type: field.type,
+        value: field.value,
+      })),
+      [
+        { name: "Micro Entity", type: "checkbox", value: false },
+        { name: "Fee Enclosed", type: "checkbox", value: true },
+      ],
+    );
+
+    const changed = JSON.parse(JSON.stringify(plan));
+    changed.fields.find((field) => field.name === "Fee Enclosed").value = false;
+    const changedReview = await validateAndReviewPlan({
+      matter: context.matter,
+      plan: changed,
+      registry: context.registry,
+      engine: context.engine,
+    });
+    assert.notEqual(review.confirmation_digest, changedReview.confirmation_digest);
+
+    const invalid = JSON.parse(JSON.stringify(plan));
+    invalid.fields.find((field) => field.name === "Fee Enclosed").value = "true";
+    await assert.rejects(
+      validateAndReviewPlan({
+        matter: context.matter,
+        plan: invalid,
+        registry: context.registry,
+        engine: context.engine,
+      }),
+      expectCode("FIELD_VALUE_INVALID"),
+    );
+  } finally {
+    cleanup(context);
+  }
+});
+
 test("verified matter JSON provenance checks hash, pointer, value, and human verification", async () => {
   const context = await makeMatter();
   try {
@@ -516,6 +590,7 @@ test("verified matter JSON provenance checks hash, pointer, value, and human ver
     const recordPath = join(context.matter, "correspondence", "receipt.json");
     const record = {
       application_number: { value: "12/345,678", human_verified: true },
+      fee_enclosed: { value: true, human_verified: true },
     };
     const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
     writeFileSync(recordPath, bytes);
@@ -545,6 +620,28 @@ test("verified matter JSON provenance checks hash, pointer, value, and human ver
       verification_pointer: "/application_number/human_verified",
       sha256: sha256Bytes(bytes),
     });
+
+    const checkboxPlan = await initializePlan({
+      matter: context.matter,
+      source: "forms/synthetic-form.pdf",
+      registry: context.registry,
+      engine: context.engine,
+    });
+    selectField(checkboxPlan, "Fee Enclosed", true, {
+      kind: "verified-matter-json",
+      path: "correspondence/receipt.json",
+      pointer: "/fee_enclosed/value",
+      verification_pointer: "/fee_enclosed/human_verified",
+      sha256: sha256Bytes(bytes),
+    });
+    const checkboxReview = await validateAndReviewPlan({
+      matter: context.matter,
+      plan: checkboxPlan,
+      registry: context.registry,
+      engine: context.engine,
+    });
+    assert.equal(checkboxReview.fields[0].value, true);
+    assert.equal(checkboxReview.fields[0].type, "checkbox");
 
     plan.fields.find((field) => field.include).value = "wrong";
     await assert.rejects(
@@ -642,8 +739,10 @@ test("aggregate selected values stay within the bounded human-review payload", a
       page_count: 1,
       field_count: fieldCount,
       xfa: false,
-      fill_support: "allowed-text-only",
+      fill_support: "confirmed-text-and-checkboxes",
       allowed_text_fields: allowedTextFields,
+      allowed_checkbox_fields: {},
+      signature_text_fields: {},
     };
     const registry = {
       schema: PROFILE_SCHEMA,
@@ -685,6 +784,7 @@ test("unknown and prohibited fields cannot be smuggled into a plan", async () =>
     plan.fields.push({
       name: "Signature",
       label: "Signature",
+      type: "text",
       include: true,
       value: "/Ada/",
       provenance: { kind: "human-confirmed", source: "chat" },
@@ -834,6 +934,8 @@ test("confirmed fill preserves the source, verifies values, emits hashes, and ne
     });
     selectField(plan, "Application Number", "12/345,678");
     selectField(plan, "Title", "Synthetic invention\nwith a second line");
+    selectField(plan, "Micro Entity", false);
+    selectField(plan, "Fee Enclosed", true);
     const review = await validateAndReviewPlan({
       matter: context.matter,
       plan,
@@ -868,6 +970,10 @@ test("confirmed fill preserves the source, verifies values, emits hashes, and ne
     assert.equal(manifest.human_review.status, "required");
     assert.deepEqual(manifest.human_review.pages_reviewed, []);
     assert.equal(manifest.boundaries.filing_ready, false);
+    assert.equal(manifest.boundaries.signatures_left_unmodified, true);
+    assert.equal(manifest.boundaries.checkbox_values_human_confirmed, true);
+    assert.equal(manifest.boundaries.legal_responses_not_inferred, true);
+    assert.equal(manifest.boundaries.payment_execution, false);
     assert.deepEqual(manifest.workflow_approval, plan.workflow_approval);
     assert.deepEqual(manifest.privacy, {
       classification: "private-matter-artifact",
@@ -875,8 +981,20 @@ test("confirmed fill preserves the source, verifies values, emits hashes, and ne
       contains_value_derived_digest: true,
     });
     assert.ok(manifest.fields_written.every((field) => field.provenance === "human-confirmed"));
+    assert.deepEqual(
+      manifest.fields_written.filter((field) => field.type === "checkbox").map((field) => field.name),
+      ["Micro Entity", "Fee Enclosed"],
+    );
     assert.equal(manifest.mechanical_verification.prohibited_and_unselected_values_unchanged, true);
     assert.doesNotMatch(manifestText, /12\/345,678|Synthetic invention/);
+    const outputDocument = await context.engine.api.PDFDocument.load(
+      readFileSync(join(context.matter, ...result.output_pdf.split("/"))),
+    );
+    assert.equal(outputDocument.getForm().getCheckBox("Micro Entity").isChecked(), false);
+    assert.equal(outputDocument.getForm().getCheckBox("Fee Enclosed").isChecked(), true);
+    const preservedSource = await context.engine.api.PDFDocument.load(readFileSync(context.source));
+    assert.equal(preservedSource.getForm().getCheckBox("Micro Entity").isChecked(), true);
+    assert.equal(preservedSource.getForm().getCheckBox("Fee Enclosed").isChecked(), false);
 
     const verified = await verifyDraft({
       matter: context.matter,

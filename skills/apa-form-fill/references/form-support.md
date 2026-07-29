@@ -9,15 +9,19 @@ each official download URL, retrieval date, byte count, and hash.
 
 | Profile | Program support | Automated scope |
 |---|---|---|
-| AIA/01 inventor declaration | AcroForm draft | Allowlisted bibliographic text only; signature block and declaration choices untouched |
-| AIA/15 utility transmittal | AcroForm draft | Allowlisted bibliographic and enclosure text only; all choices and signer fields untouched |
-| AIA/22P provisional extension | AcroForm draft | Application-identifying text only; extension, entity, fee, payment, petition, and signer fields untouched |
-| SB/16 manual cover sheet | AcroForm draft | Allowlisted inventor, title, address, and document-count text only |
-| SB/08A manual IDS sheet | AcroForm draft | Text cells only; translation choices untouched |
-| SB/08B manual IDS sheet | AcroForm draft | Text cells only; translation choices untouched |
+| AIA/01 inventor declaration | AcroForm draft | All text and both declaration-route checkboxes; actual signature excluded |
+| AIA/15 utility transmittal | AcroForm draft | All text and all 27 enclosure/status/address checkboxes; actual signature excluded |
+| AIA/22P provisional extension | AcroForm draft | All text and all 16 extension/entity/payment/role checkboxes; actual signature excluded |
+| SB/16 manual cover sheet | AcroForm draft | All text and all 15 address/enclosure/entity/payment/government-interest checkboxes; actual signature excluded |
+| SB/08A manual IDS sheet | AcroForm draft | All text cells and six translation-attached checkboxes |
+| SB/08B manual IDS sheet | AcroForm draft | All text cells and ten translation-attached checkboxes |
 | AIA/14 Patent Center ADS | Refuse | XFA |
 | SB/08 Patent Center IDS | Refuse | XFA |
 | SB/16 Patent Center cover sheet | Refuse | XFA |
+
+Checkbox support is mechanical transcription, not decision support. Require the human to supply and
+confirm each exact boolean; never infer a certification, entity status, fee election, payment
+instruction, declaration route, government-interest response, or signer role.
 
 ## XFA Contract
 
@@ -33,8 +37,9 @@ Treat an unknown hash as inspect-only:
 1. Download the form from the official USPTO form page.
 2. Record source URL, retrieval evidence, byte count, and SHA-256.
 3. Inspect every page and every field in a form-capable viewer.
-4. Independently map safe text fields and prohibited controls.
+4. Independently map every text field, checkbox, and actual signature control to its printed label.
 5. Add or revise the profile with tests.
-6. Re-run visual filling tests before enabling the new hash.
+6. Re-run checked, unchecked, text, signature-preservation, and visual filling tests before enabling
+   the new hash.
 
 Never bypass the hash gate for convenience.

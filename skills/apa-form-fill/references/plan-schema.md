@@ -1,6 +1,6 @@
 # Fill Plan and Provenance
 
-`init` creates `apa-pdf-fill-plan-v1`. Keep these top-level bindings unchanged:
+`init` creates `apa-pdf-fill-plan-v2`. Keep these top-level bindings unchanged:
 
 - `source_pdf`: matter-relative path to the verified blank PDF;
 - `source_sha256`: exact source hash;
@@ -29,6 +29,7 @@ Use after the user supplies or confirms the exact value in the active chat:
 {
   "name": "Title",
   "label": "Title of invention",
+  "type": "text",
   "include": true,
   "value": "Example invention",
   "provenance": {
@@ -38,6 +39,28 @@ Use after the user supplies or confirms the exact value in the active chat:
 }
 ```
 
+## Human-confirmed Checkbox
+
+Use a real JSON boolean after the human confirms the exact state. `true` checks the box and `false`
+clears a prechecked box:
+
+```json
+{
+  "name": "Drawings",
+  "label": "Drawings enclosed",
+  "type": "checkbox",
+  "include": true,
+  "value": true,
+  "provenance": {
+    "kind": "human-confirmed",
+    "source": "chat"
+  }
+}
+```
+
+Do not use `"true"`, `"false"`, `1`, `0`, or an inferred default. Leave the field unselected in the
+plan to preserve its source state.
+
 ## Verified Matter JSON
 
 Use only when the source JSON contains the exact value and an explicit `true` verification flag:
@@ -46,6 +69,7 @@ Use only when the source JSON contains the exact value and an explicit `true` ve
 {
   "name": "Application Number",
   "label": "Application number",
+  "type": "text",
   "include": true,
   "value": "12/345,678",
   "provenance": {
@@ -71,14 +95,16 @@ Leave unresolved or human-owned fields unchanged:
 {
   "name": "Optional Field",
   "label": "Optional field",
+  "type": "text",
   "include": false,
   "value": null,
   "provenance": null
 }
 ```
 
-Do not add fields omitted by `init`. The engine uses its verified profile, not labels copied into the
-plan, as the authorization boundary.
+Do not add fields omitted by `init` or change a field's `type`. The engine uses its verified profile,
+not labels copied into the plan, as the authorization boundary. Signature fields never appear in the
+editable field list.
 
 Treat the plan, confirmation record, draft PDF, and review manifest as private matter artifacts.
 The manifest omits plaintext field values but contains a value-derived confirmation digest, so it is

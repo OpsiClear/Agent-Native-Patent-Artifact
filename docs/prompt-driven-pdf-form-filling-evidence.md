@@ -11,35 +11,40 @@ decision, not a legal decision that a form is required, correct, complete, or re
 The official bundle was rebuilt from the allowlisted USPTO URLs in `docs/uspto-forms.json`. Each
 download matched its pinned byte count and SHA-256 before inspection.
 
-| Form profile | Pages | AcroForm fields | Automated text fields | Result |
-|---|---:|---:|---:|---|
-| AIA/01 inventor declaration | 2 | 8 | 3 | Allowlisted text draft created, reopened, and verified |
-| AIA/15 utility transmittal | 2 | 55 | 24 | Allowlisted text draft created, reopened, and verified |
-| AIA/22P provisional extension | 2 | 33 | 4 | Application-identifying text draft created, reopened, and verified |
-| SB/16 manual cover sheet | 3 | 58 | 31 | Allowlisted text draft created, reopened, and verified |
-| SB/08A manual IDS sheet | 2 | 139 | 133 | Text-cell draft created, reopened, and verified |
-| SB/08B manual IDS sheet | 2 | 38 | 28 | Text-cell draft created, reopened, and verified |
-| AIA/14 Patent Center ADS | 1 | XFA | 0 | Refused before PDF parsing; source hash unchanged |
-| SB/08 Patent Center IDS | 1 | XFA | 0 | Refused before PDF parsing; source hash unchanged |
-| SB/16 Patent Center cover sheet | 1 | XFA | 0 | Refused before PDF parsing; source hash unchanged |
+| Form profile | Pages | AcroForm fields | Automated text | Automated checkboxes | Signature excluded | Result |
+|---|---:|---:|---:|---:|---:|---|
+| AIA/01 inventor declaration | 2 | 8 | 5 | 2 | 1 | All checkboxes checked, reopened, and verified |
+| AIA/15 utility transmittal | 2 | 55 | 27 | 27 | 1 | All checkboxes checked, reopened, and verified |
+| AIA/22P provisional extension | 2 | 33 | 16 | 16 | 1 | All checkboxes checked, reopened, and verified |
+| SB/16 manual cover sheet | 3 | 58 | 42 | 15 | 1 | All checkboxes checked, reopened, and verified |
+| SB/08A manual IDS sheet | 2 | 139 | 133 | 6 | 0 | All checkboxes checked, reopened, and verified |
+| SB/08B manual IDS sheet | 2 | 38 | 28 | 10 | 0 | All checkboxes checked, reopened, and verified |
+| AIA/14 Patent Center ADS | 1 | XFA | 0 | 0 | n/a | Refused before PDF parsing; source hash unchanged |
+| SB/08 Patent Center IDS | 1 | XFA | 0 | 0 | n/a | Refused before PDF parsing; source hash unchanged |
+| SB/16 Patent Center cover sheet | 1 | XFA | 0 | 0 | n/a | Refused before PDF parsing; source hash unchanged |
 
-The program never treats structural fillability as permission to populate every field. Exact
-source hashes select a form policy. All buttons and choices are human-owned. Signatures,
-certifications, signer identity/authority, entity status, fees, payment, government-interest
-assertions, and filing confirmations are explicitly excluded.
+The program never treats structural fillability as authority to choose a response. Exact source
+hashes select a form policy, and every current checkbox has a verified printed label. The agent may
+transcribe only an exact human-confirmed JSON boolean and may not infer or recommend a declaration,
+certification, signer role, entity status, fee, payment instruction, government-interest response,
+or other legal or financial choice. Actual signature fields remain excluded.
 
-All 223 automated text fields across the six supported forms were populated with synthetic values,
-saved, reopened, and compared with the plan. Every prohibited and unselected field value remained
-unchanged.
+Across the six supported forms, the profiles authorize 251 non-signature text fields and 76
+checkboxes. A synthetic real-form matrix checked all 76 boxes, saved each draft, reopened it, and
+verified every checked state. All four actual signature fields and every unselected value remained
+unchanged. Separate synthetic tests also cleared a prechecked checkbox and rejected string values
+such as `"true"`.
 
 ## Prompt and confirmation evidence
 
 The cross-host skill uses the agent's normal chat interface as the intake layer:
 
 1. infer values from hash-pinned, human-verified matter JSON;
-2. ask a compact batch only for unresolved factual values;
+2. ask a compact batch for unresolved text and exact checked/unchecked/unchanged states without
+   choosing any response;
 3. store private values in a matter-local plan, not command arguments;
-4. print every selected field, value, provenance, source hash, and confirmation digest;
+4. print every selected field name, label, type, value, provenance, source hash, and confirmation
+   digest;
 5. pause for explicit human confirmation;
 6. bind the confirmation to the exact canonical plan digest;
 7. create a new `*_DRAFT.pdf` without overwriting the source;
@@ -65,7 +70,8 @@ The synthetic test suite covers:
 - human-confirmed and verified-matter JSON provenance;
 - missing and stale confirmation;
 - tampered plan status, field inventory, and confirmation-boundary refusal;
-- prohibited signature and checkbox fields;
+- signature-field refusal, exact checkbox booleans, checked and unchecked state changes, and
+  checkbox-state digest invalidation;
 - source preservation and output non-overwrite;
 - matter path confinement, symlink/junction escape refusal, Windows alternate-data-stream and
   reserved-device-name rejection, and exclusive non-overwriting writes;
@@ -92,11 +98,10 @@ that cannot fit at that floor. The matrix also exposed SB/08 text widgets withou
 appearance (`/DA`); the engine now supplies a black Helvetica default appearance only when one is
 absent before regenerating appearances.
 
-The final 13-page matrix showed no clipped text, overlap, missing glyph, or unexpected mark. Text
-appeared in the intended fields within their bounds. Signer, signature, certification, choice,
-government-interest, entity, fee, and payment controls remained blank. Poppler emitted a
-missing-display-font warning for an original form font, but both original form text and inserted
-Helvetica text rendered legibly.
+The checkbox-enabled 13-page matrix showed all 76 selected controls in their intended widgets with
+no clipping, overlap, missing glyph, or stray mark. All four signature lines remained blank, and
+privacy-statement pages were unchanged. The official SB/16 ADS control uses its own filled-square
+on-state while the other selected controls render as checkmarks; both reopen as boolean `true`.
 
 ## Cross-host packaging evidence
 
@@ -113,6 +118,11 @@ command execution.
 - Verify the live official form and instructions before use; a revised hash is inspect-only.
 - Use Adobe Acrobat Reader for XFA and for final human review.
 - Review every output page, not only populated pages.
-- Manually enter all human-owned choices and signature-block data.
-- Determine form route, legal response, dates, entity status, and fees independently.
-- Stop at the draft boundary: the skill cannot upload, certify, pay, submit, or mark a filing complete.
+- Supply and confirm every legal or financial checkbox choice independently; the model must not
+  select or recommend one.
+- Keep the actual signature manual. Adjacent name, date, authority, and contact fields may be
+  transcribed only from exact confirmed values and never imply execution.
+- Determine the form route, legal response, dates, entity status, fees, and payment instructions
+  independently.
+- Stop at the draft boundary: the skill cannot upload, sign, execute payment, submit, or mark a
+  filing complete.
