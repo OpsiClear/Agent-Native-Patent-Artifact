@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(join(dirname(fileURLToPath(import.meta.url)), ".."));
 const TEST_ARGS = [
   "--test",
+  "apps/**/*.test.mjs",
   "packages/**/*.test.mjs",
   "lib/**/*.test.mjs",
   "scripts/**/*.test.mjs",

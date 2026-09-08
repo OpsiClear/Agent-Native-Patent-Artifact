@@ -1,6 +1,6 @@
 # CI gate - the blocking, deterministic, FREE checks (gstack evals.yml + skill-docs.yml analog).
-# Everything here is offline (no API key): SKILL.md freshness, multi-host generation, the full
-# zero-dep test suite, and validation of the worked examples. Runs on Ubuntu AND Windows (APA
+# After dependency installation, checks run offline without an API key: SKILL.md freshness,
+# multi-host generation, the full test suite, and worked-example validation. Runs on Ubuntu AND Windows (APA
 # targets law-firm Windows laptops). The paid LLM-judge evals live in periodic-evals.yml.
 name: gate
 
@@ -24,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22" # >=21 for the test-runner glob patterns; zero deps, so no install step
+          node-version: "22"
+
+      - name: Install locked workspace dependencies
+        run: npm ci
 
       - name: SKILL.md freshness (templates + resolvers must match committed SKILL.md)
         run: node scripts/gen-skill-docs.mjs --check
@@ -53,7 +56,7 @@ jobs:
       - name: Prior-art recall score gate
         run: npm run score:prior-art-search
 
-      - name: Coverage summary (offline, advisory)
+      - name: Coverage summary (offline, blocking floors)
         run: npm run coverage
 
       - name: Core CLI smoke checks (offline)
