@@ -1,0 +1,396 @@
+{
+  "schema": "apa-skill-discovery-cases-v1",
+  "purpose": "Command-free natural language and out-of-scope routing; expected labels must stay out of evaluator packets.",
+  "cases": [
+    {
+      "id": "D001",
+      "prompt": "Fill the blank AcroForm using my confirmed answers and checked boxes.",
+      "expected": "apa-form-fill"
+    },
+    {
+      "id": "D002",
+      "prompt": "Transfer the values I approved into an unsigned USPTO PDF draft.",
+      "expected": "apa-form-fill"
+    },
+    {
+      "id": "D003",
+      "prompt": "Prepare a local declaration PDF from these exact field values, leaving the signature blank.",
+      "expected": "apa-form-fill"
+    },
+    {
+      "id": "D004",
+      "prompt": "Make a clickable checklist for reviewing claims, figures, and IDS citations in my APA matter.",
+      "expected": "apa-review-form"
+    },
+    {
+      "id": "D005",
+      "prompt": "Create an HTML questionnaire so I can confirm disclosure dates for this patent folder.",
+      "expected": "apa-review-form"
+    },
+    {
+      "id": "D006",
+      "prompt": "Build a local filing-readiness review form that exports my answers.",
+      "expected": "apa-review-form"
+    },
+    {
+      "id": "D007",
+      "prompt": "Take this invention through the complete patent preparation lifecycle with the necessary human checkpoints.",
+      "expected": "autoprep"
+    },
+    {
+      "id": "D008",
+      "prompt": "Resume the full disclosure-to-filing-package preparation pipeline for this matter.",
+      "expected": "autoprep"
+    },
+    {
+      "id": "D009",
+      "prompt": "Coordinate all patent preparation phases from intake through final review and assembly.",
+      "expected": "autoprep"
+    },
+    {
+      "id": "D010",
+      "prompt": "Draft independent and dependent claims from the supported embodiments.",
+      "expected": "claim-drafting"
+    },
+    {
+      "id": "D011",
+      "prompt": "Help organize a claim ladder with antecedent basis and source support for every limitation.",
+      "expected": "claim-drafting"
+    },
+    {
+      "id": "D012",
+      "prompt": "Propose a revised patent claim set for practitioner review.",
+      "expected": "claim-drafting"
+    },
+    {
+      "id": "D013",
+      "prompt": "Convert this published patent into a validated APA folder and preserve its claims verbatim.",
+      "expected": "compiler"
+    },
+    {
+      "id": "D014",
+      "prompt": "Extract the claims and reference numerals from this application into the artifact protocol.",
+      "expected": "compiler"
+    },
+    {
+      "id": "D015",
+      "prompt": "Turn the existing invention-disclosure document into a navigable patent artifact.",
+      "expected": "compiler"
+    },
+    {
+      "id": "D016",
+      "prompt": "Save the invention details from our conversation into an APA matter.",
+      "expected": "disclosure-capture"
+    },
+    {
+      "id": "D017",
+      "prompt": "We finished the inventor interview; capture the embodiments and disclosure dates we discussed.",
+      "expected": "disclosure-capture"
+    },
+    {
+      "id": "D018",
+      "prompt": "Record the alternatives and inventor contributions from this disclosure session.",
+      "expected": "disclosure-capture"
+    },
+    {
+      "id": "D019",
+      "prompt": "Challenge this draft with the strongest likely examiner objections and pair each with a proposed fix.",
+      "expected": "examiner-adversary"
+    },
+    {
+      "id": "D020",
+      "prompt": "Stress-test the patent application as an examiner before we assemble it.",
+      "expected": "examiner-adversary"
+    },
+    {
+      "id": "D021",
+      "prompt": "Give an adversarial examiner critique of this claim set and specification.",
+      "expected": "examiner-adversary"
+    },
+    {
+      "id": "D022",
+      "prompt": "Generate numbered black-and-white patent figures from these embodiments.",
+      "expected": "figure-generation"
+    },
+    {
+      "id": "D023",
+      "prompt": "Create patent flowcharts from the method steps and reconcile the reference numerals.",
+      "expected": "figure-generation"
+    },
+    {
+      "id": "D024",
+      "prompt": "Render the initial drawing set from the figure definitions and check spec support.",
+      "expected": "figure-generation"
+    },
+    {
+      "id": "D025",
+      "prompt": "Assemble the utility specification, ADS, IDS, declaration draft and preflight checklist.",
+      "expected": "filing-assembly"
+    },
+    {
+      "id": "D026",
+      "prompt": "Collate this reviewed matter into a filing-preparation package without submitting anything.",
+      "expected": "filing-assembly"
+    },
+    {
+      "id": "D027",
+      "prompt": "Prepare the patent application documents and fee estimate for a human filing handoff.",
+      "expected": "filing-assembly"
+    },
+    {
+      "id": "D028",
+      "prompt": "Build a blocked response checklist from this human-verified missing-parts notice record.",
+      "expected": "missing-parts-response"
+    },
+    {
+      "id": "D029",
+      "prompt": "Organize the papers and remaining human tasks for our Notice to File Missing Parts.",
+      "expected": "missing-parts-response"
+    },
+    {
+      "id": "D030",
+      "prompt": "Use the verified provisional missing-parts record to prepare a documentation checklist.",
+      "expected": "missing-parts-response"
+    },
+    {
+      "id": "D031",
+      "prompt": "Capture these examiner rejections and scaffold an Office Action response for my practitioner.",
+      "expected": "office-action"
+    },
+    {
+      "id": "D032",
+      "prompt": "Parse the non-final Office Action and estimate its response period for verification.",
+      "expected": "office-action"
+    },
+    {
+      "id": "D033",
+      "prompt": "Summarize this rejection round and organize a draft response under the as-filed support guard.",
+      "expected": "office-action"
+    },
+    {
+      "id": "D034",
+      "prompt": "Triage this USPTO notice and record what facts still need human verification.",
+      "expected": "patent-correspondence-triage"
+    },
+    {
+      "id": "D035",
+      "prompt": "Compare the filing receipt with our intended application details and flag discrepancies.",
+      "expected": "patent-correspondence-triage"
+    },
+    {
+      "id": "D036",
+      "prompt": "Classify this corrected-paper notice and capture its procedural facts.",
+      "expected": "patent-correspondence-triage"
+    },
+    {
+      "id": "D037",
+      "prompt": "Do these rendered patent drawing sheets look professionally prepared and ready for human filing review?",
+      "expected": "patent-drawing-quality"
+    },
+    {
+      "id": "D038",
+      "prompt": "Audit drawing margins, lead lines, figure labels and reference numeral legibility.",
+      "expected": "patent-drawing-quality"
+    },
+    {
+      "id": "D039",
+      "prompt": "Review the existing utility patent drawings for formal and presentation risks.",
+      "expected": "patent-drawing-quality"
+    },
+    {
+      "id": "D040",
+      "prompt": "Polish these crowded SVG patent figures into professional drawing candidates.",
+      "expected": "patent-svg-upgrader"
+    },
+    {
+      "id": "D041",
+      "prompt": "Upgrade the rough diagram exports and normalize their labels, strokes and leaders.",
+      "expected": "patent-svg-upgrader"
+    },
+    {
+      "id": "D042",
+      "prompt": "Improve these amateur generated patent SVGs while preserving supported geometry.",
+      "expected": "patent-svg-upgrader"
+    },
+    {
+      "id": "D043",
+      "prompt": "Build an element-by-element chart comparing the claims with these prior-art references.",
+      "expected": "patentability-analysis"
+    },
+    {
+      "id": "D044",
+      "prompt": "Map prior-art quotations to claim limitations and flag eligibility and support questions.",
+      "expected": "patentability-analysis"
+    },
+    {
+      "id": "D045",
+      "prompt": "Analyze this matter with a statutory-bar screen and a quote-backed prior-art matrix.",
+      "expected": "patentability-analysis"
+    },
+    {
+      "id": "D046",
+      "prompt": "Search patent databases for references relevant to the claim concepts.",
+      "expected": "prior-art-search"
+    },
+    {
+      "id": "D047",
+      "prompt": "Retrieve prior art through approved APIs and create a verified-source search dossier.",
+      "expected": "prior-art-search"
+    },
+    {
+      "id": "D048",
+      "prompt": "Find patents and papers bearing on this invention and preserve query evidence.",
+      "expected": "prior-art-search"
+    },
+    {
+      "id": "D049",
+      "prompt": "Create a reproduction benchmark fixture and expected oracle from this public patent.",
+      "expected": "public-patent-benchmark"
+    },
+    {
+      "id": "D050",
+      "prompt": "Convert a public application into a plain-text test fixture for evaluating our compiler.",
+      "expected": "public-patent-benchmark"
+    },
+    {
+      "id": "D051",
+      "prompt": "Build a real-patent benchmark and compare artifact extraction with the public record.",
+      "expected": "public-patent-benchmark"
+    },
+    {
+      "id": "D052",
+      "prompt": "Tune an APA skill against existing public-patent fixtures while keeping the oracle isolated.",
+      "expected": "real-patent-skill-tuning"
+    },
+    {
+      "id": "D053",
+      "prompt": "Run repeated skill improvement experiments using fixed patent benchmark scores and holdouts.",
+      "expected": "real-patent-skill-tuning"
+    },
+    {
+      "id": "D054",
+      "prompt": "Improve the software patent skill with fresh generated reports and keep-or-discard scoring.",
+      "expected": "real-patent-skill-tuning"
+    },
+    {
+      "id": "D055",
+      "prompt": "Run the six-dimension artifact-only rigor audit and produce the deterministic verdict report.",
+      "expected": "rigor-review"
+    },
+    {
+      "id": "D056",
+      "prompt": "Audit the completed matter for epistemic rigor and claim-spec-drawing support consistency.",
+      "expected": "rigor-review"
+    },
+    {
+      "id": "D057",
+      "prompt": "Score this APA matter using the rigor dimensions and per-dimension floors.",
+      "expected": "rigor-review"
+    },
+    {
+      "id": "D058",
+      "prompt": "Review repository dependencies and third-party notices for commercial release obligations.",
+      "expected": "software-license-review"
+    },
+    {
+      "id": "D059",
+      "prompt": "Audit the software license posture including SPDX metadata and patent-license clauses.",
+      "expected": "software-license-review"
+    },
+    {
+      "id": "D060",
+      "prompt": "Check attribution and copyleft compatibility for our vendored code.",
+      "expected": "software-license-review"
+    },
+    {
+      "id": "D061",
+      "prompt": "Review this AI invention for technical-improvement framing and algorithm disclosure gaps.",
+      "expected": "software-patent-review"
+    },
+    {
+      "id": "D062",
+      "prompt": "Harden the computer-implemented patent draft for CRM claims and software eligibility risks.",
+      "expected": "software-patent-review"
+    },
+    {
+      "id": "D063",
+      "prompt": "Assess the software invention for non-transitory storage support and concrete implementation detail.",
+      "expected": "software-patent-review"
+    },
+    {
+      "id": "D064",
+      "prompt": "Draft the specification sections from our supported claims and embodiments.",
+      "expected": "specification-drafting"
+    },
+    {
+      "id": "D065",
+      "prompt": "Write the detailed description and abstract with consistent defined terms and reference numerals.",
+      "expected": "specification-drafting"
+    },
+    {
+      "id": "D066",
+      "prompt": "Prepare a proposed patent specification in the required section order without inventing support.",
+      "expected": "specification-drafting"
+    },
+    {
+      "id": "D067",
+      "prompt": "Use tldraw as the sketch surface for these utility patent figures.",
+      "expected": "tldraw-patent-drawing"
+    },
+    {
+      "id": "D068",
+      "prompt": "Compare a tldraw export with the APA drawing definition and prepare normalization.",
+      "expected": "tldraw-patent-drawing"
+    },
+    {
+      "id": "D069",
+      "prompt": "Import this tldraw snapshot into the controlled patent drawing review workflow.",
+      "expected": "tldraw-patent-drawing"
+    },
+    {
+      "id": "D070",
+      "prompt": "Make a generic signup page for my shop.",
+      "expected": null
+    },
+    {
+      "id": "D071",
+      "prompt": "Summarize this employment agreement.",
+      "expected": null
+    },
+    {
+      "id": "D072",
+      "prompt": "Help me plan a weekend hiking trip.",
+      "expected": null
+    },
+    {
+      "id": "D073",
+      "prompt": "Make a sales presentation.",
+      "expected": null
+    },
+    {
+      "id": "D074",
+      "prompt": "Calculate the cells in this budget spreadsheet.",
+      "expected": null
+    },
+    {
+      "id": "D075",
+      "prompt": "Edit the colors in this vacation photograph.",
+      "expected": null
+    },
+    {
+      "id": "D076",
+      "prompt": "Write a birthday email to my friend.",
+      "expected": null
+    },
+    {
+      "id": "D077",
+      "prompt": "Explain how TCP retransmission works.",
+      "expected": null
+    },
+    {
+      "id": "D078",
+      "prompt": "Fix a CSS alignment bug in my recipe website.",
+      "expected": null
+    }
+  ]
+}

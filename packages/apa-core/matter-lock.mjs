@@ -11,6 +11,8 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
+import { recoverMatterTransaction } from "./transaction.mjs";
 
 export function matterWriteLockPath(matterDir) {
   return join(resolve(matterDir), "trace", ".apa-write.lock");
@@ -29,6 +31,7 @@ export function readMatterWriteLock(matterDir) {
 export function withMatterWriteLock(matterDir, operation, {
   owner = "apa",
   timestamp = new Date().toISOString(),
+  recoverAbandoned = false,
 } = {}) {
   if (typeof operation !== "function") throw new TypeError("operation must be a function");
   const root = resolve(matterDir);
@@ -49,6 +52,14 @@ export function withMatterWriteLock(matterDir, operation, {
   } catch (error) {
     if (error?.code !== "EEXIST") throw error;
     const held = readMatterWriteLock(rootReal);
+    if (recoverAbandoned && held?.host === hostname() && Number.isSafeInteger(held.pid) && held.pid > 0) {
+      let alive = true;
+      try { process.kill(held.pid, 0); } catch (error) { if (error.code === "ESRCH") alive = false; }
+      if (!alive && readMatterWriteLock(rootReal)?.token === held.token) {
+        rmSync(path);
+        return withMatterWriteLock(rootReal, operation, { owner, timestamp });
+      }
+    }
     const heldBy = String(held?.owner || "unknown").replace(/[\r\n]/g, " ").slice(0, 80);
     throw new Error(`matter write lock is held by ${heldBy}`);
   }
@@ -58,10 +69,12 @@ export function withMatterWriteLock(matterDir, operation, {
       token,
       owner,
       pid: process.pid,
+      host: hostname(),
       acquired_at: timestamp,
     })}\n`, "utf8");
     closeSync(fd);
     fd = undefined;
+    recoverMatterTransaction(rootReal);
     const result = operation({ token, path, matterDir: rootReal });
     if (result && typeof result.then === "function") {
       throw new TypeError("withMatterWriteLock operations must be synchronous");

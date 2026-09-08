@@ -177,6 +177,18 @@ function checkSkills(projectDir) {
     namesByHost[host] = skillNames.sort();
     const compiler = readFileSync(join(root, "compiler", "SKILL.md"), "utf8");
     assert.match(compiler, new RegExp(`host '${host}'`));
+    for (const script of ["generate_review_form.mjs", "ask_review_questions.mjs", "serve_review_app.mjs", "verify_dates.mjs"]) {
+      const probe = run(process.execPath, [join(root, "apa-review-form/scripts", script), "--help"], { cwd: projectDir });
+      assert.equal(probe.status, 0, `${host}/${script}: ${probe.stderr}`);
+    }
+    const matter = join(projectDir, `review-fixture-${host}`);
+    cpSync(join(ROOT, "examples/minimal-patent-artifact"), matter, { recursive: true });
+    const generated = run(process.execPath, [join(root, "apa-review-form/scripts/generate_review_form.mjs"), "--matter", matter], { cwd: projectDir });
+    assert.equal(generated.status, 0, `${host} offline generator: ${generated.stderr}`);
+    const html = readFileSync(join(matter, "assembled/human_review_form.html"), "utf8");
+    const data = JSON.parse(html.match(/<script type="application\/json" id="review-data">([\s\S]*?)<\/script>/)[1]);
+    assert.match(data.reviewTargetFingerprint.sha256, /^[0-9a-f]{64}$/);
+    assert.match(html, /CLM01/);
   }
   assert.deepEqual(namesByHost.codex, namesByHost.claude);
   assert.deepEqual(namesByHost.cursor, namesByHost.claude);

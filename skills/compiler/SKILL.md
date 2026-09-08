@@ -1,6 +1,6 @@
 ---
 name: compiler
-description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile <path>."
+description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile with a source path."
 compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
@@ -122,13 +122,15 @@ surface the residual findings for the human.
 - Claims are copied **verbatim**. Never paraphrase claim language.
 - A gap is written literally as **"Not present in source"** - never invent a limitation (new matter).
 - Every prior-art reference is flagged for human verification before it is relied on or listed on an
-  IDS (see ### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
-- Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/
-  link) before listing — the hardened prior-art verification stage records discloses-vs-lacks.
-- The duty is CONTINUING: newly-found material references must be disclosed within the 1.97 windows.
-- As of Jan 2025 there is a size-based IDS fee; surface it from the dated fee schedule, do not hardcode. via the assembly stage). Do not assert what a reference discloses
+  IDS through the assembly stage. Do not assert what a reference discloses
   beyond its actual text.
 - Output is a navigable artifact + flags/questions, never a patentability or validity conclusion.
 
 See `references/apa-schema.md` (the on-disk schema) and `references/validation-checklist.md`.
 Rules encoded as of 2026-06-15; verify currency.
+
+### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
+- Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/
+  link) before listing — the hardened prior-art verification stage records discloses-vs-lacks.
+- The duty is CONTINUING: newly-found material references must be disclosed within the 1.97 windows.
+- As of Jan 2025 there is a size-based IDS fee; surface it from the dated fee schedule, do not hardcode.

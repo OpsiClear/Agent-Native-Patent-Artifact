@@ -16,6 +16,7 @@ import {
   recordCheckpoint,
   requestLoop,
   verifyHarness,
+  recoverHarness,
 } from "../apa-workflow/commands.mjs";
 
 export function planMatter({ matter = "", domains = [], supports = [] } = {}) {
@@ -83,6 +84,8 @@ export function executeApplicationCommand(command, input = {}) {
       return harnessSummary(input.matter);
     case "verify":
       return verifyHarness(input.matter);
+    case "recover":
+      return recoverHarness(input.matter);
     default:
       throw new Error(`unknown application command '${command}'`);
   }

@@ -58,7 +58,9 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
 5. **Validate the report.** Run
    `node packages/apa-reports/cli.mjs check <matter>/prosecution/office_action_report.json --kind office_action`.
 6. **Hand off.** The scaffold is a **draft** a registered practitioner completes, argues, and files.
-   Update `PATENT.md` `status` (`office-action` -> `responded`) to reflect the round-trip.
+   Record a `response-draft-prepared` handoff note and keep `PATENT.md` status `office-action`.
+   A draft handoff is not a filed response. Change status to `responded` only after the human
+   confirms submission and supplies a matter-local receipt or equivalent completed-action evidence.
 
 ## Post-filing UPL guardrails (no override)
 - **Flags, not conclusions.** APA does not assert traversal positions, decide patentability, or write
@@ -72,4 +74,6 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
 - **No new matter.** A proposed amendment must be supported by the specification as filed
   (35 USC 132 / 37 CFR 1.121); APA never invents support.
 
-See {{ANALYSIS_101_102_103_112}} for the statutory-ground lens. Rules as of {{RULES_EFFECTIVE_DATE}}.
+Use the statutory-ground lens below. Rules as of {{RULES_EFFECTIVE_DATE}}.
+
+{{ANALYSIS_101_102_103_112}}

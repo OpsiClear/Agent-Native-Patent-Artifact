@@ -169,6 +169,11 @@ apa verify --matter <matter>
 apa-mcp --matter <matter>
 ```
 
+After an interrupted harness write, run `apa recover --matter <matter>`. Recovery completes
+the exact journaled records and ledger bytes, then verifies the matter. It can reclaim a
+lock only when its local owner process is confirmed dead; conflicting bytes and unknown
+lock owners require operator inspection. See [reliability and discovery checks](docs/gap-validation.md).
+
 Live USPTO prior-art search uses source id `patentsview` (PatentsView PatentSearch API) and needs
 `export PATENTSVIEW_API_KEY=...`; see [docs/source-registry.md](docs/source-registry.md), then run
 `node packages/apa-search/cli.mjs --matter <matter> --source patentsview --write`.

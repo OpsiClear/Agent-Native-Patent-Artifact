@@ -1,8 +1,8 @@
 ---
 name: disclosure-capture
-description: "Capture an invention disclosure into a Patent Artifact as you interview the inventor - decisions, embodiments, alternatives, prior-art hits, and bar dates - via progressive crystallization. Invoke as /apa-disclose at the end of a disclosure session. File-I/O only; no external sinks."
+description: "Capture an invention disclosure into a Patent Artifact as you interview the inventor - decisions, embodiments, alternatives, prior-art hits, and bar dates - via progressive crystallization. Invoke as /apa-disclose at the end of a disclosure session. Local file processing and validation only; no external sinks."
 compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
-allowed-tools: Read, Write, Edit, Glob, Grep
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
 
@@ -29,9 +29,13 @@ version: 0.1
 ## What this does
 
 An end-of-session epilogue that routes what happened in an invention-disclosure conversation into a
-Patent Artifact (`<matter>/`, see the canonical protocol spec at `docs/protocol.md`). It is **file-I/O only** - it never fetches or
+Patent Artifact (`<matter>/`, see the canonical protocol spec at `docs/protocol.md`). It is **local file processing and validation only** - it never fetches or
 sends anything externally, so an unfiled disclosure stays confidential on the machine. Run it after a
 disclosure interview; it reviews the turn and writes new events into the artifact.
+
+## Write boundary
+
+Initial capture may populate previously absent source/protocol files from verbatim disclosure and record their provenance. Preserve all existing source bytes. For an existing harness matter, put revisions under `drafts/disclosure/` and submit an `apa propose` candidate with stage `apa-disclose`; a human adopts exact bytes before any live projection changes. Missing information remains a question, not an inferred inventor statement.
 
 ## Procedure
 

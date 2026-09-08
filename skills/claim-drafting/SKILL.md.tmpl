@@ -12,13 +12,19 @@ triggers: "draft claims, write claims, claim set, /apa-claims, claim ladder, ind
 {{PATENT_PREAMBLE}}
 
 ## What this does
-Drafts the `CLM##`/`LIM##` claim set in `logic/claims.md` from the inventive concept, embodiments, and
+Drafts a candidate `CLM##`/`LIM##` claim set in `drafts/claims/logic/claims.md` from the inventive concept, embodiments, and
 the prior-art landscape, in the protocol's binding format ({{PROTOCOL_REF}}). Claim **scope is a human
 decision**. In `registered_practitioner` mode, produce candidate ladder/redline drafts for practitioner
 approval. In `pro_se` mode, output neutral possible organizations and questions to discuss with counsel;
 do not select scope or apply narrowing edits.
 
 ## Procedure
+Keep candidate claims, term definitions, reports, and scope-decision notes under `drafts/claims/`.
+Do not edit live `logic/claims.md`, `logic/concepts.md`, or prosecution history during drafting.
+For the checks below, prepare a temporary validation copy of the mandatory matter files outside
+the live matter, overlay the candidate `logic/` files there, and use that copy as `<validation-copy>`.
+Source-span hashes still refer to the unchanged disclosure bytes copied into that workspace.
+
 1. **Inputs:** read `logic/problem.md`, `src/embodiments.md`, `logic/prior_art.md` (+ `reference_matrix.md`
    if present), and `logic/patentability.md`. Identify the defensible kernel = the combination the
    closest art (`PA##`) lacks.
@@ -27,7 +33,7 @@ do not select scope or apply narrowing edits.
    `### CLM## - <title>`
    section: prose claim text + a ```binding block with `type`, `category`, `depends_on` (dependents),
    `distinguished_over: [PA##]` (the closest art the independent claim reads past), `scope_set_at: [PH##]`
-   (log the scope decision in `trace/prosecution.yaml`), and `limitations:` each with `id` (`LIM##`,
+   (record a proposed scope-decision note under `drafts/claims/trace/`), and `limitations:` each with `id` (`LIM##`,
    globally unique), `text`, `introduces` (the `a/an` noun phrase), `references` + `antecedent_of` (the
    earlier limitation a `the/said` phrase points to), `supported_by: [SPEC####]`, optional
    `defined_by: [TERM##]` lexicographic links, and `provenance`. Never put a `TERM##` in
@@ -45,9 +51,9 @@ do not select scope or apply narrowing edits.
    Warning/relaxed matters may retain scalar `source_span` + `source_sha256`; use
    `source: not-recoverable` only when recovery is genuinely impossible. Never name AI as an
    inventor.
-4. **Seed `concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
+4. **Seed `drafts/claims/logic/concepts.md`** with a `TERM##` for every coined/term-of-art word; give terms of degree an
    objective bound.
-5. **Report + check.** Emit `logic/claims_report.json` using the shared report envelope
+5. **Report + check.** Emit `drafts/claims/logic/claims_report.json` using the shared report envelope
    (`schema: apa-claims-report-v1`, `legal_posture: flags-not-conclusions`). If you changed claim text,
    scope choices, provenance, or dependencies, update the report's `claim_changes`, `scope_decisions`,
    `findings`, `unsupported_features`, and `human_checkpoints`. Multiple-dependent claims are
@@ -56,11 +62,14 @@ do not select scope or apply narrowing edits.
    `unsupported_features` and rewritten or explicitly routed to practitioner review. If
    `user_role: pro_se`, set `user_role: "pro_se"`, put alternatives in
    `possible_organization_options`, and leave `claim_changes` and `scope_decisions` empty. Then run
-   `node packages/apa-draft/claim-lint.mjs <matter> --report-out <matter>/logic/claims_report.json`
+   `node packages/apa-draft/claim-lint.mjs <validation-copy> --report-out <matter>/drafts/claims/logic/claims_report.json`
    (legal form + report scaffold/update) and
-   `node packages/apa-validate/validate.mjs <matter>` (antecedent basis, dependency, edge resolution).
-   Finally run `node packages/apa-reports/cli.mjs check <matter>/logic/claims_report.json --kind claims`.
+   `node packages/apa-validate/validate.mjs <validation-copy>` (antecedent basis, dependency, edge resolution).
+   Finally run `node packages/apa-reports/cli.mjs check <matter>/drafts/claims/logic/claims_report.json --kind claims`.
    Fix findings; an unresolved `supported_by` is a §112-support warning to resolve or flag, not hide.
+6. Submit the candidate through `apa propose --matter <matter> --artifact-id claims-main --artifact-type claims --stage apa-claims --content-file <matter>/drafts/claims/logic/claims.md --actor-id <agent-id> --expected-head <head> --idempotency-key <stable-key>`.
+   Submit accompanying term/report changes as separately identified proposals with the same stage.
+   A human reviews and adopts or rejects the exact bytes; only adopted revisions may update live projections.
 
 {{CLAIM_FORMAT_GUIDE}}
 

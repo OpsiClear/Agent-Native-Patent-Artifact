@@ -1,8 +1,8 @@
 /**
  * Canonical review-target fingerprints.
  *
- * This runtime belongs to the review package. The skill directory contains only a compatibility
- * re-export while installed skill bundles migrate to the application command boundary.
+ * This runtime belongs to the review package. Skill generation emits a checked, self-contained
+ * copy so installed review forms work without a repository-relative runtime dependency.
  */
 import { createHash } from "node:crypto";
 import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";

@@ -2,7 +2,7 @@
 name: patentability-analysis
 description: "Build element-by-element claim charts mapping prior-art references to claim limitations and flag 101/102/103/112 issues as questions for a registered practitioner - never a conclusion. Includes an interview-driven statutory-bar screen and a 112(f) screen. Invoke as /apa-analyze."
 compatibility: "Requires Node.js 21+ and an Agent-Native-Patent-Artifact checkout for referenced CLI gates."
-allowed-tools: Read, Write, Edit, Glob, Grep
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 0.1
 ---
 
@@ -29,7 +29,7 @@ version: 0.1
 ## What this does
 Maps each prior-art `PA##` to each `CLM##.LIM##` (element-by-element claim charts) and writes
 `logic/patentability.md` as **flags and questions for a registered practitioner**. It renders NO
-patentability, novelty, non-obviousness, FTO, validity, or infringement conclusion. File-I/O only.
+patentability, novelty, non-obviousness, FTO, validity, or infringement conclusion. Local file processing and validation only.
 If `confidential_workflow_mode: counsel_controlled`, keep the analysis inside counsel-controlled
 systems. If `shareable_redacted`, do not treat `logic/patentability_report.json` as shareable until
 the redaction guard and a human reviewer approve it.

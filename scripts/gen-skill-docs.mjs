@@ -187,6 +187,16 @@ function main(argv) {
   const directSkills = discoverDirectSkills();
   if (templates.length + directSkills.length === 0) { console.error("no skills/*/SKILL.md or SKILL.md.tmpl found"); process.exit(2); }
   let drift = 0;
+  // Ship a self-contained generated copy for every installer/host, including canonical Claude.
+  const runtimeSource = readFileSync(join(ROOT, "packages/apa-review/review-fingerprint.mjs"), "utf8").replace(/\r\n/g, "\n");
+  const runtimeOutput = join(SKILLS_DIR, "apa-review-form/scripts/review_fingerprint.mjs");
+  const runtimeText = "// Generated from packages/apa-review/review-fingerprint.mjs; do not edit.\n" + runtimeSource;
+  if (check) {
+    if (readFileSync(runtimeOutput, "utf8").replace(/\r\n/g, "\n") !== runtimeText) {
+      console.error("STALE review-form fingerprint runtime (re-run gen-skill-docs)");
+      drift++;
+    }
+  } else writeFileSync(runtimeOutput, runtimeText);
   for (const hostId of hostIds) {
     if (!check && hostId !== "claude") prepareHostOutputRoot(hostId);
     for (const t of templates) {

@@ -77,6 +77,7 @@ test("npm pack runs the real prepack lifecycle with complete host variants and n
       path.join(stagedRepo, "package.json"),
     );
     fs.mkdirSync(path.join(stagedRepo, "packages"), { recursive: true });
+    fs.cpSync(path.join(REPO_ROOT, "packages", "apa-review"), path.join(stagedRepo, "packages", "apa-review"), { recursive: true });
     fs.cpSync(
       path.join(REPO_ROOT, "packages", "apa-rules"),
       path.join(stagedRepo, "packages", "apa-rules"),

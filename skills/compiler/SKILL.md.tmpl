@@ -1,6 +1,6 @@
 ---
 name: compiler
-description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile <path>."
+description: "Lift an existing patent, published application, or invention-disclosure document into a complete, validated Patent Artifact. Extracts claims verbatim, defined terms, reference numerals, embodiments, and prior-art citations, then runs a bounded coverage/validate/fix loop. Invoke as /apa-compile with a source path."
 preamble-tier: 3
 version: "0.1"
 allowed-tools: "Read, Write, Edit, Glob, Grep, Bash"
@@ -68,9 +68,11 @@ surface the residual findings for the human.
 - Claims are copied **verbatim**. Never paraphrase claim language.
 - A gap is written literally as **"Not present in source"** - never invent a limitation (new matter).
 - Every prior-art reference is flagged for human verification before it is relied on or listed on an
-  IDS (see {{IDS_REQUIREMENTS}} via the assembly stage). Do not assert what a reference discloses
+  IDS through the assembly stage. Do not assert what a reference discloses
   beyond its actual text.
 - Output is a navigable artifact + flags/questions, never a patentability or validity conclusion.
 
 See `references/apa-schema.md` (the on-disk schema) and `references/validation-checklist.md`.
 Rules encoded as of {{RULES_EFFECTIVE_DATE}}; verify currency.
+
+{{IDS_REQUIREMENTS}}

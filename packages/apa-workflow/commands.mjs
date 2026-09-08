@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, lstatSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { canonicalSha256, sha256 } from "../apa-core/canonical.mjs";
@@ -27,11 +27,13 @@ import { loadSkillGraph } from "../apa-skillgraph/skillgraph.mjs";
 
 import {
   appendWorkflowEvent,
+  commitWorkflowTransition,
   buildWorkflowEvent,
   findIdempotentEvent,
   validateWorkflowLedger,
   workflowEvents,
 } from "./ledger.mjs";
+import { transactionPath } from "../apa-core/transaction.mjs";
 import { workflowLoopPolicy } from "./definition.mjs";
 
 const DEFAULT_STAGE_BY_ARTIFACT_TYPE = {
@@ -153,8 +155,8 @@ export function ingestSource(matterDir, {
       mediaType,
       actor,
       ingestedAt: timestamp,
-    });
-    const appended = appendWorkflowEvent(matterDir, {
+    }, { planOnly: true });
+    const appended = commitWorkflowTransition(matterDir, {
       type: "source-ingested",
       actor,
       idempotencyKey,
@@ -167,7 +169,8 @@ export function ingestSource(matterDir, {
         record_sha256: canonicalSha256(stored.record),
         content_sha256: stored.record.content.sha256,
       },
-    });
+    }, stored.writes);
+    delete stored.writes;
     return { ...stored, ...appended };
   }, { owner: "apa-workflow:source-ingested" });
 }
@@ -224,9 +227,9 @@ export function proposeArtifact(matterDir, {
       suggestedView,
       notes,
       createdAt: timestamp,
-    });
+    }, { planOnly: true });
     const proposalSha256 = canonicalSha256(stored.proposal);
-    const appended = appendWorkflowEvent(matterDir, {
+    const appended = commitWorkflowTransition(matterDir, {
       type: "proposal-created",
       actor: normalizedActor,
       idempotencyKey,
@@ -241,7 +244,8 @@ export function proposeArtifact(matterDir, {
         ...(stored.proposal.stage_id ? { stage_id: stored.proposal.stage_id } : {}),
         content_sha256: stored.proposal.content.sha256,
       },
-    });
+    }, stored.writes);
+    delete stored.writes;
     return { ...stored, proposalSha256, ...appended };
   }, { owner: "apa-workflow:proposal-created" });
 }
@@ -287,13 +291,13 @@ export function decideProposal(matterDir, {
       reviewer,
       rationale,
       decidedAt: timestamp,
-    });
+    }, { planOnly: true });
     const storedArtifact = outcome === "adopted"
       ? storeArtifactRevision(matterDir, {
           proposal,
           decision: storedDecision.decision,
           adoptedAt: timestamp,
-        })
+        }, { planOnly: true })
       : null;
     const actor = {
       kind: "human",
@@ -320,7 +324,7 @@ export function decideProposal(matterDir, {
         content_sha256: storedArtifact.envelope.content.sha256,
       } : {}),
     };
-    const appended = appendWorkflowEvent(matterDir, {
+    const appended = commitWorkflowTransition(matterDir, {
       type: eventType,
       actor,
       idempotencyKey,
@@ -328,7 +332,9 @@ export function decideProposal(matterDir, {
       timestamp,
       lockHeld: true,
       payload,
-    });
+    }, [...storedDecision.writes, ...(storedArtifact?.writes || [])]);
+    delete storedDecision.writes;
+    if (storedArtifact) delete storedArtifact.writes;
     return {
       proposal,
       ...storedDecision,
@@ -537,13 +543,23 @@ export function harnessSummary(matterDir) {
   };
 }
 
+export function recoverHarness(matterDir) {
+  return withMatterWriteLock(matterDir, () => verifyHarness(matterDir), {
+    owner: "apa-workflow:recovery", recoverAbandoned: true,
+  });
+}
+
 export function verifyHarness(matterDir) {
   const store = verifyHarnessStore(matterDir);
   const ledger = validateWorkflowLedger(matterDir);
   const errors = [...store.findings, ...ledger.errors];
+  if (existsSync(transactionPath(matterDir))) errors.push({ code: "TRANSACTION_PENDING",
+    path: "trace/pending-transaction.json", message: "Incomplete commit; run apa recover before continuing" });
   const runlog = validateRunlog(matterDir);
   if (runlog.ok) {
-    for (const event of workflowEvents(matterDir)) {
+    const events = workflowEvents(matterDir);
+    reconcileRecords(matterDir, events, errors);
+    for (const event of events) {
       if (event.type === "proposal-created") {
         try {
           const proposal = loadProposal(matterDir, event.payload.proposal_id);
@@ -587,6 +603,42 @@ export function verifyHarness(matterDir) {
     }
   }
   return { ok: errors.length === 0, errors };
+}
+
+function reconcileRecords(matterDir, events, errors) {
+  const paths = harnessPaths(matterDir);
+  const linked = new Set();
+  for (const event of events) {
+    const p = event.payload;
+    const refs = [];
+    if (event.type === "source-ingested") refs.push([p.record_path, p.record_sha256]);
+    if (event.type === "proposal-created") refs.push([`reviews/proposals/${p.proposal_id}.json`, p.proposal_sha256]);
+    if (["proposal-adopted", "proposal-rejected"].includes(event.type)) refs.push([`reviews/decisions/${p.decision_id}.json`, p.decision_sha256]);
+    if (event.type === "proposal-adopted") refs.push([p.artifact_record_path, p.artifact_sha256]);
+    for (const [rel, hash] of refs) {
+      if (typeof rel !== "string" || rel.includes("..") || !/^(sources\/records|reviews\/(proposals|decisions)|drafts\/records)\//.test(rel)) {
+        errors.push({ code: "RECORD_EVENT_INVALID", path: event.event_id, message: "unsafe record path" }); continue;
+      }
+      linked.add(rel);
+      try {
+        const record = JSON.parse(readFileSync(join(paths.root, rel), "utf8"));
+        if (canonicalSha256(record) !== hash) throw new Error("record digest differs from committed event");
+      } catch (error) { errors.push({ code: "RECORD_EVENT_INVALID", path: rel, message: error.message }); }
+    }
+  }
+  const visit = (dir) => {
+    if (!existsSync(dir)) return;
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name), stat = lstatSync(path);
+      if (stat.isSymbolicLink()) continue;
+      if (stat.isDirectory()) visit(path);
+      else if (name.endsWith(".json")) {
+        const rel = posixRelative(paths.root, path);
+        if (!linked.has(rel)) errors.push({ code: "ORPHAN_RECORD", path: rel, message: "record has no committed workflow event" });
+      }
+    }
+  };
+  for (const dir of [paths.sourceRecords, paths.proposals, paths.decisions, paths.artifactRecords]) visit(dir);
 }
 
 function existingCommand(matterDir, idempotencyKey, expectedType) {

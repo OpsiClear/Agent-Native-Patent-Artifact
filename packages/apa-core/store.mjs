@@ -109,7 +109,7 @@ export function storeSource(matterDir, {
   mediaType = "application/octet-stream",
   actor,
   ingestedAt = new Date().toISOString(),
-} = {}) {
+} = {}, { planOnly = false } = {}) {
   const paths = harnessPaths(matterDir);
   loadMatterManifest(matterDir);
   const sourcePath = resolve(file || "");
@@ -122,7 +122,6 @@ export function storeSource(matterDir, {
     original_name: basename(sourcePath),
   }).slice(0, 24)}`;
   const objectPath = join(paths.sourceObjects, digest);
-  writeContentAddressed(objectPath, bytes, digest);
   const record = {
     schema: "apa-source-record-v1",
     source_id: sourceId,
@@ -139,6 +138,9 @@ export function storeSource(matterDir, {
   };
   assertContract(record.schema, record);
   const recordPath = join(paths.sourceRecords, `${sourceId}.json`);
+  const writes = [{ path: objectPath, bytes }, { path: recordPath, bytes: JSON.stringify(record, null, 2) + "\n" }];
+  if (planOnly) return { record, recordPath, created: !existsSync(recordPath), writes };
+  writeContentAddressed(objectPath, bytes, digest);
   const created = writeImmutableJson(recordPath, record);
   return { record, recordPath, created };
 }
@@ -155,14 +157,13 @@ export function storeProposal(matterDir, {
   suggestedView = "",
   notes = "",
   createdAt = new Date().toISOString(),
-} = {}) {
+} = {}, { planOnly = false } = {}) {
   const paths = harnessPaths(matterDir);
   const matter = loadMatterManifest(matterDir);
   const type = assertArtifactTypeAllowed(artifactType);
   const bytes = Buffer.isBuffer(content) ? content : Buffer.from(String(content ?? ""), "utf8");
   const digest = sha256(bytes);
   const objectPath = join(paths.draftObjects, digest);
-  writeContentAddressed(objectPath, bytes, digest);
   const normalizedActor = normalizeActor(actor, "agent");
   const seed = {
     matter_id: matter.matter_id,
@@ -197,6 +198,9 @@ export function storeProposal(matterDir, {
   };
   assertContract(proposal.schema, proposal);
   const proposalPath = join(paths.proposals, `${proposalId}.json`);
+  const writes = [{ path: objectPath, bytes }, { path: proposalPath, bytes: JSON.stringify(proposal, null, 2) + "\n" }];
+  if (planOnly) return { proposal, proposalPath, created: !existsSync(proposalPath), writes };
+  writeContentAddressed(objectPath, bytes, digest);
   const created = writeImmutableJson(proposalPath, proposal);
   return { proposal, proposalPath, created };
 }
@@ -232,7 +236,7 @@ export function storeDecision(matterDir, {
   reviewer,
   rationale = "",
   decidedAt = new Date().toISOString(),
-} = {}) {
+} = {}, { planOnly = false } = {}) {
   const paths = harnessPaths(matterDir);
   const proposalDigest = canonicalSha256(proposal);
   const normalizedReviewer = {
@@ -258,6 +262,7 @@ export function storeDecision(matterDir, {
   };
   assertContract(decision.schema, decision);
   const decisionPath = join(paths.decisions, `${decisionId}.json`);
+  if (planOnly) return { decision, decisionPath, created: !existsSync(decisionPath), writes: [{ path: decisionPath, bytes: JSON.stringify(decision, null, 2) + "\n" }] };
   const created = writeImmutableJson(decisionPath, decision);
   return { decision, decisionPath, created };
 }
@@ -266,22 +271,22 @@ export function storeArtifactRevision(matterDir, {
   proposal,
   decision,
   adoptedAt = decision?.decided_at || new Date().toISOString(),
-} = {}) {
+} = {}, { planOnly = false } = {}) {
   if (decision?.outcome !== "adopted") throw new Error("only an adopted decision can create an artifact revision");
   if (decision.proposal_id !== proposal.proposal_id) throw new Error("decision does not match proposal");
   const proposalDigest = canonicalSha256(proposal);
   if (decision.proposal_sha256 !== proposalDigest) throw new Error("decision proposal digest does not match");
   const paths = harnessPaths(matterDir);
   const artifactDir = join(paths.artifactRecords, proposal.artifact_id);
-  mkdirSync(artifactDir, { recursive: true });
-  const existing = readdirSync(artifactDir)
+  if (!planOnly) mkdirSync(artifactDir, { recursive: true });
+  const existing = (existsSync(artifactDir) ? readdirSync(artifactDir) : [])
     .filter((name) => /^r\d{6}\.json$/.test(name))
     .sort();
   for (const name of existing) {
     const prior = JSON.parse(readFileSync(join(artifactDir, name), "utf8"));
     assertContract("apa-artifact-envelope-v1", prior);
     if (prior.decision_id === decision.decision_id) {
-      return { envelope: prior, recordPath: join(artifactDir, name), created: false };
+      return { envelope: prior, recordPath: join(artifactDir, name), created: false, ...(planOnly ? { writes: [] } : {}) };
     }
   }
   const revision = existing.length
@@ -306,6 +311,7 @@ export function storeArtifactRevision(matterDir, {
   };
   assertContract(envelope.schema, envelope);
   const recordPath = join(artifactDir, `r${String(revision).padStart(6, "0")}.json`);
+  if (planOnly) return { envelope, recordPath, created: true, writes: [{ path: recordPath, bytes: JSON.stringify(envelope, null, 2) + "\n" }] };
   writeImmutableJson(recordPath, envelope);
   return { envelope, recordPath, created: true };
 }

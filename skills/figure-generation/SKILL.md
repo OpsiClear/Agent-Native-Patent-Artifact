@@ -33,12 +33,16 @@ Turns the embodiments and method claims into numbered figures: you author a figu
 against the spec. Final 37 CFR 1.84 compliance (and any formal raster/PDF conversion) stays
 human-verified, often by a professional draftsperson.
 
+## Candidate boundary
+
+Work in a temporary validation copy outside the live matter, with the mandatory matter files and unchanged disclosure sources. In the commands below `<candidate>` denotes that copy; its `src/drawing_src/` and `evidence/drawings/` paths contain only candidate changes. Do not render over the live drawings. After checks, preserve the source definitions, SVGs, bindings and reports under live `drafts/drawings/`, hash them in a drawing-set manifest, and submit that manifest with `apa propose --artifact-type drawing-set --stage apa-figures` plus the matter, content-file, actor, expected-head and stable idempotency key. Only human-adopted bytes may update live projections.
+
 ## Procedure
 1. **Author a figure definition** at `src/drawing_src/<figN>.json` from the claims/embodiments:
    ```json
    { "fig":"FIG01", "title":"Sectional view", "representative":true,
      "parts":[ {"numeral":"10","label":"reservoir","shape":"box","x":60,"y":80,"w":200,"h":140} ],
-     "arrows":[ {"from":"12","to":"14","kind":"flow"}, {"self":"14","kind":"loop"} ] }
+     "arrows":[] }
    ```
    Method claims become flowcharts (one box per step, flow arrows); apparatus claims become structural
    views. Use a numeral for every claimed element; never invent a part not in the disclosure. Each
@@ -47,14 +51,14 @@ human-verified, often by a professional draftsperson.
 2. **Transcribe** the numerals into `evidence/drawings/<figN>.md` (the protocol `numerals` binding:
    each `{numeral, element, defined_in: SPEC####}`); exactly one figure is `representative: true`.
 3. **Generate the first-pass report before rendering SVGs:**
-   `node packages/apa-figure/cli.mjs generation-report --matter <matter> --source-dir <matter>/src/drawing_src --out <matter>/evidence/drawings/figure_generation_report.json`.
+   `node packages/apa-figure/cli.mjs generation-report --matter <candidate> --source-dir <candidate>/src/drawing_src --out <candidate>/evidence/drawings/figure_generation_report.json`.
    Stop on a nonzero exit. Fix any `unsupported_visual_change_risks`, `removed_numerals`, or
    untraceable generated numerals before rendering.
-4. **Render:** `node packages/apa-figure/cli.mjs render-dir <matter>/src/drawing_src --out-dir <matter>/evidence/drawings`.
-5. **Reconcile:** `node packages/apa-figure/cli.mjs legend --matter <matter>` - it builds the numeral
+4. **Render:** `node packages/apa-figure/cli.mjs render-dir <candidate>/src/drawing_src --out-dir <candidate>/evidence/drawings`.
+5. **Reconcile:** `node packages/apa-figure/cli.mjs legend --matter <candidate>` - it builds the numeral
    legend + the Brief Description of the Drawings and flags any numeral with no `defined_in` SPEC. Then
-   `node packages/apa-validate/validate.mjs <matter>` confirms every numeral resolves both ways.
-6. **Preflight rendered SVG quality:** `node packages/apa-figure/cli.mjs review-dir <matter>/src/drawing_src --svg-dir <matter>/evidence/drawings --out <matter>/evidence/drawings/quality-review.json --min-score 88`.
+   `node packages/apa-validate/validate.mjs <candidate>` confirms every numeral resolves both ways.
+6. **Preflight rendered SVG quality:** `node packages/apa-figure/cli.mjs review-dir <candidate>/src/drawing_src --svg-dir <candidate>/evidence/drawings --out <candidate>/evidence/drawings/quality-review.json --min-score 88`.
 7. **Polish rough SVGs before filing.** The renderer is deterministic but intentionally simple. If a
    figure looks crowded, web-diagram-like, or not draftsperson quality, route it through
    `/apa-svg-upgrader` and then `/apa-drawing-quality` before relying on it in assembly.

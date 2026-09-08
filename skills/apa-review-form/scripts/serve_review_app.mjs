@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, watchFile } from "node:fs";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { readJsonFile, updateJsonFile } from "./review_io.mjs";
+import { buildReviewTargetFingerprint } from "./review_fingerprint.mjs";
 
 function usage() {
   console.error([
@@ -131,18 +132,6 @@ function loadFormTargetFingerprint(args) {
     throw new Error("review form has no valid target fingerprint; regenerate the form");
   }
   return fingerprint;
-}
-
-function hasReviewAnswers(answers) {
-  if (!isRecord(answers)) return false;
-  return Object.entries(answers).some(([key, value]) => (
-    key !== "ui"
-    && (
-      (isRecord(value) && Object.keys(value).length > 0)
-      || (Array.isArray(value) && value.length > 0)
-      || (!isRecord(value) && !Array.isArray(value) && value !== "" && value !== null && value !== undefined)
-    )
-  ));
 }
 
 function loadAgentRequests(args) {
@@ -330,6 +319,7 @@ function augmentedHtml(args) {
     ...data,
     serverMode: true,
     initialAnswers: state.answers || {},
+    initialTargetFingerprint: state.targetFingerprint || null,
     initialRevision: Number.isSafeInteger(state.revision) ? state.revision : 0,
     agentRequests: loadAgentRequests(args)
   };
@@ -374,6 +364,15 @@ async function handleApi(req, res, args, pathname) {
     let state;
     let revisionConflict = false;
     const formTargetFingerprint = loadFormTargetFingerprint(args);
+    const liveTarget = buildReviewTargetFingerprint(args.matter);
+    const submitted = body.targetFingerprint;
+    if (submitted?.schema !== formTargetFingerprint.schema
+      || submitted?.contract !== formTargetFingerprint.contract
+      || submitted?.sha256 !== formTargetFingerprint.sha256
+      || liveTarget.sha256 !== formTargetFingerprint.sha256) {
+      return sendJson(res, 409, { code: "REVIEW_TARGET_CHANGED", targetFingerprint: liveTarget,
+        error: "Review target changed or missing; regenerate the form and review again." });
+    }
     await updateJsonFile(args.state, {}, currentValue => {
       if (!isRecord(currentValue)) throw new Error("human_review_state.json must contain a JSON object");
       const current = currentValue;
@@ -384,16 +383,11 @@ async function handleApi(req, res, args, pathname) {
         state = current;
         return current;
       }
-      const preservePriorTarget = (
-        hasReviewAnswers(body.answers)
-        && isRecord(current.targetFingerprint)
-        && current.targetFingerprint.sha256 !== formTargetFingerprint.sha256
-      );
       state = {
         schema: "apa-human-review-state-v2",
         revision: requestedRevision,
         updatedAt: new Date().toISOString(),
-        targetFingerprint: preservePriorTarget ? current.targetFingerprint : formTargetFingerprint,
+        targetFingerprint: submitted,
         answers: body.answers || {}
       };
       return state;

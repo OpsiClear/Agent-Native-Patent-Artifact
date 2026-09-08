@@ -73,8 +73,9 @@ Release copies are convenience artifacts; verify the current official USPTO form
 7. Open official forms in the required viewer. Patent Center auto-load SB/16, AIA/14, and SB/08 are
    XFA forms and may show only a `Please wait` placeholder in browsers or generic PDF previews.
 8. After the human selects a manual AcroForm route, `/apa-form-fill` may collect, confirm, and
-   populate only its hash-profiled text fields. It must refuse XFA, choices, signatures,
-   certifications, entity status, fee/payment fields, and filing.
+   populate its hash-profiled text fields and exact human-confirmed checkbox states, including
+   draft entity/fee/payment-instruction fields. It must refuse XFA, unconfirmed values, signatures,
+   certifications, choosing a legal/financial response, executing payments, and filing.
 9. A human completes all remaining fields, determines signer authority, signs, verifies entity
    status, inspects every final PDF page, uploads, certifies, pays, and submits through Patent Center.
 10. Save the confirmation and updated filing receipt privately, run `/apa-correspondence`

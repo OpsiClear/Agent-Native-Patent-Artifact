@@ -795,9 +795,45 @@
     let stateRevision = Number.isSafeInteger(DATA.initialRevision) ? DATA.initialRevision : 0;
     let serverSaveChain = Promise.resolve();
 
+    function sameTarget(left, right) {
+      return left?.schema === "apa-human-review-target-fingerprint-v1"
+        && /^[0-9a-f]{64}$/.test(left.sha256 || "")
+        && left.sha256 === right?.sha256 && left.contract === right?.contract;
+    }
+    function answerEnvelope(value) {
+      return { schema: "apa-review-answers-v1", matterId: DATA.matterId || DATA.title || "matter",
+        targetFingerprint: DATA.reviewTargetFingerprint, answers: value };
+    }
+    function restoreEnvelope(envelope) {
+      if (envelope?.schema !== "apa-review-answers-v1"
+        || envelope.matterId !== (DATA.matterId || DATA.title || "matter")
+        || !sameTarget(envelope.targetFingerprint, DATA.reviewTargetFingerprint)) {
+        throw new Error("Saved answers refer to an older or unknown revision. Review the current files again; the backup has been preserved.");
+      }
+      return envelope.answers || {};
+    }
+    function showReviewNotice(message) {
+      let notice = document.getElementById("review-notice");
+      if (!notice) {
+        notice = document.createElement("p");
+        notice.id = "review-notice";
+        notice.setAttribute("role", "alert");
+        document.body.prepend(notice);
+      }
+      notice.textContent = message;
+    }
     function loadAnswers() {
-      try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
-      catch { return {}; }
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return {};
+        try { return restoreEnvelope(JSON.parse(raw)); }
+        catch (error) {
+          localStorage.setItem(storageKey + ":stale:" + Date.now(), raw);
+          localStorage.removeItem(storageKey);
+          showReviewNotice(error.message);
+          return {};
+        }
+      } catch (error) { showReviewNotice("Local answers could not be restored: " + error.message); return {}; }
     }
     function hasOwnData(value) {
       return value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0;
@@ -815,13 +851,14 @@
       return result;
     }
     function initialAnswers() {
-      const serverAnswers = DATA.initialAnswers || {};
+      const serverAnswers = sameTarget(DATA.initialTargetFingerprint, DATA.reviewTargetFingerprint)
+        ? (DATA.initialAnswers || {}) : {};
       const localAnswers = loadAnswers();
       if (DATA.serverMode) return hasOwnData(localAnswers) ? deepMerge(serverAnswers, localAnswers) : serverAnswers;
       return localAnswers;
     }
-    function persistAnswers() {
-      localStorage.setItem(storageKey, JSON.stringify(answers));
+    async function persistAnswers() {
+      localStorage.setItem(storageKey, JSON.stringify(answerEnvelope(answers)));
       if (DATA.serverMode) {
         const pendingAnswers = JSON.parse(JSON.stringify(answers));
         serverSaveChain = serverSaveChain
@@ -833,10 +870,13 @@
               const res = await fetch("/api/state", {
                 method: "PUT",
                 headers: { "content-type": "application/json" },
-                body: JSON.stringify({ answers: candidateAnswers, revision })
+                body: JSON.stringify({ ...answerEnvelope(candidateAnswers), revision })
               });
               const saved = await res.json().catch(() => ({}));
               if (res.status === 409) {
+                if (!sameTarget(saved.targetFingerprint, DATA.reviewTargetFingerprint) || saved.code === "REVIEW_TARGET_CHANGED") {
+                  throw new Error("Reviewed files changed. Regenerate the form and review them again.");
+                }
                 if (Number.isSafeInteger(saved.revision)) {
                   stateRevision = Math.max(stateRevision, saved.revision);
                 }
@@ -855,7 +895,7 @@
       return serverSaveChain;
     }
     function saveAnswers() {
-      persistAnswers();
+      persistAnswers().catch(error => showReviewNotice(error.message));
       updateCounts();
       renderPageTabs();
     }
@@ -1440,7 +1480,7 @@
       });
     }
     function exportJson() {
-      const payload = { matter: DATA, answers, agentRequests, exportedAt: new Date().toISOString() };
+      const payload = { ...answerEnvelope(answers), matter: DATA, agentRequests, exportedAt: new Date().toISOString() };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -1604,12 +1644,9 @@
       reader.onload = () => {
         try {
           const imported = JSON.parse(reader.result);
-          const importedMatterId = imported.matter?.matterId || imported.matterId || imported.matter?.matterPath || imported.matterPath || "";
-          const currentMatterId = DATA.matterId || DATA.matterPath || "";
-          const differentMatter = importedMatterId && currentMatterId && importedMatterId !== currentMatterId;
-          if (differentMatter && !confirm("This backup appears to be for a different matter. Import it anyway?")) return;
+          const restored = restoreEnvelope(imported);
           if (!confirm("Import this backup and replace the current saved answers?")) return;
-          answers = imported.answers || imported;
+          answers = restored;
           agentRequests = imported.agentRequests || agentRequests;
           saveAnswers();
           location.reload();

@@ -7,7 +7,7 @@ decides §112 sufficiency or 101/102/103 merits (those are flags for a human). R
 node packages/apa-validate/validate.mjs <matter>
 ```
 
-## Level-1 mechanical checks (must pass - exit 0/1, never 2)
+## Level-1 mechanical checks (exit 0 clean, 1 warnings, 2 blocking errors)
 - [ ] `application_type` present and supported (provisional | utility | design); else fail loud.
 - [ ] Mandatory-core files present for the type (provisional does not require `claims.md`).
 - [ ] >= 1 inventor, none AI-named.

@@ -166,6 +166,9 @@ async function main() {
 
     const formResponse = await fetch(`${base}/human_review_form.html`);
     if (!formResponse.ok) throw new Error(`review form failed: ${formResponse.status}`);
+    const formHtml = await formResponse.text();
+    const formData = JSON.parse(formHtml.match(/<script type="application\/json" id="review-data">([\s\S]*?)<\/script>/)[1]);
+    const targetFingerprint = formData.reviewTargetFingerprint;
     if (!formResponse.headers.get("content-security-policy")?.includes("default-src 'none'")) {
       throw new Error("review form response is missing its restrictive content security policy");
     }
@@ -185,12 +188,12 @@ async function main() {
     await fetchJson(`${base}/api/state`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ revision: 2, answers: { ordering: "newer" } })
+      body: JSON.stringify({ revision: 2, targetFingerprint, answers: { ordering: "newer" } })
     });
     const staleStateResponse = await fetch(`${base}/api/state`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ revision: 1, answers: { ordering: "stale" } })
+      body: JSON.stringify({ revision: 1, targetFingerprint, answers: { ordering: "stale" } })
     });
     if (staleStateResponse.status !== 409) {
       throw new Error(`stale state write must report a conflict; got ${staleStateResponse.status}`);
@@ -202,6 +205,11 @@ async function main() {
     const orderedState = await fetchJson(`${base}/api/state`);
     if (orderedState.revision !== 2 || orderedState.answers?.ordering !== "newer") {
       throw new Error("stale state write replaced a newer revision");
+    }
+    for (const fingerprint of [undefined, { ...targetFingerprint, sha256: "0".repeat(64) }]) {
+      const staleTarget = await fetch(`${base}/api/state`, { method: "PUT", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ revision: 3, targetFingerprint: fingerprint, answers: { ordering: "must not save" } }) });
+      if (staleTarget.status !== 409) throw new Error("server accepted missing/stale review target identity");
     }
 
     const ssePromise = watchSse(`${base}/api/agent-events`, event => {

@@ -2,12 +2,23 @@ import {
   appendRunlog,
   buildRunlogEntry,
   currentRunlogHead,
+  planRunlogAppend,
   validateRunlog,
 } from "../apa-trace/runlog.mjs";
 import { assertContract } from "../apa-core/contracts.mjs";
 import { canonicalSha256 } from "../apa-core/canonical.mjs";
 import { normalizeActor } from "../apa-core/store.mjs";
 import { withMatterWriteLock } from "../apa-core/matter-lock.mjs";
+import { commitMatterFiles } from "../apa-core/transaction.mjs";
+
+export function commitWorkflowTransition(matterDir, options, writes) {
+  const event = buildWorkflowEvent(options);
+  const entry = buildRunlogEntry({ timestamp: event.timestamp, skill: "apa-workflow",
+    ruleVersion: "apa-workflow-v2", workflowEvent: event, notes: [`workflow event ${event.type}`] });
+  const ledgerWrites = planRunlogAppend(matterDir, entry, options.expectedHead);
+  commitMatterFiles(matterDir, [...writes, ...ledgerWrites]);
+  return { event, existing: false, head: currentRunlogHead(matterDir) };
+}
 
 export function workflowEvents(matterDir) {
   const runlog = validateRunlog(matterDir);

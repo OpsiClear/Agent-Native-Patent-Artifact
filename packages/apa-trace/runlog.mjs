@@ -196,6 +196,22 @@ export function appendRunlog(matterDir, entry, {
   return path;
 }
 
+// Plan an append without mutation, so records and the ledger can share a recoverable commit.
+export function planRunlogAppend(matterDir, entry, expectedHead) {
+  const head = currentRunlogHead(matterDir);
+  if (head.sha256 !== expectedHead) throw new Error("stale matter head");
+  const chained = { ...entry, schema: RUNLOG_SCHEMA,
+    chain: { sequence: head.entries + 1, previous_sha256: head.sha256 } };
+  chained.chain.entry_sha256 = entryHash(chained);
+  const path = runlogPath(matterDir);
+  const previous = existsSync(path) ? readFileSync(path, "utf8") : "";
+  return [
+    { path, replace: true, bytes: previous + (previous && !previous.endsWith("\n") ? "\n" : "") + JSON.stringify(chained) + "\n" },
+    { path: runlogHeadPath(matterDir), replace: true, bytes: JSON.stringify({ schema: RUNLOG_HEAD_SCHEMA,
+      entries: head.entries + 1, sha256: chained.chain.entry_sha256 }, null, 2) + "\n" },
+  ];
+}
+
 export function validateRunlog(pathOrMatterDir) {
   const directPath = pathOrMatterDir.endsWith(".jsonl");
   const path = directPath ? pathOrMatterDir : runlogPath(pathOrMatterDir);

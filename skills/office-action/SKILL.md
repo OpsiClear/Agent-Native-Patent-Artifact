@@ -74,7 +74,9 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
 5. **Validate the report.** Run
    `node packages/apa-reports/cli.mjs check <matter>/prosecution/office_action_report.json --kind office_action`.
 6. **Hand off.** The scaffold is a **draft** a registered practitioner completes, argues, and files.
-   Update `PATENT.md` `status` (`office-action` -> `responded`) to reflect the round-trip.
+   Record a `response-draft-prepared` handoff note and keep `PATENT.md` status `office-action`.
+   A draft handoff is not a filed response. Change status to `responded` only after the human
+   confirms submission and supplies a matter-local receipt or equivalent completed-action evidence.
 
 ## Post-filing UPL guardrails (no override)
 - **Flags, not conclusions.** APA does not assert traversal positions, decide patentability, or write
@@ -88,7 +90,9 @@ registered practitioner; do not propose amendments or arguments. Implemented by 
 - **No new matter.** A proposed amendment must be supported by the specification as filed
   (35 USC 132 / 37 CFR 1.121); APA never invents support.
 
-See ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
+Use the statutory-ground lens below. Rules as of 2026-06-15.
+
+### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never conclusions)
 - **101 (eligibility):** Alice/Mayo two-step. Flag abstract-idea risk; check the claim recites a
   practical application / concrete structure. Do not opine on eligibility.
 - **102 (novelty):** element-by-element — anticipation = every limitation in ONE reference. Each
@@ -105,4 +109,4 @@ See ### 101/102/103/112 — analysis as FLAGS + QUESTIONS for a human (never con
 - **112:** (a) written description / enablement — each limitation traced to spec support; (b)
   definiteness — terms of degree need an objective bound; (f) means-plus-function structure.
 - Output is flags and `questions_for_attorney` / `questions_for_inventor`, never an opinion or FTO/
-  validity/infringement conclusion. for the statutory-ground lens. Rules as of 2026-06-15.
+  validity/infringement conclusion.

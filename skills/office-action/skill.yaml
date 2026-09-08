@@ -6,7 +6,7 @@ command: /apa-office-action
 version: "0.1"
 description: "Parse Office Actions, estimate response dates, and scaffold practitioner-reviewed responses."
 inputs: [prosecution/oa-NN.md, PATENT.md]
-outputs: [prosecution/office_action_report.json, prosecution/response-scaffold.md, trace/runlog.jsonl]
+outputs: [prosecution/office_action_report.json, prosecution/response-NN.md, trace/runlog.jsonl]
 upstream: []
 downstream: []
 gates_after: [practitioner-mode-required]

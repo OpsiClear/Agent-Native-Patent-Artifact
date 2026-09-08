@@ -18,7 +18,9 @@ export function writingRubric() {
     "| 15 | Figure integration & reference numerals | every numeral introduced in the spec and shown in a figure; consistent numbering; Brief Description lists every figure |",
     "| 10 | Neutral background | states the problem without disparaging prior art or admitting more than necessary |",
     "",
-    "Iterate draft -> score -> revise the lowest dimension until the floor clears the target (e.g. 95).",
+    "Normalize each dimension to a percentage: earned points / its maximum points * 100.",
+    "Compare the minimum normalized percentage with the target (e.g. 95), not the raw point counts.",
+    "Revise the weakest dimension for at most three passes; stop sooner on no improvement and report unresolved gaps.",
     "Log iterations if you autotune (iteration / min_score / avg_score / kept|discarded / change).",
   ].join("\n");
 }
@@ -26,13 +28,14 @@ export function writingRubric() {
 export function claimLadderGuide() {
   return [
     "### Claim architecture - the dual lens (build BOTH, surface the tradeoff for the human)",
-    "1. **Examiner-survival ladder.** A narrow lead independent claim on the defensible inventive kernel",
-    "   (the combination the closest art lacks); mirror it across statutory categories (apparatus / method /",
-    "   system / computer-readable medium) where applicable; push breadth into dependent claims so a single",
-    "   anticipated dependent does not sink the independent claim.",
-    "2. **Portfolio-protection ladder.** Separately note broader genus territory worth reserving for a",
-    "   continuation, so the matter is not silently over-narrowed for examination at the cost of commercial",
-    "   scope. Mark it as continuation-reserved, not filed now.",
+    "1. **Examiner-survival ladder.** Present a supported independent-claim candidate and narrower",
+    "   dependent fallback positions for human review. Each dependent inherits every limitation of its",
+    "   parent; it cannot recover breadth removed from the independent claim. Mirror supported categories",
+    "   (apparatus / method / system / computer-readable medium) only where the disclosure warrants them.",
+    "   Example: independent A+B; dependent A+B+C. The dependent adds C and retains both A and B.",
+    "2. **Portfolio-protection ladder.** Separately identify supported broader independent-claim or",
+    "   continuation options for practitioner review. Do not automatically narrow the lead claim or decide",
+    "   which scope to file or reserve; record the human's choice and its disclosure support.",
     "**Statement vs. Interpretation split.** Keep each claim at the strongest level the disclosure directly",
     "supports (the Statement); quarantine any broader reading as a separate Interpretation note - this is a",
     "built-in over-claiming / 112 guard, not a license to claim beyond support.",

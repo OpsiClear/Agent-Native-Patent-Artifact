@@ -87,7 +87,9 @@ rework signal, mirroring the rigor reviewer's per-dimension floor).
 | 15 | Figure integration & reference numerals | every numeral introduced in the spec and shown in a figure; consistent numbering; Brief Description lists every figure |
 | 10 | Neutral background | states the problem without disparaging prior art or admitting more than necessary |
 
-Iterate draft -> score -> revise the lowest dimension until the floor clears the target (e.g. 95).
+Normalize each dimension to a percentage: earned points / its maximum points * 100.
+Compare the minimum normalized percentage with the target (e.g. 95), not the raw point counts.
+Revise the weakest dimension for at most three passes; stop sooner on no improvement and report unresolved gaps.
 Log iterations if you autotune (iteration / min_score / avg_score / kept|discarded / change).
 
 ## Do NOT

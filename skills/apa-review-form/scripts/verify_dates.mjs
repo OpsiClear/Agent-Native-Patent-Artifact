@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { atomicWriteFile, atomicWriteJson } from "./review_io.mjs";
 import {
   METADATA_FETCH_POLICY,
@@ -151,10 +152,16 @@ function classify(ref, text) {
   return { type, doi, arxiv, openreview, github, patentLinks, standardsLinks, links, candidateDates: extractDates(all) };
 }
 
-function datePartsToIso(parts) {
-  if (!Array.isArray(parts) || !parts[0]) return "";
-  const [y, m = 1, d = 1] = parts[0];
-  return [String(y).padStart(4, "0"), String(m).padStart(2, "0"), String(d).padStart(2, "0")].join("-");
+export function crossrefDate(parts) {
+  const values = parts?.[0];
+  if (!Array.isArray(values) || values.length < 1 || values.length > 3 || !values.every(Number.isInteger)) return null;
+  const [year, month, day] = values;
+  if (year < 1 || year > 9999 || (month !== undefined && (month < 1 || month > 12))) return null;
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day !== undefined && (day < 1 || day > days[month - 1])) return null;
+  return { value: values.map((n, i) => String(n).padStart(i === 0 ? 4 : 2, "0")).join("-"),
+    precision: ["year", "month", "day"][values.length - 1], dateParts: [...values] };
 }
 
 async function verifyDoi(doi) {
@@ -165,17 +172,19 @@ async function verifyDoi(doi) {
     const json = JSON.parse(res.text);
     const msg = json.message || {};
     const dates = [
-      ["published-print", datePartsToIso(msg["published-print"]?.["date-parts"])],
-      ["published-online", datePartsToIso(msg["published-online"]?.["date-parts"])],
-      ["issued", datePartsToIso(msg.issued?.["date-parts"])],
-      ["created", datePartsToIso(msg.created?.["date-parts"])]
+      ["published-print", crossrefDate(msg["published-print"]?.["date-parts"])],
+      ["published-online", crossrefDate(msg["published-online"]?.["date-parts"])],
+      ["issued", crossrefDate(msg.issued?.["date-parts"])],
+      ["created", crossrefDate(msg.created?.["date-parts"])]
     ].filter(([, v]) => v);
     return {
       source: "crossref",
       ok: true,
       url,
       title: Array.isArray(msg.title) ? msg.title[0] : "",
-      verifiedDates: dates.map(([kind, value]) => ({ kind, value })),
+      verifiedDates: dates.map(([kind, date]) => ({ kind, ...date,
+        evidenceRole: kind === "created" ? "metadata-creation" : "publication-metadata" })),
+      caveat: "Partial dates retain source precision; metadata creation does not establish public availability. Exact-day comparisons require day-precision evidence.",
       rawStatus: "public metadata fetched"
     };
   } catch (err) {
@@ -500,7 +509,7 @@ async function main() {
   console.log(`wrote ${args.markdown}`);
 }
 
-try {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) try {
   await main();
 } catch (err) {
   console.error(`error: ${err.message}`);

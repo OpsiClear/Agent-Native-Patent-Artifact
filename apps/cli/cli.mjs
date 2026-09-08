@@ -105,6 +105,7 @@ function usage() {
     "  head       print the current compare-and-swap ledger head",
     "  summary    print a minimal matter and review summary",
     "  verify     verify contracts, content hashes, decisions, and ledger chains",
+    "  recover    finish a journaled commit; reclaim only a dead local writer lock",
     "",
     "Every mutation after init requires --expected-head and --idempotency-key.",
     "APA never signs, certifies, pays, or files.",
@@ -224,7 +225,7 @@ function commandInput(command, args) {
       ...mutationIdentity(args),
     };
   }
-  if (["head", "summary", "verify", "artifacts", "review"].includes(command)) {
+  if (["head", "summary", "verify", "recover", "artifacts", "review"].includes(command)) {
     return { matter };
   }
   throw new Error(`unknown command '${command}'`);
@@ -249,7 +250,7 @@ function printHuman(command, result) {
     console.log(result.submit_boundary);
     return;
   }
-  if (command === "verify") {
+  if (["verify", "recover"].includes(command)) {
     console.log(result.ok ? "APA harness verification passed" : "APA harness verification failed");
     for (const error of result.errors) console.log(`  ${error.code}: ${error.path}: ${error.message}`);
     return;
@@ -268,7 +269,7 @@ export function main(argv = process.argv.slice(2)) {
   const result = printableResult(command, input, args);
   if (args.json) console.log(JSON.stringify(result, null, 2));
   else printHuman(command, result);
-  if (command === "verify" && !result.ok) return 1;
+  if (["verify", "recover"].includes(command) && !result.ok) return 1;
   if (command === "run" && result.status === "failed") return 1;
   if (command === "loop" && result.allowed === false) return 1;
   return 0;

@@ -47,3 +47,11 @@ test("network mode rejects a lookalike URL outside the metadata host allowlist",
     rmSync(matter, { recursive: true, force: true });
   }
 });
+import { crossrefDate } from "./verify_dates.mjs";
+
+test("Crossref dates preserve source precision and reject impossible dates", () => {
+  assert.deepEqual(crossrefDate([[2020]]), { value: "2020", precision: "year", dateParts: [2020] });
+  assert.deepEqual(crossrefDate([[2020, 7]]), { value: "2020-07", precision: "month", dateParts: [2020, 7] });
+  assert.deepEqual(crossrefDate([[2020, 2, 29]]), { value: "2020-02-29", precision: "day", dateParts: [2020, 2, 29] });
+  for (const input of [[], [[2021, 2, 29]], [[2020, 13]], [[2020, 1, 0]], [["2020"]]]) assert.equal(crossrefDate(input), null);
+});
