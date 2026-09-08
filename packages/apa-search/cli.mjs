@@ -18,9 +18,10 @@ import { updateClosestArtSelection, updateReferenceVerification, writeLandscape,
 import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
 import { assertPpsExportSize, buildPpsImportResult } from "./pps-import.mjs";
 import { listSources, sourceHealth } from "./sources/index.mjs";
-import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
+import { constants as fsConstants, copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { parseFrontmatter } from "../apa-core/apa-parse.mjs";
+import { withMatterWriteLock } from "../apa-core/matter-lock.mjs";
 import {
   appendRunlog,
   buildRunlogEntry,
@@ -177,43 +178,46 @@ async function main() {
   if (a.write && a.matter) {
     // Honor --limit on WRITE too (some sources, e.g. mock, ignore query.limit and return all matches,
     // so the preview showed N but the un-sliced array would file every match).
-    const { assigned } = writeLandscape(a.matter, res.ranked.slice(0, a.limit));
-    const { path: dossierPath } = writeSearchDossier(a.matter, {
-      query,
-      result: { ...res, ranked: res.ranked.slice(0, a.limit) },
-      assigned,
-      limit: a.limit,
-    });
-    const outputPaths = [
-      join(a.matter, "logic", "prior_art.md"),
-      join(a.matter, "logic", "reference_matrix.md"),
-      dossierPath,
-      ...assigned.map((x) => join(a.matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
-    ];
-    appendRunlog(a.matter, buildRunlogEntry({
-      timestamp: new Date().toISOString(),
-      skill: "apa-priorart",
-      ruleVersion: ruleVersionOf(a.matter),
-      inputs: existingFileRecords(a.matter, [
-        join(a.matter, "PATENT.md"),
-        join(a.matter, "logic", "claims.md"),
-      ]),
-      outputs: existingFileRecords(a.matter, outputPaths),
-      commands: [commandRecord({
-        argv: ["node", "packages/apa-search/cli.mjs", ...process.argv.slice(2)],
-        cwd: process.cwd(),
-        exitCode: 0,
-        startedAt,
-        endedAt: new Date().toISOString(),
-      })],
-      externalSinks: [externalSinkRecord({
-        kind: "prior-art-query",
-        bytes: res.verdict?.text || JSON.stringify(query),
-        scanVerdict: res.verdict,
-        humanApproved: Boolean(res.verdict?.needsConfirm && a.yes),
-      })],
-      humanCheckpoints: [humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false })],
-    }));
+    const { assigned, dossierPath } = withMatterWriteLock(a.matter, () => {
+      const { assigned } = writeLandscape(a.matter, res.ranked.slice(0, a.limit), { lockHeld: true });
+      const { path: dossierPath } = writeSearchDossier(a.matter, {
+        query,
+        result: { ...res, ranked: res.ranked.slice(0, a.limit) },
+        assigned,
+        limit: a.limit,
+      }, { lockHeld: true });
+      const outputPaths = [
+        join(a.matter, "logic", "prior_art.md"),
+        join(a.matter, "logic", "reference_matrix.md"),
+        dossierPath,
+        ...assigned.map((x) => join(a.matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
+      ];
+      appendRunlog(a.matter, buildRunlogEntry({
+        timestamp: new Date().toISOString(),
+        skill: "apa-priorart",
+        ruleVersion: ruleVersionOf(a.matter),
+        inputs: existingFileRecords(a.matter, [
+          join(a.matter, "PATENT.md"),
+          join(a.matter, "logic", "claims.md"),
+        ]),
+        outputs: existingFileRecords(a.matter, outputPaths),
+        commands: [commandRecord({
+          argv: ["node", "packages/apa-search/cli.mjs", ...process.argv.slice(2)],
+          cwd: process.cwd(),
+          exitCode: 0,
+          startedAt,
+          endedAt: new Date().toISOString(),
+        })],
+        externalSinks: [externalSinkRecord({
+          kind: "prior-art-query",
+          bytes: res.verdict?.text || JSON.stringify(query),
+          scanVerdict: res.verdict,
+          humanApproved: Boolean(res.verdict?.needsConfirm && a.yes),
+        })],
+        humanCheckpoints: [humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false })],
+      }), { lockHeld: true });
+      return { assigned, dossierPath };
+    }, { owner: "apa-priorart:search-write" });
     if (!a.json) {
       console.log(`\nWrote ${assigned.length} reference(s) into ${a.matter}: ${assigned.map((x) => x.paId).join(", ")}`);
       console.log(`Updated logic/prior_art.md + evidence/prior_art/ + logic/reference_matrix.md (scaffold).`);
@@ -364,7 +368,7 @@ function cmdImportPpsExport(argv, { startedAt = new Date().toISOString(), rawArg
     assertPpsExportSize(file);
     const importText = readFileSync(file, "utf8");
     const importedAt = new Date().toISOString();
-    const copiedPath = copyImportIntoMatter(matter, file, importedAt);
+    const copiedPath = importTargetPath(matter, file, importedAt);
     const { query, result, importRecord } = buildPpsImportResult({
       exportText: importText,
       exportPath: file,
@@ -375,56 +379,60 @@ function cmdImportPpsExport(argv, { startedAt = new Date().toISOString(), rawArg
       limit,
       importedAt,
     });
-    const { assigned } = writeLandscape(matter, result.ranked.slice(0, limit));
-    const { path: dossierPath, dossier } = writeSearchDossier(matter, {
-      query,
-      result: { ...result, ranked: result.ranked.slice(0, limit) },
-      assigned,
-      limit,
-      generatedAt: importedAt,
-    });
-    const outputPaths = [
-      copiedPath,
-      join(matter, "logic", "prior_art.md"),
-      join(matter, "logic", "reference_matrix.md"),
-      dossierPath,
-      ...assigned.map((x) => join(matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
-    ];
-    appendRunlog(matter, buildRunlogEntry({
-      timestamp: new Date().toISOString(),
-      skill: "apa-priorart",
-      ruleVersion: ruleVersionOf(matter),
-      inputs: [
-        ...existingFileRecords(matter, [
-          join(matter, "PATENT.md"),
-          join(matter, "logic", "claims.md"),
-        ]),
-        snapshotRecord(matter, file, importText),
-      ],
-      outputs: existingFileRecords(matter, outputPaths),
-      commands: [commandRecord({
-        argv: ["node", "packages/apa-search/cli.mjs", ...(rawArgs || [])],
-        cwd: process.cwd(),
-        exitCode: 0,
-        startedAt,
-        endedAt: new Date().toISOString(),
-      })],
-      externalSinks: [externalSinkRecord({
-        kind: "human-pps-query",
-        bytes: queryText,
-        scanVerdict: result.verdict,
-        humanApproved: true,
-      })],
-      humanCheckpoints: [
-        humanCheckpoint({ id: "pps-human-export-import", required: true, satisfied: true, reviewer, timestamp: importedAt }),
-        humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false }),
-        humanCheckpoint({ id: "ids-verification", required: true, satisfied: false }),
-      ],
-      notes: [
-        "Imported a human-exported USPTO PPS file; APA did not automate or scrape the PPS UI.",
-        "Imported references remain unverified candidates and do not establish search completeness.",
-      ],
-    }));
+    const { assigned, dossierPath, dossier } = withMatterWriteLock(matter, () => {
+      copyImportIntoMatter(matter, file, importedAt);
+      const { assigned } = writeLandscape(matter, result.ranked.slice(0, limit), { lockHeld: true });
+      const { path: dossierPath, dossier } = writeSearchDossier(matter, {
+        query,
+        result: { ...result, ranked: result.ranked.slice(0, limit) },
+        assigned,
+        limit,
+        generatedAt: importedAt,
+      }, { lockHeld: true });
+      const outputPaths = [
+        copiedPath,
+        join(matter, "logic", "prior_art.md"),
+        join(matter, "logic", "reference_matrix.md"),
+        dossierPath,
+        ...assigned.map((x) => join(matter, "evidence", "prior_art", `${x.paId.toLowerCase()}.md`)),
+      ];
+      appendRunlog(matter, buildRunlogEntry({
+        timestamp: new Date().toISOString(),
+        skill: "apa-priorart",
+        ruleVersion: ruleVersionOf(matter),
+        inputs: [
+          ...existingFileRecords(matter, [
+            join(matter, "PATENT.md"),
+            join(matter, "logic", "claims.md"),
+          ]),
+          snapshotRecord(matter, file, importText),
+        ],
+        outputs: existingFileRecords(matter, outputPaths),
+        commands: [commandRecord({
+          argv: ["node", "packages/apa-search/cli.mjs", ...(rawArgs || [])],
+          cwd: process.cwd(),
+          exitCode: 0,
+          startedAt,
+          endedAt: new Date().toISOString(),
+        })],
+        externalSinks: [externalSinkRecord({
+          kind: "human-pps-query",
+          bytes: queryText,
+          scanVerdict: result.verdict,
+          humanApproved: true,
+        })],
+        humanCheckpoints: [
+          humanCheckpoint({ id: "pps-human-export-import", required: true, satisfied: true, reviewer, timestamp: importedAt }),
+          humanCheckpoint({ id: "closest-art-selection", required: true, satisfied: false }),
+          humanCheckpoint({ id: "ids-verification", required: true, satisfied: false }),
+        ],
+        notes: [
+          "Imported a human-exported USPTO PPS file; APA did not automate or scrape the PPS UI.",
+          "Imported references remain unverified candidates and do not establish search completeness.",
+        ],
+      }), { lockHeld: true });
+      return { assigned, dossierPath, dossier };
+    }, { owner: "apa-priorart:pps-import" });
     if (argv.includes("--json")) {
       console.log(JSON.stringify({ dossier_path: dossierPath, import: importRecord, assigned, dossier }, null, 2));
     } else {
@@ -472,13 +480,18 @@ function cmdCheckDossier(argv) {
 }
 
 function copyImportIntoMatter(matterDir, file, importedAt) {
+  const target = importTargetPath(matterDir, file, importedAt);
   const importDir = join(matterDir, "evidence", "prior_art", "imports");
   mkdirSync(importDir, { recursive: true });
+  copyFileSync(file, target, fsConstants.COPYFILE_EXCL);
+  return target;
+}
+
+function importTargetPath(matterDir, file, importedAt) {
+  const importDir = join(matterDir, "evidence", "prior_art", "imports");
   const ext = extname(file) || ".txt";
   const stamp = importedAt.replace(/[^0-9A-Za-z]+/g, "-").replace(/^-|-$/g, "");
-  const target = join(importDir, `pps-export-${stamp}${ext.toLowerCase()}`);
-  copyFileSync(file, target);
-  return target;
+  return join(importDir, `pps-export-${stamp}${ext.toLowerCase()}`);
 }
 
 function ruleVersionOf(matterDir) {

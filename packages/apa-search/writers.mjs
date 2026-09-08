@@ -5,24 +5,89 @@
  * before it is relied on or listed on an IDS. Node >=21, ESM, zero deps.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { join } from "node:path";
+import { basename, extname, join } from "node:path";
 import { iterEntitySections } from "../apa-core/apa-parse.mjs";
+import { withMatterWriteLock } from "../apa-core/matter-lock.mjs";
 import { formatDossierErrors, validateSearchDossier } from "./dossier-schema.mjs";
 import { refSummary, refToPaBlock, refToEvidence } from "./lib/refs.mjs";
 import { queryToString } from "./search.mjs";
 import { sourceHealth } from "./sources/index.mjs";
 
-function nextPaNumber(priorArtPath) {
-  let max = 0;
+function nextPaNumber(matterDir, priorArtPath) {
+  const reserved = new Set();
   if (existsSync(priorArtPath)) {
-    for (const sec of iterEntitySections(readFileSync(priorArtPath, "utf8"))) {
+    const text = readFileSync(priorArtPath, "utf8");
+    for (const sec of iterEntitySections(text)) {
       const m = /^PA(\d+)$/.exec(sec.id);
-      if (m) max = Math.max(max, parseInt(m[1], 10));
+      if (m) reserved.add(parseInt(m[1], 10));
+    }
+    // A matter may preserve rejected/removed search-trail records under non-entity headings such as
+    // `#### Rejected PA25`. Those headings are intentionally invisible to the active PA parser and
+    // IDS assembler, but their identifiers remain reserved provenance. Include the strict archive
+    // heading forms in the allocator so a later search cannot silently reuse an archived PA id.
+    for (const number of archivedPaNumbers(text)) reserved.add(number);
+  }
+
+  // The evidence tree and older dossiers can outlive an active/archive heading. Treat those records
+  // as provenance too: an id is never safe to reuse merely because logic/prior_art.md was edited.
+  const evidenceDir = join(matterDir, "evidence", "prior_art");
+  for (const path of evidenceFiles(evidenceDir)) {
+    const filenameMatch = /^pa(\d+)(?=$|[._-])/i.exec(basename(path));
+    if (filenameMatch) reserved.add(parseInt(filenameMatch[1], 10));
+
+    const extension = extname(path).toLowerCase();
+    if (![".json", ".md", ".txt", ".yaml", ".yml"].includes(extension)) continue;
+    const text = readFileSync(path, "utf8");
+    const patterns = extension === ".json"
+      ? [/"pa_id"\s*:\s*"PA(\d+)"/gi]
+      : [
+          /^#{1,6}[ \t]+(?:Rejected[ \t]+|Removed[ \t]+|Retired[ \t]+|Archived[ \t]+)?PA(\d+)\b/gmi,
+          /^pa_id[ \t]*:[ \t]*PA(\d+)\b/gmi,
+        ];
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) reserved.add(parseInt(match[1], 10));
     }
   }
+
+  let max = 0;
+  for (const number of reserved) max = Math.max(max, number);
   return max + 1;
+}
+
+function archivedPaNumbers(text) {
+  const numbers = [];
+  let fence = null;
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const fenceMatch = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1];
+      if (!fence) fence = { char: marker[0], length: marker.length };
+      else if (marker[0] === fence.char && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (fence) continue;
+    const match = /^#{3,6}[ \t]+(?:Rejected|Removed|Retired|Archived)[ \t]+PA(\d+)\b/.exec(line);
+    if (match) numbers.push(parseInt(match[1], 10));
+  }
+  return numbers;
+}
+
+function evidenceFiles(root) {
+  if (!existsSync(root)) return [];
+  const files = [];
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) visit(path);
+      else if (entry.isFile()) files.push(path);
+    }
+  };
+  visit(root);
+  return files;
 }
 
 const paId = (n) => `PA${String(n).padStart(2, "0")}`;
@@ -32,7 +97,14 @@ const paId = (n) => `PA${String(n).padStart(2, "0")}`;
  * @param {object[]} rankedRefs  NormalizedRef[] (ranked)
  * @returns {{ assigned: {paId:string, docNumber:string}[], referenceMatrix:string }}
  */
-export function writeLandscape(matterDir, rankedRefs) {
+export function writeLandscape(matterDir, rankedRefs, { lockHeld = false } = {}) {
+  if (!lockHeld) {
+    return withMatterWriteLock(
+      matterDir,
+      () => writeLandscape(matterDir, rankedRefs, { lockHeld: true }),
+      { owner: "apa-priorart:landscape" },
+    );
+  }
   const priorArtPath = join(matterDir, "logic", "prior_art.md");
   const evidenceDir = join(matterDir, "evidence", "prior_art");
   mkdirSync(evidenceDir, { recursive: true });
@@ -41,12 +113,26 @@ export function writeLandscape(matterDir, rankedRefs) {
     writeFileSync(priorArtPath, "# Prior-art landscape\n\n> Typed by legal role. For patentability, NOT a freedom-to-operate / clearance opinion.\n");
   }
 
-  let n = nextPaNumber(priorArtPath);
+  let n = nextPaNumber(matterDir, priorArtPath);
   const assigned = [];
-  for (const ref of rankedRefs) {
+  const planned = rankedRefs.map((ref) => {
     const id = paId(n++);
+    return {
+      ref,
+      id,
+      evidencePath: join(evidenceDir, `${id.toLowerCase()}.md`),
+    };
+  });
+  for (const item of planned) {
+    if (existsSync(item.evidencePath)) {
+      throw new Error(`refusing to overwrite existing prior-art evidence: ${item.evidencePath}`);
+    }
+  }
+  for (const { ref, id, evidencePath } of planned) {
+    // Exclusive creation is the final fail-closed defense if an uncooperative writer bypasses the
+    // matter lock between allocation and creation.
+    writeFileSync(evidencePath, refToEvidence(ref, id), { encoding: "utf8", flag: "wx" });
     appendFileSync(priorArtPath, "\n" + refToPaBlock(ref, id));
-    writeFileSync(join(evidenceDir, `${id.toLowerCase()}.md`), refToEvidence(ref, id));
     assigned.push({ paId: id, docNumber: ref.docNumber, title: ref.title });
   }
 
@@ -351,7 +437,14 @@ function oneLine(text) {
   return String(text == null ? "" : text).replace(/[\r\n\u2028\u2029]+/g, " ").trim();
 }
 
-export function writeSearchDossier(matterDir, opts) {
+export function writeSearchDossier(matterDir, opts, { lockHeld = false } = {}) {
+  if (!lockHeld) {
+    return withMatterWriteLock(
+      matterDir,
+      () => writeSearchDossier(matterDir, opts, { lockHeld: true }),
+      { owner: "apa-priorart:dossier" },
+    );
+  }
   const evidenceDir = join(matterDir, "evidence", "prior_art");
   mkdirSync(evidenceDir, { recursive: true });
   const dossier = buildSearchDossier(opts);
@@ -359,7 +452,7 @@ export function writeSearchDossier(matterDir, opts) {
   if (!validation.ok) throw new Error(`invalid search dossier:\n${formatDossierErrors(validation.errors)}`);
   const stamp = dossier.generated_at.replace(/[^0-9A-Za-z]+/g, "-").replace(/^-|-$/g, "");
   const path = join(evidenceDir, `search-dossier-${stamp}.json`);
-  writeFileSync(path, JSON.stringify(dossier, null, 2) + "\n");
+  writeFileSync(path, JSON.stringify(dossier, null, 2) + "\n", { encoding: "utf8", flag: "wx" });
   return { path, dossier };
 }
 

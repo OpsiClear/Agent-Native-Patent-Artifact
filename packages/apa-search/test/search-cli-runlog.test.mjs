@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateRunlog } from "../../apa-trace/runlog.mjs";
+import { withMatterWriteLock } from "../../apa-core/matter-lock.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "cli.mjs");
@@ -31,6 +32,23 @@ test("apa-search --write appends a runlog entry with query sink hash and closest
     execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" });
     assert.equal(validateRunlog(d).entries.length, 2, "second write appends a second entry");
     assert.ok(existsSync(join(d, "trace", "runlog.jsonl")));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test("apa-search --write refuses the whole write while the matter lock is held", () => {
+  const d = mkdtempSync(join(tmpdir(), "apa-search-held-lock-"));
+  try {
+    cpSync(EXAMPLE, d, { recursive: true });
+    const before = readFileSync(join(d, "logic", "prior_art.md"), "utf8");
+    withMatterWriteLock(d, () => {
+      assert.throws(
+        () => execFileSync(process.execPath, [CLI, "--matter", d, "--source", "mock", "--limit", "1", "--write"], { stdio: "pipe" }),
+        (error) => error.status === 1 && /matter write lock is held by test-holder/.test(String(error.stderr)),
+      );
+      assert.equal(readFileSync(join(d, "logic", "prior_art.md"), "utf8"), before);
+      assert.equal(existsSync(join(d, "evidence", "prior_art", "pa02.md")), false);
+      assert.equal(existsSync(join(d, "trace", "runlog.jsonl")), false);
+    }, { owner: "test-holder" });
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
 

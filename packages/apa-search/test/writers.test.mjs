@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, existsSync, rmSync } from "node:fs";
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, existsSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSearchDossier, idsVerificationStatus, updateClosestArtSelection, updateReferenceVerification, writeLandscape, writeSearchDossier } from "../writers.mjs";
 import { validateSearchDossier } from "../dossier-schema.mjs";
 import { validateMatter } from "../../apa-validate/validate.mjs";
+import { withMatterWriteLock } from "../../apa-core/matter-lock.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = join(HERE, "..", "..", "..", "examples", "minimal-patent-artifact");
@@ -40,6 +41,89 @@ test("writeLandscape appends valid PA## blocks and keeps the matter mechanically
     // The appended blocks must parse and not introduce mechanical errors.
     const after = validateMatter(dir);
     assert.equal(after.errors.length, 0, JSON.stringify(after.errors));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("writeLandscape permanently reserves rejected, removed, retired, and archived heading identifiers", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-writers-archive-id-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    appendFileSync(
+      join(dir, "logic", "prior_art.md"),
+      [
+        "",
+        "#### Rejected PA25 - unrelated broad-search collision",
+        "",
+        "Archived search-trail record; not an active entity.",
+        "",
+        "#### Removed PA56 - retired exact reference",
+        "",
+        "Archived reference; not an active entity.",
+        "",
+        "#### Retired PA57 - superseded family member",
+        "",
+        "#### Archived PA61 - retained search provenance",
+        "",
+      ].join("\n"),
+    );
+
+    const { assigned } = writeLandscape(dir, REFS.slice(0, 1));
+    assert.deepEqual(assigned.map((a) => a.paId), ["PA62"]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("writeLandscape reserves evidence-only and dossier-only ids without overwriting evidence", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-writers-evidence-id-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const evidenceDir = join(dir, "evidence", "prior_art");
+    const existingPath = join(evidenceDir, "pa57.md");
+    const sentinel = "existing PA57 evidence must remain byte-for-byte unchanged\n";
+    writeFileSync(existingPath, sentinel);
+    mkdirSync(join(evidenceDir, "archive"), { recursive: true });
+    writeFileSync(
+      join(evidenceDir, "archive", "retired-record.md"),
+      "# Archived PA63 - retained evidence record\n",
+    );
+    writeFileSync(
+      join(evidenceDir, "search-dossier-history.json"),
+      JSON.stringify({ assigned_references: [{ pa_id: "PA71" }] }),
+    );
+
+    const { assigned } = writeLandscape(dir, REFS.slice(0, 1));
+    assert.deepEqual(assigned.map((a) => a.paId), ["PA72"]);
+    assert.equal(readFileSync(existingPath, "utf8"), sentinel);
+    assert.ok(existsSync(join(evidenceDir, "pa72.md")));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("archive-heading examples inside fenced code do not reserve an id", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-writers-fenced-archive-id-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    appendFileSync(
+      join(dir, "logic", "prior_art.md"),
+      "\n```markdown\n#### Archived PA99 - example only\n```\n",
+    );
+    const { assigned } = writeLandscape(dir, REFS.slice(0, 1));
+    assert.deepEqual(assigned.map((a) => a.paId), ["PA02"]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("writeLandscape refuses allocation while another matter writer holds the lock", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-writers-held-lock-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const priorArtPath = join(dir, "logic", "prior_art.md");
+    const before = readFileSync(priorArtPath, "utf8");
+    withMatterWriteLock(dir, () => {
+      assert.throws(
+        () => writeLandscape(dir, REFS.slice(0, 1)),
+        /matter write lock is held by test-holder/,
+      );
+      assert.equal(readFileSync(priorArtPath, "utf8"), before);
+      assert.equal(existsSync(join(dir, "evidence", "prior_art", "pa02.md")), false);
+    }, { owner: "test-holder" });
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -171,6 +255,24 @@ test("writeSearchDossier writes a timestamped JSON dossier under evidence/prior_
     assert.ok(existsSync(path));
     assert.equal(JSON.parse(readFileSync(path, "utf8")).schema, dossier.schema);
     assert.match(path.replace(/\\/g, "/"), /evidence\/prior_art\/search-dossier-2026-06-20T00-00-00-000Z\.json$/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("writeSearchDossier refuses to overwrite a dossier with the same timestamp", () => {
+  const dir = mkdtempSync(join(tmpdir(), "apa-dossier-no-overwrite-"));
+  try {
+    cpSync(EXAMPLE, dir, { recursive: true });
+    const opts = {
+      query: { keywords: ["reservoir"], cpc: [], limit: 1 },
+      result: { verdict: { text: "reservoir\n{}", high: [], medium: [] }, perSource: [], ranked: REFS.slice(0, 1) },
+      assigned: [],
+      limit: 1,
+      generatedAt: "2026-06-20T00:00:00.000Z",
+    };
+    const { path } = writeSearchDossier(dir, opts);
+    const before = readFileSync(path, "utf8");
+    assert.throws(() => writeSearchDossier(dir, opts), /EEXIST|already exists/i);
+    assert.equal(readFileSync(path, "utf8"), before);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

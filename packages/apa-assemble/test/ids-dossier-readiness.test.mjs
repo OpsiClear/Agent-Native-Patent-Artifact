@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,6 +53,43 @@ test("IDS fails closed without a dossier even when prior_art.md has legacy verif
     assert.equal(ids.readinessSource, "search-dossier-assigned-reference");
     assert.match(ids.markdown, /No search dossier was found/);
     assert.match(ids.markdown, /PA01.*UNVERIFIED/);
+  } finally {
+    rmSync(matter, { recursive: true, force: true });
+  }
+});
+
+test("IDS excludes rejected, removed, retired, and archived headings from the active reference seed", () => {
+  const matter = cloneMatter();
+  try {
+    appendFileSync(
+      join(matter, "logic", "prior_art.md"),
+      [
+        "",
+        "#### Rejected PA25 - unrelated broad-search collision",
+        "",
+        "```binding",
+        "role: prior-art-for-patentability",
+        "citation: SHOULD-NOT-ENTER-IDS",
+        "```",
+        "",
+        "#### Removed PA56 - retired reference",
+        "",
+        "```binding",
+        "role: prior-art-for-patentability",
+        "citation: ALSO-SHOULD-NOT-ENTER-IDS",
+        "```",
+        "",
+        "#### Retired PA57 - superseded family member",
+        "",
+        "#### Archived PA61 - retained search provenance",
+        "",
+      ].join("\n"),
+    );
+
+    const ids = assembleIds(matter);
+    assert.equal(ids.count, 1);
+    assert.match(ids.markdown, /\[PA01\]/);
+    assert.doesNotMatch(ids.markdown, /PA25|PA56|PA57|PA61|SHOULD-NOT-ENTER-IDS/);
   } finally {
     rmSync(matter, { recursive: true, force: true });
   }
