@@ -59,9 +59,12 @@ It produces, under `<matter>/assembled/`:
   declaration signatures, fee/entity checks, PDF export, and Patent Center upload.
 
 After a human selects a supported ordinary AcroForm route, use `/apa-form-fill` to collect and
-confirm allowlisted text and create a local draft. It refuses AIA/14 and other XFA forms, all
-selections, signer fields, entity/fee/payment fields, and filing. Keep its review manifest separate
-from `upload_manifest.json`; neither manifest proves filing readiness.
+confirm allowlisted text and create a local draft. It refuses AIA/14 and other XFA forms, signature
+fields, push buttons, unconfirmed values, and filing. It may mechanically transcribe exact
+human-confirmed checkbox states, including draft fields concerning entity status, fees, or payment
+instructions, but never chooses or recommends a response, certifies status, signs, charges, uploads,
+or files. Keep its review manifest separate from `upload_manifest.json`; neither manifest proves
+filing readiness.
 
 ### Information Disclosure Statement (37 CFR 1.97/1.98; SB/08)
 - Seed the IDS from the `evidence/` index. Each reference must be HUMAN-VERIFIED (real title/venue/
